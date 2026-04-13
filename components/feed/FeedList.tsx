@@ -2,7 +2,11 @@ import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { PostCard } from './PostCard';
+import { AdSlot } from '../shared/AdSlot';
+import { getAdForPosition } from '../../lib/mock-ads';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/typography';
+import { Spacing } from '../../constants/design';
 import type { Post, EngagementType } from '../../stores/feedStore';
 
 interface FeedListProps {
@@ -15,6 +19,10 @@ interface FeedListProps {
   onEngage: (postId: string, type: EngagementType) => void;
 }
 
+type FeedItem =
+  | { type: 'post'; data: Post }
+  | { type: 'ad'; data: ReturnType<typeof getAdForPosition> };
+
 export function FeedList({
   posts,
   isLoading,
@@ -24,10 +32,26 @@ export function FeedList({
   onLoadMore,
   onEngage,
 }: FeedListProps) {
+  // Interleave ads between posts
+  const feedItems: FeedItem[] = [];
+  posts.forEach((post, i) => {
+    feedItems.push({ type: 'post', data: post });
+    const ad = getAdForPosition(i);
+    if (ad) {
+      feedItems.push({ type: 'ad', data: ad });
+    }
+  });
+
   const renderItem = useCallback(
-    ({ item }: { item: Post }) => (
-      <PostCard post={item} onEngage={onEngage} />
-    ),
+    ({ item }: { item: FeedItem }) => {
+      if (item.type === 'ad' && item.data) {
+        return <AdSlot ad={item.data} />;
+      }
+      if (item.type === 'post') {
+        return <PostCard post={item.data as Post} onEngage={onEngage} />;
+      }
+      return null;
+    },
     [onEngage]
   );
 
@@ -42,9 +66,9 @@ export function FeedList({
   if (!isLoading && posts.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>No posts yet</Text>
+        <Text style={styles.emptyTitle}>Nothing here yet.</Text>
         <Text style={styles.emptySubtitle}>
-          Be the first to share something that bridges communities
+          That changes when you show up.
         </Text>
       </View>
     );
@@ -52,10 +76,14 @@ export function FeedList({
 
   return (
     <FlashList
-      data={posts}
+      data={feedItems}
       renderItem={renderItem}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
+      keyExtractor={(item, index) =>
+        item.type === 'post'
+          ? (item.data as Post).id
+          : `ad-${index}`
+      }
+      contentContainerStyle={{ paddingTop: Spacing.sm, paddingBottom: 100 }}
       onEndReached={hasMore ? onLoadMore : undefined}
       onEndReachedThreshold={0.5}
       refreshControl={
@@ -81,22 +109,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 32,
+    padding: Spacing.xl,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: Fonts.heading,
     color: Colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   emptySubtitle: {
     fontSize: 14,
+    fontFamily: Fonts.body,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   footer: {
-    padding: 20,
+    padding: Spacing.lg,
     alignItems: 'center',
   },
 });

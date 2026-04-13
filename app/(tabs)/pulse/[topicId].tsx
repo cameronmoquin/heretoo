@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,6 +16,7 @@ import {
   usePulseRealtime,
   useSubmitStatement,
 } from '../../../hooks/usePulse';
+import { showAlert } from '../../../lib/alert';
 import { usePulseStore, type VoteType } from '../../../stores/pulseStore';
 import { OpinionSlider } from '../../../components/pulse/OpinionSlider';
 import { ConsensusBar } from '../../../components/pulse/ConsensusBar';
@@ -24,6 +24,7 @@ import { ClusterMap } from '../../../components/pulse/ClusterMap';
 import { Button } from '../../../components/shared/Button';
 import { LoadingPulse } from '../../../components/shared/LoadingPulse';
 import { Colors } from '../../../constants/colors';
+import { generateMockClusterPoints } from '../../../lib/mock-data';
 
 export default function TopicScreen() {
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
@@ -55,7 +56,7 @@ export default function TopicScreen() {
       {
         onSuccess: () => {
           setNewStatement('');
-          Alert.alert('Submitted', 'Your statement is now live for voting.');
+          showAlert('Submitted', 'Live now.');
         },
       }
     );
@@ -75,13 +76,13 @@ export default function TopicScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Cluster Map placeholder */}
-          <ClusterMap points={[]} activeVoterCount={activeVoterCount} />
+          {/* Cluster Map */}
+          <ClusterMap points={generateMockClusterPoints(50)} activeVoterCount={activeVoterCount} />
 
           {/* Top bridging statement */}
           {topBridging && topBridging.bridging_score > 0 && (
             <View style={styles.topBridging}>
-              <Text style={styles.topBridgingLabel}>Top Bridge Statement</Text>
+              <Text style={styles.topBridgingLabel}>Common Ground</Text>
               <Text style={styles.topBridgingText}>{topBridging.text}</Text>
               <ConsensusBar bridgingScore={topBridging.bridging_score} />
             </View>
@@ -104,10 +105,10 @@ export default function TopicScreen() {
 
           {/* Submit new statement */}
           <View style={styles.submitSection}>
-            <Text style={styles.sectionTitle}>Add a statement</Text>
+            <Text style={styles.sectionTitle}>Say something</Text>
             <TextInput
               style={styles.input}
-              placeholder="State a position for others to vote on..."
+              placeholder="What do you think?"
               placeholderTextColor={Colors.textMuted}
               value={newStatement}
               onChangeText={setNewStatement}
@@ -115,7 +116,7 @@ export default function TopicScreen() {
               maxLength={280}
             />
             <Button
-              title="Submit Statement"
+              title="Submit"
               onPress={handleSubmitStatement}
               loading={submitStatement.isPending}
               disabled={!newStatement.trim()}

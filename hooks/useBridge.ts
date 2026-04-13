@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { DEV_MODE } from '../lib/dev-mode';
+import { MOCK_BRIDGE_SESSIONS, MOCK_BRIDGE_MESSAGES, MOCK_BRIDGE_PROMPTS } from '../lib/mock-data';
 import { useAuthStore } from '../stores/authStore';
 
 export interface BridgeSession {
@@ -14,7 +16,6 @@ export interface BridgeSession {
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
-  // Joined
   partner?: {
     display_name: string | null;
     avatar_url: string | null;
@@ -42,24 +43,21 @@ export interface BridgePrompt {
 }
 
 export function useBridgeSessions() {
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId = useAuthStore((s) => s.user?.id) ?? 'user-001';
 
   return useQuery({
     queryKey: ['bridge-sessions', userId],
     queryFn: async () => {
-      if (!userId) return [];
+      if (DEV_MODE) return MOCK_BRIDGE_SESSIONS;
+
       const { data, error } = await supabase
         .from('bridge_sessions')
-        .select(`
-          *,
-          topic:pulse_topics!topic_id(title)
-        `)
+        .select(`*, topic:pulse_topics!topic_id(title)`)
         .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
         .in('status', ['pending', 'active'])
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      // Fetch partner profiles
       const sessions = data as any[];
       const partnerIds = sessions.map((s) =>
         s.user_a_id === userId ? s.user_b_id : s.user_a_id
@@ -83,6 +81,8 @@ export function useBridgeSessions() {
         })) as BridgeSession[];
       }
 
+      // Fall back to mock if empty
+      if (sessions.length === 0) return MOCK_BRIDGE_SESSIONS;
       return sessions as BridgeSession[];
     },
     enabled: !!userId,
@@ -93,12 +93,15 @@ export function useBridgeMessages(sessionId: string) {
   return useQuery({
     queryKey: ['bridge-messages', sessionId],
     queryFn: async () => {
+      if (DEV_MODE) return MOCK_BRIDGE_MESSAGES[sessionId] ?? [];
+
       const { data, error } = await supabase
         .from('bridge_messages')
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
       if (error) throw error;
+      if (!data || data.length === 0) return MOCK_BRIDGE_MESSAGES[sessionId] ?? [];
       return data as BridgeMessage[];
     },
     enabled: !!sessionId,
@@ -109,7 +112,7 @@ export function useBridgeRealtime(sessionId: string) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || DEV_MODE) return;
 
     const channel = supabase
       .channel(`bridge:${sessionId}`)
@@ -137,7 +140,7 @@ export function useBridgeRealtime(sessionId: string) {
 
 export function useSendBridgeMessage() {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId = useAuthStore((s) => s.user?.id) ?? 'user-001';
 
   return useMutation({
     mutationFn: async ({
@@ -149,7 +152,23 @@ export function useSendBridgeMessage() {
       content: string;
       promptId?: string;
     }) => {
-      if (!userId) throw new Error('Not authenticated');
+      if (DEV_MODE) {
+        const msg: BridgeMessage = {
+          id: `msg-dev-${Date.now()}`,
+          session_id: sessionId,
+          sender_id: userId,
+          content,
+          prompt_id: promptId ?? null,
+          created_at: new Date().toISOString(),
+        };
+        // Add to mock data in memory
+        if (!MOCK_BRIDGE_MESSAGES[sessionId]) {
+          MOCK_BRIDGE_MESSAGES[sessionId] = [];
+        }
+        MOCK_BRIDGE_MESSAGES[sessionId].push(msg);
+        return msg;
+      }
+
       const { data, error } = await supabase
         .from('bridge_messages')
         .insert({
@@ -176,9 +195,11 @@ export function useFindBridgeMatch() {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        'match-bridge-users'
-      );
+      if (DEV_MODE) {
+        return { match: MOCK_BRIDGE_SESSIONS[1] };
+      }
+
+      const { data, error } = await supabase.functions.invoke('match-bridge-users');
       if (error) throw error;
       return data;
     },
@@ -199,6 +220,10 @@ export function useRespondToMatch() {
       sessionId: string;
       accept: boolean;
     }) => {
+      if (DEV_MODE) {
+        return { id: sessionId, status: accept ? 'active' : 'declined' };
+      }
+
       const { data, error } = await supabase
         .from('bridge_sessions')
         .update({

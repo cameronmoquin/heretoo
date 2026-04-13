@@ -1,49 +1,51 @@
 export const Colors = {
-  // Brand — HereToo temporary brand spec
-  brandIvory: '#F0EEE8',     // "HERE" color
-  brandGold: '#E8C97A',      // "Too" color
-  brandDark: '#0C0C0F',      // Background / app icon
+  // Brand — HereToo logo only
+  brandIvory: '#F0EEE8',
+  brandGold: '#E8C97A',
+  brandDark: '#0C0C0F',
 
-  // Primary palette (app UI)
-  primary: '#E8C97A',          // Gold — primary action color
-  primaryDark: '#D4B568',
-  primaryLight: '#F0D998',
+  // Primary palette — warm emerald (growth, bridging, common ground)
+  primary: '#059669',
+  primaryDark: '#047857',
+  primaryLight: '#34D399',
+  primaryFaint: 'rgba(5, 150, 105, 0.08)',
 
-  // Neutrals
-  background: '#0C0C0F',
-  surface: '#1A1A1F',
-  surfaceLight: '#2A2A30',
-  border: '#3A3A42',
-  textPrimary: '#F0EEE8',
-  textSecondary: '#A0A0A8',
-  textMuted: '#6B6B75',
+  // Neutrals — warm light base
+  background: '#FAFAF8',
+  surface: '#FFFFFF',
+  surfaceLight: '#F3F3F0',
+  border: '#E5E3DE',
+  borderLight: '#EEEDEA',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#5C5C5C',
+  textMuted: '#9C9C9C',
 
   // Engagement colors
-  agree: '#10B981',
-  disagree: '#EF4444',
-  important: '#F59E0B',
-  bridge: '#3B82F6',
-  share: '#8B5CF6',
+  agree: '#059669',
+  disagree: '#DC2626',
+  important: '#D97706',
+  bridge: '#2563EB',
+  share: '#7C3AED',
 
   // Bridge score badge colors
-  badgeLocal: '#6B6B75',
-  badgeReaching: '#3B82F6',
-  badgeBridging: '#10B981',
-  badgeCommonGround: '#E8C97A',
+  badgeLocal: '#9C9C9C',
+  badgeReaching: '#2563EB',
+  badgeBridging: '#059669',
+  badgeCommonGround: '#D97706',
 
   // Cluster colors (for ClusterMap visualization)
   clusters: {
     pragmatic_center: '#6B7280',
-    community_focused: '#3B82F6',
+    community_focused: '#2563EB',
     tradition_minded: '#92400E',
-    reform_oriented: '#10B981',
-    liberty_focused: '#F59E0B',
+    reform_oriented: '#059669',
+    liberty_focused: '#D97706',
     unclassified: '#D1D5DB',
   },
 
   // System
-  error: '#EF4444',
-  warning: '#F59E0B',
-  success: '#10B981',
-  info: '#3B82F6',
+  error: '#DC2626',
+  warning: '#D97706',
+  success: '#059669',
+  info: '#2563EB',
 } as const;

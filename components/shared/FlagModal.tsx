@@ -6,11 +6,11 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Button } from './Button';
+import { showAlert } from '../../lib/alert';
 import { useFlagContent } from '../../hooks/useModeration';
 import { FLAG_REASONS, type FlagReason, type ContentType } from '../../lib/moderation';
 
@@ -43,14 +43,14 @@ export function FlagModal({
       },
       {
         onSuccess: () => {
-          Alert.alert(
+          showAlert(
             'Reported',
             'Thank you. This will be reviewed by community members from multiple perspectives.'
           );
           handleClose();
         },
         onError: (error) => {
-          Alert.alert('Error', error.message);
+          showAlert('Error', error.message);
         },
       }
     );

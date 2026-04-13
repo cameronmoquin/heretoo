@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
+import { DEV_MODE } from '../lib/dev-mode';
 import {
   createInviteCode,
   shareInvite,
   getInviteStats,
   acceptInvite,
 } from '../lib/invites';
+
+const DEV_STATS = { totalSent: 5, totalAccepted: 3, invites: [] as any[] };
 
 export function useInvite() {
   const userId = useAuthStore((s) => s.user?.id);
@@ -16,12 +19,21 @@ export function useInvite() {
 
   const stats = useQuery({
     queryKey: ['invite-stats', userId],
-    queryFn: () => getInviteStats(userId!),
-    enabled: !!userId,
+    queryFn: () => {
+      if (DEV_MODE) return DEV_STATS;
+      return getInviteStats(userId!);
+    },
+    enabled: !!userId || DEV_MODE,
   });
 
   const sendInvite = useMutation({
     mutationFn: async () => {
+      if (DEV_MODE) {
+        setIsSharing(true);
+        await shareInvite('HERETOO1', displayName);
+        setIsSharing(false);
+        return { code: 'HERETOO1', shared: true };
+      }
       if (!userId) throw new Error('Not authenticated');
       setIsSharing(true);
       try {
@@ -39,13 +51,14 @@ export function useInvite() {
 
   const claimInvite = useMutation({
     mutationFn: async (inviteCode: string) => {
+      if (DEV_MODE) return { inviterId: 'user-002' };
       if (!userId) throw new Error('Not authenticated');
       return acceptInvite(inviteCode, userId);
     },
   });
 
   return {
-    stats: stats.data ?? { totalSent: 0, totalAccepted: 0, invites: [] },
+    stats: stats.data ?? DEV_STATS,
     isLoadingStats: stats.isLoading,
     sendInvite,
     claimInvite,

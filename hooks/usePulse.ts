@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { DEV_MODE } from '../lib/dev-mode';
+import { MOCK_TOPICS, MOCK_STATEMENTS } from '../lib/mock-data';
 import { usePulseStore, type VoteType } from '../stores/pulseStore';
 import { useAuthStore } from '../stores/authStore';
 import { recordPulseVoteForVerification } from '../lib/verification';
@@ -9,29 +11,34 @@ export function usePulseTopics() {
   return useQuery({
     queryKey: ['pulse-topics'],
     queryFn: async () => {
+      if (DEV_MODE) return MOCK_TOPICS;
+
       const { data, error } = await supabase
         .from('pulse_topics')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       if (error) throw error;
+      // Fall back to mock if empty
+      if (!data || data.length === 0) return MOCK_TOPICS;
       return data;
     },
   });
 }
 
 export function usePulseStatements(topicId: string) {
-  const userId = useAuthStore((s) => s.user?.id);
-
   return useQuery({
     queryKey: ['pulse-statements', topicId],
     queryFn: async () => {
+      if (DEV_MODE) return MOCK_STATEMENTS[topicId] ?? [];
+
       const { data, error } = await supabase
         .from('pulse_statements')
         .select('*')
         .eq('topic_id', topicId)
         .order('created_at', { ascending: true });
       if (error) throw error;
+      if (!data || data.length === 0) return MOCK_STATEMENTS[topicId] ?? [];
       return data;
     },
     enabled: !!topicId,
@@ -52,6 +59,10 @@ export function usePulseVote() {
     }) => {
       if (!userId) throw new Error('Not authenticated');
 
+      if (DEV_MODE) {
+        return { statement_id: statementId, user_id: userId, vote };
+      }
+
       const { data, error } = await supabase
         .from('pulse_votes')
         .upsert(
@@ -61,17 +72,13 @@ export function usePulseVote() {
         .select()
         .single();
       if (error) throw error;
-
-      // Update statement counts via RPC or refetch
-      // For MVP, we refetch
       return data;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['pulse-statements'],
       });
-      // Record vote for behavioral verification (unlocks posting after 5 votes)
-      if (userId) {
+      if (userId && !DEV_MODE) {
         recordPulseVoteForVerification(userId);
         queryClient.invalidateQueries({
           queryKey: ['verification-status', userId],
@@ -86,19 +93,18 @@ export function usePulseRealtime(topicId: string) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!topicId) return;
+    if (!topicId || DEV_MODE) {
+      // In dev mode, simulate some voters
+      if (DEV_MODE) setActiveVoterCount(Math.floor(Math.random() * 30) + 10);
+      return;
+    }
 
     const channel = supabase
       .channel(`pulse:${topicId}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'pulse_votes',
-        },
+        { event: '*', schema: 'public', table: 'pulse_votes' },
         () => {
-          // Refetch statements to get updated counts
           queryClient.invalidateQueries({
             queryKey: ['pulse-statements', topicId],
           });
@@ -147,13 +153,14 @@ export function useSubmitStatement() {
       text: string;
     }) => {
       if (!userId) throw new Error('Not authenticated');
+
+      if (DEV_MODE) {
+        return { id: `stmt-dev-${Date.now()}`, topic_id: topicId, text, submitted_by: userId };
+      }
+
       const { data, error } = await supabase
         .from('pulse_statements')
-        .insert({
-          topic_id: topicId,
-          text,
-          submitted_by: userId,
-        })
+        .insert({ topic_id: topicId, text, submitted_by: userId })
         .select()
         .single();
       if (error) throw error;

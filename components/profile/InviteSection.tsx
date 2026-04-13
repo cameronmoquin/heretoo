@@ -10,9 +10,9 @@ export function InviteSection() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Grow Your Community</Text>
+        <Text style={styles.title}>Bring people</Text>
         <Text style={styles.subtitle}>
-          Invite friends and family to join the conversation
+          You know someone who belongs here.
         </Text>
       </View>
 
@@ -37,7 +37,7 @@ export function InviteSection() {
       </View>
 
       <Button
-        title="Invite Someone"
+        title="Invite"
         onPress={() => sendInvite.mutate()}
         loading={isSharing || sendInvite.isPending}
         variant="primary"
@@ -47,7 +47,7 @@ export function InviteSection() {
 
       {stats.totalAccepted > 0 && (
         <Text style={styles.bonusNote}>
-          Your invites have earned you a trust score bonus
+          Trust earned.
         </Text>
       )}
     </View>

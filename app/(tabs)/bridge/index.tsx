@@ -32,14 +32,13 @@ export default function BridgeHomeScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>The Bridge</Text>
           <Text style={styles.subtitle}>
-            Get matched with someone from a different generation and background
-            for a real conversation.
+            Your next real conversation is out there.
           </Text>
         </View>
 
         {/* Find a match button */}
         <Button
-          title="Find a Bridge"
+          title="Show up"
           onPress={() => findMatch.mutate()}
           loading={findMatch.isPending}
           size="lg"
@@ -49,7 +48,7 @@ export default function BridgeHomeScreen() {
         {/* Pending matches */}
         {pendingSessions.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pending Matches</Text>
+            <Text style={styles.sectionTitle}>Waiting</Text>
             {pendingSessions.map((session) => (
               <MatchCard
                 key={session.id}
@@ -68,7 +67,7 @@ export default function BridgeHomeScreen() {
         {/* Active conversations */}
         {activeSessions.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Active Bridges</Text>
+            <Text style={styles.sectionTitle}>Open</Text>
             {activeSessions.map((session) => (
               <TouchableOpacity
                 key={session.id}
@@ -84,7 +83,7 @@ export default function BridgeHomeScreen() {
                   </Text>
                 </View>
                 <Text style={styles.sessionHint}>
-                  48h window — take your time, be thoughtful
+                  48 hours. Be real.
                 </Text>
               </TouchableOpacity>
             ))}
@@ -95,10 +94,9 @@ export default function BridgeHomeScreen() {
           pendingSessions.length === 0 &&
           activeSessions.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No active bridges</Text>
+              <Text style={styles.emptyTitle}>Your match is out there.</Text>
               <Text style={styles.emptyText}>
-                Tap "Find a Bridge" to get matched with someone different from
-                you for a guided conversation.
+                Vote on a topic first.
               </Text>
             </View>
           )}

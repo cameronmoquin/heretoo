@@ -9,7 +9,7 @@ interface SuspendedBannerProps {
 export function SuspendedBanner({ reason }: SuspendedBannerProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Account Suspended</Text>
+      <Text style={styles.title}>Suspended</Text>
       <Text style={styles.description}>
         Your account has been temporarily suspended.
         {reason ? ` Reason: ${reason}` : ''}

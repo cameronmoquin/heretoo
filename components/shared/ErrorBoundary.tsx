@@ -30,11 +30,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
+          <Text style={styles.title}>Something broke.</Text>
           <Text style={styles.message}>
             {this.state.error?.message ?? 'An unexpected error occurred'}
           </Text>
-          <Button title="Try Again" onPress={this.handleReset} variant="outline" />
+          <Button title="Retry" onPress={this.handleReset} variant="outline" />
         </View>
       );
     }

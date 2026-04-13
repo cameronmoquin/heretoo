@@ -5,7 +5,6 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Alert,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -14,11 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { assignInitialCluster } from '../../lib/clusters';
+import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
+import { AdCategoryPicker } from '../../components/shared/AdCategoryPicker';
 import { Colors } from '../../constants/colors';
 import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
 
-type Step = 'name' | 'age' | 'location' | 'interests' | 'story';
+type Step = 'name' | 'age' | 'location' | 'interests' | 'ads' | 'story';
 
 export default function ProfileSetupScreen() {
   const { createProfile } = useAuth();
@@ -30,9 +31,11 @@ export default function ProfileSetupScreen() {
   const [birthYear, setBirthYear] = useState('');
   const [locationRegion, setLocationRegion] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<InterestTopic[]>([]);
+  const [adCategories, setAdCategories] = useState<Set<string>>(new Set());
+  const [adSubcategories, setAdSubcategories] = useState<Set<string>>(new Set());
   const [originStory, setOriginStory] = useState('');
 
-  const steps: Step[] = ['name', 'age', 'location', 'interests', 'story'];
+  const steps: Step[] = ['name', 'age', 'location', 'interests', 'ads', 'story'];
   const stepIndex = steps.indexOf(step);
 
   function nextStep() {
@@ -55,9 +58,41 @@ export default function ProfileSetupScreen() {
     });
   }
 
+  function toggleAdCategory(categoryId: string) {
+    setAdCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+        // Also remove subcategories
+        setAdSubcategories((subs) => {
+          const nextSubs = new Set(subs);
+          for (const sub of subs) {
+            if (sub.startsWith(categoryId + '_')) nextSubs.delete(sub);
+          }
+          return nextSubs;
+        });
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  }
+
+  function toggleAdSubcategory(_categoryId: string, subcategoryId: string) {
+    setAdSubcategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(subcategoryId)) {
+        next.delete(subcategoryId);
+      } else {
+        next.add(subcategoryId);
+      }
+      return next;
+    });
+  }
+
   async function handleComplete() {
     if (!displayName.trim() || !username.trim() || !birthYear) {
-      Alert.alert('Missing info', 'Please fill in your name, username, and birth year.');
+      showAlert('Missing info', 'Please fill in your name, username, and birth year.');
       return;
     }
 
@@ -77,7 +112,7 @@ export default function ProfileSetupScreen() {
 
       router.replace('/(tabs)/feed');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -108,7 +143,7 @@ export default function ProfileSetupScreen() {
 
           {step === 'name' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>What should we call you?</Text>
+              <Text style={styles.stepTitle}>Who are you?</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Display name"
@@ -136,9 +171,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'age' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>When were you born?</Text>
+              <Text style={styles.stepTitle}>What year?</Text>
               <Text style={styles.stepSubtitle}>
-                Used for generational matching — never displayed publicly
+                For generational matching. Never shown.
               </Text>
               <TextInput
                 style={styles.input}
@@ -158,9 +193,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'location' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Where are you from?</Text>
+              <Text style={styles.stepTitle}>Where are you?</Text>
               <Text style={styles.stepSubtitle}>
-                State or region only — helps find local topics
+                State or region. Helps find local topics.
               </Text>
               <TextInput
                 style={styles.input}
@@ -178,9 +213,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'interests' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Pick 3 topics you care about</Text>
+              <Text style={styles.stepTitle}>Pick 3.</Text>
               <Text style={styles.stepSubtitle}>
-                This helps us start you off — your real community emerges from how you vote
+                Your real community emerges from how you vote.
               </Text>
               <View style={styles.interestGrid}>
                 {INTEREST_TOPICS.map((topic) => (
@@ -214,11 +249,34 @@ export default function ProfileSetupScreen() {
             </View>
           )}
 
+          {step === 'ads' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>What do you want to see?</Text>
+              <Text style={styles.stepSubtitle}>
+                Ads keep HereToo free. Pick at least 3 categories so they are relevant to you. Change anytime.
+              </Text>
+              <AdCategoryPicker
+                selectedCategories={adCategories}
+                selectedSubcategories={adSubcategories}
+                onToggleCategory={toggleAdCategory}
+                onToggleSubcategory={toggleAdSubcategory}
+              />
+              <View style={styles.navButtons}>
+                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
+                <Button
+                  title="Next"
+                  onPress={nextStep}
+                  disabled={adCategories.size < 3}
+                />
+              </View>
+            </View>
+          )}
+
           {step === 'story' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Your origin story</Text>
+              <Text style={styles.stepTitle}>Origin story</Text>
               <Text style={styles.stepSubtitle}>
-                Optional — a few words about where you come from and what matters to you
+                Where do you come from? What shaped you? You do not have to explain your politics. Just be real.
               </Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -233,7 +291,7 @@ export default function ProfileSetupScreen() {
               <View style={styles.navButtons}>
                 <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
                 <Button
-                  title="Join HereToo"
+                  title="Show up"
                   onPress={handleComplete}
                   loading={loading}
                   size="lg"

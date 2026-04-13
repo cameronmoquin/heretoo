@@ -17,7 +17,7 @@ export function PromptCard({ prompt, isActive }: PromptCardProps) {
       ]}
     >
       <Text style={styles.label}>
-        Prompt {prompt.order}
+        {prompt.order}
       </Text>
       <Text style={[styles.text, isActive && styles.textActive]}>
         {prompt.text}

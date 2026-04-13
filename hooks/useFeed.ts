@@ -1,5 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { DEV_MODE } from '../lib/dev-mode';
+import { MOCK_POSTS } from '../lib/mock-data';
 import { checkRateLimit } from '../lib/moderation';
 import { useFeedStore, type EngagementType, type FeedTab, type Post } from '../stores/feedStore';
 import { useAuthStore } from '../stores/authStore';
@@ -13,6 +15,14 @@ export function useFeed(tab: FeedTab = 'for_you') {
   const query = useInfiniteQuery({
     queryKey: ['feed', tab],
     queryFn: async ({ pageParam = 0 }) => {
+      if (DEV_MODE) {
+        const sorted = tab === 'bridging'
+          ? [...MOCK_POSTS].sort((a, b) => b.bridging_score - a.bridging_score)
+          : MOCK_POSTS;
+        return sorted.slice(pageParam, pageParam + PAGE_SIZE);
+      }
+
+      // Try real data first, fall back to mock if empty
       let q = supabase
         .from('posts')
         .select(`
@@ -24,14 +34,12 @@ export function useFeed(tab: FeedTab = 'for_you') {
       if (tab === 'bridging') {
         q = q.order('bridging_score', { ascending: false });
       } else {
-        // "For You" uses created_at as proxy; real ranking done client-side
         q = q.order('created_at', { ascending: false });
       }
 
       const { data, error } = await q;
       if (error) throw error;
 
-      // If user is logged in, fetch their engagements for these posts
       let postsWithEngagements = data as Post[];
       if (userId && data.length > 0) {
         const postIds = data.map((p: any) => p.id);
@@ -53,6 +61,14 @@ export function useFeed(tab: FeedTab = 'for_you') {
             user_engagements: engagementMap.get(p.id) ?? [],
           }));
         }
+      }
+
+      // If DB is empty, show mock content so the app feels alive
+      if (postsWithEngagements.length === 0 && pageParam === 0) {
+        const sorted = tab === 'bridging'
+          ? [...MOCK_POSTS].sort((a, b) => b.bridging_score - a.bridging_score)
+          : MOCK_POSTS;
+        return sorted;
       }
 
       return postsWithEngagements;
@@ -81,11 +97,14 @@ export function useToggleEngagement() {
     }) => {
       if (!userId) throw new Error('Not authenticated');
 
-      // Rate limit check
+      if (DEV_MODE) {
+        // Toggle in mock data — just return success
+        return { action: 'added' as const, type };
+      }
+
       const rateCheck = await checkRateLimit('engage');
       if (!rateCheck.allowed) throw new Error(rateCheck.reason ?? 'Rate limited');
 
-      // Check if engagement exists
       const { data: existing } = await supabase
         .from('engagements')
         .select('id')
@@ -95,11 +114,9 @@ export function useToggleEngagement() {
         .single();
 
       if (existing) {
-        // Remove engagement
         await supabase.from('engagements').delete().eq('id', existing.id);
         return { action: 'removed' as const, type };
       } else {
-        // Add engagement
         await supabase.from('engagements').insert({
           post_id: postId,
           user_id: userId,

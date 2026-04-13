@@ -8,6 +8,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/typography';
 
 interface ButtonProps {
   title: string;
@@ -49,7 +50,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? Colors.brandDark : Colors.primary}
+          color={variant === 'primary' ? '#FFFFFF' : Colors.primary}
           size="small"
         />
       ) : (
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   secondary: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceLight,
   },
   outline: {
     backgroundColor: 'transparent',
@@ -109,10 +110,10 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   text: {
-    fontWeight: '600',
+    fontFamily: Fonts.bodySemiBold,
   },
   text_primary: {
-    color: Colors.brandDark,
+    color: '#FFFFFF',
   },
   text_secondary: {
     color: Colors.textPrimary,

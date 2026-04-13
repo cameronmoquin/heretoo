@@ -5,6 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Syne_800ExtraBold } from '@expo-google-fonts/syne';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../stores/authStore';
 import { LoadingPulse } from '../components/shared/LoadingPulse';
@@ -15,7 +21,7 @@ import { Colors } from '../constants/colors';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes
+      staleTime: 1000 * 60 * 2,
       retry: 2,
     },
   },
@@ -27,6 +33,10 @@ function RootLayoutInner() {
 
   const [fontsLoaded] = useFonts({
     Syne_800ExtraBold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   if (isLoading || !fontsLoaded) {
@@ -35,8 +45,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <StatusBar style="light" />
-      {/* Show suspension banner if account is suspended */}
+      <StatusBar style="dark" />
       {profile?.is_suspended && (
         <View style={{ backgroundColor: Colors.background }}>
           <SuspendedBanner reason={profile.suspension_reason ?? undefined} />
