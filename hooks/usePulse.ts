@@ -19,6 +19,8 @@ export function usePulseTopics() {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       if (error) throw error;
+      // Fall back to mock if empty
+      if (!data || data.length === 0) return MOCK_TOPICS;
       return data;
     },
   });
@@ -36,6 +38,7 @@ export function usePulseStatements(topicId: string) {
         .eq('topic_id', topicId)
         .order('created_at', { ascending: true });
       if (error) throw error;
+      if (!data || data.length === 0) return MOCK_STATEMENTS[topicId] ?? [];
       return data;
     },
     enabled: !!topicId,

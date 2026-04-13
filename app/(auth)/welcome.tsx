@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -63,11 +64,14 @@ export default function WelcomeScreen() {
     if (!email.trim() || !password) return;
     try {
       setLoading('email');
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       if (error) throw error;
+      if (data.session) {
+        router.replace('/(auth)/profile-setup');
+      }
     } catch (error: any) {
       showAlert('Sign In Failed', error.message);
     } finally {
@@ -87,8 +91,10 @@ export default function WelcomeScreen() {
         password,
       });
       if (error) throw error;
-      // If auto-confirm is off, user needs to check email
-      if (!data.session) {
+      if (data.session) {
+        // Auto-confirmed — go to profile setup
+        router.replace('/(auth)/profile-setup');
+      } else {
         showAlert('Check your email', 'Confirm your account to continue.');
       }
     } catch (error: any) {

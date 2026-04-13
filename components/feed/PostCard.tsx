@@ -6,6 +6,7 @@ import { Fonts } from '../../constants/typography';
 import { Avatar } from '../shared/Avatar';
 import { BridgeScoreBadge } from './BridgeScoreBadge';
 import { FlagModal } from '../shared/FlagModal';
+import { VideoPlayer } from './VideoPlayer';
 import type { Post, EngagementType } from '../../stores/feedStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -87,18 +88,12 @@ export function PostCard({ post, onEngage }: PostCardProps) {
         </View>
       )}
 
-      {/* Video thumbnail */}
-      {post.media_type === 'video' && post.mux_thumbnail_url && (
-        <View style={styles.mediaContainer}>
-          <Image
-            source={{ uri: post.mux_thumbnail_url }}
-            style={styles.singlePhoto}
-            resizeMode="cover"
-          />
-          <View style={styles.playOverlay}>
-            <Text style={styles.playIcon}>▶</Text>
-          </View>
-        </View>
+      {/* Video */}
+      {post.media_type === 'video' && post.mux_playback_id && (
+        <VideoPlayer
+          playbackId={post.mux_playback_id}
+          thumbnailUrl={post.mux_thumbnail_url ?? undefined}
+        />
       )}
 
       {/* Engagement buttons */}

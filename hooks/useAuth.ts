@@ -117,7 +117,7 @@ export function useAuth() {
     if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('profiles')
-      .insert({ id: user.id, ...profileData })
+      .upsert({ id: user.id, ...profileData }, { onConflict: 'id' })
       .select()
       .single();
     if (error) throw error;

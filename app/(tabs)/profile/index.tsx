@@ -6,6 +6,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
 import { showConfirm } from '../../../lib/alert';
 import { Avatar } from '../../../components/shared/Avatar';
@@ -69,6 +70,11 @@ export default function OwnProfileScreen() {
             onPress={() => {}}
             variant="outline"
             style={{ flex: 1 }}
+          />
+          <Button
+            title="Settings"
+            onPress={() => router.push('/(tabs)/profile/settings')}
+            variant="secondary"
           />
           <Button
             title="Sign out"

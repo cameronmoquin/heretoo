@@ -15,10 +15,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { assignInitialCluster } from '../../lib/clusters';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
+import { AdCategoryPicker } from '../../components/shared/AdCategoryPicker';
 import { Colors } from '../../constants/colors';
 import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
 
-type Step = 'name' | 'age' | 'location' | 'interests' | 'story';
+type Step = 'name' | 'age' | 'location' | 'interests' | 'ads' | 'story';
 
 export default function ProfileSetupScreen() {
   const { createProfile } = useAuth();
@@ -30,9 +31,11 @@ export default function ProfileSetupScreen() {
   const [birthYear, setBirthYear] = useState('');
   const [locationRegion, setLocationRegion] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<InterestTopic[]>([]);
+  const [adCategories, setAdCategories] = useState<Set<string>>(new Set());
+  const [adSubcategories, setAdSubcategories] = useState<Set<string>>(new Set());
   const [originStory, setOriginStory] = useState('');
 
-  const steps: Step[] = ['name', 'age', 'location', 'interests', 'story'];
+  const steps: Step[] = ['name', 'age', 'location', 'interests', 'ads', 'story'];
   const stepIndex = steps.indexOf(step);
 
   function nextStep() {
@@ -52,6 +55,38 @@ export default function ProfileSetupScreen() {
       if (prev.includes(topic)) return prev.filter((t) => t !== topic);
       if (prev.length >= 3) return prev;
       return [...prev, topic];
+    });
+  }
+
+  function toggleAdCategory(categoryId: string) {
+    setAdCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+        // Also remove subcategories
+        setAdSubcategories((subs) => {
+          const nextSubs = new Set(subs);
+          for (const sub of subs) {
+            if (sub.startsWith(categoryId + '_')) nextSubs.delete(sub);
+          }
+          return nextSubs;
+        });
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  }
+
+  function toggleAdSubcategory(_categoryId: string, subcategoryId: string) {
+    setAdSubcategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(subcategoryId)) {
+        next.delete(subcategoryId);
+      } else {
+        next.add(subcategoryId);
+      }
+      return next;
     });
   }
 
@@ -209,6 +244,29 @@ export default function ProfileSetupScreen() {
                   title="Next"
                   onPress={nextStep}
                   disabled={selectedInterests.length < 3}
+                />
+              </View>
+            </View>
+          )}
+
+          {step === 'ads' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>What do you want to see?</Text>
+              <Text style={styles.stepSubtitle}>
+                Ads keep HereToo free. Pick at least 3 categories so they are relevant to you. Change anytime.
+              </Text>
+              <AdCategoryPicker
+                selectedCategories={adCategories}
+                selectedSubcategories={adSubcategories}
+                onToggleCategory={toggleAdCategory}
+                onToggleSubcategory={toggleAdSubcategory}
+              />
+              <View style={styles.navButtons}>
+                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
+                <Button
+                  title="Next"
+                  onPress={nextStep}
+                  disabled={adCategories.size < 3}
                 />
               </View>
             </View>

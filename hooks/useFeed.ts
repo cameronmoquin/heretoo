@@ -22,6 +22,7 @@ export function useFeed(tab: FeedTab = 'for_you') {
         return sorted.slice(pageParam, pageParam + PAGE_SIZE);
       }
 
+      // Try real data first, fall back to mock if empty
       let q = supabase
         .from('posts')
         .select(`
@@ -60,6 +61,14 @@ export function useFeed(tab: FeedTab = 'for_you') {
             user_engagements: engagementMap.get(p.id) ?? [],
           }));
         }
+      }
+
+      // If DB is empty, show mock content so the app feels alive
+      if (postsWithEngagements.length === 0 && pageParam === 0) {
+        const sorted = tab === 'bridging'
+          ? [...MOCK_POSTS].sort((a, b) => b.bridging_score - a.bridging_score)
+          : MOCK_POSTS;
+        return sorted;
       }
 
       return postsWithEngagements;
