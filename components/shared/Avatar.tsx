@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Image, Text, StyleSheet } from 'react-native';
-import { Fonts } from '../../constants/typography';
 
 const PALETTE = [
   '#FFD6E0', '#D4E4FF', '#D4F5D4', '#FFF0CC',
@@ -38,5 +37,5 @@ export function Avatar({ url, name, size = 38, borderColor }: AvatarProps) {
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  initials: { fontFamily: Fonts.bodySemiBold, color: '#4A4A4A' },
+  initials: { fontWeight: '600', color: '#4A4A4A' },
 });

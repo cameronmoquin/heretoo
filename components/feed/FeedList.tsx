@@ -5,7 +5,6 @@ import { PostCard } from './PostCard';
 import { AdSlot } from '../shared/AdSlot';
 import { getAdForPosition } from '../../lib/mock-ads';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
 import { Spacing } from '../../constants/design';
 import type { Post, EngagementType } from '../../stores/feedStore';
 
@@ -64,7 +63,7 @@ export function FeedList({ posts, isLoading, isRefreshing, hasMore, onRefresh, o
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
-  emptyTitle: { fontSize: 18, fontFamily: Fonts.bodySemiBold, color: Colors.textPrimary, marginBottom: 6 },
-  emptySub: { fontSize: 14, fontFamily: Fonts.body, color: Colors.textSecondary, textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.textPrimary, marginBottom: 6 },
+  emptySub: { fontSize: 14, fontWeight: '400', color: Colors.textSecondary, textAlign: 'center' },
   footer: { padding: Spacing.lg, alignItems: 'center' },
 });

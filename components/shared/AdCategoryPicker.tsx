@@ -7,7 +7,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
 import {
   AD_CATEGORIES,
   MIN_AD_CATEGORIES,
@@ -115,7 +114,7 @@ const styles = StyleSheet.create({
   },
   counter: {
     fontSize: 13,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textMuted,
     marginBottom: 8,
   },
@@ -141,12 +140,12 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 15,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textPrimary,
     flex: 1,
   },
   categoryLabelSelected: {
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.primary,
   },
   expandArrow: {
@@ -175,11 +174,11 @@ const styles = StyleSheet.create({
   },
   subChipText: {
     fontSize: 13,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textSecondary,
   },
   subChipTextSelected: {
     color: '#FFFFFF',
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
   },
 });

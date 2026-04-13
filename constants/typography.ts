@@ -1,60 +1,87 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { Colors } from './colors';
+
+/**
+ * System font stack. The most invisible choice.
+ * iOS: SF Pro. Android: Roboto. Web: system default.
+ * Nobody notices it. That is the point.
+ */
+
+const SYSTEM = Platform.select({
+  ios: 'System',
+  android: 'Roboto',
+  web: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  default: 'System',
+});
 
 export const Fonts = {
   logo: 'Syne_800ExtraBold',
-  heading: 'Inter_700Bold',
-  body: 'Inter_400Regular',
-  bodyMedium: 'Inter_500Medium',
-  bodySemiBold: 'Inter_600SemiBold',
+  heading: SYSTEM,
+  body: SYSTEM,
+  bodyMedium: SYSTEM,
+  bodySemiBold: SYSTEM,
 } as const;
 
+/**
+ * Font weights — used inline since system fonts use fontWeight not fontFamily.
+ */
+export const Weight = {
+  regular: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+};
+
+/**
+ * Tight, social-app-sized type scale.
+ * Instagram body = 14px. Twitter = 15px. We split the difference.
+ */
 export const Typography = StyleSheet.create({
   h1: {
-    fontSize: 28,
-    fontFamily: Fonts.heading,
-    color: Colors.textPrimary,
-    lineHeight: 34,
-  },
-  h2: {
     fontSize: 22,
-    fontFamily: Fonts.heading,
+    fontWeight: Weight.bold,
     color: Colors.textPrimary,
     lineHeight: 28,
   },
-  h3: {
+  h2: {
     fontSize: 18,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: Weight.bold,
     color: Colors.textPrimary,
     lineHeight: 24,
+  },
+  h3: {
+    fontSize: 16,
+    fontWeight: Weight.semibold,
+    color: Colors.textPrimary,
+    lineHeight: 21,
   },
   body: {
-    fontSize: 16,
-    fontFamily: Fonts.body,
+    fontSize: 14,
+    fontWeight: Weight.regular,
     color: Colors.textPrimary,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   bodySmall: {
-    fontSize: 14,
-    fontFamily: Fonts.body,
+    fontSize: 13,
+    fontWeight: Weight.regular,
     color: Colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   caption: {
     fontSize: 12,
-    fontFamily: Fonts.body,
+    fontWeight: Weight.regular,
     color: Colors.textMuted,
     lineHeight: 16,
   },
   label: {
-    fontSize: 14,
-    fontFamily: Fonts.bodySemiBold,
+    fontSize: 13,
+    fontWeight: Weight.semibold,
     color: Colors.textPrimary,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   button: {
-    fontSize: 16,
-    fontFamily: Fonts.bodySemiBold,
-    lineHeight: 24,
+    fontSize: 15,
+    fontWeight: Weight.semibold,
+    lineHeight: 20,
   },
 });

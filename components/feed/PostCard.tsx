@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
 import { Spacing } from '../../constants/design';
 import { Avatar } from '../shared/Avatar';
 import { FlagModal } from '../shared/FlagModal';
@@ -111,12 +110,12 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 10,
   },
-  name: { fontSize: 15, fontFamily: Fonts.bodySemiBold, color: Colors.textPrimary },
-  meta: { fontSize: 13, fontFamily: Fonts.body, color: Colors.textMuted, marginTop: 1 },
+  name: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+  meta: { fontSize: 13, fontWeight: '400', color: Colors.textMuted, marginTop: 1 },
   more: { fontSize: 18, color: Colors.textMuted, letterSpacing: 1 },
   body: {
     fontSize: 15,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textPrimary,
     lineHeight: 22,
     marginBottom: 10,
@@ -129,7 +128,7 @@ const styles = StyleSheet.create({
   },
   bridgeHint: {
     fontSize: 12,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
     marginBottom: 8,
   },
@@ -145,7 +144,7 @@ const styles = StyleSheet.create({
   },
   reactionText: {
     fontSize: 12,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textMuted,
   },
 });

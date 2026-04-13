@@ -13,7 +13,6 @@ import { AdCategoryPicker } from '../../../../components/shared/AdCategoryPicker
 import { Button } from '../../../../components/shared/Button';
 import { showAlert } from '../../../../lib/alert';
 import { Colors } from '../../../../constants/colors';
-import { Fonts } from '../../../../constants/typography';
 import { AD_FREE_BACKGROUNDS, MIN_AD_CATEGORIES } from '../../../../constants/adCategories';
 
 export default function AdPreferencesScreen() {
@@ -161,12 +160,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: Fonts.heading,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   subtitle: {
     fontSize: 14,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textSecondary,
   },
   saveButton: {
@@ -184,12 +183,12 @@ const styles = StyleSheet.create({
   },
   adFreeTitle: {
     fontSize: 18,
-    fontFamily: Fonts.heading,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   adFreeDesc: {
     fontSize: 14,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textSecondary,
     lineHeight: 20,
   },
@@ -210,7 +209,7 @@ const styles = StyleSheet.create({
   },
   backgroundLabel: {
     fontSize: 10,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textSecondary,
   },
 });

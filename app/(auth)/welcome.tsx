@@ -17,7 +17,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/design';
 
 type AuthMode = 'options' | 'email_login' | 'email_signup';
@@ -249,14 +248,14 @@ const styles = StyleSheet.create({
   logoToo: { fontFamily: 'Syne_800ExtraBold', color: Colors.primary, letterSpacing: -1 },
   tagline: {
     fontSize: 20,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 6,
   },
   sub: {
     fontSize: 15,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -266,7 +265,7 @@ const styles = StyleSheet.create({
   btn: { width: '100%' },
   formTitle: {
     fontSize: 18,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 4,
@@ -277,7 +276,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textPrimary,
   },
   divider: {
@@ -287,25 +286,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.border },
-  dividerText: { fontSize: 13, fontFamily: Fonts.body, color: Colors.textMuted },
+  dividerText: { fontSize: 13, fontWeight: '400', color: Colors.textMuted },
   socialRow: { flexDirection: 'row', gap: 10 },
   socialBtn: { flex: 1 },
   switchText: {
     fontSize: 14,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textSecondary,
     textAlign: 'center',
   },
-  switchBold: { fontFamily: Fonts.bodySemiBold, color: Colors.primary },
+  switchBold: { fontWeight: '600', color: Colors.primary },
   backLink: {
     fontSize: 14,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
     textAlign: 'center',
   },
   legal: {
     fontSize: 12,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
     textAlign: 'center',
     lineHeight: 17,

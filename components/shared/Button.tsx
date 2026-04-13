@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  type ViewStyle,
-  type TextStyle,
-} from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle, type TextStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
+import { Weight } from '../../constants/typography';
 import { Radius } from '../../constants/design';
 
 interface ButtonProps {
@@ -23,107 +16,43 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
-export function Button({
-  title,
-  onPress,
-  variant = 'primary',
-  size = 'md',
-  loading = false,
-  disabled = false,
-  style,
-  textStyle,
-  icon,
-}: ButtonProps) {
-  const isDisabled = disabled || loading;
-
+export function Button({ title, onPress, variant = 'primary', size = 'md', loading = false, disabled = false, style, textStyle, icon }: ButtonProps) {
+  const off = disabled || loading;
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={isDisabled}
-      style={[
-        styles.base,
-        variantStyles[variant],
-        sizeStyles[size],
-        isDisabled && styles.disabled,
-        style,
-      ]}
-      activeOpacity={0.75}
-    >
+    <TouchableOpacity onPress={onPress} disabled={off} style={[s.base, v[variant], sz[size], off && s.off, style]} activeOpacity={0.75}>
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? '#FFFFFF' : Colors.primary}
-          size="small"
-        />
+        <ActivityIndicator color={variant === 'primary' ? '#FFF' : Colors.primary} size="small" />
       ) : (
-        <>
-          {icon}
-          <Text
-            style={[
-              styles.text,
-              textVariantStyles[variant],
-              textSizeStyles[size],
-              textStyle,
-            ]}
-          >
-            {title}
-          </Text>
-        </>
+        <>{icon}<Text style={[s.text, tv[variant], ts[size], textStyle]}>{title}</Text></>
       )}
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  disabled: {
-    opacity: 0.4,
-  },
-  text: {
-    fontFamily: Fonts.bodySemiBold,
-  },
+const s = StyleSheet.create({
+  base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  off: { opacity: 0.4 },
+  text: { fontWeight: Weight.semibold },
 });
-
-const variantStyles = StyleSheet.create({
-  primary: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-  },
-  secondary: {
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: Radius.md,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-    borderRadius: Radius.md,
-  },
+const v = StyleSheet.create({
+  primary: { backgroundColor: Colors.primary, borderRadius: Radius.md },
+  secondary: { backgroundColor: Colors.surfaceLight, borderRadius: Radius.md },
+  outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md },
+  ghost: { backgroundColor: 'transparent', borderRadius: Radius.md },
 });
-
-const sizeStyles = StyleSheet.create({
-  sm: { paddingHorizontal: 14, paddingVertical: 8 },
-  md: { paddingHorizontal: 20, paddingVertical: 12 },
-  lg: { paddingHorizontal: 24, paddingVertical: 15 },
+const sz = StyleSheet.create({
+  sm: { paddingHorizontal: 12, paddingVertical: 7 },
+  md: { paddingHorizontal: 18, paddingVertical: 10 },
+  lg: { paddingHorizontal: 22, paddingVertical: 13 },
 });
-
-const textVariantStyles = StyleSheet.create({
-  primary: { color: '#FFFFFF' },
+const tv = StyleSheet.create({
+  primary: { color: '#FFF' },
   secondary: { color: Colors.textPrimary },
   outline: { color: Colors.textPrimary },
   ghost: { color: Colors.primary },
 });
-
-const textSizeStyles = StyleSheet.create({
-  sm: { fontSize: 14 },
-  md: { fontSize: 15 },
-  lg: { fontSize: 16 },
+const ts = StyleSheet.create({
+  sm: { fontSize: 13 },
+  md: { fontSize: 14 },
+  lg: { fontSize: 15 },
 });
