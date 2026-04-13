@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { DEV_MODE } from '../lib/dev-mode';
+import { MOCK_USER } from '../lib/mock-data';
 import { useAuthStore } from '../stores/authStore';
 import type { Profile } from '../stores/authStore';
 
@@ -8,6 +10,13 @@ export function useAuth() {
     useAuthStore();
 
   useEffect(() => {
+    if (DEV_MODE) {
+      // In dev mode, auto-login with mock user
+      setProfile(MOCK_USER);
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -66,11 +75,19 @@ export function useAuth() {
   }
 
   async function signOut() {
+    if (DEV_MODE) {
+      useAuthStore.getState().reset();
+      return;
+    }
     await supabase.auth.signOut();
     useAuthStore.getState().reset();
   }
 
   async function updateProfile(updates: Partial<Profile>) {
+    if (DEV_MODE) {
+      setProfile({ ...MOCK_USER, ...updates });
+      return { ...MOCK_USER, ...updates };
+    }
     if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('profiles')
@@ -92,6 +109,11 @@ export function useAuth() {
     cluster_confidence: number;
     origin_story?: string;
   }) {
+    if (DEV_MODE) {
+      const newProfile = { ...MOCK_USER, ...profileData };
+      setProfile(newProfile);
+      return newProfile;
+    }
     if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('profiles')
@@ -103,12 +125,15 @@ export function useAuth() {
     return data;
   }
 
+  // In dev mode, always treat as logged in and setup complete
+  const devHasCompletedSetup = DEV_MODE ? true : hasCompletedSetup;
+
   return {
     session,
     user,
-    profile,
+    profile: DEV_MODE ? (profile ?? MOCK_USER) : profile,
     isLoading,
-    hasCompletedSetup,
+    hasCompletedSetup: devHasCompletedSetup,
     signInWithGoogle,
     signInWithApple,
     signOut,

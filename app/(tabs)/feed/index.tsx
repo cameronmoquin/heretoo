@@ -5,6 +5,7 @@ import { useFeed, useToggleEngagement } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
+import { Fonts } from '../../../constants/typography';
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: 'for_you', label: 'For You' },
@@ -23,8 +24,8 @@ export default function FeedScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logo}>
-          <Text style={{ color: Colors.brandIvory }}>HERE</Text>
-          <Text style={{ color: Colors.brandGold }}>Too</Text>
+          <Text style={{ color: Colors.textPrimary }}>HERE</Text>
+          <Text style={{ color: Colors.primary }}>Too</Text>
         </Text>
       </View>
 
@@ -72,6 +73,9 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
   },
   logo: {
     fontFamily: 'Syne_800ExtraBold',
@@ -80,8 +84,9 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
+    paddingVertical: 8,
     gap: 4,
-    marginBottom: 8,
+    backgroundColor: Colors.surface,
   },
   tab: {
     flex: 1,
@@ -90,11 +95,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: {
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: Colors.primaryFaint,
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: Fonts.bodySemiBold,
     color: Colors.textMuted,
   },
   tabTextActive: {

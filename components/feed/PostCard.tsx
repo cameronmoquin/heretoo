@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/typography';
 import { Avatar } from '../shared/Avatar';
 import { BridgeScoreBadge } from './BridgeScoreBadge';
 import { FlagModal } from '../shared/FlagModal';
@@ -109,7 +110,7 @@ export function PostCard({ post, onEngage }: PostCardProps) {
               key={type}
               style={[
                 styles.engagementButton,
-                isActive && { backgroundColor: `${color}20` },
+                isActive && { backgroundColor: `${color}12` },
               ]}
               onPress={() => onEngage(post.id, type)}
             >
@@ -166,15 +167,17 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.bodySemiBold,
     color: Colors.textPrimary,
   },
   authorUsername: {
     fontSize: 13,
+    fontFamily: Fonts.body,
     color: Colors.textMuted,
   },
   content: {
     fontSize: 16,
+    fontFamily: Fonts.body,
     color: Colors.textPrimary,
     lineHeight: 24,
     marginBottom: 12,
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   },
   engagementRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   engagementButton: {
     flex: 1,
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
   },
   engagementLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: Fonts.bodySemiBold,
   },
   flagButton: {
     paddingVertical: 8,
@@ -234,7 +237,7 @@ const styles = StyleSheet.create({
   },
   flagLabel: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: Fonts.bodySemiBold,
     color: Colors.textMuted,
     letterSpacing: 2,
   },

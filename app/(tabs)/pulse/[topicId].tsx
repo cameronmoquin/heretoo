@@ -24,6 +24,7 @@ import { ClusterMap } from '../../../components/pulse/ClusterMap';
 import { Button } from '../../../components/shared/Button';
 import { LoadingPulse } from '../../../components/shared/LoadingPulse';
 import { Colors } from '../../../constants/colors';
+import { generateMockClusterPoints } from '../../../lib/mock-data';
 
 export default function TopicScreen() {
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
@@ -75,8 +76,8 @@ export default function TopicScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Cluster Map placeholder */}
-          <ClusterMap points={[]} activeVoterCount={activeVoterCount} />
+          {/* Cluster Map */}
+          <ClusterMap points={generateMockClusterPoints(50)} activeVoterCount={activeVoterCount} />
 
           {/* Top bridging statement */}
           {topBridging && topBridging.bridging_score > 0 && (
