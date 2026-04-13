@@ -5,7 +5,6 @@ import { useFeed, useToggleEngagement } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
-import { Fonts } from '../../../constants/typography';
 import { Spacing } from '../../../constants/design';
 
 const TABS: { key: FeedTab; label: string }[] = [
@@ -86,12 +85,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 15,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textMuted,
   },
   tabTextActive: {
     color: Colors.textPrimary,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
   },
   tabBar: {
     position: 'absolute',

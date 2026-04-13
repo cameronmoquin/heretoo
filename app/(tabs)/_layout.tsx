@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { usePathname, router } from 'expo-router';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
 import { Spacing } from '../../constants/design';
 
 const NAV = [
@@ -128,8 +127,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   navItemActive: { backgroundColor: Colors.primaryFaint },
-  navText: { fontSize: 15, fontFamily: Fonts.bodyMedium, color: Colors.textSecondary },
-  navTextActive: { color: Colors.primary, fontFamily: Fonts.bodySemiBold },
+  navText: { fontSize: 15, fontWeight: '500', color: Colors.textSecondary },
+  navTextActive: { color: Colors.primary, fontWeight: '600' },
   desktopContent: {
     width: 580,
     backgroundColor: Colors.background,
@@ -146,6 +145,6 @@ const styles = StyleSheet.create({
     height: 56,
     paddingTop: 6,
   },
-  tabLabel: { fontSize: 11, fontFamily: Fonts.bodyMedium, color: Colors.textMuted },
-  tabLabelActive: { color: Colors.primary, fontFamily: Fonts.bodySemiBold },
+  tabLabel: { fontSize: 11, fontWeight: '500', color: Colors.textMuted },
+  tabLabelActive: { color: Colors.primary, fontWeight: '600' },
 });

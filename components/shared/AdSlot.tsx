@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Fonts } from '../../constants/typography';
 import { Spacing } from '../../constants/design';
 import type { MockAd } from '../../lib/mock-ads';
 
@@ -46,11 +45,11 @@ const styles = StyleSheet.create({
   },
   adFree: { height: 6, marginHorizontal: Spacing.md, borderRadius: 3, opacity: 0.2 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  adLabel: { fontSize: 11, fontFamily: Fonts.bodyMedium, color: Colors.textMuted, letterSpacing: 0.3 },
-  badge: { fontSize: 10, fontFamily: Fonts.bodySemiBold, color: Colors.primary, backgroundColor: Colors.primaryFaint, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
-  headline: { fontSize: 16, fontFamily: Fonts.bodySemiBold, color: Colors.textPrimary, marginBottom: 3 },
-  body: { fontSize: 14, fontFamily: Fonts.body, color: Colors.textSecondary, lineHeight: 20, marginBottom: 10 },
+  adLabel: { fontSize: 11, fontWeight: '500', color: Colors.textMuted, letterSpacing: 0.3 },
+  badge: { fontSize: 10, fontWeight: '600', color: Colors.primary, backgroundColor: Colors.primaryFaint, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
+  headline: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary, marginBottom: 3 },
+  body: { fontSize: 14, fontWeight: '400', color: Colors.textSecondary, lineHeight: 20, marginBottom: 10 },
   ctaRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  cta: { fontSize: 14, fontFamily: Fonts.bodySemiBold, color: Colors.primary },
-  url: { fontSize: 12, fontFamily: Fonts.body, color: Colors.textMuted },
+  cta: { fontSize: 14, fontWeight: '600', color: Colors.primary },
+  url: { fontSize: 12, fontWeight: '400', color: Colors.textMuted },
 });

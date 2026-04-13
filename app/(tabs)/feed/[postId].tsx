@@ -26,7 +26,6 @@ import { LoadingPulse } from '../../../components/shared/LoadingPulse';
 import { useComments, useAddComment, type Comment } from '../../../hooks/useComments';
 import { useToggleEngagement } from '../../../hooks/useFeed';
 import { Colors } from '../../../constants/colors';
-import { Fonts } from '../../../constants/typography';
 import type { EngagementType } from '../../../stores/feedStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -314,17 +313,17 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 17,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   authorUsername: {
     fontSize: 14,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
   },
   content: {
     fontSize: 18,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textPrimary,
     lineHeight: 28,
   },
@@ -372,7 +371,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 13,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textSecondary,
   },
   engagementRow: {
@@ -388,7 +387,7 @@ const styles = StyleSheet.create({
   },
   engagementLabel: {
     fontSize: 14,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
   },
   statsRow: {
     flexDirection: 'row',
@@ -397,7 +396,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
   },
   commentsSection: {
@@ -408,7 +407,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   commentItem: {
@@ -424,24 +423,24 @@ const styles = StyleSheet.create({
   },
   commentAuthor: {
     fontSize: 13,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   commentTime: {
     fontSize: 12,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
   },
   commentText: {
     fontSize: 15,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textPrimary,
     lineHeight: 22,
     paddingLeft: 36,
   },
   replyButton: {
     fontSize: 12,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.primary,
     paddingLeft: 36,
     paddingTop: 2,
@@ -459,7 +458,7 @@ const styles = StyleSheet.create({
   },
   emptyComments: {
     fontSize: 14,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
     textAlign: 'center',
     paddingVertical: 20,
@@ -479,12 +478,12 @@ const styles = StyleSheet.create({
   },
   replyingText: {
     fontSize: 12,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textSecondary,
   },
   cancelReply: {
     fontSize: 12,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.primary,
   },
   commentInputRow: {
@@ -501,7 +500,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textPrimary,
     maxHeight: 80,
   },

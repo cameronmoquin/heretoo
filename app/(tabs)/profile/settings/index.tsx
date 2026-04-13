@@ -11,7 +11,6 @@ import { router } from 'expo-router';
 import { useSettingsStore } from '../../../../stores/settingsStore';
 import { FONT_SCALE_OPTIONS } from '../../../../hooks/useScaledFont';
 import { Colors } from '../../../../constants/colors';
-import { Fonts } from '../../../../constants/typography';
 
 export default function SettingsScreen() {
   const { fontScale, setFontScale } = useSettingsStore();
@@ -81,7 +80,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: Fonts.heading,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   section: {
@@ -89,7 +88,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   scaleOptions: {
@@ -111,7 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryFaint,
   },
   scalePreview: {
-    fontFamily: Fonts.bodySemiBold,
+    fontWeight: '600',
     color: Colors.textSecondary,
   },
   scalePreviewActive: {
@@ -119,12 +118,12 @@ const styles = StyleSheet.create({
   },
   scaleLabel: {
     fontSize: 11,
-    fontFamily: Fonts.body,
+    fontWeight: '400',
     color: Colors.textMuted,
   },
   scaleLabelActive: {
     color: Colors.primary,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
   },
   menuItem: {
     flexDirection: 'row',
@@ -139,7 +138,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    fontFamily: Fonts.bodyMedium,
+    fontWeight: '500',
     color: Colors.textPrimary,
   },
   menuArrow: {
