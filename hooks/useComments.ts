@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
+import { getCommentsForPost } from '../lib/mock-data';
 import { useAuthStore } from '../stores/authStore';
 
 export interface Comment {
@@ -18,42 +19,11 @@ export interface Comment {
   replies?: Comment[];
 }
 
-const MOCK_COMMENTS: Record<string, Comment[]> = {
-  'post-001': [
-    {
-      id: 'c1', post_id: 'post-001', author_id: 'user-004', parent_id: null,
-      content: 'This is exactly what my street needs. How did you organize it?',
-      created_at: '2026-04-13T09:00:00Z',
-      author: { username: 'priya_s', display_name: 'Priya Shah', avatar_url: null },
-    },
-    {
-      id: 'c2', post_id: 'post-001', author_id: 'user-002', parent_id: 'c1',
-      content: 'Just knocked on doors. Most people said yes before I finished asking.',
-      created_at: '2026-04-13T09:30:00Z',
-      author: { username: 'elena_r', display_name: 'Elena Rodriguez', avatar_url: null },
-    },
-    {
-      id: 'c3', post_id: 'post-001', author_id: 'user-006', parent_id: null,
-      content: 'We did the same thing. Best thing we ever did for our block.',
-      created_at: '2026-04-13T10:00:00Z',
-      author: { username: 'sarah_k', display_name: 'Sarah Kim', avatar_url: null },
-    },
-  ],
-  'post-002': [
-    {
-      id: 'c4', post_id: 'post-002', author_id: 'user-005', parent_id: null,
-      content: 'This one hit home. My dad was a mechanic. I write software. Same drive.',
-      created_at: '2026-04-13T07:00:00Z',
-      author: { username: 'marcus_t', display_name: 'Marcus Thompson', avatar_url: null },
-    },
-  ],
-};
-
 export function useComments(postId: string) {
   return useQuery({
     queryKey: ['comments', postId],
     queryFn: async () => {
-      if (DEV_MODE) return MOCK_COMMENTS[postId] ?? [];
+      if (DEV_MODE) return getCommentsForPost(postId);
 
       const { data, error } = await supabase
         .from('comments')
@@ -65,7 +35,7 @@ export function useComments(postId: string) {
         .order('created_at', { ascending: true });
       if (error) throw error;
 
-      if (!data || data.length === 0) return MOCK_COMMENTS[postId] ?? [];
+      if (!data || data.length === 0) return getCommentsForPost(postId);
 
       // Nest replies under parents
       const topLevel: Comment[] = [];
