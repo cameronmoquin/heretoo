@@ -7,6 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,9 +18,16 @@ import { Button } from '../../../components/shared/Button';
 import { VerificationGate } from '../../../components/shared/VerificationGate';
 import { Colors } from '../../../constants/colors';
 
+const TAG_OPTIONS = [
+  'Food & Cooking', 'Fitness & Health', 'Music', 'Sports',
+  'Outdoors & Nature', 'Tech & Gadgets', 'Books & Learning',
+  'Art & Design', 'Travel', 'Parenting & Family', 'Pets', 'Local Community',
+];
+
 export default function UploadScreen() {
   const upload = useUpload();
   const [content, setContent] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const hasMedia = upload.selectedAssets.length > 0;
   const canPost = content.trim().length > 0 || hasMedia;
@@ -42,6 +50,7 @@ export default function UploadScreen() {
             videoDuration: firstAsset.duration
               ? Math.round(firstAsset.duration / 1000)
               : undefined,
+            topicTags: selectedTags.length > 0 ? selectedTags : undefined,
           });
         } else {
           const photoUrls = await upload.uploadPhotos(upload.selectedAssets);
@@ -49,16 +58,19 @@ export default function UploadScreen() {
             content: content.trim(),
             mediaType: 'photo',
             photoUrls,
+            topicTags: selectedTags.length > 0 ? selectedTags : undefined,
           });
         }
       } else {
         await upload.createPost.mutateAsync({
           content: content.trim(),
           mediaType: 'none',
+          topicTags: selectedTags.length > 0 ? selectedTags : undefined,
         });
       }
 
       setContent('');
+      setSelectedTags([]);
       upload.reset();
       showAlert('Done', 'Live now.');
       router.push('/(tabs)/feed');
@@ -104,6 +116,31 @@ export default function UploadScreen() {
             }}
             onClear={upload.reset}
           />
+
+          {/* Topic tags */}
+          <View>
+            <Text style={styles.tagLabel}>Tag it</Text>
+            <View style={styles.tagGrid}>
+              {TAG_OPTIONS.map((tag) => {
+                const active = selectedTags.includes(tag);
+                return (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[styles.tagChip, active && styles.tagChipActive]}
+                    onPress={() => {
+                      setSelectedTags((prev) =>
+                        active ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      );
+                    }}
+                  >
+                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                      {tag}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
 
           {/* Upload progress */}
           {isUploading && (
@@ -186,5 +223,36 @@ const styles = StyleSheet.create({
   },
   postButton: {
     width: '100%',
+  },
+  tagLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tagChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  tagChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  tagChipText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  tagChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });
