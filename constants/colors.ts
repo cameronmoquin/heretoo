@@ -1,51 +1,58 @@
+/**
+ * Bell curve center palette.
+ * Blue is the most universally liked color across every demographic.
+ * Warm white background. Soft shadows. Nothing that draws attention to itself.
+ * The UI disappears. The content stays.
+ */
+
 export const Colors = {
-  // Brand — HereToo logo only
+  // Brand
   brandIvory: '#F0EEE8',
   brandGold: '#E8C97A',
   brandDark: '#0C0C0F',
 
-  // Primary palette — warm emerald (growth, bridging, common ground)
-  primary: '#059669',
-  primaryDark: '#047857',
-  primaryLight: '#34D399',
-  primaryFaint: 'rgba(5, 150, 105, 0.08)',
+  // Primary — confident calm blue. The color every demo agrees on.
+  primary: '#3478F6',
+  primaryDark: '#2563EB',
+  primaryLight: '#60A5FA',
+  primaryFaint: 'rgba(52, 120, 246, 0.06)',
 
-  // Neutrals — warm light base
-  background: '#FAFAF8',
+  // Neutrals — warm white, never harsh
+  background: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceLight: '#F3F3F0',
-  border: '#E5E3DE',
-  borderLight: '#EEEDEA',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#5C5C5C',
-  textMuted: '#9C9C9C',
+  surfaceLight: '#F5F5F7',
+  border: '#E8E8ED',
+  borderLight: '#F0F0F5',
+  textPrimary: '#1C1C1E',
+  textSecondary: '#636366',
+  textMuted: '#AEAEB2',
 
-  // Engagement colors
-  agree: '#059669',
-  disagree: '#DC2626',
-  important: '#D97706',
-  bridge: '#2563EB',
-  share: '#7C3AED',
+  // Engagement — muted, not screaming
+  agree: '#34C759',
+  disagree: '#FF3B30',
+  important: '#FF9500',
+  bridge: '#5856D6',
+  share: '#AF52DE',
 
-  // Bridge score badge colors
-  badgeLocal: '#9C9C9C',
-  badgeReaching: '#2563EB',
-  badgeBridging: '#059669',
-  badgeCommonGround: '#D97706',
+  // Bridge badges
+  badgeLocal: '#AEAEB2',
+  badgeReaching: '#5856D6',
+  badgeBridging: '#34C759',
+  badgeCommonGround: '#FF9500',
 
-  // Cluster colors (for ClusterMap visualization)
+  // Clusters
   clusters: {
-    pragmatic_center: '#6B7280',
-    community_focused: '#2563EB',
-    tradition_minded: '#92400E',
-    reform_oriented: '#059669',
-    liberty_focused: '#D97706',
-    unclassified: '#D1D5DB',
+    pragmatic_center: '#8E8E93',
+    community_focused: '#3478F6',
+    tradition_minded: '#A2845E',
+    reform_oriented: '#34C759',
+    liberty_focused: '#FF9500',
+    unclassified: '#D1D1D6',
   },
 
   // System
-  error: '#DC2626',
-  warning: '#D97706',
-  success: '#059669',
-  info: '#2563EB',
+  error: '#FF3B30',
+  warning: '#FF9500',
+  success: '#34C759',
+  info: '#3478F6',
 } as const;

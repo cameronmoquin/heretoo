@@ -18,7 +18,7 @@ import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/typography';
-import { Shadow, Radius, Spacing } from '../../constants/design';
+import { Spacing, Radius } from '../../constants/design';
 
 type AuthMode = 'options' | 'email_login' | 'email_signup';
 
@@ -70,9 +70,7 @@ export default function WelcomeScreen() {
         password,
       });
       if (error) throw error;
-      if (data.session) {
-        router.replace('/(auth)/profile-setup');
-      }
+      if (data.session) router.replace('/(auth)/profile-setup');
     } catch (error: any) {
       showAlert('Sign In Failed', error.message);
     } finally {
@@ -82,7 +80,7 @@ export default function WelcomeScreen() {
 
   const handleEmailSignup = async () => {
     if (!email.trim() || !password || password.length < 6) {
-      showAlert('Error', 'Please enter a valid email and password (6+ characters).');
+      showAlert('Error', 'Email and password (6+ characters) required.');
       return;
     }
     try {
@@ -105,7 +103,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -114,69 +112,65 @@ export default function WelcomeScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo + Tagline */}
-          <View style={styles.hero}>
-            <View style={styles.logoMark}>
+          {/* Logo */}
+          <View style={styles.logoArea}>
+            <Text style={styles.logoMark}>
               <Text style={styles.logoHere}>HERE</Text>
               <Text style={styles.logoToo}>Too</Text>
-            </View>
-            <Text style={styles.tagline}>Be real.</Text>
+            </Text>
           </View>
 
-          {/* Value prop */}
-          <Text style={styles.pitch}>
-            Every other platform rewards the loudest voice.{'\n'}
-            This one rewards the truest one.
+          {/* Tagline */}
+          <Text style={styles.tagline}>Be real.</Text>
+          <Text style={styles.sub}>
+            The platform that rewards what people actually share.
           </Text>
 
-          {/* Auth card */}
-          <View style={styles.authCard}>
+          {/* Auth */}
+          <View style={styles.authArea}>
             {mode === 'options' && (
               <>
                 <Button
-                  title="Sign up with email"
+                  title="Create account"
                   onPress={() => setMode('email_signup')}
                   variant="primary"
                   size="lg"
-                  style={styles.fullWidth}
+                  style={styles.btn}
+                />
+                <Button
+                  title="Sign in"
+                  onPress={() => setMode('email_login')}
+                  variant="outline"
+                  size="lg"
+                  style={styles.btn}
                 />
 
-                <View style={styles.dividerRow}>
+                <View style={styles.divider}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
+                  <Text style={styles.dividerText}>or continue with</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
-                <Button
-                  title="Continue with Google"
-                  onPress={handleGoogleLogin}
-                  loading={loading === 'google'}
-                  disabled={loading !== null}
-                  variant="outline"
-                  size="lg"
-                  style={styles.fullWidth}
-                />
-
-                {Platform.OS === 'ios' && (
+                <View style={styles.socialRow}>
                   <Button
-                    title="Continue with Apple"
-                    onPress={handleAppleLogin}
-                    loading={loading === 'apple'}
-                    disabled={loading !== null}
-                    variant="secondary"
-                    size="lg"
-                    style={styles.fullWidth}
+                    title="Google"
+                    onPress={handleGoogleLogin}
+                    loading={loading === 'google'}
+                    variant="outline"
+                    size="md"
+                    style={styles.socialBtn}
                   />
-                )}
-
-                <TouchableOpacity
-                  onPress={() => setMode('email_login')}
-                  style={styles.switchLink}
-                >
-                  <Text style={styles.switchText}>
-                    Already have an account? <Text style={styles.switchBold}>Sign in</Text>
-                  </Text>
-                </TouchableOpacity>
+                  {Platform.OS === 'ios' && (
+                    <Button
+                      title="Apple"
+                      onPress={handleAppleLogin}
+                      loading={loading === 'apple'}
+                      variant="outline"
+                      size="md"
+                      style={styles.socialBtn}
+                    />
+                  )}
+                </View>
               </>
             )}
 
@@ -185,7 +179,6 @@ export default function WelcomeScreen() {
                 <Text style={styles.formTitle}>
                   {mode === 'email_signup' ? 'Create your account' : 'Welcome back'}
                 </Text>
-
                 <TextInput
                   style={styles.input}
                   placeholder="Email"
@@ -203,9 +196,7 @@ export default function WelcomeScreen() {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
-                  autoComplete={mode === 'email_signup' ? 'new-password' : 'current-password'}
                 />
-
                 <Button
                   title={mode === 'email_login' ? 'Sign in' : 'Create account'}
                   onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
@@ -213,37 +204,27 @@ export default function WelcomeScreen() {
                   disabled={!email.trim() || !password}
                   variant="primary"
                   size="lg"
-                  style={styles.fullWidth}
+                  style={styles.btn}
                 />
-
                 <TouchableOpacity
-                  onPress={() =>
-                    setMode(mode === 'email_login' ? 'email_signup' : 'email_login')
-                  }
-                  style={styles.switchLink}
+                  onPress={() => setMode(mode === 'email_login' ? 'email_signup' : 'email_login')}
                 >
                   <Text style={styles.switchText}>
-                    {mode === 'email_login'
-                      ? "Don't have an account? "
-                      : 'Already have an account? '}
+                    {mode === 'email_login' ? 'Need an account? ' : 'Have an account? '}
                     <Text style={styles.switchBold}>
                       {mode === 'email_login' ? 'Sign up' : 'Sign in'}
                     </Text>
                   </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setMode('options')}
-                  style={styles.switchLink}
-                >
-                  <Text style={styles.backText}>All sign in options</Text>
+                <TouchableOpacity onPress={() => setMode('options')}>
+                  <Text style={styles.backLink}>All options</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
 
-          <Text style={styles.terms}>
-            By continuing, you agree to HereToo's Terms of Service and Privacy Policy
+          <Text style={styles.legal}>
+            By continuing you agree to the Terms of Service and Privacy Policy.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -252,129 +233,81 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  safe: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: 28,
     paddingVertical: Spacing.xl,
-    maxWidth: 420,
+    maxWidth: 400,
     alignSelf: 'center',
     width: '100%',
   },
-  hero: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  logoMark: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: Spacing.sm,
-  },
-  logoHere: {
-    fontFamily: 'Syne_800ExtraBold',
-    fontSize: 52,
-    color: Colors.textPrimary,
-    letterSpacing: -1,
-  },
-  logoToo: {
-    fontFamily: 'Syne_800ExtraBold',
-    fontSize: 52,
-    color: Colors.primary,
-    letterSpacing: -1,
-  },
+  logoArea: { alignItems: 'center', marginBottom: 12 },
+  logoMark: { fontSize: 44 },
+  logoHere: { fontFamily: 'Syne_800ExtraBold', color: Colors.textPrimary, letterSpacing: -1 },
+  logoToo: { fontFamily: 'Syne_800ExtraBold', color: Colors.primary, letterSpacing: -1 },
   tagline: {
-    fontSize: 18,
-    fontFamily: Fonts.body,
-    color: Colors.textSecondary,
-    letterSpacing: 2,
-    textTransform: 'lowercase',
-  },
-  pitch: {
-    fontSize: 17,
-    fontFamily: Fonts.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: Spacing.xl,
-    paddingHorizontal: Spacing.sm,
-  },
-  authCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-    ...Shadow.md,
-    borderWidth: 0.5,
-    borderColor: Colors.borderLight,
-  },
-  formTitle: {
     fontSize: 20,
-    fontFamily: Fonts.heading,
+    fontFamily: Fonts.bodySemiBold,
     color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 6,
   },
-  fullWidth: {
-    width: '100%',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 0.5,
-    backgroundColor: Colors.border,
-  },
-  dividerText: {
-    fontSize: 13,
+  sub: {
+    fontSize: 15,
     fontFamily: Fonts.body,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+  },
+  authArea: { gap: 12, marginBottom: Spacing.lg },
+  btn: { width: '100%' },
+  formTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.bodySemiBold,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   input: {
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     fontFamily: Fonts.body,
     color: Colors.textPrimary,
   },
-  switchLink: {
-    paddingVertical: Spacing.xs,
+  divider: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+    paddingVertical: 4,
   },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.border },
+  dividerText: { fontSize: 13, fontFamily: Fonts.body, color: Colors.textMuted },
+  socialRow: { flexDirection: 'row', gap: 10 },
+  socialBtn: { flex: 1 },
   switchText: {
     fontSize: 14,
     fontFamily: Fonts.body,
     color: Colors.textSecondary,
     textAlign: 'center',
   },
-  switchBold: {
-    fontFamily: Fonts.bodySemiBold,
-    color: Colors.primary,
-  },
-  backText: {
+  switchBold: { fontFamily: Fonts.bodySemiBold, color: Colors.primary },
+  backLink: {
     fontSize: 14,
     fontFamily: Fonts.body,
     color: Colors.textMuted,
     textAlign: 'center',
   },
-  terms: {
+  legal: {
     fontSize: 12,
     fontFamily: Fonts.body,
     color: Colors.textMuted,
     textAlign: 'center',
-    marginTop: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    lineHeight: 18,
+    lineHeight: 17,
   },
 });
