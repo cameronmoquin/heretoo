@@ -20,7 +20,7 @@ export default function PulseHomeScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>The Pulse</Text>
         <Text style={styles.subtitle}>
-          Vote on what matters. Watch consensus form in real time.
+          See what your neighborhood actually thinks. Not the algorithm's version. The real one.
         </Text>
       </View>
 
@@ -58,7 +58,7 @@ export default function PulseHomeScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={styles.emptyText}>No active topics yet</Text>
+              <Text style={styles.emptyText}>Quiet in here. Start something real.</Text>
             </View>
           }
         />

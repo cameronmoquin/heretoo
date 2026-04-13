@@ -110,19 +110,19 @@ export default function WelcomeScreen() {
               <Text style={styles.logoHere}>HERE</Text>
               <Text style={styles.logoToo}>Too</Text>
             </View>
-            <Text style={styles.tagline}>Where common ground lives</Text>
+            <Text style={styles.tagline}>Be real.</Text>
           </View>
 
           <View style={styles.description}>
             <Text style={styles.descText}>
-              Post. Vote. Bridge. Watch your community find what it shares — not what divides it.
+              Every other platform rewards the loudest voice. This one rewards the truest one.
             </Text>
           </View>
 
           {mode === 'options' && (
             <View style={styles.buttons}>
               <Button
-                title="Continue with Email"
+                title="Sign up"
                 onPress={() => setMode('email_login')}
                 variant="primary"
                 size="lg"
@@ -130,7 +130,7 @@ export default function WelcomeScreen() {
               />
 
               <Button
-                title="Continue with Google"
+                title="Google"
                 onPress={handleGoogleLogin}
                 loading={loading === 'google'}
                 disabled={loading !== null}
@@ -141,7 +141,7 @@ export default function WelcomeScreen() {
 
               {Platform.OS === 'ios' && (
                 <Button
-                  title="Continue with Apple"
+                  title="Apple"
                   onPress={handleAppleLogin}
                   loading={loading === 'apple'}
                   disabled={loading !== null}

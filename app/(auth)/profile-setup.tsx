@@ -108,7 +108,7 @@ export default function ProfileSetupScreen() {
 
           {step === 'name' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>What should we call you?</Text>
+              <Text style={styles.stepTitle}>Who are you?</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Display name"
@@ -136,9 +136,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'age' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>When were you born?</Text>
+              <Text style={styles.stepTitle}>What year?</Text>
               <Text style={styles.stepSubtitle}>
-                Used for generational matching — never displayed publicly
+                For generational matching. Never shown.
               </Text>
               <TextInput
                 style={styles.input}
@@ -158,9 +158,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'location' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Where are you from?</Text>
+              <Text style={styles.stepTitle}>Where are you?</Text>
               <Text style={styles.stepSubtitle}>
-                State or region only — helps find local topics
+                State or region. Helps find local topics.
               </Text>
               <TextInput
                 style={styles.input}
@@ -178,9 +178,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'interests' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Pick 3 topics you care about</Text>
+              <Text style={styles.stepTitle}>Pick 3.</Text>
               <Text style={styles.stepSubtitle}>
-                This helps us start you off — your real community emerges from how you vote
+                Your real community emerges from how you vote.
               </Text>
               <View style={styles.interestGrid}>
                 {INTEREST_TOPICS.map((topic) => (
@@ -216,9 +216,9 @@ export default function ProfileSetupScreen() {
 
           {step === 'story' && (
             <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Your origin story</Text>
+              <Text style={styles.stepTitle}>Origin story</Text>
               <Text style={styles.stepSubtitle}>
-                Optional — a few words about where you come from and what matters to you
+                Where do you come from? What shaped you? You do not have to explain your politics. Just be real.
               </Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -233,7 +233,7 @@ export default function ProfileSetupScreen() {
               <View style={styles.navButtons}>
                 <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
                 <Button
-                  title="Join HereToo"
+                  title="Show up"
                   onPress={handleComplete}
                   loading={loading}
                   size="lg"

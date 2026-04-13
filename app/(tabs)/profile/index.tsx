@@ -68,13 +68,13 @@ export default function OwnProfileScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <Button
-            title="Edit Profile"
+            title="Edit"
             onPress={() => {}}
             variant="outline"
             style={{ flex: 1 }}
           />
           <Button
-            title="Sign Out"
+            title="Sign out"
             onPress={handleSignOut}
             variant="ghost"
             textStyle={{ color: Colors.error }}

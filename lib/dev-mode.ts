@@ -1,10 +1,10 @@
 /**
  * Dev mode flag.
  * When true, the app uses mock data and skips Supabase entirely.
- * Flip to false once your Supabase project has migrations run + auth configured.
+ * When false, the app uses the real Supabase backend.
  */
 
-export const DEV_MODE = true;
+export const DEV_MODE = false;
 
 export function isDevMode(): boolean {
   return DEV_MODE;

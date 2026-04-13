@@ -60,7 +60,7 @@ export default function UploadScreen() {
 
       setContent('');
       upload.reset();
-      Alert.alert('Posted!', 'Your post is now live.');
+      Alert.alert('Done', 'Live now.');
       router.push('/(tabs)/feed');
     } catch (error: any) {
       Alert.alert('Error', error.message);
@@ -81,11 +81,11 @@ export default function UploadScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>Share</Text>
+          <Text style={styles.title}>Post</Text>
 
           <TextInput
             style={styles.input}
-            placeholder="What's on your mind? Share something that bridges communities..."
+            placeholder="Say something real."
             placeholderTextColor={Colors.textMuted}
             value={content}
             onChangeText={setContent}

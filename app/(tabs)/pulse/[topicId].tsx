@@ -56,7 +56,7 @@ export default function TopicScreen() {
       {
         onSuccess: () => {
           setNewStatement('');
-          Alert.alert('Submitted', 'Your statement is now live for voting.');
+          Alert.alert('Submitted', 'Live now.');
         },
       }
     );
@@ -82,7 +82,7 @@ export default function TopicScreen() {
           {/* Top bridging statement */}
           {topBridging && topBridging.bridging_score > 0 && (
             <View style={styles.topBridging}>
-              <Text style={styles.topBridgingLabel}>Top Bridge Statement</Text>
+              <Text style={styles.topBridgingLabel}>Common Ground</Text>
               <Text style={styles.topBridgingText}>{topBridging.text}</Text>
               <ConsensusBar bridgingScore={topBridging.bridging_score} />
             </View>
@@ -105,10 +105,10 @@ export default function TopicScreen() {
 
           {/* Submit new statement */}
           <View style={styles.submitSection}>
-            <Text style={styles.sectionTitle}>Add a statement</Text>
+            <Text style={styles.sectionTitle}>Say something</Text>
             <TextInput
               style={styles.input}
-              placeholder="State a position for others to vote on..."
+              placeholder="What do you think?"
               placeholderTextColor={Colors.textMuted}
               value={newStatement}
               onChangeText={setNewStatement}
@@ -116,7 +116,7 @@ export default function TopicScreen() {
               maxLength={280}
             />
             <Button
-              title="Submit Statement"
+              title="Submit"
               onPress={handleSubmitStatement}
               loading={submitStatement.isPending}
               disabled={!newStatement.trim()}

@@ -33,7 +33,7 @@ export function MatchCard({ session, onAccept, onDecline }: MatchCardProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Bridge Match Found</Text>
+      <Text style={styles.label}>Match</Text>
 
       <View style={styles.statsRow}>
         <View style={styles.stat}>
@@ -69,12 +69,12 @@ export function MatchCard({ session, onAccept, onDecline }: MatchCardProps) {
       )}
 
       <Text style={styles.note}>
-        Names and photos are hidden until both sides accept.
+        Anonymous until you both show up.
       </Text>
 
       <View style={styles.buttons}>
         <Button title="Pass" onPress={onDecline} variant="ghost" style={{ flex: 1 }} />
-        <Button title="Accept Match" onPress={onAccept} style={{ flex: 2 }} />
+        <Button title="Show up" onPress={onAccept} style={{ flex: 2 }} />
       </View>
     </View>
   );

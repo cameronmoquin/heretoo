@@ -78,7 +78,7 @@ export default function BridgeSessionScreen() {
         <View style={styles.inputArea}>
           <TextInput
             style={styles.input}
-            placeholder="Share your perspective..."
+            placeholder="Be real."
             placeholderTextColor={Colors.textMuted}
             value={text}
             onChangeText={setText}
@@ -95,7 +95,7 @@ export default function BridgeSessionScreen() {
         </View>
 
         <Text style={styles.reminder}>
-          48-hour window — thoughtful responses build trust
+          48 hours. Take your time.
         </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>

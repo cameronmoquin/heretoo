@@ -42,9 +42,9 @@ export function FeedList({
   if (!isLoading && posts.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>No posts yet</Text>
+        <Text style={styles.emptyTitle}>Nothing here yet.</Text>
         <Text style={styles.emptySubtitle}>
-          Be the first to share something that bridges communities
+          That changes when you show up.
         </Text>
       </View>
     );

@@ -33,11 +33,11 @@ export function VerificationGate({
         <Text style={styles.lockEmoji}>🔒</Text>
       </View>
 
-      <Text style={styles.title}>Verify you're human</Text>
+      <Text style={styles.title}>Prove you're real</Text>
 
       <Text style={styles.description}>
         {fallbackMessage ??
-          'To keep HereToo bot-free, we ask new members to participate before posting.'}
+          'Participate first. Then post.'}
       </Text>
 
       <View style={styles.progressSection}>
@@ -57,7 +57,7 @@ export function VerificationGate({
       </View>
 
       <Button
-        title="Go to The Pulse"
+        title="Pulse"
         onPress={() => router.push('/(tabs)/pulse')}
         variant="primary"
         size="lg"
@@ -65,7 +65,7 @@ export function VerificationGate({
       />
 
       <Text style={styles.altText}>
-        Or verify your phone number for instant access
+        Or verify by phone.
       </Text>
     </View>
   );
