@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   stepTitle: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 28,
     color: Colors.textPrimary,
   },

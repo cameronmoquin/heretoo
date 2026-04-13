@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   title: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 22,
     color: Colors.textPrimary,
   },

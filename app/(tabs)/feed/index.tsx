@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   logo: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 24,
     letterSpacing: -0.5,
   },

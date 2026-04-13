@@ -15,7 +15,7 @@ const SYSTEM = Platform.select({
 });
 
 export const Fonts = {
-  logo: 'Syne_800ExtraBold',
+  logo: SYSTEM,
   heading: SYSTEM,
   body: SYSTEM,
   bodyMedium: SYSTEM,

@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   sidebarLogo: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 24,
     letterSpacing: -0.5,
     marginBottom: 32,
