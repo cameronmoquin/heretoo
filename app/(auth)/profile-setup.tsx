@@ -5,7 +5,6 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Alert,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { assignInitialCluster } from '../../lib/clusters';
+import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
@@ -57,7 +57,7 @@ export default function ProfileSetupScreen() {
 
   async function handleComplete() {
     if (!displayName.trim() || !username.trim() || !birthYear) {
-      Alert.alert('Missing info', 'Please fill in your name, username, and birth year.');
+      showAlert('Missing info', 'Please fill in your name, username, and birth year.');
       return;
     }
 
@@ -77,7 +77,7 @@ export default function ProfileSetupScreen() {
 
       router.replace('/(tabs)/feed');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     } finally {
       setLoading(false);
     }

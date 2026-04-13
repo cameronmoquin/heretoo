@@ -5,7 +5,6 @@ import {
   TextInput,
   StyleSheet,
   Platform,
-  Alert,
   TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
@@ -14,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/typography';
@@ -32,7 +32,7 @@ export default function WelcomeScreen() {
       setLoading('google');
       await signInWithGoogle();
     } catch (error: any) {
-      Alert.alert('Sign In Failed', error.message);
+      showAlert('Sign In Failed', error.message);
     } finally {
       setLoading(null);
     }
@@ -52,7 +52,7 @@ export default function WelcomeScreen() {
       }
     } catch (error: any) {
       if (error.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Sign In Failed', error.message);
+        showAlert('Sign In Failed', error.message);
       }
     } finally {
       setLoading(null);
@@ -69,7 +69,7 @@ export default function WelcomeScreen() {
       });
       if (error) throw error;
     } catch (error: any) {
-      Alert.alert('Sign In Failed', error.message);
+      showAlert('Sign In Failed', error.message);
     } finally {
       setLoading(null);
     }
@@ -77,19 +77,22 @@ export default function WelcomeScreen() {
 
   const handleEmailSignup = async () => {
     if (!email.trim() || !password || password.length < 6) {
-      Alert.alert('Error', 'Please enter a valid email and password (6+ characters).');
+      showAlert('Error', 'Please enter a valid email and password (6+ characters).');
       return;
     }
     try {
       setLoading('email');
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
       });
       if (error) throw error;
-      Alert.alert('Check your email', 'We sent you a confirmation link.');
+      // If auto-confirm is off, user needs to check email
+      if (!data.session) {
+        showAlert('Check your email', 'Confirm your account to continue.');
+      }
     } catch (error: any) {
-      Alert.alert('Sign Up Failed', error.message);
+      showAlert('Sign Up Failed', error.message);
     } finally {
       setLoading(null);
     }
@@ -123,7 +126,7 @@ export default function WelcomeScreen() {
             <View style={styles.buttons}>
               <Button
                 title="Sign up"
-                onPress={() => setMode('email_login')}
+                onPress={() => setMode('email_signup')}
                 variant="primary"
                 size="lg"
                 style={styles.fullWidth}
@@ -150,6 +153,10 @@ export default function WelcomeScreen() {
                   style={styles.fullWidth}
                 />
               )}
+
+              <TouchableOpacity onPress={() => setMode('email_login')}>
+                <Text style={styles.switchText}>Already have an account? Sign in</Text>
+              </TouchableOpacity>
             </View>
           )}
 

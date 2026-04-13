@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,6 +16,7 @@ import {
   usePulseRealtime,
   useSubmitStatement,
 } from '../../../hooks/usePulse';
+import { showAlert } from '../../../lib/alert';
 import { usePulseStore, type VoteType } from '../../../stores/pulseStore';
 import { OpinionSlider } from '../../../components/pulse/OpinionSlider';
 import { ConsensusBar } from '../../../components/pulse/ConsensusBar';
@@ -56,7 +56,7 @@ export default function TopicScreen() {
       {
         onSuccess: () => {
           setNewStatement('');
-          Alert.alert('Submitted', 'Live now.');
+          showAlert('Submitted', 'Live now.');
         },
       }
     );

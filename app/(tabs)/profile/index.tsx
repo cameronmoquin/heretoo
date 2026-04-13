@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../hooks/useAuth';
+import { showConfirm } from '../../../lib/alert';
 import { Avatar } from '../../../components/shared/Avatar';
 import { Button } from '../../../components/shared/Button';
 import { TrustScoreRing } from '../../../components/profile/TrustScoreRing';
@@ -20,10 +20,7 @@ export default function OwnProfileScreen() {
   const { profile, signOut } = useAuth();
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ]);
+    showConfirm('Sign out', 'Are you sure?', signOut, 'Sign out');
   };
 
   if (!profile) return null;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFeed, useToggleEngagement } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
@@ -16,18 +16,22 @@ export default function FeedScreen() {
   const { activeTab, setActiveTab } = useFeedStore();
   const feed = useFeed(activeTab);
   const toggleEngagement = useToggleEngagement();
+  const { width } = useWindowDimensions();
+  const isDesktop = width > 768;
 
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>
-          <Text style={{ color: Colors.textPrimary }}>HERE</Text>
-          <Text style={{ color: Colors.primary }}>Too</Text>
-        </Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={isDesktop ? [] : ['top']}>
+      {/* Header — only show logo on mobile, sidebar has it on desktop */}
+      {!isDesktop && (
+        <View style={styles.header}>
+          <Text style={styles.logo}>
+            <Text style={{ color: Colors.textPrimary }}>HERE</Text>
+            <Text style={{ color: Colors.primary }}>Too</Text>
+          </Text>
+        </View>
+      )}
 
       {/* Tab toggle */}
       <View style={styles.tabBar}>

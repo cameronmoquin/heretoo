@@ -5,13 +5,13 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useUpload } from '../../../hooks/useUpload';
+import { showAlert } from '../../../lib/alert';
 import { MediaPicker } from '../../../components/upload/MediaPicker';
 import { Button } from '../../../components/shared/Button';
 import { VerificationGate } from '../../../components/shared/VerificationGate';
@@ -60,10 +60,10 @@ export default function UploadScreen() {
 
       setContent('');
       upload.reset();
-      Alert.alert('Done', 'Live now.');
+      showAlert('Done', 'Live now.');
       router.push('/(tabs)/feed');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
     }
   };
 
