@@ -1,0 +1,337 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useAuth } from '../../hooks/useAuth';
+import { assignInitialCluster } from '../../lib/clusters';
+import { Button } from '../../components/shared/Button';
+import { Colors } from '../../constants/colors';
+import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
+
+type Step = 'name' | 'age' | 'location' | 'interests' | 'story';
+
+export default function ProfileSetupScreen() {
+  const { createProfile } = useAuth();
+  const [step, setStep] = useState<Step>('name');
+  const [loading, setLoading] = useState(false);
+
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [locationRegion, setLocationRegion] = useState('');
+  const [selectedInterests, setSelectedInterests] = useState<InterestTopic[]>([]);
+  const [originStory, setOriginStory] = useState('');
+
+  const steps: Step[] = ['name', 'age', 'location', 'interests', 'story'];
+  const stepIndex = steps.indexOf(step);
+
+  function nextStep() {
+    if (stepIndex < steps.length - 1) {
+      setStep(steps[stepIndex + 1]);
+    }
+  }
+
+  function prevStep() {
+    if (stepIndex > 0) {
+      setStep(steps[stepIndex - 1]);
+    }
+  }
+
+  function toggleInterest(topic: InterestTopic) {
+    setSelectedInterests((prev) => {
+      if (prev.includes(topic)) return prev.filter((t) => t !== topic);
+      if (prev.length >= 3) return prev;
+      return [...prev, topic];
+    });
+  }
+
+  async function handleComplete() {
+    if (!displayName.trim() || !username.trim() || !birthYear) {
+      Alert.alert('Missing info', 'Please fill in your name, username, and birth year.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { clusterId, confidence } = assignInitialCluster(selectedInterests);
+
+      await createProfile({
+        username: username.trim().toLowerCase(),
+        display_name: displayName.trim(),
+        birth_year: parseInt(birthYear, 10),
+        location_region: locationRegion.trim(),
+        cluster_id: clusterId,
+        cluster_confidence: confidence,
+        origin_story: originStory.trim() || undefined,
+      });
+
+      router.replace('/(tabs)/feed');
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Progress indicator */}
+          <View style={styles.progress}>
+            {steps.map((s, i) => (
+              <View
+                key={s}
+                style={[
+                  styles.progressDot,
+                  i <= stepIndex && styles.progressDotActive,
+                ]}
+              />
+            ))}
+          </View>
+
+          {step === 'name' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>What should we call you?</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Display name"
+                placeholderTextColor={Colors.textMuted}
+                value={displayName}
+                onChangeText={setDisplayName}
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Username (lowercase, no spaces)"
+                placeholderTextColor={Colors.textMuted}
+                value={username}
+                onChangeText={(t) => setUsername(t.replace(/[^a-z0-9_]/g, ''))}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Button
+                title="Next"
+                onPress={nextStep}
+                disabled={!displayName.trim() || !username.trim()}
+              />
+            </View>
+          )}
+
+          {step === 'age' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>When were you born?</Text>
+              <Text style={styles.stepSubtitle}>
+                Used for generational matching — never displayed publicly
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Birth year (e.g. 1992)"
+                placeholderTextColor={Colors.textMuted}
+                value={birthYear}
+                onChangeText={(t) => setBirthYear(t.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={4}
+              />
+              <View style={styles.navButtons}>
+                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
+                <Button title="Next" onPress={nextStep} disabled={birthYear.length !== 4} />
+              </View>
+            </View>
+          )}
+
+          {step === 'location' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>Where are you from?</Text>
+              <Text style={styles.stepSubtitle}>
+                State or region only — helps find local topics
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. California, Texas, Ontario"
+                placeholderTextColor={Colors.textMuted}
+                value={locationRegion}
+                onChangeText={setLocationRegion}
+              />
+              <View style={styles.navButtons}>
+                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
+                <Button title="Next" onPress={nextStep} />
+              </View>
+            </View>
+          )}
+
+          {step === 'interests' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>Pick 3 topics you care about</Text>
+              <Text style={styles.stepSubtitle}>
+                This helps us start you off — your real community emerges from how you vote
+              </Text>
+              <View style={styles.interestGrid}>
+                {INTEREST_TOPICS.map((topic) => (
+                  <TouchableOpacity
+                    key={topic}
+                    style={[
+                      styles.interestChip,
+                      selectedInterests.includes(topic) && styles.interestChipActive,
+                    ]}
+                    onPress={() => toggleInterest(topic)}
+                  >
+                    <Text
+                      style={[
+                        styles.interestChipText,
+                        selectedInterests.includes(topic) && styles.interestChipTextActive,
+                      ]}
+                    >
+                      {topic}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.navButtons}>
+                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
+                <Button
+                  title="Next"
+                  onPress={nextStep}
+                  disabled={selectedInterests.length < 3}
+                />
+              </View>
+            </View>
+          )}
+
+          {step === 'story' && (
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepTitle}>Your origin story</Text>
+              <Text style={styles.stepSubtitle}>
+                Optional — a few words about where you come from and what matters to you
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="I grew up in a small town where..."
+                placeholderTextColor={Colors.textMuted}
+                value={originStory}
+                onChangeText={setOriginStory}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+              <View style={styles.navButtons}>
+                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
+                <Button
+                  title="Join HereToo"
+                  onPress={handleComplete}
+                  loading={loading}
+                  size="lg"
+                />
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  progress: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginBottom: 40,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.surfaceLight,
+  },
+  progressDotActive: {
+    backgroundColor: Colors.primary,
+    width: 24,
+  },
+  stepContainer: {
+    flex: 1,
+    gap: 16,
+  },
+  stepTitle: {
+    fontFamily: 'Syne_800ExtraBold',
+    fontSize: 28,
+    color: Colors.textPrimary,
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  input: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.textPrimary,
+  },
+  textArea: {
+    minHeight: 120,
+    paddingTop: 14,
+  },
+  navButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  interestGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 8,
+  },
+  interestChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  interestChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  interestChipText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  interestChipTextActive: {
+    color: Colors.brandDark,
+    fontWeight: '600',
+  },
+});

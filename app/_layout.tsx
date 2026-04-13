@@ -1,0 +1,67 @@
+import React from 'react';
+import { View } from 'react-native';
+import { Stack } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import { Syne_800ExtraBold } from '@expo-google-fonts/syne';
+import { useAuth } from '../hooks/useAuth';
+import { useAuthStore } from '../stores/authStore';
+import { LoadingPulse } from '../components/shared/LoadingPulse';
+import { ErrorBoundary } from '../components/shared/ErrorBoundary';
+import { SuspendedBanner } from '../components/shared/SuspendedBanner';
+import { Colors } from '../constants/colors';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes
+      retry: 2,
+    },
+  },
+});
+
+function RootLayoutInner() {
+  const { isLoading } = useAuth();
+  const profile = useAuthStore((s) => s.profile);
+
+  const [fontsLoaded] = useFonts({
+    Syne_800ExtraBold,
+  });
+
+  if (isLoading || !fontsLoaded) {
+    return <LoadingPulse />;
+  }
+
+  return (
+    <>
+      <StatusBar style="light" />
+      {/* Show suspension banner if account is suspended */}
+      {profile?.is_suspended && (
+        <View style={{ backgroundColor: Colors.background }}>
+          <SuspendedBanner reason={profile.suspension_reason ?? undefined} />
+        </View>
+      )}
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: Colors.background },
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <RootLayoutInner />
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
