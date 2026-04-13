@@ -6,66 +6,52 @@ import {
   StyleSheet,
   useWindowDimensions,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import { usePathname, router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/typography';
+import { Spacing } from '../../constants/design';
 
-const NAV_ITEMS = [
+const NAV = [
   { name: 'feed', label: 'Feed', href: '/(tabs)/feed' },
   { name: 'pulse', label: 'Pulse', href: '/(tabs)/pulse' },
   { name: 'upload', label: 'Post', href: '/(tabs)/upload' },
   { name: 'bridge', label: 'Bridge', href: '/(tabs)/bridge' },
-  { name: 'profile', label: 'You', href: '/(tabs)/profile' },
+  { name: 'profile', label: 'Profile', href: '/(tabs)/profile' },
 ] as const;
 
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   return (
-    <View style={styles.tabIcon}>
-      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-        {label}
-      </Text>
-      {focused && <View style={styles.activeIndicator} />}
-    </View>
+    <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+      {label}
+    </Text>
   );
 }
 
-function DesktopSidebar() {
+function Sidebar() {
   const pathname = usePathname();
-
   return (
     <View style={styles.sidebar}>
       <Text style={styles.sidebarLogo}>
         <Text style={{ color: Colors.textPrimary }}>HERE</Text>
         <Text style={{ color: Colors.primary }}>Too</Text>
       </Text>
-
       <View style={styles.sidebarNav}>
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname.includes(`/${item.name}`);
+        {NAV.map((item) => {
+          const active = pathname.includes(`/${item.name}`);
           return (
             <TouchableOpacity
               key={item.name}
-              style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}
+              style={[styles.navItem, active && styles.navItemActive]}
               onPress={() => router.push(item.href as any)}
               activeOpacity={0.7}
             >
-              <Text
-                style={[
-                  styles.sidebarItemText,
-                  isActive && styles.sidebarItemTextActive,
-                ]}
-              >
+              <Text style={[styles.navText, active && styles.navTextActive]}>
                 {item.label}
               </Text>
             </TouchableOpacity>
           );
         })}
-      </View>
-
-      <View style={styles.sidebarFooter}>
-        <Text style={styles.sidebarFooterText}>Be real.</Text>
       </View>
     </View>
   );
@@ -78,161 +64,88 @@ export default function TabLayout() {
   if (isDesktop) {
     return (
       <View style={styles.desktopRoot}>
-        <DesktopSidebar />
-        <View style={styles.desktopMain}>
-          <View style={styles.desktopContent}>
-            <Tabs
-              screenOptions={{
-                headerShown: false,
-                tabBarStyle: { display: 'none' },
-              }}
-            >
-              <Tabs.Screen name="feed" />
-              <Tabs.Screen name="pulse" />
-              <Tabs.Screen name="upload" />
-              <Tabs.Screen name="bridge" />
-              <Tabs.Screen name="profile" />
-            </Tabs>
-          </View>
+        <Sidebar />
+        <View style={styles.desktopContent}>
+          <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
+            <Tabs.Screen name="feed" />
+            <Tabs.Screen name="pulse" />
+            <Tabs.Screen name="upload" />
+            <Tabs.Screen name="bridge" />
+            <Tabs.Screen name="profile" />
+          </Tabs>
         </View>
+        {/* Right gutter for balance */}
+        <View style={styles.rightGutter} />
       </View>
     );
   }
 
-  // Mobile layout with bottom tabs
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
-          borderTopWidth: 0.5,
-          height: 72,
-          paddingBottom: 16,
-          paddingTop: 8,
-        },
+        tabBarStyle: styles.mobileTabBar,
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
       }}
     >
-      <Tabs.Screen
-        name="feed"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon label="Feed" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="pulse"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon label="Pulse" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="upload"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon label="+" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="bridge"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon label="Bridge" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon label="You" focused={focused} />,
-        }}
-      />
+      {NAV.map((item) => (
+        <Tabs.Screen
+          key={item.name}
+          name={item.name}
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon label={item.label} focused={focused} />,
+          }}
+        />
+      ))}
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  // ── Desktop ──
-  desktopRoot: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: Colors.surfaceLight,
-  },
+  // Desktop
+  desktopRoot: { flex: 1, flexDirection: 'row', backgroundColor: Colors.surfaceLight },
   sidebar: {
-    width: 260,
-    backgroundColor: Colors.surface,
-    borderRightWidth: 0.5,
+    width: 220,
+    backgroundColor: Colors.background,
+    borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: Colors.border,
-    paddingTop: 32,
-    paddingHorizontal: 24,
-    justifyContent: 'flex-start',
+    paddingTop: 28,
+    paddingHorizontal: 16,
   },
   sidebarLogo: {
     fontFamily: 'Syne_800ExtraBold',
-    fontSize: 28,
-    marginBottom: 40,
+    fontSize: 24,
+    letterSpacing: -0.5,
+    marginBottom: 32,
+    paddingHorizontal: 8,
   },
-  sidebarNav: {
-    gap: 4,
-  },
-  sidebarItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  sidebarNav: { gap: 2 },
+  navItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 10,
   },
-  sidebarItemActive: {
-    backgroundColor: Colors.primaryFaint,
-  },
-  sidebarItemText: {
-    fontSize: 16,
-    fontFamily: Fonts.bodyMedium,
-    color: Colors.textSecondary,
-  },
-  sidebarItemTextActive: {
-    color: Colors.primary,
-    fontFamily: Fonts.bodySemiBold,
-  },
-  sidebarFooter: {
-    marginTop: 'auto' as any,
-    paddingBottom: 32,
-    paddingHorizontal: 16,
-  },
-  sidebarFooterText: {
-    fontSize: 13,
-    fontFamily: Fonts.body,
-    color: Colors.textMuted,
-  },
-  desktopMain: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  navItemActive: { backgroundColor: Colors.primaryFaint },
+  navText: { fontSize: 15, fontFamily: Fonts.bodyMedium, color: Colors.textSecondary },
+  navTextActive: { color: Colors.primary, fontFamily: Fonts.bodySemiBold },
   desktopContent: {
-    width: 600,
-    maxWidth: 600,
-    flex: 1,
+    width: 580,
     backgroundColor: Colors.background,
-    borderLeftWidth: 0.5,
-    borderRightWidth: 0.5,
-    borderColor: Colors.border,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: Colors.border,
   },
+  rightGutter: { flex: 1 },
 
-  // ── Mobile tab bar ──
-  tabIcon: {
-    alignItems: 'center',
-    gap: 4,
+  // Mobile
+  mobileTabBar: {
+    backgroundColor: Colors.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    height: 56,
+    paddingTop: 6,
   },
-  tabLabel: {
-    fontSize: 12,
-    fontFamily: Fonts.bodySemiBold,
-    color: Colors.textMuted,
-  },
-  tabLabelActive: {
-    color: Colors.primary,
-  },
-  activeIndicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
-  },
+  tabLabel: { fontSize: 11, fontFamily: Fonts.bodyMedium, color: Colors.textMuted },
+  tabLabelActive: { color: Colors.primary, fontFamily: Fonts.bodySemiBold },
 });

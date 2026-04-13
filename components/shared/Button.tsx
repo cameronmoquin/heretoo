@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/typography';
+import { Radius } from '../../constants/design';
 
 interface ButtonProps {
   title: string;
@@ -41,12 +42,12 @@ export function Button({
       disabled={isDisabled}
       style={[
         styles.base,
-        styles[variant],
-        styles[`size_${size}`],
+        variantStyles[variant],
+        sizeStyles[size],
         isDisabled && styles.disabled,
         style,
       ]}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
     >
       {loading ? (
         <ActivityIndicator
@@ -59,8 +60,8 @@ export function Button({
           <Text
             style={[
               styles.text,
-              styles[`text_${variant}`],
-              styles[`text_${size}`],
+              textVariantStyles[variant],
+              textSizeStyles[size],
               textStyle,
             ]}
           >
@@ -77,60 +78,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
     gap: 8,
   },
-  primary: {
-    backgroundColor: Colors.primary,
-  },
-  secondary: {
-    backgroundColor: Colors.surfaceLight,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-  size_sm: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  size_md: {
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-  },
-  size_lg: {
-    paddingHorizontal: 32,
-    paddingVertical: 18,
-  },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   text: {
     fontFamily: Fonts.bodySemiBold,
   },
-  text_primary: {
-    color: '#FFFFFF',
+});
+
+const variantStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
   },
-  text_secondary: {
-    color: Colors.textPrimary,
+  secondary: {
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.md,
   },
-  text_outline: {
-    color: Colors.primary,
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
   },
-  text_ghost: {
-    color: Colors.primary,
+  ghost: {
+    backgroundColor: 'transparent',
+    borderRadius: Radius.md,
   },
-  text_sm: {
-    fontSize: 14,
-  },
-  text_md: {
-    fontSize: 16,
-  },
-  text_lg: {
-    fontSize: 18,
-  },
+});
+
+const sizeStyles = StyleSheet.create({
+  sm: { paddingHorizontal: 14, paddingVertical: 8 },
+  md: { paddingHorizontal: 20, paddingVertical: 12 },
+  lg: { paddingHorizontal: 24, paddingVertical: 15 },
+});
+
+const textVariantStyles = StyleSheet.create({
+  primary: { color: '#FFFFFF' },
+  secondary: { color: Colors.textPrimary },
+  outline: { color: Colors.textPrimary },
+  ghost: { color: Colors.primary },
+});
+
+const textSizeStyles = StyleSheet.create({
+  sm: { fontSize: 14 },
+  md: { fontSize: 15 },
+  lg: { fontSize: 16 },
 });

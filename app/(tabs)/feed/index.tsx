@@ -6,7 +6,7 @@ import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
 import { Fonts } from '../../../constants/typography';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing } from '../../../constants/design';
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: 'for_you', label: 'For You' },
@@ -19,12 +19,10 @@ export default function FeedScreen() {
   const toggleEngagement = useToggleEngagement();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
-
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
-    <SafeAreaView style={styles.container} edges={isDesktop ? [] : ['top']}>
-      {/* Header */}
+    <SafeAreaView style={styles.safe} edges={isDesktop ? [] : ['top']}>
       {!isDesktop && (
         <View style={styles.header}>
           <Text style={styles.logo}>
@@ -34,28 +32,24 @@ export default function FeedScreen() {
         </View>
       )}
 
-      {/* Tab toggle */}
-      <View style={styles.tabBar}>
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => setActiveTab(tab.key)}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === tab.key && styles.tabTextActive,
-              ]}
+      <View style={styles.tabRow}>
+        {TABS.map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={styles.tab}
+              onPress={() => setActiveTab(tab.key)}
             >
-              {tab.label}
-            </Text>
-            {activeTab === tab.key && <View style={styles.tabIndicator} />}
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                {tab.label}
+              </Text>
+              {active && <View style={styles.tabBar} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      {/* Feed */}
       <FeedList
         posts={posts}
         isLoading={feed.isLoading}
@@ -63,47 +57,33 @@ export default function FeedScreen() {
         hasMore={feed.hasNextPage ?? false}
         onRefresh={() => feed.refetch()}
         onLoadMore={() => feed.fetchNextPage()}
-        onEngage={(postId, type) =>
-          toggleEngagement.mutate({ postId, type })
-        }
+        onEngage={(postId, type) => toggleEngagement.mutate({ postId, type })}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  safe: { flex: 1, backgroundColor: Colors.background },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 14,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.borderLight,
+    paddingVertical: 12,
   },
   logo: {
     fontFamily: 'Syne_800ExtraBold',
-    fontSize: 26,
+    fontSize: 24,
     letterSpacing: -0.5,
   },
-  tabBar: {
+  tabRow: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: 2,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.borderLight,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
     alignItems: 'center',
-    position: 'relative',
+    paddingVertical: 12,
   },
-  tabActive: {},
   tabText: {
     fontSize: 15,
     fontFamily: Fonts.bodyMedium,
@@ -113,12 +93,12 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontFamily: Fonts.bodySemiBold,
   },
-  tabIndicator: {
+  tabBar: {
     position: 'absolute',
     bottom: 0,
-    width: 32,
-    height: 2.5,
-    borderRadius: 2,
+    width: 28,
+    height: 2,
+    borderRadius: 1,
     backgroundColor: Colors.primary,
   },
 });
