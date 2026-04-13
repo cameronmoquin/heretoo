@@ -4,7 +4,6 @@ import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { Syne_800ExtraBold } from '@expo-google-fonts/syne';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -32,7 +31,6 @@ function RootLayoutInner() {
   const profile = useAuthStore((s) => s.profile);
 
   const [fontsLoaded] = useFonts({
-    Syne_800ExtraBold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,

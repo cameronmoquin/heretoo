@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   title: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 22,
     color: Colors.textPrimary,
     textAlign: 'center',

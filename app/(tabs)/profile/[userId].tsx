@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   displayName: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 24,
     color: Colors.textPrimary,
   },

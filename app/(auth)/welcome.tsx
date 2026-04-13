@@ -244,8 +244,8 @@ const styles = StyleSheet.create({
   },
   logoArea: { alignItems: 'center', marginBottom: 12 },
   logoMark: { fontSize: 44 },
-  logoHere: { fontFamily: 'Syne_800ExtraBold', color: Colors.textPrimary, letterSpacing: -1 },
-  logoToo: { fontFamily: 'Syne_800ExtraBold', color: Colors.primary, letterSpacing: -1 },
+  logoHere: { fontWeight: '800', color: Colors.textPrimary, letterSpacing: -1 },
+  logoToo: { fontWeight: '800', color: Colors.primary, letterSpacing: -1 },
   tagline: {
     fontSize: 20,
     fontWeight: '600',

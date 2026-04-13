@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.bridge,
   },
   label: {
-    fontFamily: 'Syne_800ExtraBold',
+    fontWeight: '800',
     fontSize: 20,
     color: Colors.bridge,
     textAlign: 'center',
