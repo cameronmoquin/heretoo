@@ -6,6 +6,7 @@ import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
 import { Fonts } from '../../../constants/typography';
+import { Spacing, Radius } from '../../../constants/design';
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: 'for_you', label: 'For You' },
@@ -23,7 +24,7 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={isDesktop ? [] : ['top']}>
-      {/* Header — only show logo on mobile, sidebar has it on desktop */}
+      {/* Header */}
       {!isDesktop && (
         <View style={styles.header}>
           <Text style={styles.logo}>
@@ -49,6 +50,7 @@ export default function FeedScreen() {
             >
               {tab.label}
             </Text>
+            {activeTab === tab.key && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
         ))}
       </View>
@@ -75,38 +77,48 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 14,
     backgroundColor: Colors.surface,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.borderLight,
   },
   logo: {
     fontFamily: 'Syne_800ExtraBold',
-    fontSize: 24,
+    fontSize: 26,
+    letterSpacing: -0.5,
   },
   tabBar: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 4,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: 2,
     backgroundColor: Colors.surface,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.borderLight,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 10,
+    position: 'relative',
   },
-  tabActive: {
-    backgroundColor: Colors.primaryFaint,
-  },
+  tabActive: {},
   tabText: {
-    fontSize: 14,
-    fontFamily: Fonts.bodySemiBold,
+    fontSize: 15,
+    fontFamily: Fonts.bodyMedium,
     color: Colors.textMuted,
   },
   tabTextActive: {
-    color: Colors.primary,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.bodySemiBold,
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: 32,
+    height: 2.5,
+    borderRadius: 2,
+    backgroundColor: Colors.primary,
   },
 });

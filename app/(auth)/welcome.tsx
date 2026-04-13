@@ -18,6 +18,7 @@ import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/typography';
+import { Shadow, Radius, Spacing } from '../../constants/design';
 
 type AuthMode = 'options' | 'email_login' | 'email_signup';
 
@@ -92,7 +93,6 @@ export default function WelcomeScreen() {
       });
       if (error) throw error;
       if (data.session) {
-        // Auto-confirmed — go to profile setup
         router.replace('/(auth)/profile-setup');
       } else {
         showAlert('Check your email', 'Confirm your account to continue.');
@@ -114,107 +114,133 @@ export default function WelcomeScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Logo + Tagline */}
           <View style={styles.hero}>
-            <View style={styles.logoContainer}>
+            <View style={styles.logoMark}>
               <Text style={styles.logoHere}>HERE</Text>
               <Text style={styles.logoToo}>Too</Text>
             </View>
             <Text style={styles.tagline}>Be real.</Text>
           </View>
 
-          <View style={styles.description}>
-            <Text style={styles.descText}>
-              Every other platform rewards the loudest voice. This one rewards the truest one.
-            </Text>
-          </View>
+          {/* Value prop */}
+          <Text style={styles.pitch}>
+            Every other platform rewards the loudest voice.{'\n'}
+            This one rewards the truest one.
+          </Text>
 
-          {mode === 'options' && (
-            <View style={styles.buttons}>
-              <Button
-                title="Sign up"
-                onPress={() => setMode('email_signup')}
-                variant="primary"
-                size="lg"
-                style={styles.fullWidth}
-              />
-
-              <Button
-                title="Google"
-                onPress={handleGoogleLogin}
-                loading={loading === 'google'}
-                disabled={loading !== null}
-                variant="outline"
-                size="lg"
-                style={styles.fullWidth}
-              />
-
-              {Platform.OS === 'ios' && (
+          {/* Auth card */}
+          <View style={styles.authCard}>
+            {mode === 'options' && (
+              <>
                 <Button
-                  title="Apple"
-                  onPress={handleAppleLogin}
-                  loading={loading === 'apple'}
-                  disabled={loading !== null}
-                  variant="secondary"
+                  title="Sign up with email"
+                  onPress={() => setMode('email_signup')}
+                  variant="primary"
                   size="lg"
                   style={styles.fullWidth}
                 />
-              )}
 
-              <TouchableOpacity onPress={() => setMode('email_login')}>
-                <Text style={styles.switchText}>Already have an account? Sign in</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-          {(mode === 'email_login' || mode === 'email_signup') && (
-            <View style={styles.buttons}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor={Colors.textMuted}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={Colors.textMuted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoComplete={mode === 'email_signup' ? 'new-password' : 'current-password'}
-              />
+                <Button
+                  title="Continue with Google"
+                  onPress={handleGoogleLogin}
+                  loading={loading === 'google'}
+                  disabled={loading !== null}
+                  variant="outline"
+                  size="lg"
+                  style={styles.fullWidth}
+                />
 
-              <Button
-                title={mode === 'email_login' ? 'Sign In' : 'Create Account'}
-                onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
-                loading={loading === 'email'}
-                disabled={!email.trim() || !password}
-                variant="primary"
-                size="lg"
-                style={styles.fullWidth}
-              />
+                {Platform.OS === 'ios' && (
+                  <Button
+                    title="Continue with Apple"
+                    onPress={handleAppleLogin}
+                    loading={loading === 'apple'}
+                    disabled={loading !== null}
+                    variant="secondary"
+                    size="lg"
+                    style={styles.fullWidth}
+                  />
+                )}
 
-              <TouchableOpacity
-                onPress={() =>
-                  setMode(mode === 'email_login' ? 'email_signup' : 'email_login')
-                }
-              >
-                <Text style={styles.switchText}>
-                  {mode === 'email_login'
-                    ? "Don't have an account? Sign up"
-                    : 'Already have an account? Sign in'}
+                <TouchableOpacity
+                  onPress={() => setMode('email_login')}
+                  style={styles.switchLink}
+                >
+                  <Text style={styles.switchText}>
+                    Already have an account? <Text style={styles.switchBold}>Sign in</Text>
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {(mode === 'email_login' || mode === 'email_signup') && (
+              <>
+                <Text style={styles.formTitle}>
+                  {mode === 'email_signup' ? 'Create your account' : 'Welcome back'}
                 </Text>
-              </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setMode('options')}>
-                <Text style={styles.backText}>Back to all options</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor={Colors.textMuted}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor={Colors.textMuted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoComplete={mode === 'email_signup' ? 'new-password' : 'current-password'}
+                />
+
+                <Button
+                  title={mode === 'email_login' ? 'Sign in' : 'Create account'}
+                  onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
+                  loading={loading === 'email'}
+                  disabled={!email.trim() || !password}
+                  variant="primary"
+                  size="lg"
+                  style={styles.fullWidth}
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setMode(mode === 'email_login' ? 'email_signup' : 'email_login')
+                  }
+                  style={styles.switchLink}
+                >
+                  <Text style={styles.switchText}>
+                    {mode === 'email_login'
+                      ? "Don't have an account? "
+                      : 'Already have an account? '}
+                    <Text style={styles.switchBold}>
+                      {mode === 'email_login' ? 'Sign up' : 'Sign in'}
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setMode('options')}
+                  style={styles.switchLink}
+                >
+                  <Text style={styles.backText}>All sign in options</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
 
           <Text style={styles.terms}>
             By continuing, you agree to HereToo's Terms of Service and Privacy Policy
@@ -232,85 +258,123 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: 24,
     justifyContent: 'center',
-    maxWidth: 440,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xl,
+    maxWidth: 420,
     alignSelf: 'center',
     width: '100%',
   },
   hero: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: Spacing.xl,
   },
-  logoContainer: {
+  logoMark: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   logoHere: {
     fontFamily: 'Syne_800ExtraBold',
-    fontSize: 48,
+    fontSize: 52,
     color: Colors.textPrimary,
+    letterSpacing: -1,
   },
   logoToo: {
     fontFamily: 'Syne_800ExtraBold',
-    fontSize: 48,
+    fontSize: 52,
     color: Colors.primary,
+    letterSpacing: -1,
   },
   tagline: {
-    fontSize: 16,
-    fontFamily: Fonts.body,
-    color: Colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  description: {
-    marginBottom: 40,
-    paddingHorizontal: 8,
-  },
-  descText: {
     fontSize: 18,
     fontFamily: Fonts.body,
+    color: Colors.textSecondary,
+    letterSpacing: 2,
+    textTransform: 'lowercase',
+  },
+  pitch: {
+    fontSize: 17,
+    fontFamily: Fonts.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 26,
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.sm,
+  },
+  authCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+    ...Shadow.md,
+    borderWidth: 0.5,
+    borderColor: Colors.borderLight,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontFamily: Fonts.heading,
     color: Colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 28,
-  },
-  buttons: {
-    gap: 12,
-    marginBottom: 32,
+    marginBottom: Spacing.xs,
   },
   fullWidth: {
     width: '100%',
   },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: Fonts.body,
+    color: Colors.textMuted,
+  },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.background,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 14,
     fontSize: 16,
     fontFamily: Fonts.body,
     color: Colors.textPrimary,
   },
+  switchLink: {
+    paddingVertical: Spacing.xs,
+    alignItems: 'center',
+  },
   switchText: {
     fontSize: 14,
-    fontFamily: Fonts.bodyMedium,
-    color: Colors.primary,
+    fontFamily: Fonts.body,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    paddingVertical: 4,
+  },
+  switchBold: {
+    fontFamily: Fonts.bodySemiBold,
+    color: Colors.primary,
   },
   backText: {
     fontSize: 14,
     fontFamily: Fonts.body,
     color: Colors.textMuted,
     textAlign: 'center',
-    paddingVertical: 4,
   },
   terms: {
     fontSize: 12,
     fontFamily: Fonts.body,
     color: Colors.textMuted,
     textAlign: 'center',
-    paddingHorizontal: 24,
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    lineHeight: 18,
   },
 });
