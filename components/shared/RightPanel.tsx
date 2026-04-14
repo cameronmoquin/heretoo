@@ -4,12 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 import { usePanelStore, type PanelMode } from '../../stores/panelStore';
+import { useWallet, useSpendInvite } from '../../hooks/useWallet';
+import { formatWamp, WAMP } from '../../constants/wamp';
+import { showAlert } from '../../lib/alert';
 
 const TABS: { mode: PanelMode; icon: string; label: string }[] = [
-  { mode: 'art', icon: 'image-outline', label: 'Art' },
+  { mode: 'wallet', icon: 'wallet-outline', label: 'WAMP' },
   { mode: 'events', icon: 'calendar-outline', label: 'Events' },
   { mode: 'chat', icon: 'chatbubble-outline', label: 'Chat' },
   { mode: 'dm', icon: 'mail-outline', label: 'DM' },
+  { mode: 'art', icon: 'image-outline', label: 'Art' },
   { mode: 'research', icon: 'search-outline', label: 'Research' },
 ];
 
@@ -149,6 +153,87 @@ function ResearchPanel() {
   );
 }
 
+function WalletPanel() {
+  const { wallet, transactions } = useWallet();
+  const spendInvite = useSpendInvite();
+  const canInvite = wallet.balance >= WAMP.INVITE_COST;
+
+  const txLabels: Record<string, string> = {
+    earn_vote: 'Voted',
+    earn_bridge: 'Bridge',
+    earn_post_bridging: 'Post bridged',
+    earn_comment: 'Comment',
+    earn_daily_login: 'Logged in',
+    earn_invite_accepted: 'Invite accepted',
+    spend_invite: 'Invite sent',
+    transfer_out: 'Sent',
+    transfer_in: 'Received',
+    bonus: 'Bonus',
+    genesis: 'Welcome',
+  };
+
+  const handleInvite = () => {
+    if (!canInvite) {
+      showAlert('Not enough WAMP', `You need ${formatWamp(WAMP.INVITE_COST)} to invite. Keep participating.`);
+      return;
+    }
+    spendInvite.mutate(undefined, {
+      onSuccess: (data) => {
+        showAlert('Invite code', data.code);
+      },
+    });
+  };
+
+  return (
+    <View style={styles.walletPanel}>
+      {/* Balance */}
+      <View style={styles.walletBalance}>
+        <Text style={styles.walletLabel}>WAMP</Text>
+        <Text style={styles.walletAmount}>{wallet.balance.toFixed(2)}</Text>
+        <Text style={styles.walletSub}>Earned {wallet.lifetime_earned.toFixed(2)} total</Text>
+      </View>
+
+      {/* Invite button */}
+      <TouchableOpacity
+        style={[styles.walletInviteBtn, !canInvite && styles.walletInviteBtnDisabled]}
+        onPress={handleInvite}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="person-add-outline" size={16} color={canInvite ? '#FFF' : Colors.textMuted} />
+        <Text style={[styles.walletInviteText, !canInvite && { color: Colors.textMuted }]}>
+          Invite ({formatWamp(WAMP.INVITE_COST)})
+        </Text>
+      </TouchableOpacity>
+
+      {/* How to earn */}
+      <View style={styles.walletEarnSection}>
+        <Text style={styles.walletEarnTitle}>How to earn</Text>
+        <View style={styles.walletEarnRow}><Text style={styles.walletEarnLabel}>Vote on Pulse</Text><Text style={styles.walletEarnAmt}>+{WAMP.EARN_VOTE} W</Text></View>
+        <View style={styles.walletEarnRow}><Text style={styles.walletEarnLabel}>Complete a Bridge</Text><Text style={styles.walletEarnAmt}>+{WAMP.EARN_BRIDGE_COMPLETE} W</Text></View>
+        <View style={styles.walletEarnRow}><Text style={styles.walletEarnLabel}>Post bridges 3+ groups</Text><Text style={styles.walletEarnAmt}>+{WAMP.EARN_POST_BRIDGING} W</Text></View>
+        <View style={styles.walletEarnRow}><Text style={styles.walletEarnLabel}>Daily login</Text><Text style={styles.walletEarnAmt}>+{WAMP.EARN_DAILY_LOGIN} W</Text></View>
+        <View style={styles.walletEarnRow}><Text style={styles.walletEarnLabel}>Invite accepted</Text><Text style={styles.walletEarnAmt}>+{WAMP.EARN_INVITE_ACCEPTED} W</Text></View>
+      </View>
+
+      {/* Recent transactions */}
+      <ScrollView style={styles.walletTxList}>
+        <Text style={styles.walletTxTitle}>Recent</Text>
+        {transactions.slice(0, 10).map((tx) => (
+          <View key={tx.id} style={styles.walletTxRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.walletTxLabel}>{txLabels[tx.type] ?? tx.type}</Text>
+              {tx.note && <Text style={styles.walletTxNote}>{tx.note}</Text>}
+            </View>
+            <Text style={[styles.walletTxAmt, tx.amount > 0 ? { color: Colors.agree } : { color: Colors.disagree }]}>
+              {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 function EventsPanel() {
   const events = [
     { id: 1, title: 'Community Potluck', where: 'Federal Hill', when: 'Sat Apr 18 · 5pm', going: 34 },
@@ -202,6 +287,7 @@ export function RightPanel() {
 
       {/* Content */}
       <View style={styles.content}>
+        {mode === 'wallet' && <WalletPanel />}
         {mode === 'art' && <ArtPanel />}
         {mode === 'events' && <EventsPanel />}
         {mode === 'chat' && <ChatPanel />}
@@ -280,6 +366,31 @@ const styles = StyleSheet.create({
   resultCard: { backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm, padding: 12, marginBottom: 8 },
   resultText: { fontSize: 13, color: Colors.textPrimary, lineHeight: 19 },
   researchEmpty: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', paddingTop: 40 },
+
+  // Wallet
+  walletPanel: { flex: 1 },
+  walletBalance: { alignItems: 'center', paddingVertical: 20, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border },
+  walletLabel: { fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 2, textTransform: 'uppercase' },
+  walletAmount: { fontSize: 36, fontWeight: '800', color: Colors.textPrimary, marginTop: 4 },
+  walletSub: { fontSize: 11, color: Colors.textMuted, marginTop: 4 },
+  walletInviteBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    marginHorizontal: 12, marginTop: 12, paddingVertical: 10, borderRadius: Radius.sm,
+    backgroundColor: Colors.primary,
+  },
+  walletInviteBtnDisabled: { backgroundColor: Colors.surfaceLight },
+  walletInviteText: { fontSize: 13, fontWeight: '600', color: '#FFF' },
+  walletEarnSection: { paddingHorizontal: 12, paddingTop: 16, gap: 6 },
+  walletEarnTitle: { fontSize: 12, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  walletEarnRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  walletEarnLabel: { fontSize: 12, color: Colors.textSecondary },
+  walletEarnAmt: { fontSize: 12, fontWeight: '600', color: Colors.agree },
+  walletTxList: { flex: 1, paddingHorizontal: 12, paddingTop: 16 },
+  walletTxTitle: { fontSize: 12, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+  walletTxRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.borderLight },
+  walletTxLabel: { fontSize: 12, fontWeight: '500', color: Colors.textPrimary },
+  walletTxNote: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
+  walletTxAmt: { fontSize: 13, fontWeight: '700' },
 
   // Events
   eventsPanel: { flex: 1 },
