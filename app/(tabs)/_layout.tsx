@@ -31,10 +31,11 @@ function Sidebar() {
   const pathname = usePathname();
   return (
     <View style={styles.sidebar}>
-      <Text style={styles.sidebarLogo}>
-        <Text style={{ color: Colors.textPrimary }}>HERE</Text>
-        <Text style={{ color: Colors.primary }}>Too</Text>
-      </Text>
+      <View style={styles.sidebarLogoWrap}>
+        <Text style={[styles.sidebarLogo, { color: '#FF0040', position: 'absolute', left: -1, top: -1, opacity: 0.6 }]}>HT</Text>
+        <Text style={[styles.sidebarLogo, { color: '#00FF88', position: 'absolute', left: 1, top: 1, opacity: 0.6 }]}>HT</Text>
+        <Text style={styles.sidebarLogo}>HT</Text>
+      </View>
       <View style={styles.sidebarNav}>
         {NAV.map((item) => {
           const active = pathname.includes(`/${item.name}`);
@@ -118,12 +119,12 @@ const styles = StyleSheet.create({
     paddingTop: 28,
     paddingHorizontal: 16,
   },
+  sidebarLogoWrap: { position: 'relative', marginBottom: 32, paddingHorizontal: 8, height: 30 },
   sidebarLogo: {
-    fontWeight: '800',
-    fontSize: 24,
-    letterSpacing: -0.5,
-    marginBottom: 32,
-    paddingHorizontal: 8,
+    fontWeight: '900',
+    fontSize: 28,
+    letterSpacing: 4,
+    color: Colors.textPrimary,
   },
   sidebarNav: { gap: 2 },
   navItem: {

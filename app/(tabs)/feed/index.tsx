@@ -29,10 +29,11 @@ export default function FeedScreen() {
     <SafeAreaView style={styles.safe} edges={isDesktop ? [] : ['top']}>
       {!isDesktop && (
         <View style={styles.header}>
-          <Text style={styles.logo}>
-            <Text style={{ color: Colors.textPrimary }}>HERE</Text>
-            <Text style={{ color: Colors.primary }}>Too</Text>
-          </Text>
+          <View style={{ position: 'relative' }}>
+            <Text style={[styles.logo, { color: '#FF0040', position: 'absolute', left: -1, top: -1, opacity: 0.6 }]}>HT</Text>
+            <Text style={[styles.logo, { color: '#00FF88', position: 'absolute', left: 1, top: 1, opacity: 0.6 }]}>HT</Text>
+            <Text style={styles.logo}>HT</Text>
+          </View>
           <TouchableOpacity style={styles.formatBtn} onPress={() => setFormatPickerOpen(true)}>
             <Text style={styles.formatBtnText}>{currentFormat?.label ?? 'View'}</Text>
           </TouchableOpacity>

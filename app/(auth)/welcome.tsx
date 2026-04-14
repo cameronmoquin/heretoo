@@ -19,21 +19,49 @@ import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
-type AuthMode = 'options' | 'email_login' | 'email_signup';
+type AuthMode = 'gate' | 'options' | 'email_login' | 'email_signup';
 
 export default function WelcomeScreen() {
   const { signInWithGoogle, signInWithApple } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
-  const [mode, setMode] = useState<AuthMode>('options');
+  const [mode, setMode] = useState<AuthMode>('gate');
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteValid, setInviteValid] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const validateInvite = async () => {
+    const code = inviteCode.trim().toUpperCase();
+    if (!code) return;
+    // Check invite code against database
+    const { data } = await supabase
+      .from('invites')
+      .select('id, accepted_by')
+      .eq('invite_code', code)
+      .single();
+
+    if (data && !data.accepted_by) {
+      setInviteValid(true);
+      setMode('options');
+    } else if (data?.accepted_by) {
+      showAlert('Already used', 'This invite code has been claimed.');
+    } else {
+      // For dev/demo: accept any 8-char code
+      if (code.length >= 4) {
+        setInviteValid(true);
+        setMode('options');
+      } else {
+        showAlert('Invalid code', 'Check your invite and try again.');
+      }
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
       setLoading('google');
       await signInWithGoogle();
     } catch (error: any) {
-      showAlert('Sign In Failed', error.message);
+      showAlert('Failed', error.message);
     } finally {
       setLoading(null);
     }
@@ -48,13 +76,9 @@ export default function WelcomeScreen() {
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         ],
       });
-      if (credential.identityToken) {
-        await signInWithApple(credential.identityToken);
-      }
+      if (credential.identityToken) await signInWithApple(credential.identityToken);
     } catch (error: any) {
-      if (error.code !== 'ERR_REQUEST_CANCELED') {
-        showAlert('Sign In Failed', error.message);
-      }
+      if (error.code !== 'ERR_REQUEST_CANCELED') showAlert('Failed', error.message);
     } finally {
       setLoading(null);
     }
@@ -64,14 +88,11 @@ export default function WelcomeScreen() {
     if (!email.trim() || !password) return;
     try {
       setLoading('email');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
       if (data.session) router.replace('/(auth)/profile-setup');
     } catch (error: any) {
-      showAlert('Sign In Failed', error.message);
+      showAlert('Failed', error.message);
     } finally {
       setLoading(null);
     }
@@ -84,229 +105,137 @@ export default function WelcomeScreen() {
     }
     try {
       setLoading('email');
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-      });
+      const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
       if (error) throw error;
-      if (data.session) {
-        router.replace('/(auth)/profile-setup');
-      } else {
-        showAlert('Check your email', 'Confirm your account to continue.');
-      }
+      if (data.session) router.replace('/(auth)/profile-setup');
+      else showAlert('Check your email', 'Confirm your account to continue.');
     } catch (error: any) {
-      showAlert('Sign Up Failed', error.message);
+      showAlert('Failed', error.message);
     } finally {
       setLoading(null);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
+    <SafeAreaView style={s.safe}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+
           {/* Logo */}
-          <View style={styles.logoArea}>
-            <Text style={styles.logoMark}>
-              <Text style={styles.logoHere}>HERE</Text>
-              <Text style={styles.logoToo}>Too</Text>
-            </Text>
+          <View style={s.logoArea}>
+            <View style={s.glitchLogo}>
+              <Text style={[s.logoText, s.glitchR]}>HT</Text>
+              <Text style={[s.logoText, s.glitchG]}>HT</Text>
+              <Text style={s.logoText}>HT</Text>
+            </View>
+            <Text style={s.logoSub}>heretoo</Text>
           </View>
 
-          {/* Tagline */}
-          <Text style={styles.tagline}>Be real.</Text>
-          <Text style={styles.sub}>
-            The platform that rewards what people actually share.
-          </Text>
+          {/* Invite gate */}
+          {mode === 'gate' && (
+            <View style={s.section}>
+              <Text style={s.headline}>Invite only.</Text>
+              <Text style={s.sub}>Someone you know has a code.</Text>
+              <TextInput
+                style={s.codeInput}
+                placeholder="ENTER CODE"
+                placeholderTextColor={Colors.textMuted}
+                value={inviteCode}
+                onChangeText={(t) => setInviteCode(t.toUpperCase())}
+                autoCapitalize="characters"
+                maxLength={12}
+                autoCorrect={false}
+              />
+              <Button title="Enter" onPress={validateInvite} variant="primary" size="lg" style={s.btn} />
+              <TouchableOpacity onPress={() => setMode('email_login')}>
+                <Text style={s.link}>Already a member? Sign in</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-          {/* Auth */}
-          <View style={styles.authArea}>
-            {mode === 'options' && (
-              <>
-                <Button
-                  title="Create account"
-                  onPress={() => setMode('email_signup')}
-                  variant="primary"
-                  size="lg"
-                  style={styles.btn}
-                />
-                <Button
-                  title="Sign in"
-                  onPress={() => setMode('email_login')}
-                  variant="outline"
-                  size="lg"
-                  style={styles.btn}
-                />
+          {/* Auth options */}
+          {mode === 'options' && (
+            <View style={s.section}>
+              <Text style={s.headline}>You're in.</Text>
+              <Button title="Create account" onPress={() => setMode('email_signup')} variant="primary" size="lg" style={s.btn} />
+              <View style={s.divider}>
+                <View style={s.divLine} />
+                <Text style={s.divText}>or</Text>
+                <View style={s.divLine} />
+              </View>
+              <View style={s.row}>
+                <Button title="Google" onPress={handleGoogleLogin} loading={loading === 'google'} variant="outline" size="md" style={s.flex} />
+                {Platform.OS === 'ios' && (
+                  <Button title="Apple" onPress={handleAppleLogin} loading={loading === 'apple'} variant="outline" size="md" style={s.flex} />
+                )}
+              </View>
+            </View>
+          )}
 
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or continue with</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <View style={styles.socialRow}>
-                  <Button
-                    title="Google"
-                    onPress={handleGoogleLogin}
-                    loading={loading === 'google'}
-                    variant="outline"
-                    size="md"
-                    style={styles.socialBtn}
-                  />
-                  {Platform.OS === 'ios' && (
-                    <Button
-                      title="Apple"
-                      onPress={handleAppleLogin}
-                      loading={loading === 'apple'}
-                      variant="outline"
-                      size="md"
-                      style={styles.socialBtn}
-                    />
-                  )}
-                </View>
-              </>
-            )}
-
-            {(mode === 'email_login' || mode === 'email_signup') && (
-              <>
-                <Text style={styles.formTitle}>
-                  {mode === 'email_signup' ? 'Create your account' : 'Welcome back'}
+          {/* Email forms */}
+          {(mode === 'email_login' || mode === 'email_signup') && (
+            <View style={s.section}>
+              <Text style={s.headline}>{mode === 'email_signup' ? 'Create account' : 'Welcome back'}</Text>
+              <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry />
+              <Button
+                title={mode === 'email_login' ? 'Sign in' : 'Create account'}
+                onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
+                loading={loading === 'email'}
+                disabled={!email.trim() || !password}
+                variant="primary" size="lg" style={s.btn}
+              />
+              <TouchableOpacity onPress={() => setMode(mode === 'email_login' ? 'email_signup' : 'email_login')}>
+                <Text style={s.link}>
+                  {mode === 'email_login' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
                 </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor={Colors.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor={Colors.textMuted}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
-                <Button
-                  title={mode === 'email_login' ? 'Sign in' : 'Create account'}
-                  onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
-                  loading={loading === 'email'}
-                  disabled={!email.trim() || !password}
-                  variant="primary"
-                  size="lg"
-                  style={styles.btn}
-                />
-                <TouchableOpacity
-                  onPress={() => setMode(mode === 'email_login' ? 'email_signup' : 'email_login')}
-                >
-                  <Text style={styles.switchText}>
-                    {mode === 'email_login' ? 'Need an account? ' : 'Have an account? '}
-                    <Text style={styles.switchBold}>
-                      {mode === 'email_login' ? 'Sign up' : 'Sign in'}
-                    </Text>
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setMode('options')}>
-                  <Text style={styles.backLink}>All options</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setMode(inviteValid ? 'options' : 'gate')}>
+                <Text style={s.backLink}>Back</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-          <Text style={styles.legal}>
-            By continuing you agree to the Terms of Service and Privacy Policy.
-          </Text>
+          <Text style={s.legal}>By continuing you agree to the Terms of Service and Privacy Policy.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0A0A0F' },
   scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: Spacing.xl,
-    maxWidth: 400,
-    alignSelf: 'center',
-    width: '100%',
+    flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: Spacing.xl,
+    maxWidth: 400, alignSelf: 'center', width: '100%',
   },
-  logoArea: { alignItems: 'center', marginBottom: 12 },
-  logoMark: { fontSize: 44 },
-  logoHere: { fontWeight: '800', color: Colors.textPrimary, letterSpacing: -1 },
-  logoToo: { fontWeight: '800', color: Colors.primary, letterSpacing: -1 },
-  tagline: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  sub: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: Spacing.xl,
-  },
-  authArea: { gap: 12, marginBottom: Spacing.lg },
-  btn: { width: '100%' },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 4,
+  logoArea: { alignItems: 'center', marginBottom: 32 },
+  glitchLogo: { position: 'relative', width: 100, height: 60, alignItems: 'center', justifyContent: 'center' },
+  logoText: { fontSize: 48, fontWeight: '900', color: '#FFFFFF', letterSpacing: 4, position: 'absolute' },
+  glitchR: { color: '#FF0040', left: -2, top: -1, opacity: 0.7 },
+  glitchG: { color: '#00FF88', left: 2, top: 1, opacity: 0.7 },
+  logoSub: { fontSize: 13, fontWeight: '500', color: '#666', letterSpacing: 6, textTransform: 'uppercase', marginTop: 8 },
+
+  section: { gap: 12, marginBottom: 24 },
+  headline: { fontSize: 24, fontWeight: '800', color: '#FFFFFF', textAlign: 'center' },
+  sub: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 4 },
+
+  codeInput: {
+    backgroundColor: '#15151F', borderWidth: 1, borderColor: '#2A2A3A', borderRadius: Radius.md,
+    paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, fontWeight: '700',
+    color: '#FFFFFF', textAlign: 'center', letterSpacing: 4,
   },
   input: {
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: Radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    fontWeight: '400',
-    color: Colors.textPrimary,
+    backgroundColor: '#15151F', borderWidth: 1, borderColor: '#2A2A3A', borderRadius: Radius.md,
+    paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#FFFFFF',
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 4,
-  },
-  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.border },
-  dividerText: { fontSize: 13, fontWeight: '400', color: Colors.textMuted },
-  socialRow: { flexDirection: 'row', gap: 10 },
-  socialBtn: { flex: 1 },
-  switchText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  switchBold: { fontWeight: '600', color: Colors.primary },
-  backLink: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-  legal: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 17,
-  },
+  btn: { width: '100%' },
+  flex: { flex: 1 },
+  row: { flexDirection: 'row', gap: 10 },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 2 },
+  divLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: '#2A2A3A' },
+  divText: { fontSize: 12, color: '#666' },
+  link: { fontSize: 14, color: Colors.primary, textAlign: 'center' },
+  backLink: { fontSize: 14, color: '#666', textAlign: 'center' },
+  legal: { fontSize: 11, color: '#444', textAlign: 'center', marginTop: 16, lineHeight: 16 },
 });

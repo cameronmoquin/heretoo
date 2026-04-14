@@ -43,7 +43,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       {profile?.is_suspended && (
         <View style={{ backgroundColor: Colors.background }}>
           <SuspendedBanner reason={profile.suspension_reason ?? undefined} />

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type PanelMode = 'art' | 'chat' | 'dm' | 'research';
+export type PanelMode = 'art' | 'chat' | 'dm' | 'research' | 'events';
 
 interface PanelState {
   mode: PanelMode;

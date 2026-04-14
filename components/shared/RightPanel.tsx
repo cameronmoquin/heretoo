@@ -7,6 +7,7 @@ import { usePanelStore, type PanelMode } from '../../stores/panelStore';
 
 const TABS: { mode: PanelMode; icon: string; label: string }[] = [
   { mode: 'art', icon: 'image-outline', label: 'Art' },
+  { mode: 'events', icon: 'calendar-outline', label: 'Events' },
   { mode: 'chat', icon: 'chatbubble-outline', label: 'Chat' },
   { mode: 'dm', icon: 'mail-outline', label: 'DM' },
   { mode: 'research', icon: 'search-outline', label: 'Research' },
@@ -148,6 +149,35 @@ function ResearchPanel() {
   );
 }
 
+function EventsPanel() {
+  const events = [
+    { id: 1, title: 'Community Potluck', where: 'Federal Hill', when: 'Sat Apr 18 · 5pm', going: 34 },
+    { id: 2, title: 'Open Mic Night', where: 'Seven Petals', when: 'Thu Apr 17 · 7pm', going: 22 },
+    { id: 3, title: 'Bridge Walk', where: 'India Point Park', when: 'Sun Apr 19 · 10am', going: 18 },
+    { id: 4, title: 'Maker Market', where: 'Westminster St', when: 'Sat Apr 25 · 9am', going: 67 },
+    { id: 5, title: 'Neighborhood Cleanup', where: 'Atwells Ave', when: 'Sun Apr 26 · 8am', going: 12 },
+  ];
+  return (
+    <View style={styles.eventsPanel}>
+      <Text style={styles.panelTitle}>Events</Text>
+      <ScrollView contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingBottom: 20 }}>
+        {events.map((e) => (
+          <TouchableOpacity key={e.id} style={styles.eventCard}>
+            <View style={styles.eventDate}>
+              <Text style={styles.eventDateText}>{e.when.split(' · ')[0].split(' ').slice(1).join(' ')}</Text>
+            </View>
+            <View style={styles.eventInfo}>
+              <Text style={styles.eventTitle}>{e.title}</Text>
+              <Text style={styles.eventMeta}>{e.where} · {e.when.split(' · ')[1]}</Text>
+              <Text style={styles.eventGoing}>{e.going} going</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 export function RightPanel() {
   const { mode, setMode } = usePanelStore();
 
@@ -173,6 +203,7 @@ export function RightPanel() {
       {/* Content */}
       <View style={styles.content}>
         {mode === 'art' && <ArtPanel />}
+        {mode === 'events' && <EventsPanel />}
         {mode === 'chat' && <ChatPanel />}
         {mode === 'dm' && <DMPanel />}
         {mode === 'research' && <ResearchPanel />}
@@ -249,4 +280,14 @@ const styles = StyleSheet.create({
   resultCard: { backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm, padding: 12, marginBottom: 8 },
   resultText: { fontSize: 13, color: Colors.textPrimary, lineHeight: 19 },
   researchEmpty: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', paddingTop: 40 },
+
+  // Events
+  eventsPanel: { flex: 1 },
+  eventCard: { flexDirection: 'row', gap: 10, backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm, padding: 10, borderWidth: 1, borderColor: Colors.border },
+  eventDate: { width: 44, height: 44, borderRadius: 8, backgroundColor: Colors.primaryFaint, alignItems: 'center', justifyContent: 'center' },
+  eventDateText: { fontSize: 11, fontWeight: '700', color: Colors.primary, textAlign: 'center' },
+  eventInfo: { flex: 1, gap: 2 },
+  eventTitle: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  eventMeta: { fontSize: 11, color: Colors.textSecondary },
+  eventGoing: { fontSize: 11, color: Colors.primary, fontWeight: '500' },
 });
