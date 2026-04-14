@@ -1,0 +1,252 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../../constants/colors';
+import { Spacing, Radius } from '../../constants/design';
+import { usePanelStore, type PanelMode } from '../../stores/panelStore';
+
+const TABS: { mode: PanelMode; icon: string; label: string }[] = [
+  { mode: 'art', icon: 'image-outline', label: 'Art' },
+  { mode: 'chat', icon: 'chatbubble-outline', label: 'Chat' },
+  { mode: 'dm', icon: 'mail-outline', label: 'DM' },
+  { mode: 'research', icon: 'search-outline', label: 'Research' },
+];
+
+const ARTWORKS = [
+  { id: 1, url: 'https://picsum.photos/seed/art1/400/500', title: 'Untitled I' },
+  { id: 2, url: 'https://picsum.photos/seed/art2/400/500', title: 'Untitled II' },
+  { id: 3, url: 'https://picsum.photos/seed/art3/400/500', title: 'Untitled III' },
+  { id: 4, url: 'https://picsum.photos/seed/art4/400/500', title: 'Untitled IV' },
+];
+
+function ArtPanel() {
+  const [artIndex, setArtIndex] = useState(0);
+  const art = ARTWORKS[artIndex % ARTWORKS.length];
+  return (
+    <View style={styles.artPanel}>
+      <Image source={{ uri: art.url }} style={styles.artImage} resizeMode="cover" />
+      <View style={styles.artFooter}>
+        <Text style={styles.artTitle}>{art.title}</Text>
+        <TouchableOpacity onPress={() => setArtIndex((i) => i + 1)}>
+          <Ionicons name="shuffle-outline" size={18} color={Colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function ChatPanel() {
+  const { chatMessages, addChatMessage } = usePanelStore();
+  const [text, setText] = useState('');
+
+  const send = () => {
+    if (!text.trim()) return;
+    addChatMessage({ author: 'You', text: text.trim() });
+    setText('');
+  };
+
+  return (
+    <View style={styles.chatPanel}>
+      <Text style={styles.panelTitle}>Live Chat</Text>
+      <ScrollView style={styles.chatScroll} contentContainerStyle={styles.chatContent}>
+        {chatMessages.map((msg) => (
+          <View key={msg.id} style={styles.chatMsg}>
+            <Text style={styles.chatAuthor}>{msg.author}</Text>
+            <Text style={styles.chatText}>{msg.text}</Text>
+            <Text style={styles.chatTime}>{msg.time}</Text>
+          </View>
+        ))}
+      </ScrollView>
+      <View style={styles.chatInputRow}>
+        <TextInput
+          style={styles.chatInput}
+          value={text}
+          onChangeText={setText}
+          placeholder="Say something..."
+          placeholderTextColor={Colors.textMuted}
+          onSubmitEditing={send}
+          returnKeyType="send"
+        />
+        <TouchableOpacity onPress={send} style={styles.chatSendBtn}>
+          <Ionicons name="arrow-up" size={18} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function DMPanel() {
+  const contacts = [
+    { name: 'Sandy Corvo', last: 'The knife thing was a metaphor.', time: '3h' },
+    { name: 'Vega', last: 'I found something in the case file.', time: '5h' },
+    { name: 'Dillon Marsh', last: 'The alpacas are confirmed for Saturday.', time: '1d' },
+    { name: 'Jude', last: 'Pip says hello. He does not but I am being polite.', time: '2d' },
+  ];
+  return (
+    <View style={styles.dmPanel}>
+      <Text style={styles.panelTitle}>Messages</Text>
+      {contacts.map((c, i) => (
+        <TouchableOpacity key={i} style={styles.dmItem}>
+          <View style={styles.dmAvatar}>
+            <Text style={styles.dmInitial}>{c.name[0]}</Text>
+          </View>
+          <View style={styles.dmContent}>
+            <View style={styles.dmHeader}>
+              <Text style={styles.dmName}>{c.name}</Text>
+              <Text style={styles.dmTime}>{c.time}</Text>
+            </View>
+            <Text style={styles.dmLast} numberOfLines={1}>{c.last}</Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+function ResearchPanel() {
+  const { researchQuery, setResearchQuery } = usePanelStore();
+  const [results, setResults] = useState<string[]>([]);
+
+  const search = () => {
+    if (!researchQuery.trim()) return;
+    setResults([
+      'Wampum was used as a record of agreements between nations, not as currency. The colonial conversion to money happened in the 1600s.',
+      'Federal Hill, Providence: historically Italian-American neighborhood. Triple-decker houses built 1890-1930.',
+      'The Alsos Mission (1943-1945) was a secret US military effort to assess Axis nuclear research, led by Boris Pash with Samuel Goudsmit as scientific lead.',
+    ]);
+  };
+
+  return (
+    <View style={styles.researchPanel}>
+      <Text style={styles.panelTitle}>Research</Text>
+      <Text style={styles.researchSub}>Fact-check. Dig deeper.</Text>
+      <View style={styles.researchInputRow}>
+        <TextInput
+          style={styles.researchInput}
+          value={researchQuery}
+          onChangeText={setResearchQuery}
+          placeholder="Look something up..."
+          placeholderTextColor={Colors.textMuted}
+          onSubmitEditing={search}
+          returnKeyType="search"
+        />
+        <TouchableOpacity onPress={search} style={styles.researchBtn}>
+          <Ionicons name="search" size={16} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.researchResults}>
+        {results.map((r, i) => (
+          <View key={i} style={styles.resultCard}>
+            <Text style={styles.resultText}>{r}</Text>
+          </View>
+        ))}
+        {results.length === 0 && (
+          <Text style={styles.researchEmpty}>Search for a topic, name, or claim.</Text>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+export function RightPanel() {
+  const { mode, setMode } = usePanelStore();
+
+  return (
+    <View style={styles.container}>
+      {/* Mode tabs */}
+      <View style={styles.tabRow}>
+        {TABS.map((tab) => {
+          const active = mode === tab.mode;
+          return (
+            <TouchableOpacity
+              key={tab.mode}
+              style={[styles.tab, active && styles.tabActive]}
+              onPress={() => setMode(tab.mode)}
+            >
+              <Ionicons name={tab.icon as any} size={16} color={active ? Colors.primary : Colors.textMuted} />
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{tab.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        {mode === 'art' && <ArtPanel />}
+        {mode === 'chat' && <ChatPanel />}
+        {mode === 'dm' && <DMPanel />}
+        {mode === 'research' && <ResearchPanel />}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: Colors.border,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    paddingHorizontal: 4,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 6,
+    margin: 4,
+  },
+  tabActive: { backgroundColor: Colors.primaryFaint },
+  tabLabel: { fontSize: 11, fontWeight: '500', color: Colors.textMuted },
+  tabLabelActive: { color: Colors.primary, fontWeight: '600' },
+  content: { flex: 1 },
+
+  // Art
+  artPanel: { flex: 1, padding: 12 },
+  artImage: { flex: 1, borderRadius: 10, backgroundColor: Colors.surfaceLight },
+  artFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10 },
+  artTitle: { fontSize: 13, fontWeight: '500', color: Colors.textSecondary },
+
+  // Chat
+  chatPanel: { flex: 1 },
+  panelTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary, padding: 12, paddingBottom: 8 },
+  chatScroll: { flex: 1 },
+  chatContent: { paddingHorizontal: 12, gap: 10, paddingBottom: 10 },
+  chatMsg: { gap: 2 },
+  chatAuthor: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+  chatText: { fontSize: 13, color: Colors.textPrimary, lineHeight: 18 },
+  chatTime: { fontSize: 10, color: Colors.textMuted },
+  chatInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border },
+  chatInput: { flex: 1, backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: Colors.textPrimary },
+  chatSendBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+
+  // DM
+  dmPanel: { flex: 1 },
+  dmItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.borderLight },
+  dmAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceLight, alignItems: 'center', justifyContent: 'center' },
+  dmInitial: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  dmContent: { flex: 1, gap: 2 },
+  dmHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dmName: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  dmTime: { fontSize: 11, color: Colors.textMuted },
+  dmLast: { fontSize: 12, color: Colors.textMuted },
+
+  // Research
+  researchPanel: { flex: 1, padding: 12, gap: 8 },
+  researchSub: { fontSize: 12, color: Colors.textMuted },
+  researchInputRow: { flexDirection: 'row', gap: 8 },
+  researchInput: { flex: 1, backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: Colors.textPrimary },
+  researchBtn: { width: 34, height: 34, borderRadius: Radius.sm, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  researchResults: { flex: 1 },
+  resultCard: { backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm, padding: 12, marginBottom: 8 },
+  resultText: { fontSize: 13, color: Colors.textPrimary, lineHeight: 19 },
+  researchEmpty: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', paddingTop: 40 },
+});
