@@ -35,7 +35,7 @@ export function useComments(postId: string) {
         .order('created_at', { ascending: true });
       if (error) throw error;
 
-      if (!data || data.length === 0) return getCommentsForPost(postId);
+      if (!data || data.length === 0) return [];
 
       // Nest replies under parents
       const topLevel: Comment[] = [];

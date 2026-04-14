@@ -105,8 +105,8 @@ export default function PostDetailScreen() {
         `)
         .eq('id', postId)
         .single();
-      if (error) throw error;
-      if (!data) return MOCK_POSTS.find((p) => p.id === postId) ?? null;
+      if (error) return null;
+      return data;
       return data;
     },
   });
