@@ -24,9 +24,15 @@ import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
 type Step = 'name' | 'age' | 'location' | 'interests' | 'ads' | 'story';
 
 export default function ProfileSetupScreen() {
-  const { createProfile, user } = useAuth();
+  const { createProfile, user, hasCompletedSetup } = useAuth();
   const [step, setStep] = useState<Step>('name');
   const [loading, setLoading] = useState(false);
+
+  // If profile already exists, skip setup entirely
+  if (hasCompletedSetup) {
+    router.replace('/(tabs)/feed');
+    return null;
+  }
 
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');

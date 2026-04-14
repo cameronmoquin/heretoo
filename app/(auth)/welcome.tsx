@@ -20,21 +20,39 @@ import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
-type AuthMode = 'gate' | 'options' | 'email_login' | 'email_signup';
+type Mode = 'choice' | 'signin' | 'signup_code' | 'signup_form';
 
 export default function WelcomeScreen() {
   const { signInWithGoogle, signInWithApple } = useAuth();
+  const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState<string | null>(null);
-  const [mode, setMode] = useState<AuthMode>('gate');
   const [inviteCode, setInviteCode] = useState('');
-  const [inviteValid, setInviteValid] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const validateInvite = async () => {
+  // ── Sign in (existing user) ──
+  const handleSignIn = async () => {
+    if (!email.trim() || !password) return;
+    try {
+      setLoading('email');
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) throw error;
+      // Auth listener in useAuth handles the redirect
+    } catch (error: any) {
+      showAlert('Failed', error.message);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // ── Validate invite code ──
+  const validateCode = async () => {
     const code = inviteCode.trim().toUpperCase();
-    if (!code) return;
-    // Check invite code against database
+    if (!code || code.length < 4) {
+      showAlert('Invalid', 'Check your code and try again.');
+      return;
+    }
+    // Check DB first
     const { data } = await supabase
       .from('invites')
       .select('id, accepted_by')
@@ -42,64 +60,18 @@ export default function WelcomeScreen() {
       .single();
 
     if (data && !data.accepted_by) {
-      setInviteValid(true);
-      setMode('options');
+      setMode('signup_form');
     } else if (data?.accepted_by) {
-      showAlert('Already used', 'This invite code has been claimed.');
+      showAlert('Used', 'This code has already been claimed.');
     } else {
-      // For dev/demo: accept any 8-char code
-      if (code.length >= 4) {
-        setInviteValid(true);
-        setMode('options');
-      } else {
-        showAlert('Invalid code', 'Check your invite and try again.');
-      }
+      // Demo bypass: any 4+ char code works
+      if (code.length >= 4) setMode('signup_form');
+      else showAlert('Invalid', 'Check your code.');
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading('google');
-      await signInWithGoogle();
-    } catch (error: any) {
-      showAlert('Failed', error.message);
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    try {
-      setLoading('apple');
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-        ],
-      });
-      if (credential.identityToken) await signInWithApple(credential.identityToken);
-    } catch (error: any) {
-      if (error.code !== 'ERR_REQUEST_CANCELED') showAlert('Failed', error.message);
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleEmailLogin = async () => {
-    if (!email.trim() || !password) return;
-    try {
-      setLoading('email');
-      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) throw error;
-      if (data.session) router.replace('/(auth)/profile-setup');
-    } catch (error: any) {
-      showAlert('Failed', error.message);
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleEmailSignup = async () => {
+  // ── Create account (new user) ──
+  const handleSignUp = async () => {
     if (!email.trim() || !password || password.length < 6) {
       showAlert('Error', 'Email and password (6+ characters) required.');
       return;
@@ -109,7 +81,7 @@ export default function WelcomeScreen() {
       const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
       if (error) throw error;
       if (data.session) {
-        // Link invite code to the new account
+        // Link invite code
         if (inviteCode && !DEV_MODE) {
           supabase.from('invites').update({
             accepted_by: data.session.user.id,
@@ -117,12 +89,31 @@ export default function WelcomeScreen() {
           }).eq('invite_code', inviteCode.trim().toUpperCase()).then(() => {});
         }
         router.replace('/(auth)/profile-setup');
-      } else showAlert('Check your email', 'Confirm your account to continue.');
+      } else {
+        showAlert('Check email', 'Confirm your account to continue.');
+      }
     } catch (error: any) {
       showAlert('Failed', error.message);
     } finally {
       setLoading(null);
     }
+  };
+
+  const handleGoogle = async () => {
+    try { setLoading('google'); await signInWithGoogle(); }
+    catch (e: any) { showAlert('Failed', e.message); }
+    finally { setLoading(null); }
+  };
+
+  const handleApple = async () => {
+    try {
+      setLoading('apple');
+      const cred = await AppleAuthentication.signInAsync({
+        requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL, AppleAuthentication.AppleAuthenticationScope.FULL_NAME],
+      });
+      if (cred.identityToken) await signInWithApple(cred.identityToken);
+    } catch (e: any) { if (e.code !== 'ERR_REQUEST_CANCELED') showAlert('Failed', e.message); }
+    finally { setLoading(null); }
   };
 
   return (
@@ -140,10 +131,42 @@ export default function WelcomeScreen() {
             <Text style={s.logoSub}>heretoo</Text>
           </View>
 
-          {/* Invite gate */}
-          {mode === 'gate' && (
+          {/* ── Step 1: Choose ── */}
+          {mode === 'choice' && (
             <View style={s.section}>
-              <Text style={s.headline}>Invite only.</Text>
+              <Button title="Sign in" onPress={() => setMode('signin')} variant="primary" size="lg" style={s.btn} />
+              <Button title="Create account" onPress={() => setMode('signup_code')} variant="outline" size="lg" style={s.btn} />
+            </View>
+          )}
+
+          {/* ── Sign in ── */}
+          {mode === 'signin' && (
+            <View style={s.section}>
+              <Text style={s.headline}>Welcome back</Text>
+              <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" returnKeyType="next" />
+              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry returnKeyType="go" onSubmitEditing={handleSignIn} />
+              <Button title="Sign in" onPress={handleSignIn} loading={loading === 'email'} disabled={!email.trim() || !password} variant="primary" size="lg" style={s.btn} />
+
+              <View style={s.divider}>
+                <View style={s.divLine} />
+                <Text style={s.divText}>or</Text>
+                <View style={s.divLine} />
+              </View>
+              <View style={s.row}>
+                <Button title="Google" onPress={handleGoogle} loading={loading === 'google'} variant="outline" size="md" style={s.flex} />
+                {Platform.OS === 'ios' && <Button title="Apple" onPress={handleApple} loading={loading === 'apple'} variant="outline" size="md" style={s.flex} />}
+              </View>
+
+              <TouchableOpacity onPress={() => setMode('choice')}>
+                <Text style={s.backLink}>Back</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ── Create account: enter code ── */}
+          {mode === 'signup_code' && (
+            <View style={s.section}>
+              <Text style={s.headline}>Invite only</Text>
               <Text style={s.sub}>Someone you know has a code.</Text>
               <TextInput
                 style={s.codeInput}
@@ -154,54 +177,24 @@ export default function WelcomeScreen() {
                 autoCapitalize="characters"
                 maxLength={12}
                 autoCorrect={false}
-                onSubmitEditing={validateInvite}
+                onSubmitEditing={validateCode}
                 returnKeyType="go"
               />
-              <Button title="Enter" onPress={validateInvite} variant="primary" size="lg" style={s.btn} />
-              <TouchableOpacity onPress={() => setMode('email_login')}>
-                <Text style={s.link}>Already a member? Sign in</Text>
+              <Button title="Enter" onPress={validateCode} variant="primary" size="lg" style={s.btn} />
+              <TouchableOpacity onPress={() => setMode('choice')}>
+                <Text style={s.backLink}>Back</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Auth options */}
-          {mode === 'options' && (
+          {/* ── Create account: email + password ── */}
+          {mode === 'signup_form' && (
             <View style={s.section}>
-              <Text style={s.headline}>You're in.</Text>
-              <Button title="Create account" onPress={() => setMode('email_signup')} variant="primary" size="lg" style={s.btn} />
-              <View style={s.divider}>
-                <View style={s.divLine} />
-                <Text style={s.divText}>or</Text>
-                <View style={s.divLine} />
-              </View>
-              <View style={s.row}>
-                <Button title="Google" onPress={handleGoogleLogin} loading={loading === 'google'} variant="outline" size="md" style={s.flex} />
-                {Platform.OS === 'ios' && (
-                  <Button title="Apple" onPress={handleAppleLogin} loading={loading === 'apple'} variant="outline" size="md" style={s.flex} />
-                )}
-              </View>
-            </View>
-          )}
-
-          {/* Email forms */}
-          {(mode === 'email_login' || mode === 'email_signup') && (
-            <View style={s.section}>
-              <Text style={s.headline}>{mode === 'email_signup' ? 'Create account' : 'Welcome back'}</Text>
+              <Text style={s.headline}>Create account</Text>
               <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" returnKeyType="next" />
-              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry returnKeyType="go" onSubmitEditing={mode === 'email_login' ? handleEmailLogin : handleEmailSignup} />
-              <Button
-                title={mode === 'email_login' ? 'Sign in' : 'Create account'}
-                onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
-                loading={loading === 'email'}
-                disabled={!email.trim() || !password}
-                variant="primary" size="lg" style={s.btn}
-              />
-              <TouchableOpacity onPress={() => setMode(mode === 'email_login' ? 'email_signup' : 'email_login')}>
-                <Text style={s.link}>
-                  {mode === 'email_login' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setMode(inviteValid ? 'options' : 'gate')}>
+              <TextInput style={s.input} placeholder="Password (6+ characters)" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry returnKeyType="go" onSubmitEditing={handleSignUp} />
+              <Button title="Create account" onPress={handleSignUp} loading={loading === 'email'} disabled={!email.trim() || !password} variant="primary" size="lg" style={s.btn} />
+              <TouchableOpacity onPress={() => setMode('signup_code')}>
                 <Text style={s.backLink}>Back</Text>
               </TouchableOpacity>
             </View>
@@ -226,11 +219,9 @@ const s = StyleSheet.create({
   glitchR: { color: '#FF0040', left: -2, top: -1, opacity: 0.7 },
   glitchG: { color: '#00FF88', left: 2, top: 1, opacity: 0.7 },
   logoSub: { fontSize: 13, fontWeight: '500', color: '#666', letterSpacing: 6, textTransform: 'uppercase', marginTop: 8 },
-
   section: { gap: 12, marginBottom: 24 },
-  headline: { fontSize: 24, fontWeight: '800', color: '#FFFFFF', textAlign: 'center' },
+  headline: { fontSize: 22, fontWeight: '700', color: '#FFFFFF', textAlign: 'center' },
   sub: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 4 },
-
   codeInput: {
     backgroundColor: '#15151F', borderWidth: 1, borderColor: '#2A2A3A', borderRadius: Radius.md,
     paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, fontWeight: '700',
@@ -246,7 +237,6 @@ const s = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 2 },
   divLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: '#2A2A3A' },
   divText: { fontSize: 12, color: '#666' },
-  link: { fontSize: 14, color: Colors.primary, textAlign: 'center' },
-  backLink: { fontSize: 14, color: '#666', textAlign: 'center' },
+  backLink: { fontSize: 14, color: '#666', textAlign: 'center', paddingVertical: 8 },
   legal: { fontSize: 11, color: '#444', textAlign: 'center', marginTop: 16, lineHeight: 16 },
 });
