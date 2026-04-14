@@ -81,8 +81,6 @@ export function useBridgeSessions() {
         })) as BridgeSession[];
       }
 
-      // Fall back to mock if empty
-      if (sessions.length === 0) return MOCK_BRIDGE_SESSIONS;
       return sessions as BridgeSession[];
     },
     enabled: !!userId,
@@ -101,8 +99,7 @@ export function useBridgeMessages(sessionId: string) {
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      if (!data || data.length === 0) return MOCK_BRIDGE_MESSAGES[sessionId] ?? [];
-      return data as BridgeMessage[];
+      return (data ?? []) as BridgeMessage[];
     },
     enabled: !!sessionId,
   });
