@@ -1,58 +1,57 @@
 /**
- * Bell curve center palette.
- * Blue is the most universally liked color across every demographic.
- * Warm white background. Soft shadows. Nothing that draws attention to itself.
- * The UI disappears. The content stays.
+ * Retro digital glitch palette.
+ * Dark base. Neon accents. CRT energy.
+ * Clean enough to use. Weird enough to remember.
  */
 
 export const Colors = {
   // Brand
   brandIvory: '#F0EEE8',
   brandGold: '#E8C97A',
-  brandDark: '#0C0C0F',
+  brandDark: '#0A0A0F',
 
-  // Primary — confident calm blue. The color every demo agrees on.
-  primary: '#3478F6',
-  primaryDark: '#2563EB',
-  primaryLight: '#60A5FA',
-  primaryFaint: 'rgba(52, 120, 246, 0.06)',
+  // Primary — electric blue with a hint of purple
+  primary: '#4F6EFF',
+  primaryDark: '#3B5AE8',
+  primaryLight: '#7B93FF',
+  primaryFaint: 'rgba(79, 110, 255, 0.08)',
 
-  // Neutrals — warm white, never harsh
-  background: '#FFFFFF',
-  surface: '#FFFFFF',
-  surfaceLight: '#F5F5F7',
-  border: '#E8E8ED',
-  borderLight: '#F0F0F5',
-  textPrimary: '#1C1C1E',
-  textSecondary: '#636366',
-  textMuted: '#AEAEB2',
+  // Background — near-black with blue undertone
+  background: '#0A0A0F',
+  surface: '#12121A',
+  surfaceLight: '#1A1A25',
+  border: '#252535',
+  borderLight: '#1E1E2A',
+  textPrimary: '#E8E8F0',
+  textSecondary: '#8888A0',
+  textMuted: '#555568',
 
-  // Engagement — muted, not screaming
-  agree: '#34C759',
-  disagree: '#FF3B30',
-  important: '#FF9500',
-  bridge: '#5856D6',
-  share: '#AF52DE',
+  // Neon accents
+  agree: '#00FF88',
+  disagree: '#FF0040',
+  important: '#FFB800',
+  bridge: '#00D4FF',
+  share: '#BF5AF2',
 
-  // Bridge badges
-  badgeLocal: '#AEAEB2',
-  badgeReaching: '#5856D6',
-  badgeBridging: '#34C759',
-  badgeCommonGround: '#FF9500',
+  // Badges
+  badgeLocal: '#555568',
+  badgeReaching: '#00D4FF',
+  badgeBridging: '#00FF88',
+  badgeCommonGround: '#FFB800',
 
   // Clusters
   clusters: {
-    pragmatic_center: '#8E8E93',
-    community_focused: '#3478F6',
-    tradition_minded: '#A2845E',
-    reform_oriented: '#34C759',
-    liberty_focused: '#FF9500',
-    unclassified: '#D1D1D6',
+    pragmatic_center: '#8888A0',
+    community_focused: '#4F6EFF',
+    tradition_minded: '#C4622D',
+    reform_oriented: '#00FF88',
+    liberty_focused: '#FFB800',
+    unclassified: '#555568',
   },
 
   // System
-  error: '#FF3B30',
-  warning: '#FF9500',
-  success: '#34C759',
-  info: '#3478F6',
+  error: '#FF0040',
+  warning: '#FFB800',
+  success: '#00FF88',
+  info: '#00D4FF',
 } as const;
