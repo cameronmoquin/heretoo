@@ -84,6 +84,9 @@ export default function BridgeSessionScreen() {
             onChangeText={setText}
             multiline
             maxLength={1000}
+            returnKeyType="send"
+            blurOnSubmit={true}
+            onSubmitEditing={handleSend}
           />
           <Button
             title="Send"
