@@ -9,26 +9,32 @@ interface VideoPlayerProps {
   thumbnailUrl?: string;
 }
 
+/**
+ * Native video player component — separated so hooks are called unconditionally.
+ */
+function NativeVideo({ streamUrl }: { streamUrl: string }) {
+  const { useVideoPlayer, VideoView } = require('expo-video');
+  const player = useVideoPlayer(streamUrl, (p: any) => { p.play(); });
+  return <VideoView player={player} style={styles.video} allowsFullscreen allowsPictureInPicture />;
+}
+
 export function VideoPlayer({ playbackId, thumbnailUrl }: VideoPlayerProps) {
   const [playing, setPlaying] = useState(false);
   const streamUrl = getMuxStreamUrl(playbackId);
   const thumb = thumbnailUrl ?? getMuxThumbnailUrl(playbackId);
 
-  if (playing && Platform.OS === 'web') {
+  if (playing) {
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.container}>
+          {/* @ts-ignore */}
+          <video src={streamUrl} controls autoPlay style={{ width: '100%', height: 300, borderRadius: 12, backgroundColor: '#000' }} />
+        </View>
+      );
+    }
     return (
       <View style={styles.container}>
-        {/* @ts-ignore */}
-        <video src={streamUrl} controls autoPlay style={{ width: '100%', height: 300, borderRadius: 12, backgroundColor: '#000' }} />
-      </View>
-    );
-  }
-
-  if (playing && Platform.OS !== 'web') {
-    const { useVideoPlayer, VideoView } = require('expo-video');
-    const player = useVideoPlayer(streamUrl, (p: any) => { p.play(); });
-    return (
-      <View style={styles.container}>
-        <VideoView player={player} style={styles.video} allowsFullscreen allowsPictureInPicture />
+        <NativeVideo streamUrl={streamUrl} />
       </View>
     );
   }

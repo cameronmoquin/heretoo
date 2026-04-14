@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
+import { DEV_MODE } from '../lib/dev-mode';
 import { uploadVideoToMux } from '../lib/mux';
 import { useAuthStore } from '../stores/authStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -64,6 +65,15 @@ export function useUpload() {
     if (!userId) throw new Error('Not authenticated');
     setState((s) => ({ ...s, stage: 'uploading', progress: 0 }));
 
+    if (DEV_MODE) {
+      // In dev mode, use the local URIs as-is (they work for preview)
+      const urls = assets.map((a, i) => {
+        setState((s) => ({ ...s, progress: (i + 1) / assets.length }));
+        return a.uri;
+      });
+      return urls;
+    }
+
     const urls: string[] = [];
     for (let i = 0; i < assets.length; i++) {
       const asset = assets[i];
@@ -98,6 +108,12 @@ export function useUpload() {
     asset: ImagePicker.ImagePickerAsset
   ): Promise<{ assetId: string; playbackId: string; thumbnailUrl: string }> {
     setState((s) => ({ ...s, stage: 'uploading', progress: 0 }));
+
+    if (DEV_MODE) {
+      setState((s) => ({ ...s, progress: 1 }));
+      return { assetId: 'dev', playbackId: 'dev', thumbnailUrl: asset.uri };
+    }
+
     const result = await uploadVideoToMux(asset.uri, (progress) => {
       setState((s) => ({ ...s, progress }));
     });
@@ -117,6 +133,11 @@ export function useUpload() {
     }) => {
       if (!userId) throw new Error('Not authenticated');
       setState((s) => ({ ...s, stage: 'creating_post' }));
+
+      if (DEV_MODE) {
+        setState({ stage: 'done', progress: 1, error: null, selectedAssets: [] });
+        return { id: `post-dev-${Date.now()}`, content: params.content };
+      }
 
       const { data, error } = await supabase
         .from('posts')

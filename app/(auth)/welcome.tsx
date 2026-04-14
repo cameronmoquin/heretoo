@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../../lib/supabase';
+import { DEV_MODE } from '../../lib/dev-mode';
 import { useAuth } from '../../hooks/useAuth';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
@@ -107,8 +108,16 @@ export default function WelcomeScreen() {
       setLoading('email');
       const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
       if (error) throw error;
-      if (data.session) router.replace('/(auth)/profile-setup');
-      else showAlert('Check your email', 'Confirm your account to continue.');
+      if (data.session) {
+        // Link invite code to the new account
+        if (inviteCode && !DEV_MODE) {
+          supabase.from('invites').update({
+            accepted_by: data.session.user.id,
+            accepted_at: new Date().toISOString(),
+          }).eq('invite_code', inviteCode.trim().toUpperCase()).then(() => {});
+        }
+        router.replace('/(auth)/profile-setup');
+      } else showAlert('Check your email', 'Confirm your account to continue.');
     } catch (error: any) {
       showAlert('Failed', error.message);
     } finally {
