@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontWeight: '800',
-    fontSize: 28,
+    fontSize: 20,
     color: Colors.textPrimary,
   },
   stepSubtitle: {

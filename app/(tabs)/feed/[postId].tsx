@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MentionInput } from '../../../components/shared/MentionInput';
+import { MENTION_USERS } from '../../../lib/mention-users';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { DEV_MODE } from '../../../lib/dev-mode';
@@ -273,16 +275,16 @@ export default function PostDetailScreen() {
             </View>
           )}
           <View style={styles.commentInputRow}>
-            <TextInput
+            <MentionInput
               style={styles.commentInput}
-              placeholder={replyingTo ? 'Write a reply...' : 'Add a comment...'}
+              placeholder={replyingTo ? 'Write a reply...' : 'Type @ to tag someone...'}
               placeholderTextColor={Colors.textMuted}
               value={commentText}
               onChangeText={setCommentText}
+              users={MENTION_USERS}
               multiline
               maxLength={500}
               returnKeyType="send"
-              blurOnSubmit={true}
               onSubmitEditing={handleSendComment}
             />
             <Button
