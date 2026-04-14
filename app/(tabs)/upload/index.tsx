@@ -104,6 +104,9 @@ export default function UploadScreen() {
             multiline
             maxLength={2000}
             textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit={true}
+            onSubmitEditing={handlePost}
           />
 
           <MediaPicker

@@ -281,6 +281,9 @@ export default function PostDetailScreen() {
               onChangeText={setCommentText}
               multiline
               maxLength={500}
+              returnKeyType="send"
+              blurOnSubmit={true}
+              onSubmitEditing={handleSendComment}
             />
             <Button
               title="Post"

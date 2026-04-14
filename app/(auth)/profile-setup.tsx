@@ -151,6 +151,7 @@ export default function ProfileSetupScreen() {
                 value={displayName}
                 onChangeText={setDisplayName}
                 autoCapitalize="words"
+                returnKeyType="next"
               />
               <TextInput
                 style={styles.input}
@@ -160,6 +161,8 @@ export default function ProfileSetupScreen() {
                 onChangeText={(t) => setUsername(t.replace(/[^a-z0-9_]/g, ''))}
                 autoCapitalize="none"
                 autoCorrect={false}
+                returnKeyType="go"
+                onSubmitEditing={nextStep}
               />
               <Button
                 title="Next"
@@ -183,6 +186,8 @@ export default function ProfileSetupScreen() {
                 onChangeText={(t) => setBirthYear(t.replace(/[^0-9]/g, ''))}
                 keyboardType="number-pad"
                 maxLength={4}
+                returnKeyType="go"
+                onSubmitEditing={nextStep}
               />
               <View style={styles.navButtons}>
                 <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
@@ -203,6 +208,8 @@ export default function ProfileSetupScreen() {
                 placeholderTextColor={Colors.textMuted}
                 value={locationRegion}
                 onChangeText={setLocationRegion}
+                returnKeyType="go"
+                onSubmitEditing={nextStep}
               />
               <View style={styles.navButtons}>
                 <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
@@ -287,6 +294,9 @@ export default function ProfileSetupScreen() {
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                returnKeyType="done"
+                blurOnSubmit={true}
+                onSubmitEditing={handleComplete}
               />
               <View style={styles.navButtons}>
                 <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />

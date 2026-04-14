@@ -145,6 +145,8 @@ export default function WelcomeScreen() {
                 autoCapitalize="characters"
                 maxLength={12}
                 autoCorrect={false}
+                onSubmitEditing={validateInvite}
+                returnKeyType="go"
               />
               <Button title="Enter" onPress={validateInvite} variant="primary" size="lg" style={s.btn} />
               <TouchableOpacity onPress={() => setMode('email_login')}>
@@ -176,8 +178,8 @@ export default function WelcomeScreen() {
           {(mode === 'email_login' || mode === 'email_signup') && (
             <View style={s.section}>
               <Text style={s.headline}>{mode === 'email_signup' ? 'Create account' : 'Welcome back'}</Text>
-              <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry />
+              <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" returnKeyType="next" />
+              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry returnKeyType="go" onSubmitEditing={mode === 'email_login' ? handleEmailLogin : handleEmailSignup} />
               <Button
                 title={mode === 'email_login' ? 'Sign in' : 'Create account'}
                 onPress={mode === 'email_login' ? handleEmailLogin : handleEmailSignup}
