@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 import { Avatar } from '../shared/Avatar';
@@ -55,7 +56,7 @@ function ReactionRow({ post, onEngage, format }: { post: Post; onEngage: (id: st
           const on = active.includes(type);
           return (
             <TouchableOpacity key={type} onPress={() => onEngage(post.id, type)}>
-              <Text style={[ig.rxIcon, on && { color }]}>{type === 'agree' ? '♥' : type === 'important' ? '★' : '↗'}</Text>
+              <Ionicons name={type === 'agree' ? (on ? 'heart' : 'heart-outline') : type === 'important' ? (on ? 'star' : 'star-outline') : 'paper-plane-outline'} size={22} color={on ? color : Colors.textPrimary} />
             </TouchableOpacity>
           );
         })}
@@ -228,7 +229,7 @@ export function PostCard({ post, onEngage }: PostCardProps) {
           <Text style={def.meta}>@{post.author?.username} · {timeAgo(post.created_at)}</Text>
         </View>
         <TouchableOpacity onPress={() => setFlagOpen(true)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Text style={def.more}>···</Text>
+          <Ionicons name="ellipsis-horizontal" size={18} color={Colors.textMuted} />
         </TouchableOpacity>
       </TouchableOpacity>
       <TouchableOpacity activeOpacity={0.9} onPress={nav}>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Button } from './Button';
 import { useVerification } from '../../hooks/useVerification';
@@ -30,7 +31,7 @@ export function VerificationGate({
   return (
     <View style={styles.container}>
       <View style={styles.lockIcon}>
-        <Text style={styles.lockEmoji}>🔒</Text>
+        <Ionicons name="lock-closed-outline" size={28} color={Colors.textMuted} />
       </View>
 
       <Text style={styles.title}>Prove you're real</Text>

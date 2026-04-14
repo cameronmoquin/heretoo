@@ -20,7 +20,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'clothing',
     label: 'Clothing & Fashion',
-    icon: '👕',
+    icon: 'shirt-outline',
     subcategories: [
       { id: 'clothing_mens', label: 'Men\'s' },
       { id: 'clothing_womens', label: 'Women\'s' },
@@ -34,7 +34,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'sports',
     label: 'Sports',
-    icon: '⚽',
+    icon: 'football-outline',
     subcategories: [
       { id: 'sports_football', label: 'Football' },
       { id: 'sports_basketball', label: 'Basketball' },
@@ -61,7 +61,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'tech',
     label: 'Tech & Gadgets',
-    icon: '💻',
+    icon: 'laptop-outline',
     subcategories: [
       { id: 'tech_phones', label: 'Phones & Tablets' },
       { id: 'tech_computers', label: 'Computers' },
@@ -75,7 +75,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'food',
     label: 'Food & Drink',
-    icon: '🍽️',
+    icon: 'restaurant-outline',
     subcategories: [
       { id: 'food_restaurants', label: 'Restaurants' },
       { id: 'food_cooking', label: 'Cooking & Recipes' },
@@ -89,7 +89,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'home',
     label: 'Home & Garden',
-    icon: '🏠',
+    icon: 'home-outline',
     subcategories: [
       { id: 'home_furniture', label: 'Furniture' },
       { id: 'home_decor', label: 'Decor' },
@@ -102,7 +102,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'auto',
     label: 'Cars & Vehicles',
-    icon: '🚗',
+    icon: 'car-outline',
     subcategories: [
       { id: 'auto_cars', label: 'Cars' },
       { id: 'auto_trucks', label: 'Trucks & SUVs' },
@@ -114,7 +114,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'health',
     label: 'Health & Wellness',
-    icon: '💪',
+    icon: 'fitness-outline',
     subcategories: [
       { id: 'health_fitness', label: 'Fitness Equipment' },
       { id: 'health_supplements', label: 'Supplements' },
@@ -126,7 +126,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'beauty',
     label: 'Beauty & Personal Care',
-    icon: '✨',
+    icon: 'sparkles-outline',
     subcategories: [
       { id: 'beauty_makeup', label: 'Makeup' },
       { id: 'beauty_hair', label: 'Hair Care' },
@@ -137,7 +137,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'travel',
     label: 'Travel',
-    icon: '✈️',
+    icon: 'airplane-outline',
     subcategories: [
       { id: 'travel_flights', label: 'Flights' },
       { id: 'travel_hotels', label: 'Hotels & Stays' },
@@ -149,7 +149,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'entertainment',
     label: 'Entertainment',
-    icon: '🎬',
+    icon: 'film-outline',
     subcategories: [
       { id: 'ent_streaming', label: 'Streaming & TV' },
       { id: 'ent_music', label: 'Music' },
@@ -162,7 +162,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'hobbies',
     label: 'Hobbies & Crafts',
-    icon: '🎨',
+    icon: 'color-palette-outline',
     subcategories: [
       { id: 'hobby_art', label: 'Art Supplies' },
       { id: 'hobby_photography', label: 'Photography' },
@@ -177,7 +177,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'pets',
     label: 'Pets',
-    icon: '🐕',
+    icon: 'paw-outline',
     subcategories: [
       { id: 'pets_dogs', label: 'Dogs' },
       { id: 'pets_cats', label: 'Cats' },
@@ -187,7 +187,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'finance',
     label: 'Finance & Business',
-    icon: '💰',
+    icon: 'wallet-outline',
     subcategories: [
       { id: 'finance_banking', label: 'Banking' },
       { id: 'finance_investing', label: 'Investing' },
@@ -199,7 +199,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'education',
     label: 'Education & Learning',
-    icon: '📚',
+    icon: 'book-outline',
     subcategories: [
       { id: 'edu_courses', label: 'Online Courses' },
       { id: 'edu_languages', label: 'Languages' },
@@ -211,7 +211,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'family',
     label: 'Family & Kids',
-    icon: '👨‍👩‍👧‍👦',
+    icon: 'people-outline',
     subcategories: [
       { id: 'family_baby', label: 'Baby & Toddler' },
       { id: 'family_toys', label: 'Toys & Games' },
@@ -222,7 +222,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'local',
     label: 'Local Businesses',
-    icon: '📍',
+    icon: 'location-outline',
     subcategories: [
       { id: 'local_restaurants', label: 'Local Restaurants' },
       { id: 'local_services', label: 'Local Services' },
@@ -233,7 +233,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'sustainability',
     label: 'Sustainability & Green',
-    icon: '🌱',
+    icon: 'leaf-outline',
     subcategories: [
       { id: 'green_products', label: 'Eco Products' },
       { id: 'green_energy', label: 'Clean Energy' },
@@ -243,7 +243,7 @@ export const AD_CATEGORIES: AdCategory[] = [
   {
     id: 'charity',
     label: 'Nonprofits & Causes',
-    icon: '❤️',
+    icon: 'heart-outline',
   },
 ];
 
