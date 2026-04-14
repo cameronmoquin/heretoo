@@ -11,6 +11,7 @@ import { usePathname, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
+import { RightPanel } from '../../components/shared/RightPanel';
 
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
@@ -76,7 +77,9 @@ export default function TabLayout() {
           </Tabs>
         </View>
         {/* Right gutter for balance */}
-        <View style={styles.rightGutter} />
+        <View style={styles.rightPanel}>
+          <RightPanel />
+        </View>
       </View>
     );
   }
@@ -138,7 +141,7 @@ const styles = StyleSheet.create({
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: Colors.border,
   },
-  rightGutter: { flex: 1 },
+  rightPanel: { width: 320, maxWidth: 320 },
 
   // Mobile
   mobileTabBar: {
