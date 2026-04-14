@@ -3,9 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
+  type TextStyle,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import {
   AD_CATEGORIES,
@@ -51,7 +53,7 @@ export function AdCategoryPicker({
               }}
               activeOpacity={0.7}
             >
-              <Text style={styles.categoryIcon}>{cat.icon}</Text>
+              <Ionicons name={cat.icon as any} size={20} color={isSelected ? Colors.primary : Colors.textSecondary} style={styles.categoryIcon as TextStyle} />
               <Text
                 style={[
                   styles.categoryLabel,

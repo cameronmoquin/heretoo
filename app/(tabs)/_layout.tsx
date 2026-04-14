@@ -8,22 +8,21 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { usePathname, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 
 const NAV = [
-  { name: 'feed', label: 'Feed', href: '/(tabs)/feed' },
-  { name: 'pulse', label: 'Pulse', href: '/(tabs)/pulse' },
-  { name: 'upload', label: 'Post', href: '/(tabs)/upload' },
-  { name: 'bridge', label: 'Bridge', href: '/(tabs)/bridge' },
-  { name: 'profile', label: 'Profile', href: '/(tabs)/profile' },
+  { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
+  { name: 'pulse', label: 'Pulse', icon: 'pulse-outline', iconActive: 'pulse', href: '/(tabs)/pulse' },
+  { name: 'upload', label: 'Post', icon: 'add-circle-outline', iconActive: 'add-circle', href: '/(tabs)/upload' },
+  { name: 'bridge', label: 'Bridge', icon: 'chatbubbles-outline', iconActive: 'chatbubbles', href: '/(tabs)/bridge' },
+  { name: 'profile', label: 'Profile', icon: 'person-outline', iconActive: 'person', href: '/(tabs)/profile' },
 ] as const;
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+function TabIcon({ icon, iconActive, focused }: { icon: string; iconActive: string; focused: boolean }) {
   return (
-    <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-      {label}
-    </Text>
+    <Ionicons name={(focused ? iconActive : icon) as any} size={22} color={focused ? Colors.primary : Colors.textMuted} />
   );
 }
 
@@ -45,9 +44,12 @@ function Sidebar() {
               onPress={() => router.push(item.href as any)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.navText, active && styles.navTextActive]}>
-                {item.label}
-              </Text>
+              <View style={styles.navItemInner}>
+                <Ionicons name={(active ? item.iconActive : item.icon) as any} size={20} color={active ? Colors.primary : Colors.textSecondary} />
+                <Text style={[styles.navText, active && styles.navTextActive]}>
+                  {item.label}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -94,7 +96,7 @@ export default function TabLayout() {
           key={item.name}
           name={item.name}
           options={{
-            tabBarIcon: ({ focused }) => <TabIcon label={item.label} focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon icon={item.icon} iconActive={item.iconActive} focused={focused} />,
           }}
         />
       ))}
@@ -127,6 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   navItemActive: { backgroundColor: Colors.primaryFaint },
+  navItemInner: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   navText: { fontSize: 15, fontWeight: '500', color: Colors.textSecondary },
   navTextActive: { color: Colors.primary, fontWeight: '600' },
   desktopContent: {
