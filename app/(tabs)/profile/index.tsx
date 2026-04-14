@@ -67,7 +67,7 @@ export default function OwnProfileScreen() {
         <View style={styles.actions}>
           <Button
             title="Edit"
-            onPress={() => {}}
+            onPress={() => router.push('/(tabs)/profile/settings')}
             variant="outline"
             style={{ flex: 1 }}
           />

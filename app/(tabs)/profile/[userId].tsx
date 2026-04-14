@@ -10,12 +10,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
+import { DEV_MODE } from '../../../lib/dev-mode';
 import { Avatar } from '../../../components/shared/Avatar';
 import { TrustScoreRing } from '../../../components/profile/TrustScoreRing';
 import { ClusterBadge } from '../../../components/profile/ClusterBadge';
 import { OriginStory } from '../../../components/profile/OriginStory';
 import { Colors } from '../../../constants/colors';
 import type { Profile } from '../../../stores/authStore';
+
+const MOCK_PROFILES: Record<string, any> = {
+  'thirdfloor': { id: 'thirdfloor', username: 'thirdfloor', display_name: 'Mike Walden', avatar_url: 'https://i.pravatar.cc/150?u=thirdfloor', trust_score: 0.65, cluster_id: 1, cluster_confidence: 0.7, origin_story: 'Providence Fire. Cardiac EMT. Federal Hill kid.', location_region: 'Providence, RI' },
+  'purpleshell': { id: 'purpleshell', username: 'purpleshell', display_name: 'Allen Hazard', avatar_url: 'https://i.pravatar.cc/150?u=purpleshell', trust_score: 0.82, cluster_id: 3, cluster_confidence: 0.9, origin_story: 'Wampum maker. Charlestown. My granddaughter picks the shells.', location_region: 'Charlestown, RI' },
+  'coldpack': { id: 'coldpack', username: 'coldpack', display_name: 'Sandy Corvo', avatar_url: 'https://i.pravatar.cc/150?u=coldpack', trust_score: 0.58, cluster_id: 1, cluster_confidence: 0.6, origin_story: 'Catering. Providence. Fifteen years in kitchens.', location_region: 'Providence, RI' },
+};
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -28,7 +35,10 @@ export default function UserProfileScreen() {
         .select('*')
         .eq('id', userId)
         .single();
-      if (error) throw error;
+      if (!data || error) {
+        if (DEV_MODE) return MOCK_PROFILES[userId] ?? null;
+        if (error) throw error;
+      }
       return data as Profile;
     },
   });

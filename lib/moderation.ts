@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { DEV_MODE } from './dev-mode';
 
 export type FlagReason =
   | 'spam'
@@ -24,6 +25,8 @@ export async function flagContent(params: {
   reason: FlagReason;
   description?: string;
 }): Promise<void> {
+  if (DEV_MODE) return; // No-op in dev
+
   const { data, error } = await supabase.functions.invoke('flag-content', {
     body: {
       action: 'create',
@@ -42,6 +45,7 @@ export async function appealFlag(params: {
   flagId: string;
   appealText: string;
 }): Promise<void> {
+  if (DEV_MODE) return;
   const { data, error } = await supabase.functions.invoke('flag-content', {
     body: {
       action: 'appeal',
@@ -60,6 +64,7 @@ export async function appealFlag(params: {
 export async function checkRateLimit(
   action: 'post' | 'engage' | 'vote' | 'message' | 'invite' | 'flag'
 ): Promise<{ allowed: boolean; reason?: string }> {
+  if (DEV_MODE) return { allowed: true };
   const { data, error } = await supabase.functions.invoke('rate-limit', {
     body: { action },
   });

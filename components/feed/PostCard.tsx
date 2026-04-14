@@ -117,7 +117,7 @@ export function PostCard({ post, onEngage }: PostCardProps) {
   // ── Twitter: compact text-first ──
   if (format === 'twitter') {
     return (
-      <TouchableOpacity style={tw.card} onPress={nav} activeOpacity={0.95}>
+      <TouchableOpacity style={tw.card} onPress={nav} onLongPress={() => setFlagOpen(true)} activeOpacity={0.95}>
         <Avatar url={post.author?.avatar_url} name={post.author?.display_name} size={32} />
         <View style={tw.body}>
           <View style={tw.nameRow}>
@@ -138,7 +138,7 @@ export function PostCard({ post, onEngage }: PostCardProps) {
   // ── Instagram: photo-first ──
   if (format === 'instagram') {
     return (
-      <View style={ig.card}>
+      <TouchableOpacity style={ig.card} onLongPress={() => setFlagOpen(true)} activeOpacity={1}>
         <TouchableOpacity style={ig.header} onPress={navProfile}>
           <Avatar url={post.author?.avatar_url} name={post.author?.display_name} size={30} />
           <Text style={ig.name}>{post.author?.display_name}</Text>
@@ -153,14 +153,14 @@ export function PostCard({ post, onEngage }: PostCardProps) {
           <Text style={ig.time}>{timeAgo(post.created_at)}</Text>
         </View>
         <FlagModal visible={flagOpen} onClose={() => setFlagOpen(false)} contentType="post" contentId={post.id} />
-      </View>
+      </TouchableOpacity>
     );
   }
 
   // ── Facebook: card with reactions bar ──
   if (format === 'facebook') {
     return (
-      <View style={fb.card}>
+      <TouchableOpacity style={fb.card} onLongPress={() => setFlagOpen(true)} activeOpacity={1}>
         <TouchableOpacity style={fb.header} onPress={navProfile}>
           <Avatar url={post.author?.avatar_url} name={post.author?.display_name} size={36} />
           <View>
@@ -177,14 +177,14 @@ export function PostCard({ post, onEngage }: PostCardProps) {
         <View style={fb.divider} />
         <ReactionRow post={post} onEngage={onEngage} format="facebook" />
         <FlagModal visible={flagOpen} onClose={() => setFlagOpen(false)} contentType="post" contentId={post.id} />
-      </View>
+      </TouchableOpacity>
     );
   }
 
   // ── Snapchat: vertical story-style ──
   if (format === 'snapchat') {
     return (
-      <View style={sc.card}>
+      <TouchableOpacity style={sc.card} onLongPress={() => setFlagOpen(true)} activeOpacity={1}>
         <View style={sc.storyBar}>
           <Avatar url={post.author?.avatar_url} name={post.author?.display_name} size={28} />
           <Text style={sc.name}>{post.author?.display_name}</Text>
@@ -195,14 +195,14 @@ export function PostCard({ post, onEngage }: PostCardProps) {
         </TouchableOpacity>
         <ReactionRow post={post} onEngage={onEngage} format="snapchat" />
         <FlagModal visible={flagOpen} onClose={() => setFlagOpen(false)} contentType="post" contentId={post.id} />
-      </View>
+      </TouchableOpacity>
     );
   }
 
   // ── MySpace: retro ──
   if (format === 'myspace') {
     return (
-      <View style={[ms.card, { backgroundColor: myspaceBg }]}>
+      <TouchableOpacity style={[ms.card, { backgroundColor: myspaceBg }]} onLongPress={() => setFlagOpen(true)} activeOpacity={1}>
         <TouchableOpacity style={ms.header} onPress={navProfile}>
           <Avatar url={post.author?.avatar_url} name={post.author?.display_name} size={42} />
           <View>
@@ -215,7 +215,7 @@ export function PostCard({ post, onEngage }: PostCardProps) {
         <ReactionRow post={post} onEngage={onEngage} format="myspace" />
         <Text style={ms.html}>&lt;/div&gt;</Text>
         <FlagModal visible={flagOpen} onClose={() => setFlagOpen(false)} contentType="post" contentId={post.id} />
-      </View>
+      </TouchableOpacity>
     );
   }
 

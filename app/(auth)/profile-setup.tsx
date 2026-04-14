@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
+import { DEV_MODE } from '../../lib/dev-mode';
 import { assignInitialCluster } from '../../lib/clusters';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
@@ -22,7 +24,7 @@ import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
 type Step = 'name' | 'age' | 'location' | 'interests' | 'ads' | 'story';
 
 export default function ProfileSetupScreen() {
-  const { createProfile } = useAuth();
+  const { createProfile, user } = useAuth();
   const [step, setStep] = useState<Step>('name');
   const [loading, setLoading] = useState(false);
 
@@ -109,6 +111,21 @@ export default function ProfileSetupScreen() {
         cluster_confidence: confidence,
         origin_story: originStory.trim() || undefined,
       });
+
+      // Save ad preferences
+      if (!DEV_MODE && adCategories.size > 0) {
+        const prefs = [...adCategories].map((catId) => ({
+          category_id: catId,
+          subcategory_id: null as string | null,
+        }));
+        for (const subId of adSubcategories) {
+          prefs.push({ category_id: subId.split('_').slice(0, -1).join('_'), subcategory_id: subId });
+        }
+        // Fire and forget — don't block signup
+        supabase.from('user_ad_preferences').insert(
+          prefs.map((p) => ({ user_id: user?.id, ...p }))
+        ).then(() => {});
+      }
 
       router.replace('/(tabs)/feed');
     } catch (error: any) {
