@@ -14,6 +14,8 @@ import { router } from 'expo-router';
 import { useUpload } from '../../../hooks/useUpload';
 import { showAlert } from '../../../lib/alert';
 import { MediaPicker } from '../../../components/upload/MediaPicker';
+import { MentionInput } from '../../../components/shared/MentionInput';
+import { MENTION_USERS } from '../../../lib/mention-users';
 import { Button } from '../../../components/shared/Button';
 import { VerificationGate } from '../../../components/shared/VerificationGate';
 import { Colors } from '../../../constants/colors';
@@ -95,12 +97,13 @@ export default function UploadScreen() {
         >
           <Text style={styles.title}>Post</Text>
 
-          <TextInput
+          <MentionInput
             style={styles.input}
-            placeholder="Say something real."
+            placeholder="Say something real. Type @ to tag."
             placeholderTextColor={Colors.textMuted}
             value={content}
             onChangeText={setContent}
+            users={MENTION_USERS}
             multiline
             maxLength={2000}
             textAlignVertical="top"
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '800',
-    fontSize: 28,
+    fontSize: 20,
     color: Colors.textPrimary,
   },
   input: {

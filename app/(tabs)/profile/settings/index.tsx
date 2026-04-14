@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: Colors.textPrimary,
   },

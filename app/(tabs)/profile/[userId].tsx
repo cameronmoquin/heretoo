@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   displayName: {
     fontWeight: '800',
-    fontSize: 24,
+    fontSize: 18,
     color: Colors.textPrimary,
   },
   username: {

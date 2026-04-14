@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   adFreeTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
