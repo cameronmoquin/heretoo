@@ -23,7 +23,7 @@ import { Spacing, Radius } from '../../constants/design';
 type Mode = 'choice' | 'signin' | 'signup_code' | 'signup_form';
 
 export default function WelcomeScreen() {
-  const { signInWithGoogle, signInWithApple } = useAuth();
+  const { signInWithApple } = useAuth();
   const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState<string | null>(null);
   const [inviteCode, setInviteCode] = useState('');
@@ -99,12 +99,6 @@ export default function WelcomeScreen() {
     }
   };
 
-  const handleGoogle = async () => {
-    try { setLoading('google'); await signInWithGoogle(); }
-    catch (e: any) { showAlert('Failed', e.message); }
-    finally { setLoading(null); }
-  };
-
   const handleApple = async () => {
     try {
       setLoading('apple');
@@ -147,15 +141,16 @@ export default function WelcomeScreen() {
               <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry returnKeyType="go" onSubmitEditing={handleSignIn} />
               <Button title="Sign in" onPress={handleSignIn} loading={loading === 'email'} disabled={!email.trim() || !password} variant="primary" size="lg" style={s.btn} />
 
-              <View style={s.divider}>
-                <View style={s.divLine} />
-                <Text style={s.divText}>or</Text>
-                <View style={s.divLine} />
-              </View>
-              <View style={s.row}>
-                <Button title="Google" onPress={handleGoogle} loading={loading === 'google'} variant="outline" size="md" style={s.flex} />
-                {Platform.OS === 'ios' && <Button title="Apple" onPress={handleApple} loading={loading === 'apple'} variant="outline" size="md" style={s.flex} />}
-              </View>
+              {Platform.OS === 'ios' && (
+                <>
+                  <View style={s.divider}>
+                    <View style={s.divLine} />
+                    <Text style={s.divText}>or</Text>
+                    <View style={s.divLine} />
+                  </View>
+                  <Button title="Continue with Apple" onPress={handleApple} loading={loading === 'apple'} variant="outline" size="md" style={s.btn} />
+                </>
+              )}
 
               <TouchableOpacity onPress={() => setMode('choice')}>
                 <Text style={s.backLink}>Back</Text>

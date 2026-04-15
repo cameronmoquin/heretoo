@@ -15,6 +15,7 @@ import { useAuthStore } from '../stores/authStore';
 import { LoadingPulse } from '../components/shared/LoadingPulse';
 import { ErrorBoundary } from '../components/shared/ErrorBoundary';
 import { SuspendedBanner } from '../components/shared/SuspendedBanner';
+import { BuildBadge } from '../components/shared/BuildBadge';
 import { Colors } from '../constants/colors';
 
 const queryClient = new QueryClient({
@@ -58,7 +59,9 @@ function RootLayoutInner() {
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
+      <BuildBadge />
     </>
   );
 }

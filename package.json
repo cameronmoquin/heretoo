@@ -6,7 +6,18 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build-info": "node scripts/generate-build-info.mjs",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist .expo node_modules/.cache",
+    "build": "npm run build-info && expo export --platform web && node scripts/copy-build-marker.mjs",
+    "test": "npm run typecheck",
+    "predeploy": "node scripts/predeploy-check.mjs",
+    "predeploy:force": "node scripts/predeploy-check.mjs --force",
+    "deploy": "npm run predeploy && npm run build && netlify deploy --prod --dir=dist",
+    "deploy:force": "npm run predeploy:force && npm run build && netlify deploy --prod --dir=dist",
+    "deploy:force-clean": "npm run clean && npm install && npm run predeploy:force && npm run build && netlify deploy --prod --dir=dist",
+    "verify": "curl -s https://heretoo.social/_build.txt && echo"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -45,6 +56,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "pg": "^8.20.0",
+    "rimraf": "^6.1.3",
     "typescript": "~5.9.2"
   },
   "private": true
