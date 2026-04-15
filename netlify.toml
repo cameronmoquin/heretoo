@@ -1,0 +1,51 @@
+# Netlify build configuration
+# See DEPLOYMENT.md for full deploy flow.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# index.html: NEVER cache — must always fetch the latest.
+# Stale index.html references dead JS bundle hashes and breaks the app.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# _build.txt: never cache — used to verify deployed version.
+[[headers]]
+  for = "/_build.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Fingerprinted JS/CSS bundles: cache aggressively (1 year).
+# Expo adds a content hash to every filename, so a new build = new filename.
+[[headers]]
+  for = "/_expo/static/js/web/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/_expo/static/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Assets (fonts, images): cache 1 day
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
