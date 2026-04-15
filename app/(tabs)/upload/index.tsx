@@ -77,7 +77,14 @@ export default function UploadScreen() {
       showAlert('Done', 'Live now.');
       router.push('/(tabs)/feed');
     } catch (error: any) {
-      showAlert('Error', error.message);
+      const msg = error?.message ?? 'Unknown error';
+      if (msg.includes('fetch') || msg.includes('network')) {
+        showAlert('Connection error', 'Check your internet connection and try again.');
+      } else if (msg.includes('authenticated') || msg.includes('auth')) {
+        showAlert('Sign in required', 'Your session expired. Sign in again.');
+      } else {
+        showAlert('Error', msg);
+      }
     }
   };
 
