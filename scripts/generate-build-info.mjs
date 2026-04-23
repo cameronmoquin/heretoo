@@ -22,7 +22,11 @@ function safeExec(cmd, fallback = 'unknown') {
 const commit = safeExec('git rev-parse --short HEAD');
 const commitFull = safeExec('git rev-parse HEAD');
 const branch = safeExec('git rev-parse --abbrev-ref HEAD');
-const dirty = safeExec('git status --porcelain').length > 0;
+// Only count source file changes as "dirty" — ignore build artifacts etc.
+const dirty = safeExec('git status --porcelain')
+  .split('\n')
+  .filter((l) => l.trim())
+  .some((l) => /\.(ts|tsx|js|jsx|json|md|sql|toml)$/.test(l));
 const buildTime = new Date().toISOString();
 const env = process.env.NETLIFY === 'true' ? 'production' :
             process.env.NODE_ENV === 'production' ? 'production' :

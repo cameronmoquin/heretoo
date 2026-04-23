@@ -1,14 +1,15 @@
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { DEV_MODE } from '../lib/dev-mode';
+import { detectAppId } from '../constants/apps';
 
 export default function Index() {
   const session = useAuthStore((s) => s.session);
   const hasCompletedSetup = useAuthStore((s) => s.hasCompletedSetup);
+  const appId = detectAppId();
 
-  // In dev mode, go straight to the feed
   if (DEV_MODE) {
-    return <Redirect href="/(tabs)/feed" />;
+    return <Redirect href={appId === 'candon' ? '/candon' : '/(tabs)/feed'} />;
   }
 
   if (!session) {
@@ -19,5 +20,6 @@ export default function Index() {
     return <Redirect href="/(auth)/profile-setup" />;
   }
 
-  return <Redirect href="/(tabs)/feed" />;
+  // Route based on which hostname / app is active
+  return <Redirect href={appId === 'candon' ? '/candon' : '/(tabs)/feed'} />;
 }
