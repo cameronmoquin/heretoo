@@ -15,10 +15,12 @@ export default function CandonLayout() {
       <Stack.Screen name="contacts" options={{ title: 'Contacts' }} />
       <Stack.Screen name="contacts/new" options={{ title: 'New Contact' }} />
       <Stack.Screen name="contacts/[id]" options={{ title: 'Contact' }} />
-      <Stack.Screen name="family" options={{ title: 'Family' }} />
+      <Stack.Screen name="family/index" options={{ title: 'Family' }} />
       <Stack.Screen name="family/new" options={{ title: 'New Family Group' }} />
       <Stack.Screen name="family/join" options={{ title: 'Join Family' }} />
-      <Stack.Screen name="family/[id]" options={{ title: 'Family Group' }} />
+      <Stack.Screen name="family/[id]/index" options={{ title: 'Family Group' }} />
+      <Stack.Screen name="family/[id]/new-post" options={{ title: 'New Post' }} />
+      <Stack.Screen name="family/[id]/post/[postId]" options={{ title: 'Post' }} />
     </Stack>
   );
 }
