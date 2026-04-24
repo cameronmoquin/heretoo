@@ -4,9 +4,11 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import { notifyGroupOfNewPost } from '../lib/candon-notifications';
 
-export type PostType = 'general_update' | 'event' | 'assignment' | 'reminder';
+export type PostType = 'general_update' | 'event' | 'assignment' | 'reminder' | 'medical_update';
 export type RsvpResponse = 'yes' | 'no' | 'maybe';
 export type AssignmentStatus = 'open' | 'claimed' | 'complete';
+export type VisibilityScope = 'group' | 'selected_members' | 'admins_only' | 'medical_limited';
+export type PostSensitivity = 'normal' | 'private' | 'medical';
 
 export interface FamilyPost {
   id: string;
@@ -15,7 +17,8 @@ export interface FamilyPost {
   post_type: PostType;
   title: string;
   body: string | null;
-  sensitivity: 'normal' | 'private';
+  sensitivity: PostSensitivity;
+  visibility_scope: VisibilityScope;
   status: 'draft' | 'published' | 'archived';
   created_at: string;
   updated_at: string;
@@ -152,6 +155,10 @@ interface CreatePostInput {
   post_type: PostType;
   title: string;
   body?: string;
+  // visibility
+  visibility_scope?: VisibilityScope;
+  sensitivity?: PostSensitivity;
+  recipient_user_ids?: string[]; // for selected_members / medical_limited
   // event fields
   start_at?: string;
   end_at?: string;
@@ -161,6 +168,15 @@ interface CreatePostInput {
   rsvp_deadline?: string;
   // assignment slots
   assignments?: { label: string; quantity_needed?: number; assignment_type?: string }[];
+  // medical
+  medical?: {
+    patient_label: string;
+    status_level?: 'stable' | 'monitoring' | 'concerning' | 'critical' | 'improving' | 'recovering' | 'passed';
+    care_location?: string;
+    help_needed?: string;
+    contact_person?: string;
+    next_update_expected_at?: string;
+  };
 }
 
 export function useCreateFamilyPost() {
@@ -171,6 +187,14 @@ export function useCreateFamilyPost() {
     mutationFn: async (input: CreatePostInput) => {
       if (!userId) throw new Error('Not authenticated');
 
+      // Medical posts default to medical_limited scope if caller didn't set one.
+      const scope: VisibilityScope =
+        input.visibility_scope ??
+        (input.post_type === 'medical_update' ? 'medical_limited' : 'group');
+      const sensitivity: PostSensitivity =
+        input.sensitivity ??
+        (input.post_type === 'medical_update' ? 'medical' : 'normal');
+
       const { data: post, error } = await supabase
         .from('candon_family_posts')
         .insert({
@@ -179,10 +203,40 @@ export function useCreateFamilyPost() {
           post_type: input.post_type,
           title: input.title,
           body: input.body ?? null,
+          sensitivity,
+          visibility_scope: scope,
         })
         .select()
         .single();
       if (error) throw error;
+
+      // Recipient list for scoped posts
+      if (
+        (scope === 'selected_members' || scope === 'medical_limited')
+        && input.recipient_user_ids && input.recipient_user_ids.length > 0
+      ) {
+        const rows = input.recipient_user_ids.map((uid) => ({
+          family_post_id: post.id,
+          user_id: uid,
+        }));
+        await supabase.from('candon_family_post_recipients').insert(rows);
+      }
+
+      // Medical subtype
+      if (input.post_type === 'medical_update' && input.medical) {
+        const { error: mErr } = await supabase
+          .from('candon_family_medical_updates')
+          .insert({
+            family_post_id: post.id,
+            patient_label: input.medical.patient_label,
+            status_level: input.medical.status_level ?? 'stable',
+            care_location: input.medical.care_location ?? null,
+            help_needed: input.medical.help_needed ?? null,
+            contact_person: input.medical.contact_person ?? null,
+            next_update_expected_at: input.medical.next_update_expected_at ?? null,
+          });
+        if (mErr) throw mErr;
+      }
 
       // Event subtype
       let eventId: string | null = null;

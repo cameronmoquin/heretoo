@@ -6,15 +6,31 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCreateFamilyPost, type PostType } from '../../../../hooks/useFamilyPosts';
+import {
+  useCreateFamilyPost,
+  type PostType,
+  type VisibilityScope,
+} from '../../../../hooks/useFamilyPosts';
 import { showAlert } from '../../../../lib/alert';
 import { CandonColors } from '../../../../constants/candon-theme';
+import { VisibilityPicker } from '../../../../components/candon/VisibilityPicker';
 
 const POST_TYPES: { id: PostType; label: string; icon: any }[] = [
   { id: 'general_update', label: 'Update', icon: 'create-outline' },
   { id: 'event', label: 'Event', icon: 'calendar-outline' },
-  { id: 'assignment', label: 'Sign Up Sheet', icon: 'list-outline' },
+  { id: 'assignment', label: 'Sign Up', icon: 'list-outline' },
+  { id: 'medical_update', label: 'Medical', icon: 'medkit-outline' },
 ];
+
+const MEDICAL_STATUS_OPTIONS = [
+  { id: 'stable', label: 'Stable' },
+  { id: 'monitoring', label: 'Monitoring' },
+  { id: 'improving', label: 'Improving' },
+  { id: 'concerning', label: 'Concerning' },
+  { id: 'critical', label: 'Critical' },
+  { id: 'recovering', label: 'Recovering' },
+  { id: 'passed', label: 'Passed' },
+] as const;
 
 export default function NewPost() {
   const { id: groupId } = useLocalSearchParams<{ id: string }>();
@@ -24,15 +40,34 @@ export default function NewPost() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
 
-  // event fields
-  const [dateStr, setDateStr] = useState(''); // YYYY-MM-DD
-  const [timeStr, setTimeStr] = useState(''); // HH:MM
+  const [scope, setScope] = useState<VisibilityScope>('group');
+  const [recipients, setRecipients] = useState<string[]>([]);
+
+  // Event fields
+  const [dateStr, setDateStr] = useState('');
+  const [timeStr, setTimeStr] = useState('');
   const [locationName, setLocationName] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
 
-  // assignment slots
+  // Assignment slots
   const [slotInput, setSlotInput] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
+
+  // Medical fields
+  const [patientLabel, setPatientLabel] = useState('');
+  const [statusLevel, setStatusLevel] = useState<typeof MEDICAL_STATUS_OPTIONS[number]['id']>('stable');
+  const [careLocation, setCareLocation] = useState('');
+  const [helpNeeded, setHelpNeeded] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
+
+  const onPostTypeChange = (t: PostType) => {
+    setPostType(t);
+    if (t === 'medical_update') {
+      setScope('medical_limited');
+    } else if (scope === 'medical_limited') {
+      setScope('group');
+    }
+  };
 
   const addSlot = () => {
     const t = slotInput.trim();
@@ -45,10 +80,7 @@ export default function NewPost() {
   };
 
   const save = () => {
-    if (!title.trim()) {
-      showAlert('Missing title', 'Give this post a title.');
-      return;
-    }
+    if (!title.trim()) { showAlert('Missing title', 'Give this post a title.'); return; }
     if (!groupId) return;
 
     const payload: any = {
@@ -56,28 +88,34 @@ export default function NewPost() {
       post_type: postType,
       title: title.trim(),
       body: body.trim() || undefined,
+      visibility_scope: scope,
+      recipient_user_ids: recipients,
     };
 
     if (postType === 'event') {
-      if (!dateStr) {
-        showAlert('Missing date', 'Pick a date for the event.');
-        return;
-      }
+      if (!dateStr) { showAlert('Missing date', 'Pick a date for the event.'); return; }
       const startIso = timeStr
         ? new Date(`${dateStr}T${timeStr}:00`).toISOString()
         : new Date(`${dateStr}T12:00:00`).toISOString();
       payload.start_at = startIso;
       if (locationName.trim()) payload.location_name = locationName.trim();
       if (locationAddress.trim()) payload.location_address = locationAddress.trim();
-      if (slots.length > 0) {
-        payload.assignments = slots.map((s) => ({ label: s }));
-      }
+      if (slots.length > 0) payload.assignments = slots.map((s) => ({ label: s }));
     } else if (postType === 'assignment') {
-      if (slots.length === 0) {
-        showAlert('Add slots', 'Add at least one item people can sign up for.');
+      if (slots.length === 0) { showAlert('Add slots', 'Add at least one sign-up slot.'); return; }
+      payload.assignments = slots.map((s) => ({ label: s }));
+    } else if (postType === 'medical_update') {
+      if (!patientLabel.trim()) {
+        showAlert('Who is this about?', 'Add a name or label (initials are fine).');
         return;
       }
-      payload.assignments = slots.map((s) => ({ label: s }));
+      payload.medical = {
+        patient_label: patientLabel.trim(),
+        status_level: statusLevel,
+        care_location: careLocation.trim() || undefined,
+        help_needed: helpNeeded.trim() || undefined,
+        contact_person: contactPerson.trim() || undefined,
+      };
     }
 
     createPost.mutate(payload, {
@@ -91,7 +129,6 @@ export default function NewPost() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-          {/* Post type selector */}
           <View style={s.typeRow}>
             {POST_TYPES.map((t) => {
               const active = postType === t.id;
@@ -99,9 +136,13 @@ export default function NewPost() {
                 <TouchableOpacity
                   key={t.id}
                   style={[s.typeBtn, active && s.typeBtnActive]}
-                  onPress={() => setPostType(t.id)}
+                  onPress={() => onPostTypeChange(t.id)}
                 >
-                  <Ionicons name={t.icon} size={18} color={active ? CandonColors.primary : CandonColors.textSecondary} />
+                  <Ionicons
+                    name={t.icon}
+                    size={16}
+                    color={active ? CandonColors.primary : CandonColors.textSecondary}
+                  />
                   <Text style={[s.typeLabel, active && s.typeLabelActive]}>{t.label}</Text>
                 </TouchableOpacity>
               );
@@ -116,13 +157,14 @@ export default function NewPost() {
             placeholder={
               postType === 'event' ? 'Sunday dinner'
                 : postType === 'assignment' ? 'Thanksgiving potluck'
+                : postType === 'medical_update' ? 'Mom update'
                 : 'Quick update'
             }
             placeholderTextColor={CandonColors.textMuted}
             autoFocus
           />
 
-          <Text style={s.label}>{postType === 'general_update' ? 'Message' : 'Details'}</Text>
+          <Text style={s.label}>{postType === 'medical_update' ? 'Update' : 'Message'}</Text>
           <TextInput
             style={[s.input, s.textarea]}
             value={body}
@@ -134,10 +176,67 @@ export default function NewPost() {
             textAlignVertical="top"
           />
 
-          {/* Event fields */}
+          {postType === 'medical_update' && (
+            <>
+              <Text style={s.label}>Who is this about?</Text>
+              <TextInput
+                style={s.input}
+                value={patientLabel}
+                onChangeText={setPatientLabel}
+                placeholder="Mom / Dad / J.S."
+                placeholderTextColor={CandonColors.textMuted}
+              />
+
+              <Text style={s.label}>Status</Text>
+              <View style={s.chipRow}>
+                {MEDICAL_STATUS_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[s.chip, statusLevel === opt.id && s.chipActive]}
+                    onPress={() => setStatusLevel(opt.id)}
+                  >
+                    <Text style={[s.chipText, statusLevel === opt.id && s.chipTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.label}>Where (optional)</Text>
+              <TextInput
+                style={s.input}
+                value={careLocation}
+                onChangeText={setCareLocation}
+                placeholder="Hospital / home / hospice"
+                placeholderTextColor={CandonColors.textMuted}
+              />
+
+              <Text style={s.label}>Contact person (optional)</Text>
+              <TextInput
+                style={s.input}
+                value={contactPerson}
+                onChangeText={setContactPerson}
+                placeholder="Who to reach for questions"
+                placeholderTextColor={CandonColors.textMuted}
+              />
+
+              <Text style={s.label}>How others can help (optional)</Text>
+              <TextInput
+                style={[s.input, s.textarea]}
+                value={helpNeeded}
+                onChangeText={setHelpNeeded}
+                placeholder="Meals, rides, visits, quiet."
+                placeholderTextColor={CandonColors.textMuted}
+                multiline
+                maxLength={500}
+                textAlignVertical="top"
+              />
+            </>
+          )}
+
           {postType === 'event' && (
             <>
-              <Text style={s.label}>Date</Text>
+              <Text style={s.label}>Date (YYYY-MM-DD)</Text>
               <TextInput
                 style={s.input}
                 value={dateStr}
@@ -146,8 +245,7 @@ export default function NewPost() {
                 placeholderTextColor={CandonColors.textMuted}
                 autoCapitalize="none"
               />
-
-              <Text style={s.label}>Time (optional)</Text>
+              <Text style={s.label}>Time (HH:MM, optional)</Text>
               <TextInput
                 style={s.input}
                 value={timeStr}
@@ -156,7 +254,6 @@ export default function NewPost() {
                 placeholderTextColor={CandonColors.textMuted}
                 autoCapitalize="none"
               />
-
               <Text style={s.label}>Location name (optional)</Text>
               <TextInput
                 style={s.input}
@@ -165,7 +262,6 @@ export default function NewPost() {
                 placeholder="Mom's house"
                 placeholderTextColor={CandonColors.textMuted}
               />
-
               <Text style={s.label}>Address (optional)</Text>
               <TextInput
                 style={s.input}
@@ -177,11 +273,10 @@ export default function NewPost() {
             </>
           )}
 
-          {/* Slots for event OR assignment */}
           {(postType === 'event' || postType === 'assignment') && (
             <>
               <Text style={s.label}>
-                {postType === 'event' ? 'Bring list (optional)' : 'Sign up slots'}
+                {postType === 'event' ? 'Bring list (optional)' : 'Sign-up slots'}
               </Text>
               <View style={s.slotInputRow}>
                 <TextInput
@@ -209,6 +304,17 @@ export default function NewPost() {
             </>
           )}
 
+          <View style={{ marginTop: 12 }}>
+            <VisibilityPicker
+              groupId={groupId!}
+              scope={scope}
+              recipientIds={recipients}
+              onScopeChange={setScope}
+              onRecipientsChange={setRecipients}
+              medicalMode={postType === 'medical_update'}
+            />
+          </View>
+
           <TouchableOpacity
             style={[s.saveBtn, createPost.isPending && { opacity: 0.5 }]}
             onPress={save}
@@ -228,14 +334,14 @@ export default function NewPost() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: CandonColors.bg },
   scroll: { padding: 20, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
-  typeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  typeRow: { flexDirection: 'row', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
   typeBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 10, borderRadius: 10,
+    flex: 1, minWidth: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+    paddingVertical: 9, paddingHorizontal: 6, borderRadius: 10,
     backgroundColor: CandonColors.surface, borderWidth: 1, borderColor: CandonColors.border,
   },
   typeBtnActive: { borderColor: CandonColors.primary, backgroundColor: CandonColors.primaryFaint },
-  typeLabel: { fontSize: 13, color: CandonColors.textSecondary, fontWeight: '500' },
+  typeLabel: { fontSize: 12, color: CandonColors.textSecondary, fontWeight: '500' },
   typeLabelActive: { color: CandonColors.primary, fontWeight: '600' },
   label: { fontSize: 12, fontWeight: '600', color: CandonColors.textSecondary, marginTop: 12, marginBottom: 4 },
   input: {
@@ -244,6 +350,14 @@ const s = StyleSheet.create({
     fontSize: 15, color: CandonColors.textPrimary,
   },
   textarea: { minHeight: 80 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: {
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14,
+    backgroundColor: CandonColors.surface, borderWidth: 1, borderColor: CandonColors.border,
+  },
+  chipActive: { borderColor: CandonColors.primary, backgroundColor: CandonColors.primaryFaint },
+  chipText: { fontSize: 12, color: CandonColors.textSecondary },
+  chipTextActive: { color: CandonColors.primary, fontWeight: '600' },
   slotInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   addSlotBtn: {
     width: 40, height: 40, borderRadius: 10, backgroundColor: CandonColors.primary,

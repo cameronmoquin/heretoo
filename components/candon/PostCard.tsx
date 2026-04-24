@@ -23,14 +23,27 @@ const TYPE_META: Record<FamilyPost['post_type'], { icon: any; label: string; col
   event: { icon: 'calendar-outline', label: 'Event', color: CandonColors.warm },
   assignment: { icon: 'list-outline', label: 'Sign Up', color: CandonColors.primary },
   reminder: { icon: 'notifications-outline', label: 'Reminder', color: CandonColors.warning },
+  medical_update: { icon: 'medkit-outline', label: 'Medical', color: CandonColors.medical },
+};
+
+const SCOPE_ICON: Record<FamilyPost['visibility_scope'], any> = {
+  group: null,
+  selected_members: 'person-outline',
+  admins_only: 'shield-outline',
+  medical_limited: 'lock-closed-outline',
 };
 
 export function PostCard({ post }: { post: FamilyPost }) {
   const meta = TYPE_META[post.post_type];
+  const scopeIcon = SCOPE_ICON[post.visibility_scope];
+  const isMedical = post.post_type === 'medical_update';
 
   return (
     <TouchableOpacity
-      style={s.card}
+      style={[
+        s.card,
+        isMedical && { borderLeftWidth: 3, borderLeftColor: CandonColors.medical, paddingLeft: 11 },
+      ]}
       onPress={() => router.push(`/candon/family/${post.family_group_id}/post/${post.id}`)}
       activeOpacity={0.7}
     >
@@ -39,6 +52,12 @@ export function PostCard({ post }: { post: FamilyPost }) {
           <Ionicons name={meta.icon} size={12} color={meta.color} />
           <Text style={[s.typeLabel, { color: meta.color }]}>{meta.label}</Text>
         </View>
+        {scopeIcon && (
+          <View style={s.scopeChip}>
+            <Ionicons name={scopeIcon} size={11} color={CandonColors.textMuted} />
+          </View>
+        )}
+        <View style={{ flex: 1 }} />
         <Text style={s.time}>{timeAgo(post.created_at)}</Text>
       </View>
 
@@ -53,12 +72,17 @@ const s = StyleSheet.create({
     backgroundColor: CandonColors.surface, borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: CandonColors.border, gap: 6,
   },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   typeBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4,
   },
   typeLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3, textTransform: 'uppercase' },
+  scopeChip: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: CandonColors.surfaceRaise,
+    alignItems: 'center', justifyContent: 'center',
+  },
   time: { fontSize: 11, color: CandonColors.textMuted },
   title: { fontSize: 16, fontWeight: '600', color: CandonColors.textPrimary },
   body: { fontSize: 14, color: CandonColors.textSecondary, lineHeight: 20 },
