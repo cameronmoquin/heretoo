@@ -30,10 +30,6 @@ const AUTH_SUSPECT_FRAGMENTS = [
   'invalid jwt',
   'no api key found',
   'invalid api key',
-  // RLS rejections that look like an authed request but aren't —
-  // the same shape the user hit in this session.
-  'new row violates row-level security policy',
-  'row-level security',
 ];
 
 export interface SupabaseLikeError {
