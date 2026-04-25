@@ -7,11 +7,20 @@ import { useAuthStore } from '../../stores/authStore';
 import { useContacts } from '../../hooks/useContacts';
 import { useFamilyGroups } from '../../hooks/useFamilyGroups';
 import { CandonColors } from '../../constants/candon-theme';
+import { supabase } from '../../lib/supabase';
 
 export default function CandonHome() {
   const profile = useAuthStore((s) => s.profile);
+  const user = useAuthStore((s) => s.user);
+  const reset = useAuthStore((s) => s.reset);
   const { data: contacts } = useContacts();
   const { data: families } = useFamilyGroups();
+
+  const onSignOut = async () => {
+    await supabase.auth.signOut();
+    reset();
+    router.replace('/candon');
+  };
 
   const name = profile?.display_name?.split(' ')[0] ?? 'there';
   const contactCount = contacts?.length ?? 0;
@@ -57,6 +66,16 @@ export default function CandonHome() {
             Daily queue, content reservoir, and bulletin workflows coming in Phase 2.
           </Text>
         </View>
+
+        {user && (
+          <View style={s.acct}>
+            <Text style={s.acctEmail}>Signed in as {user.email}</Text>
+            <TouchableOpacity onPress={onSignOut} style={s.signOutBtn} activeOpacity={0.7}>
+              <Ionicons name="log-out-outline" size={16} color={CandonColors.textSecondary} />
+              <Text style={s.signOutText}>Sign out</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -85,4 +104,16 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: CandonColors.borderLight,
   },
   placeholderText: { fontSize: 13, color: CandonColors.textMuted, textAlign: 'center' },
+  acct: {
+    marginTop: 32, paddingTop: 20, borderTopWidth: 1, borderTopColor: CandonColors.borderLight,
+    alignItems: 'center', gap: 10,
+  },
+  acctEmail: { fontSize: 12, color: CandonColors.textMuted },
+  signOutBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 8, borderWidth: 1, borderColor: CandonColors.border,
+    backgroundColor: CandonColors.surface,
+  },
+  signOutText: { fontSize: 13, color: CandonColors.textSecondary, fontWeight: '500' },
 });
