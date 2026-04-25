@@ -30,20 +30,44 @@ export default function WelcomeScreen() {
   const [inviteCode, setInviteCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // ── Sign in (existing user) ──
   const handleSignIn = async () => {
-    if (!email.trim() || !password) return;
+    setErrorMsg(null);
+    if (!email.trim() || !password) {
+      setErrorMsg('Email and password are required.');
+      return;
+    }
     try {
       setLoading('email');
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      // eslint-disable-next-line no-console
+      console.log('[signin] attempting', email.trim());
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      // eslint-disable-next-line no-console
+      console.log('[signin] result:', {
+        ok: !error,
+        sessionPresent: !!data?.session,
+        userId: data?.user?.id,
+        error: error?.message,
+      });
       if (error) throw error;
-      // Explicitly route based on which app the hostname says we're in.
-      // The auth-state listener updates the store, but it doesn't navigate.
+      if (!data?.session) {
+        setErrorMsg('Sign-in succeeded but no session was returned. Try again.');
+        return;
+      }
       const appId = detectAppId();
-      router.replace(appId === 'candon' ? '/candon' : '/(tabs)/feed');
+      const target = appId === 'candon' ? '/candon' : '/(tabs)/feed';
+      // eslint-disable-next-line no-console
+      console.log('[signin] navigating to', target);
+      router.replace(target);
     } catch (error: any) {
-      showAlert('Sign in failed', error.message ?? 'Check your email and password.');
+      // eslint-disable-next-line no-console
+      console.error('[signin] failed:', error);
+      setErrorMsg(error?.message ?? 'Sign in failed. Check your email and password.');
     } finally {
       setLoading(null);
     }
@@ -143,9 +167,15 @@ export default function WelcomeScreen() {
           {mode === 'signin' && (
             <View style={s.section}>
               <Text style={s.headline}>Welcome back</Text>
-              <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" returnKeyType="next" />
-              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry returnKeyType="go" onSubmitEditing={handleSignIn} />
+              <TextInput style={s.input} placeholder="Email" placeholderTextColor={Colors.textMuted} value={email} onChangeText={(t) => { setEmail(t); setErrorMsg(null); }} autoCapitalize="none" keyboardType="email-address" returnKeyType="next" />
+              <TextInput style={s.input} placeholder="Password" placeholderTextColor={Colors.textMuted} value={password} onChangeText={(t) => { setPassword(t); setErrorMsg(null); }} secureTextEntry returnKeyType="go" onSubmitEditing={handleSignIn} />
               <Button title="Sign in" onPress={handleSignIn} loading={loading === 'email'} disabled={!email.trim() || !password} variant="primary" size="lg" style={s.btn} />
+
+              {errorMsg && (
+                <View style={s.errorBox}>
+                  <Text style={s.errorText}>{errorMsg}</Text>
+                </View>
+              )}
 
               {Platform.OS === 'ios' && (
                 <>
@@ -240,4 +270,10 @@ const s = StyleSheet.create({
   divText: { fontSize: 12, color: '#666' },
   backLink: { fontSize: 14, color: '#666', textAlign: 'center', paddingVertical: 8 },
   legal: { fontSize: 11, color: '#444', textAlign: 'center', marginTop: 16, lineHeight: 16 },
+  errorBox: {
+    backgroundColor: 'rgba(255, 0, 64, 0.1)',
+    borderWidth: 1, borderColor: 'rgba(255, 0, 64, 0.4)',
+    borderRadius: Radius.md, padding: 12, marginTop: 4,
+  },
+  errorText: { color: '#FF6B6B', fontSize: 13, textAlign: 'center', lineHeight: 18 },
 });
