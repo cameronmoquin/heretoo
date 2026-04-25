@@ -19,6 +19,7 @@ import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { detectAppId } from '../../constants/apps';
 
 type Mode = 'choice' | 'signin' | 'signup_code' | 'signup_form';
 
@@ -35,11 +36,14 @@ export default function WelcomeScreen() {
     if (!email.trim() || !password) return;
     try {
       setLoading('email');
-      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
-      // Auth listener in useAuth handles the redirect
+      // Explicitly route based on which app the hostname says we're in.
+      // The auth-state listener updates the store, but it doesn't navigate.
+      const appId = detectAppId();
+      router.replace(appId === 'candon' ? '/candon' : '/(tabs)/feed');
     } catch (error: any) {
-      showAlert('Failed', error.message);
+      showAlert('Sign in failed', error.message ?? 'Check your email and password.');
     } finally {
       setLoading(null);
     }
@@ -88,7 +92,9 @@ export default function WelcomeScreen() {
             accepted_at: new Date().toISOString(),
           }).eq('invite_code', inviteCode.trim().toUpperCase()).then(() => {});
         }
-        router.replace('/(auth)/profile-setup');
+        // On Candon, no profile-setup flow — go straight to the home.
+        const appId = detectAppId();
+        router.replace(appId === 'candon' ? '/candon' : '/(auth)/profile-setup');
       } else {
         showAlert('Check email', 'Confirm your account to continue.');
       }
