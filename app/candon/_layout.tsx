@@ -1,7 +1,20 @@
-import { Stack } from 'expo-router';
+import { Stack, Redirect, usePathname } from 'expo-router';
 import { CandonColors } from '../../constants/candon-theme';
+import { useAuthStore } from '../../stores/authStore';
+import { DEV_MODE } from '../../lib/dev-mode';
 
 export default function CandonLayout() {
+  const session = useAuthStore((s) => s.session);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const pathname = usePathname();
+
+  // Allow the reset page to render even when signed out — that's its whole job.
+  const isResetPage = pathname?.endsWith('/candon/reset');
+
+  if (!DEV_MODE && !isLoading && !session && !isResetPage) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
   return (
     <Stack
       screenOptions={{
@@ -12,6 +25,7 @@ export default function CandonLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Candon' }} />
+      <Stack.Screen name="reset" options={{ title: 'Reset Session', headerShown: false }} />
       <Stack.Screen name="contacts" options={{ title: 'Contacts' }} />
       <Stack.Screen name="contacts/new" options={{ title: 'New Contact' }} />
       <Stack.Screen name="contacts/[id]" options={{ title: 'Contact' }} />
