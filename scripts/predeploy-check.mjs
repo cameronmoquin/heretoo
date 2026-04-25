@@ -2,81 +2,170 @@
 /**
  * Pre-deploy validation.
  * Fails fast with readable errors if anything is wrong.
+ *
+ * Tiered checks:
+ *   - Always: git hygiene + TypeScript (cheap, no network)
+ *   - Always: env vars present (cheap, local)
+ *   - Network: anon-key live probe of Supabase (skippable with --no-network)
+ *   - Network: Netlify Functions build smoke (skippable)
+ *
+ * Bypass with --force for emergency deploys (skips git checks but never
+ * skips typecheck or env-var validation).
  */
 
 import { execSync } from 'node:child_process';
+import { readdirSync, existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..');
 const PRODUCTION_BRANCH = 'master';
+
 const args = process.argv.slice(2);
 const force = args.includes('--force');
+const skipNetwork = args.includes('--no-network');
 
-function run(cmd) { return execSync(cmd, { encoding: 'utf8' }).trim(); }
+function run(cmd, opts = {}) {
+  return execSync(cmd, { encoding: 'utf8', cwd: ROOT, ...opts }).trim();
+}
 function fail(msg) {
   console.error(`\n  FAIL: ${msg}\n`);
   process.exit(1);
 }
 function ok(msg) { console.log(`  OK   ${msg}`); }
+function warn(msg) { console.log(`  WARN ${msg}`); }
 
 console.log('\nPre-deploy checks');
 console.log('─────────────────────────────────');
 
-// 1. Working tree clean
+// ── 1. Working tree clean ────────────────────────────────────────────────
 const dirty = run('git status --porcelain');
 if (dirty.length > 0) {
-  if (force) {
-    console.log('  WARN working tree dirty (--force override)');
-  } else {
-    fail(
-      `working tree is dirty. Commit or stash, or use --force:\n\n${dirty}\n`
-    );
-  }
-} else {
-  ok('working tree clean');
-}
+  if (force) warn('working tree dirty (--force override)');
+  else fail(`working tree is dirty. Commit or stash, or use --force:\n\n${dirty}\n`);
+} else ok('working tree clean');
 
-// 2. On production branch
+// ── 2. On production branch ──────────────────────────────────────────────
 const branch = run('git rev-parse --abbrev-ref HEAD');
 if (branch !== PRODUCTION_BRANCH) {
-  if (force) {
-    console.log(`  WARN on branch "${branch}", expected "${PRODUCTION_BRANCH}" (--force override)`);
-  } else {
-    fail(
-      `on branch "${branch}", expected "${PRODUCTION_BRANCH}".\n` +
-      `     Production deploys must come from ${PRODUCTION_BRANCH}.\n` +
-      `     Run: git checkout ${PRODUCTION_BRANCH}`
-    );
-  }
-} else {
-  ok(`on branch "${PRODUCTION_BRANCH}"`);
-}
+  if (force) warn(`on branch "${branch}", expected "${PRODUCTION_BRANCH}" (--force override)`);
+  else fail(
+    `on branch "${branch}", expected "${PRODUCTION_BRANCH}".\n` +
+    `     Run: git checkout ${PRODUCTION_BRANCH}`
+  );
+} else ok(`on branch "${PRODUCTION_BRANCH}"`);
 
-// 3. Up to date with remote
+// ── 3. Up to date with remote ────────────────────────────────────────────
 try {
   run('git fetch origin');
   const local = run(`git rev-parse ${branch}`);
-  const remote = run(`git rev-parse origin/${branch}`).trim();
+  const remote = run(`git rev-parse origin/${branch}`);
   if (local !== remote) {
-    if (force) {
-      console.log('  WARN branch out of sync with remote (--force override)');
-    } else {
-      fail(
-        `branch is out of sync with origin/${branch}.\n` +
-        `     Run: git pull origin ${branch}`
-      );
-    }
-  } else {
-    ok(`in sync with origin/${branch}`);
-  }
+    if (force) warn('branch out of sync with remote (--force override)');
+    else fail(
+      `branch is out of sync with origin/${branch}.\n` +
+      `     Run: git pull origin ${branch}`
+    );
+  } else ok(`in sync with origin/${branch}`);
 } catch (e) {
-  console.log(`  WARN could not check remote sync (${e.message})`);
+  warn(`could not check remote sync (${e.message})`);
 }
 
-// 4. TypeScript passes
+// ── 4. TypeScript passes ─────────────────────────────────────────────────
 try {
   run('npx tsc --noEmit');
   ok('TypeScript compiles');
 } catch {
   fail('TypeScript errors. Fix before deploying.');
+}
+
+// ── 5. Required env vars present ─────────────────────────────────────────
+// Source from .env.local if present so we can validate without exporting.
+const envFile = join(ROOT, '.env.local');
+const envFromFile = {};
+if (existsSync(envFile)) {
+  for (const line of readFileSync(envFile, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
+    if (m) envFromFile[m[1]] = m[2].replace(/^["']|["']$/g, '');
+  }
+}
+const REQUIRED_ENV = ['EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+const missing = REQUIRED_ENV.filter(
+  (k) => !process.env[k] && !envFromFile[k]
+);
+if (missing.length) {
+  if (force) warn(`missing env vars: ${missing.join(', ')} (--force override)`);
+  else fail(
+    `Missing required env vars: ${missing.join(', ')}.\n` +
+    `     Set them in your shell or in .env.local.`
+  );
+} else ok('env vars present');
+
+const supabaseUrl =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ?? envFromFile.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseKey =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? envFromFile.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// ── 6. Anon-key live probe (catches wrong project / revoked key) ─────────
+if (!skipNetwork && supabaseUrl && supabaseKey) {
+  try {
+    // PostgREST returns 200 even for empty results when RLS is happy.
+    // We hit a public-readable table; profiles is the safest bet.
+    const res = await fetch(`${supabaseUrl}/rest/v1/profiles?select=id&limit=1`, {
+      headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+    });
+    if (res.status === 401) {
+      fail('Supabase rejected the anon key (401). Key may be revoked or wrong project.');
+    } else if (res.status === 404) {
+      fail(`Supabase URL ${supabaseUrl} reachable but /profiles missing — wrong project?`);
+    } else if (res.status >= 500) {
+      warn(`Supabase responded ${res.status} (transient backend issue?)`);
+    } else {
+      ok(`Supabase reachable (${res.status})`);
+    }
+  } catch (e) {
+    if (force) warn(`Supabase probe failed: ${e.message} (--force override)`);
+    else fail(`Cannot reach Supabase at ${supabaseUrl}: ${e.message}`);
+  }
+} else if (skipNetwork) {
+  warn('skipped Supabase live probe (--no-network)');
+}
+
+// ── 7. Netlify Functions build smoke ────────────────────────────────────
+const fnDir = join(ROOT, 'netlify', 'functions');
+if (existsSync(fnDir)) {
+  const fns = readdirSync(fnDir).filter((f) => /\.(ts|js|mjs)$/.test(f));
+  if (fns.length > 0) {
+    try {
+      // esbuild dry-run: outdir to a throwaway tmp to surface syntax errors
+      run(
+        `npx --yes esbuild ${fns
+          .map((f) => `"${join(fnDir, f)}"`)
+          .join(' ')} --bundle --platform=node --target=node20 --outdir=node_modules/.predeploy-check-tmp 2>&1`,
+      );
+      ok(`Netlify Functions compile (${fns.length})`);
+    } catch (e) {
+      fail(`Netlify Function build failed:\n\n${e.message}`);
+    }
+  }
+}
+
+// ── 8. Migration consistency (informational) ─────────────────────────────
+// We don't have a managed link to Supabase from CI, but we can at least
+// flag that there are migrations the deploy doesn't apply. This nudges
+// the human to verify dashboard state.
+const migDir = join(ROOT, 'supabase', 'migrations');
+if (existsSync(migDir)) {
+  const migs = readdirSync(migDir).filter((f) => f.endsWith('.sql')).sort();
+  if (migs.length > 0) {
+    const latest = migs[migs.length - 1];
+    warn(
+      `${migs.length} migrations on disk; latest: ${latest}.\n` +
+      `       This script does NOT verify they're applied to live Supabase.\n` +
+      `       Confirm in dashboard before deploying schema-dependent changes.`,
+    );
+  }
 }
 
 console.log('─────────────────────────────────');

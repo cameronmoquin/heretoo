@@ -57,9 +57,9 @@ CREATE TABLE IF NOT EXISTS public.candon_contacts (
 CREATE TRIGGER candon_contacts_updated_at
   BEFORE UPDATE ON candon_contacts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE INDEX idx_candon_contacts_user ON candon_contacts(user_id);
-CREATE INDEX idx_candon_contacts_mode ON candon_contacts(user_id, outreach_mode);
-CREATE INDEX idx_candon_contacts_name ON candon_contacts(user_id, display_name);
+CREATE INDEX IF NOT EXISTS idx_candon_contacts_user ON candon_contacts(user_id);
+CREATE INDEX IF NOT EXISTS idx_candon_contacts_mode ON candon_contacts(user_id, outreach_mode);
+CREATE INDEX IF NOT EXISTS idx_candon_contacts_name ON candon_contacts(user_id, display_name);
 
 -- ─── CONTACT TAGS ───
 CREATE TABLE IF NOT EXISTS public.candon_contact_tags (
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.candon_contact_tags (
   tag TEXT NOT NULL,
   UNIQUE (contact_id, tag)
 );
-CREATE INDEX idx_candon_contact_tags_contact ON candon_contact_tags(contact_id);
+CREATE INDEX IF NOT EXISTS idx_candon_contact_tags_contact ON candon_contact_tags(contact_id);
 
 -- ─── FAMILY GROUPS ───
 CREATE TABLE IF NOT EXISTS public.candon_family_groups (
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.candon_family_groups (
   invite_code TEXT UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_candon_family_groups_owner ON candon_family_groups(owner_user_id);
+CREATE INDEX IF NOT EXISTS idx_candon_family_groups_owner ON candon_family_groups(owner_user_id);
 
 -- ─── FAMILY MEMBERSHIPS ───
 CREATE TABLE IF NOT EXISTS public.candon_family_memberships (
@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS public.candon_family_memberships (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (family_group_id, user_id)
 );
-CREATE INDEX idx_candon_memberships_user ON candon_family_memberships(user_id);
-CREATE INDEX idx_candon_memberships_group ON candon_family_memberships(family_group_id);
+CREATE INDEX IF NOT EXISTS idx_candon_memberships_user ON candon_family_memberships(user_id);
+CREATE INDEX IF NOT EXISTS idx_candon_memberships_group ON candon_family_memberships(family_group_id);
 
 -- ─── HELPER FUNCTIONS ───
 -- Is the current user a member of this family group?

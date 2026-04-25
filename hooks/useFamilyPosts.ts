@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import { notifyGroupOfNewPost } from '../lib/candon-notifications';
+import { withAuthRecovery } from '../lib/auth-recovery';
 
 export type PostType = 'general_update' | 'event' | 'assignment' | 'reminder' | 'medical_update';
 export type RsvpResponse = 'yes' | 'no' | 'maybe';
@@ -184,22 +185,8 @@ export function useCreateFamilyPost() {
   const userId = useAuthStore((s) => s.user?.id);
 
   return useMutation({
-    mutationFn: async (input: CreatePostInput) => {
+    mutationFn: async (input: CreatePostInput) => withAuthRecovery(async () => {
       if (!userId) throw new Error('Not authenticated');
-
-      // DEBUG: surface what we're sending vs what auth.uid() resolves to server-side
-      const { data: sessionData } = await supabase.auth.getSession();
-      const { data: userData } = await supabase.auth.getUser();
-      // eslint-disable-next-line no-console
-      console.log('[create-post DEBUG]', {
-        store_userId: userId,
-        session_user_id: sessionData?.session?.user?.id,
-        session_user_email: sessionData?.session?.user?.email,
-        getUser_id: userData?.user?.id,
-        getUser_email: userData?.user?.email,
-        access_token_present: !!sessionData?.session?.access_token,
-        family_group_id: input.family_group_id,
-      });
 
       // Medical posts default to medical_limited scope if caller didn't set one.
       const scope: VisibilityScope =
@@ -222,12 +209,7 @@ export function useCreateFamilyPost() {
         })
         .select()
         .single();
-      if (error) {
-        const { data: s2 } = await supabase.auth.getSession();
-        throw new Error(
-          `${error.message}\n\nDEBUG: store=${userId?.slice(0, 8)} session=${s2?.session?.user?.id?.slice(0, 8) ?? 'NONE'} email=${s2?.session?.user?.email ?? 'NONE'}`
-        );
-      }
+      if (error) throw error;
 
       // Recipient list for scoped posts
       if (
@@ -302,7 +284,7 @@ export function useCreateFamilyPost() {
       });
 
       return post as FamilyPost;
-    },
+    }),
     onSuccess: (post) => {
       qc.invalidateQueries({ queryKey: ['candon-posts', post.family_group_id] });
     },

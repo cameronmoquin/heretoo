@@ -11,11 +11,14 @@ import {
   type PostType,
   type VisibilityScope,
 } from '../../../../hooks/useFamilyPosts';
-import { showAlert } from '../../../../lib/alert';
+import { showAlert, showConfirm } from '../../../../lib/alert';
 import { CandonColors } from '../../../../constants/candon-theme';
 import { VisibilityPicker } from '../../../../components/candon/VisibilityPicker';
+import { formatPgError } from '../../../../lib/error-format';
+import { hardSignOutAndRedirect } from '../../../../lib/auth-recovery';
+import type { IoniconName } from '../../../../lib/icon-types';
 
-const POST_TYPES: { id: PostType; label: string; icon: any }[] = [
+const POST_TYPES: { id: PostType; label: string; icon: IoniconName }[] = [
   { id: 'general_update', label: 'Update', icon: 'create-outline' },
   { id: 'event', label: 'Event', icon: 'calendar-outline' },
   { id: 'assignment', label: 'Sign Up', icon: 'list-outline' },
@@ -120,7 +123,22 @@ export default function NewPost() {
 
     createPost.mutate(payload, {
       onSuccess: () => router.back(),
-      onError: (e: any) => showAlert('Failed', e.message),
+      onError: (e: unknown) => {
+        const f = formatPgError(e, 'Could not save your post.');
+        // eslint-disable-next-line no-console
+        console.error('[create-post] failed:', f.raw, '(code:', f.code, ')');
+        if (f.authSuspect) {
+          showConfirm(
+            'Session expired',
+            `${f.message}\n\nSign out and back in?`,
+            () => hardSignOutAndRedirect(),
+            'Sign in again',
+            'Cancel',
+          );
+        } else {
+          showAlert('Could not post', f.message);
+        }
+      },
     });
   };
 

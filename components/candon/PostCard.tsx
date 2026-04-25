@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { CandonColors } from '../../constants/candon-theme';
 import type { FamilyPost } from '../../hooks/useFamilyPosts';
+import type { IoniconName } from '../../lib/icon-types';
 
 function timeAgo(iso: string): string {
   const d = new Date(iso);
@@ -18,7 +19,7 @@ function timeAgo(iso: string): string {
   return d.toLocaleDateString();
 }
 
-const TYPE_META: Record<FamilyPost['post_type'], { icon: any; label: string; color: string }> = {
+const TYPE_META: Record<FamilyPost['post_type'], { icon: IoniconName; label: string; color: string }> = {
   general_update: { icon: 'chatbubble-outline', label: 'Update', color: CandonColors.textSecondary },
   event: { icon: 'calendar-outline', label: 'Event', color: CandonColors.warm },
   assignment: { icon: 'list-outline', label: 'Sign Up', color: CandonColors.primary },
@@ -26,7 +27,7 @@ const TYPE_META: Record<FamilyPost['post_type'], { icon: any; label: string; col
   medical_update: { icon: 'medkit-outline', label: 'Medical', color: CandonColors.medical },
 };
 
-const SCOPE_ICON: Record<FamilyPost['visibility_scope'], any> = {
+const SCOPE_ICON: Record<FamilyPost['visibility_scope'], IoniconName | null> = {
   group: null,
   selected_members: 'person-outline',
   admins_only: 'shield-outline',

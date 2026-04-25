@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 import { RightPanel } from '../../components/shared/RightPanel';
+import { useAuthStore } from '../../stores/authStore';
+import { DEV_MODE } from '../../lib/dev-mode';
 
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
@@ -63,6 +65,13 @@ function Sidebar() {
 export default function TabLayout() {
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
+
+  // Auth gate: tabs are protected. Signed-out deep-links bounce to welcome.
+  const session = useAuthStore((s) => s.session);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  if (!DEV_MODE && !isLoading && !session) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
 
   if (isDesktop) {
     return (

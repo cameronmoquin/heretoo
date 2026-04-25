@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS public.candon_family_post_recipients (
   UNIQUE (family_post_id, user_id)
 );
 
-CREATE INDEX idx_candon_post_recipients_post ON candon_family_post_recipients(family_post_id);
-CREATE INDEX idx_candon_post_recipients_user ON candon_family_post_recipients(user_id);
+CREATE INDEX IF NOT EXISTS idx_candon_post_recipients_post ON candon_family_post_recipients(family_post_id);
+CREATE INDEX IF NOT EXISTS idx_candon_post_recipients_user ON candon_family_post_recipients(user_id);
 
 -- ─── MEDICAL UPDATE DETAILS (subtype) ───
 CREATE TABLE IF NOT EXISTS public.candon_family_medical_updates (
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.candon_family_medical_updates (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_candon_medical_post ON candon_family_medical_updates(family_post_id);
+CREATE INDEX IF NOT EXISTS idx_candon_medical_post ON candon_family_medical_updates(family_post_id);
 
 -- ─── AUDIT LOG FOR SENSITIVE POST VIEWS ───
 CREATE TABLE IF NOT EXISTS public.candon_post_view_log (
@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS public.candon_post_view_log (
   viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_candon_view_log_post ON candon_post_view_log(family_post_id, viewed_at DESC);
-CREATE INDEX idx_candon_view_log_user ON candon_post_view_log(user_id, viewed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candon_view_log_post ON candon_post_view_log(family_post_id, viewed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candon_view_log_user ON candon_post_view_log(user_id, viewed_at DESC);
 
 -- ─── INBOUND EMAILS (from Resend webhook) ───
 CREATE TABLE IF NOT EXISTS public.candon_inbound_emails (
@@ -74,8 +74,8 @@ CREATE TABLE IF NOT EXISTS public.candon_inbound_emails (
   received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_candon_inbound_group ON candon_inbound_emails(family_group_id, received_at DESC);
-CREATE INDEX idx_candon_inbound_post ON candon_inbound_emails(family_post_id, received_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candon_inbound_group ON candon_inbound_emails(family_group_id, received_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candon_inbound_post ON candon_inbound_emails(family_post_id, received_at DESC);
 
 -- ─── HELPER: can the current user view this post? ───
 -- Respects visibility_scope: group | selected_members | admins_only | medical_limited

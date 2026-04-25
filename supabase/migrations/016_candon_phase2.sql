@@ -18,8 +18,8 @@ CREATE TRIGGER candon_family_posts_updated_at
   BEFORE UPDATE ON candon_family_posts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE INDEX idx_candon_posts_group ON candon_family_posts(family_group_id, created_at DESC);
-CREATE INDEX idx_candon_posts_type ON candon_family_posts(family_group_id, post_type);
+CREATE INDEX IF NOT EXISTS idx_candon_posts_group ON candon_family_posts(family_group_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candon_posts_type ON candon_family_posts(family_group_id, post_type);
 
 -- ─── EVENT DETAILS (subtype) ───
 CREATE TABLE IF NOT EXISTS public.candon_family_events (
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS public.candon_family_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_candon_events_post ON candon_family_events(family_post_id);
-CREATE INDEX idx_candon_events_start ON candon_family_events(start_at);
+CREATE INDEX IF NOT EXISTS idx_candon_events_post ON candon_family_events(family_post_id);
+CREATE INDEX IF NOT EXISTS idx_candon_events_start ON candon_family_events(start_at);
 
 -- ─── RSVPS ───
 CREATE TABLE IF NOT EXISTS public.candon_event_rsvps (
@@ -55,8 +55,8 @@ CREATE TRIGGER candon_event_rsvps_updated_at
   BEFORE UPDATE ON candon_event_rsvps
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE INDEX idx_candon_rsvps_event ON candon_event_rsvps(event_id);
-CREATE INDEX idx_candon_rsvps_user ON candon_event_rsvps(user_id);
+CREATE INDEX IF NOT EXISTS idx_candon_rsvps_event ON candon_event_rsvps(event_id);
+CREATE INDEX IF NOT EXISTS idx_candon_rsvps_user ON candon_event_rsvps(user_id);
 
 -- ─── ASSIGNMENTS (food, tasks, rides) ───
 CREATE TABLE IF NOT EXISTS public.candon_family_assignments (
@@ -74,9 +74,9 @@ CREATE TABLE IF NOT EXISTS public.candon_family_assignments (
   CHECK (family_post_id IS NOT NULL OR family_event_id IS NOT NULL)
 );
 
-CREATE INDEX idx_candon_assignments_post ON candon_family_assignments(family_post_id);
-CREATE INDEX idx_candon_assignments_event ON candon_family_assignments(family_event_id);
-CREATE INDEX idx_candon_assignments_user ON candon_family_assignments(claimed_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_candon_assignments_post ON candon_family_assignments(family_post_id);
+CREATE INDEX IF NOT EXISTS idx_candon_assignments_event ON candon_family_assignments(family_event_id);
+CREATE INDEX IF NOT EXISTS idx_candon_assignments_user ON candon_family_assignments(claimed_by_user_id);
 
 -- ─── POST ACKNOWLEDGEMENTS ───
 CREATE TABLE IF NOT EXISTS public.candon_post_acknowledgements (
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS public.candon_post_acknowledgements (
   UNIQUE (family_post_id, user_id)
 );
 
-CREATE INDEX idx_candon_acks_post ON candon_post_acknowledgements(family_post_id);
+CREATE INDEX IF NOT EXISTS idx_candon_acks_post ON candon_post_acknowledgements(family_post_id);
 
 -- ─── NOTIFICATION JOBS (for email bulletins) ───
 CREATE TABLE IF NOT EXISTS public.candon_notification_jobs (
@@ -106,8 +106,8 @@ CREATE TABLE IF NOT EXISTS public.candon_notification_jobs (
   sent_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_candon_notif_status ON candon_notification_jobs(status, scheduled_for);
-CREATE INDEX idx_candon_notif_user ON candon_notification_jobs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candon_notif_status ON candon_notification_jobs(status, scheduled_for);
+CREATE INDEX IF NOT EXISTS idx_candon_notif_user ON candon_notification_jobs(user_id, created_at DESC);
 
 -- ─── REALTIME ───
 ALTER PUBLICATION supabase_realtime ADD TABLE candon_family_posts;

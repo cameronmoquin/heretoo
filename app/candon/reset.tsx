@@ -24,7 +24,7 @@ export default function CandonReset() {
   useEffect(() => {
     (async () => {
       try {
-        await supabase.auth.signOut({ scope: 'global' as any });
+        await supabase.auth.signOut({ scope: 'global' });
       } catch {}
 
       try {

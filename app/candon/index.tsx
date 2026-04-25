@@ -8,6 +8,7 @@ import { useContacts } from '../../hooks/useContacts';
 import { useFamilyGroups } from '../../hooks/useFamilyGroups';
 import { CandonColors } from '../../constants/candon-theme';
 import { supabase } from '../../lib/supabase';
+import type { IoniconName } from '../../lib/icon-types';
 
 const SERIF = Platform.select({
   ios: 'Georgia',
@@ -24,7 +25,7 @@ export default function CandonHome() {
 
   const onSignOut = async () => {
     try {
-      await supabase.auth.signOut({ scope: 'global' as any });
+      await supabase.auth.signOut({ scope: 'global' });
     } catch {}
     // Nuke any cached Supabase tokens — they survive plain signOut on web sometimes
     try {
@@ -58,7 +59,7 @@ export default function CandonHome() {
   const Card = ({
     icon, title, subtitle, count, onPress, accent,
   }: {
-    icon: any; title: string; subtitle: string; count?: number;
+    icon: IoniconName; title: string; subtitle: string; count?: number;
     onPress: () => void; accent?: string;
   }) => (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.75}>
