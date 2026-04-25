@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#0F0F10"/>
+  <!-- HT wordmark, split-color: ivory left, gold right -->
+  <!-- H -->
+  <g font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="42" letter-spacing="-2">
+    <text x="8" y="44" fill="#F4EFE3">H</text>
+    <text x="34" y="44" fill="#C9A24A">T</text>
+  </g>
+</svg>
