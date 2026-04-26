@@ -209,23 +209,33 @@ export function useCreateFamilyPost() {
         input.sensitivity ??
         (input.post_type === 'medical_update' ? 'medical' : 'normal');
 
+      // Build the row defensively. Only include media columns when actually
+      // populated, so a text-only post still works on a database that hasn't
+      // applied migration 019 yet.
+      const row: Record<string, unknown> = {
+        family_group_id: input.family_group_id,
+        created_by: userId,
+        post_type: input.post_type,
+        title: input.title,
+        body: input.body ?? null,
+        sensitivity,
+        visibility_scope: scope,
+      };
+      if (input.photo_urls && input.photo_urls.length > 0) {
+        row.photo_urls = input.photo_urls;
+      }
+      if (input.mux_playback_id) {
+        row.mux_asset_id = input.mux_asset_id ?? null;
+        row.mux_playback_id = input.mux_playback_id;
+        row.mux_thumbnail_url = input.mux_thumbnail_url ?? null;
+        if (input.video_duration_seconds != null) {
+          row.video_duration_seconds = input.video_duration_seconds;
+        }
+      }
+
       const { data: post, error } = await supabase
         .from('candon_family_posts')
-        .insert({
-          family_group_id: input.family_group_id,
-          created_by: userId,
-          post_type: input.post_type,
-          title: input.title,
-          body: input.body ?? null,
-          sensitivity,
-          visibility_scope: scope,
-          // media (column added in migration 019; safe to omit if 019 not yet applied)
-          photo_urls: input.photo_urls ?? [],
-          mux_asset_id: input.mux_asset_id ?? null,
-          mux_playback_id: input.mux_playback_id ?? null,
-          mux_thumbnail_url: input.mux_thumbnail_url ?? null,
-          video_duration_seconds: input.video_duration_seconds ?? null,
-        })
+        .insert(row)
         .select()
         .single();
       if (error) throw error;
