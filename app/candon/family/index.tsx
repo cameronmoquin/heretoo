@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFamilyGroups } from '../../../hooks/useFamilyGroups';
 import { CandonColors } from '../../../constants/candon-theme';
 import { FamilyCrest } from '../../../components/candon/FamilyCrest';
@@ -14,6 +15,12 @@ const SERIF = Platform.select({
 });
 
 export default function FamilyList() {
+  const qc = useQueryClient();
+  // Force a fresh fetch every time the list opens — drops cached deleted
+  // groups so users never tap into a ghost URL.
+  useEffect(() => {
+    qc.invalidateQueries({ queryKey: ['candon-family-groups'] });
+  }, [qc]);
   const { data: groups, isLoading } = useFamilyGroups();
 
   return (

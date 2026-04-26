@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform,
 } from 'react-native';
@@ -14,6 +14,18 @@ import { PostCard } from '../../../../components/candon/PostCard';
 import { FamilyCrest } from '../../../../components/candon/FamilyCrest';
 
 type Tab = 'feed' | 'about';
+
+function DeletedGroupRedirect() {
+  useEffect(() => {
+    // Replace, don't push, so the user can't "back" into the dead URL.
+    router.replace('/candon/family');
+  }, []);
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: CandonColors.bg }}>
+      <ActivityIndicator color={CandonColors.primary} style={{ marginTop: 60 }} />
+    </SafeAreaView>
+  );
+}
 
 export default function FamilyDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,11 +44,9 @@ export default function FamilyDetail() {
     );
   }
   if (!group) {
-    return (
-      <SafeAreaView style={s.root}>
-        <Text style={s.empty}>Group not found.</Text>
-      </SafeAreaView>
-    );
+    // Group was deleted (or stale link from cache). Bounce to family list,
+    // which forces a fresh query and avoids attempts to post into a ghost.
+    return <DeletedGroupRedirect />;
   }
 
   const isOwner = group.owner_user_id === userId;
