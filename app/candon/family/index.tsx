@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFamilyGroups } from '../../../hooks/useFamilyGroups';
 import { CandonColors } from '../../../constants/candon-theme';
+import { FamilyCrest } from '../../../components/candon/FamilyCrest';
 
 const SERIF = Platform.select({
   ios: 'Georgia',
@@ -67,9 +68,8 @@ export default function FamilyList() {
               onPress={() => router.push(`/candon/family/${g.id}`)}
               activeOpacity={0.75}
             >
-              <View style={s.iconBox}>
-                <Ionicons name="home" size={20} color={CandonColors.primary} />
-              </View>
+              <FamilyCrest seed={g.id} name={g.name} size={42} />
+              <View style={{ width: 4 }} />
               <View style={{ flex: 1 }}>
                 <Text style={s.rowTitle}>{g.name}</Text>
                 <View style={s.rowMetaRow}>

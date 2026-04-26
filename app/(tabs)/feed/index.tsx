@@ -7,6 +7,7 @@ import { useFeed, useToggleEngagement } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { useFeedFormatStore, FEED_FORMATS, type FeedFormat } from '../../../stores/feedFormatStore';
 import { useFamilyGroups, useCandonNetworkStats } from '../../../hooks/useFamilyGroups';
+import { FamilyCrest } from '../../../components/candon/FamilyCrest';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -55,24 +56,41 @@ export default function FeedScreen() {
       )}
 
       {/* Family Group banner — links to private family bulletin board.
-          Top line is the user's own status; bottom line is the public
-          aggregate network stats (non-private). */}
+          When the user belongs to families, render their crests + names.
+          Otherwise render the join-by-invite call. The aggregate network
+          stats below are always non-private. */}
       <TouchableOpacity
         style={styles.familyBanner}
         onPress={() => router.push(familyCount > 0 ? '/candon/family' : '/candon')}
         activeOpacity={0.85}
       >
-        <View style={styles.familyBannerIcon}>
-          <Ionicons name="git-branch" size={18} color="#FFF" />
-        </View>
+        {familyCount > 0 && families ? (
+          <View style={styles.crestStack}>
+            {families.slice(0, 3).map((g, i) => (
+              <View key={g.id} style={[styles.crestStackItem, { marginLeft: i === 0 ? 0 : -14 }]}>
+                <FamilyCrest seed={g.id} name={g.name} size={36} />
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.familyBannerIcon}>
+            <Ionicons name="git-branch" size={18} color="#FFF" />
+          </View>
+        )}
         <View style={{ flex: 1 }}>
-          <Text style={styles.familyBannerTitle}>Family Group</Text>
+          <Text style={styles.familyBannerTitle}>
+            {familyCount === 0
+              ? 'Family Group'
+              : familyCount === 1
+                ? families![0].name
+                : 'Family Groups'}
+          </Text>
           <Text style={styles.familyBannerSub}>
             {familyCount === 0
               ? 'Joinable by invite — start with a code from someone you know'
               : familyCount === 1
                 ? 'Open your family bulletin board'
-                : `${familyCount} family circles you belong to`}
+                : `${families!.slice(0, 3).map((g) => g.name).join(' · ')}${familyCount > 3 ? ` +${familyCount - 3}` : ''}`}
           </Text>
           {networkStats && networkStats.total_families > 0 && (
             <View style={styles.statsRow}>
@@ -197,6 +215,8 @@ const styles = StyleSheet.create({
   },
   familyBannerTitle: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   familyBannerSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  crestStack: { flexDirection: 'row', alignItems: 'center', height: 44 },
+  crestStackItem: {},
   statsRow: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     marginTop: 6, flexWrap: 'wrap',

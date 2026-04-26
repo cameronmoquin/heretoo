@@ -11,6 +11,7 @@ import { useAuthStore } from '../../../../stores/authStore';
 import { showAlert, showConfirm } from '../../../../lib/alert';
 import { CandonColors } from '../../../../constants/candon-theme';
 import { PostCard } from '../../../../components/candon/PostCard';
+import { FamilyCrest } from '../../../../components/candon/FamilyCrest';
 
 type Tab = 'feed' | 'about';
 
@@ -69,10 +70,8 @@ export default function FamilyDetail() {
       {/* Group header (compact) */}
       <View style={s.header}>
         <View style={s.headerLeft}>
-          <View style={s.iconBox}>
-            <Ionicons name="home" size={20} color={CandonColors.primary} />
-          </View>
-          <View style={{ flex: 1 }}>
+          <FamilyCrest seed={group.id} name={group.name} size={40} />
+          <View style={{ flex: 1, marginLeft: 4 }}>
             <Text style={s.name}>{group.name}</Text>
             <Text style={s.metaText}>{members?.length ?? 0} members</Text>
           </View>
