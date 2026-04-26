@@ -156,6 +156,26 @@ export default function FamilyDetail() {
               ))}
             </View>
 
+            {/* Spin off — only members can spawn a child family */}
+            <View style={s.spinoffCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.spinoffTitle}>Spin off a new family</Text>
+                <Text style={s.spinoffText}>
+                  Start a separate, private family group connected to this one.
+                  The two stay independent, but the connection contributes to
+                  the public family-tree network stats.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={s.spinoffBtn}
+                onPress={() => router.push(`/candon/family/new?from=${group.id}`)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="git-branch-outline" size={16} color="#FFF" />
+                <Text style={s.spinoffBtnText}>Spin off</Text>
+              </TouchableOpacity>
+            </View>
+
             {!isOwner && (
               <TouchableOpacity style={s.leaveBtn} onPress={onLeave}>
                 <Text style={s.leaveBtnText}>Leave group</Text>
@@ -236,4 +256,17 @@ const s = StyleSheet.create({
   memberRole: { fontSize: 11, color: CandonColors.textMuted, textTransform: 'capitalize' },
   leaveBtn: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 14, marginTop: 8 },
   leaveBtnText: { color: CandonColors.error, fontSize: 14, fontWeight: '500' },
+  spinoffCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: CandonColors.surface, borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: CandonColors.border,
+  },
+  spinoffTitle: { fontSize: 14, fontWeight: '600', color: CandonColors.textPrimary },
+  spinoffText: { fontSize: 12, color: CandonColors.textMuted, marginTop: 4, lineHeight: 17 },
+  spinoffBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
+    backgroundColor: CandonColors.primary,
+  },
+  spinoffBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
 });

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFeed, useToggleEngagement } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { useFeedFormatStore, FEED_FORMATS, type FeedFormat } from '../../../stores/feedFormatStore';
-import { useFamilyGroups } from '../../../hooks/useFamilyGroups';
+import { useFamilyGroups, useCandonNetworkStats } from '../../../hooks/useFamilyGroups';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -28,6 +28,7 @@ export default function FeedScreen() {
 
   const currentFormat = FEED_FORMATS.find((f) => f.id === format);
   const { data: families } = useFamilyGroups();
+  const { data: networkStats } = useCandonNetworkStats();
   const familyCount = families?.length ?? 0;
 
   return (
@@ -53,24 +54,49 @@ export default function FeedScreen() {
         </View>
       )}
 
-      {/* Family Group banner — links to private family bulletin board */}
+      {/* Family Group banner — links to private family bulletin board.
+          Top line is the user's own status; bottom line is the public
+          aggregate network stats (non-private). */}
       <TouchableOpacity
         style={styles.familyBanner}
         onPress={() => router.push(familyCount > 0 ? '/candon/family' : '/candon')}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
         <View style={styles.familyBannerIcon}>
-          <Ionicons name="home" size={18} color="#FFF" />
+          <Ionicons name="git-branch" size={18} color="#FFF" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.familyBannerTitle}>Family Group</Text>
           <Text style={styles.familyBannerSub}>
             {familyCount === 0
-              ? 'Set up a private circle for the people closest to you'
+              ? 'Joinable by invite — start with a code from someone you know'
               : familyCount === 1
                 ? 'Open your family bulletin board'
-                : `${familyCount} family circles`}
+                : `${familyCount} family circles you belong to`}
           </Text>
+          {networkStats && networkStats.total_families > 0 && (
+            <View style={styles.statsRow}>
+              <Text style={styles.statsChip}>
+                {networkStats.total_families} families
+              </Text>
+              <Text style={styles.statsDot}>·</Text>
+              <Text style={styles.statsChip}>
+                {networkStats.total_root_trees} trees
+              </Text>
+              <Text style={styles.statsDot}>·</Text>
+              <Text style={styles.statsChip}>
+                largest: {networkStats.largest_tree_size}
+              </Text>
+              {networkStats.families_last_7d > 0 && (
+                <>
+                  <Text style={styles.statsDot}>·</Text>
+                  <Text style={[styles.statsChip, { color: Colors.primary }]}>
+                    +{networkStats.families_last_7d} this week
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
         </View>
         <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
       </TouchableOpacity>
@@ -171,6 +197,12 @@ const styles = StyleSheet.create({
   },
   familyBannerTitle: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   familyBannerSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  statsRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    marginTop: 6, flexWrap: 'wrap',
+  },
+  statsChip: { fontSize: 11, color: Colors.textSecondary, fontWeight: '500' },
+  statsDot: { fontSize: 11, color: Colors.textMuted },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 11 },
   tabText: { fontSize: 14, fontWeight: '500', color: Colors.textMuted },
   tabTextActive: { color: Colors.textPrimary, fontWeight: '600' },

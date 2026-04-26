@@ -30,15 +30,7 @@ export default function FamilyList() {
               activeOpacity={0.7}
             >
               <Ionicons name="enter-outline" size={14} color={CandonColors.textPrimary} />
-              <Text style={s.secondaryBtnText}>Join</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={s.addBtn}
-              onPress={() => router.push('/candon/family/new')}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={20} color="#FFF" />
-              <Text style={s.addBtnText}>New</Text>
+              <Text style={s.secondaryBtnText}>Join with code</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -50,24 +42,18 @@ export default function FamilyList() {
             <View style={s.emptyIcon}>
               <Ionicons name="home-outline" size={32} color={CandonColors.primary} />
             </View>
-            <Text style={s.emptyTitle}>No family yet</Text>
+            <Text style={s.emptyTitle}>You're not in a family yet</Text>
             <Text style={s.emptyText}>
-              Start a small, private circle for the people closest to you — or join one with an invite.
+              Family groups grow by invitation. Ask someone you know for their group's invite
+              code — once you're in, you can spin off a new family of your own.
             </Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
               <TouchableOpacity
                 style={s.emptyBtn}
-                onPress={() => router.push('/candon/family/new')}
+                onPress={() => router.push('/candon/family/join')}
                 activeOpacity={0.8}
               >
-                <Text style={s.emptyBtnText}>Create a group</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.emptyBtn, s.emptyBtnOutline]}
-                onPress={() => router.push('/candon/family/join')}
-                activeOpacity={0.7}
-              >
-                <Text style={[s.emptyBtnText, { color: CandonColors.primary }]}>I have an invite</Text>
+                <Text style={s.emptyBtnText}>I have an invite code</Text>
               </TouchableOpacity>
             </View>
           </View>

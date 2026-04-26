@@ -11,6 +11,8 @@ export interface FamilyGroup {
   description: string | null;
   invite_code: string | null;
   created_at: string;
+  parent_family_group_id?: string | null;
+  spawned_by_user_id?: string | null;
 }
 
 export interface FamilyMembership {
@@ -97,16 +99,28 @@ export function useCreateFamilyGroup() {
   const userId = useAuthStore((s) => s.user?.id);
 
   return useMutation({
-    mutationFn: async ({ name, description }: { name: string; description?: string }) => {
+    mutationFn: async ({
+      name,
+      description,
+      parent_family_group_id,
+    }: { name: string; description?: string; parent_family_group_id?: string | null }) => {
       if (!userId) throw new Error('Not authenticated');
+      const row: Record<string, unknown> = {
+        owner_user_id: userId,
+        name,
+        description: description ?? null,
+        invite_code: generateInviteCode(),
+      };
+      // Only set the parent + spawner columns if explicitly provided. This
+      // keeps inserts working pre-migration-020. With 020 applied, the RLS
+      // check requires the creator to be a member of the parent group.
+      if (parent_family_group_id) {
+        row.parent_family_group_id = parent_family_group_id;
+        row.spawned_by_user_id = userId;
+      }
       const { data, error } = await supabase
         .from('candon_family_groups')
-        .insert({
-          owner_user_id: userId,
-          name,
-          description: description ?? null,
-          invite_code: generateInviteCode(),
-        })
+        .insert(row)
         .select()
         .single();
       if (error) throw error;
@@ -115,6 +129,42 @@ export function useCreateFamilyGroup() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['candon-family-groups'] });
     },
+  });
+}
+
+// ─── NETWORK STATS (non-private aggregate, exposed on the main HereToo feed) ───
+export interface CandonNetworkStats {
+  total_families: number;
+  total_root_trees: number;
+  total_members: number;
+  largest_tree_size: number;
+  deepest_tree_depth: number;
+  families_last_7d: number;
+}
+
+export function useCandonNetworkStats() {
+  return useQuery({
+    queryKey: ['candon-network-stats'],
+    queryFn: async (): Promise<CandonNetworkStats | null> => {
+      const { data, error } = await supabase.rpc('get_candon_network_stats');
+      if (error) {
+        // Pre-migration-020: RPC won't exist — fail soft so the feed still loads.
+        // eslint-disable-next-line no-console
+        console.warn('[network-stats] RPC unavailable:', error.message);
+        return null;
+      }
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) return null;
+      return {
+        total_families: Number(row.total_families ?? 0),
+        total_root_trees: Number(row.total_root_trees ?? 0),
+        total_members: Number(row.total_members ?? 0),
+        largest_tree_size: Number(row.largest_tree_size ?? 0),
+        deepest_tree_depth: Number(row.deepest_tree_depth ?? 0),
+        families_last_7d: Number(row.families_last_7d ?? 0),
+      };
+    },
+    staleTime: 60_000, // a minute is fine for aggregate stats
   });
 }
 
