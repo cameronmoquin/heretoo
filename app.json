@@ -27,7 +27,6 @@
       "package": "social.heretoo.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
