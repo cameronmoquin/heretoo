@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useCreateFamilyPost,
   type PostType,
+  type PostCategory,
   type VisibilityScope,
 } from '../../../../hooks/useFamilyPosts';
 import { showAlert, showConfirm } from '../../../../lib/alert';
@@ -26,6 +27,14 @@ const POST_TYPES: { id: PostType; label: string; icon: IoniconName }[] = [
   { id: 'medical_update', label: 'Medical', icon: 'medkit-outline' },
 ];
 
+const CATEGORIES: { id: PostCategory; label: string; icon: IoniconName }[] = [
+  { id: 'general', label: 'General', icon: 'list-outline' },
+  { id: 'medical', label: 'Medical', icon: 'medkit-outline' },
+  { id: 'holiday', label: 'Holiday', icon: 'gift-outline' },
+  { id: 'party',   label: 'Party',   icon: 'wine-outline' },
+  { id: 'event',   label: 'Event',   icon: 'calendar-outline' },
+];
+
 const MEDICAL_STATUS_OPTIONS = [
   { id: 'stable', label: 'Stable' },
   { id: 'monitoring', label: 'Monitoring' },
@@ -37,11 +46,15 @@ const MEDICAL_STATUS_OPTIONS = [
 ] as const;
 
 export default function NewPost() {
-  const { id: groupId } = useLocalSearchParams<{ id: string }>();
+  const { id: groupId, category: initialCategory } =
+    useLocalSearchParams<{ id: string; category?: string }>();
   const createPost = useCreateFamilyPost();
   const upload = useCandonUpload();
 
   const [postType, setPostType] = useState<PostType>('general_update');
+  const [category, setCategory] = useState<PostCategory>(
+    (initialCategory as PostCategory) ?? 'general',
+  );
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
 
@@ -105,9 +118,12 @@ export default function NewPost() {
     setPostType(t);
     if (t === 'medical_update') {
       setScope('medical_limited');
+      // Auto-switch to medical category when picking medical type.
+      setCategory('medical');
     } else if (scope === 'medical_limited') {
       setScope('group');
     }
+    if (t === 'event' && category === 'general') setCategory('event');
   };
 
   const addSlot = () => {
@@ -128,6 +144,7 @@ export default function NewPost() {
     const payload: any = {
       family_group_id: groupId,
       post_type: postType,
+      category,
       title: title.trim(),
       body: body.trim() || undefined,
       visibility_scope: scope,
@@ -230,6 +247,28 @@ export default function NewPost() {
               );
             })}
           </View>
+
+          <Text style={s.label}>Where this goes</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+            {CATEGORIES.map((c) => {
+              const active = category === c.id;
+              return (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[s.catChip, active && s.catChipActive]}
+                  onPress={() => setCategory(c.id)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={c.icon}
+                    size={13}
+                    color={active ? '#FFF' : CandonColors.textSecondary}
+                  />
+                  <Text style={[s.catChipText, active && s.catChipTextActive]}>{c.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
 
           <Text style={s.label}>Title</Text>
           <TextInput
@@ -568,4 +607,14 @@ const s = StyleSheet.create({
     backgroundColor: CandonColors.primaryFaint, borderRadius: 8,
   },
   uploadProgressText: { fontSize: 13, color: CandonColors.textSecondary, flex: 1 },
+
+  catChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 11, paddingVertical: 7, borderRadius: 999,
+    borderWidth: 1, borderColor: CandonColors.border,
+    backgroundColor: CandonColors.surface,
+  },
+  catChipActive: { backgroundColor: CandonColors.primary, borderColor: CandonColors.primary },
+  catChipText: { fontSize: 12, color: CandonColors.textSecondary, fontWeight: '500' },
+  catChipTextActive: { color: '#FFF', fontWeight: '600' },
 });

@@ -6,10 +6,19 @@ import { notifyGroupOfNewPost } from '../lib/candon-notifications';
 import { withAuthRecovery } from '../lib/auth-recovery';
 
 export type PostType = 'general_update' | 'event' | 'assignment' | 'reminder' | 'medical_update';
+export type PostCategory = 'general' | 'medical' | 'holiday' | 'party' | 'event';
 export type RsvpResponse = 'yes' | 'no' | 'maybe';
 export type AssignmentStatus = 'open' | 'claimed' | 'complete';
 export type VisibilityScope = 'group' | 'selected_members' | 'admins_only' | 'medical_limited';
 export type PostSensitivity = 'normal' | 'private' | 'medical';
+
+export const POST_CATEGORIES: { id: PostCategory; label: string; icon: string }[] = [
+  { id: 'general',  label: 'All',       icon: 'list' },
+  { id: 'medical',  label: 'Medical',   icon: 'medkit-outline' },
+  { id: 'holiday',  label: 'Holidays',  icon: 'gift-outline' },
+  { id: 'party',    label: 'Parties',   icon: 'wine-outline' },
+  { id: 'event',    label: 'Events',    icon: 'calendar-outline' },
+];
 
 export interface FamilyPost {
   id: string;
@@ -23,6 +32,7 @@ export interface FamilyPost {
   status: 'draft' | 'published' | 'archived';
   created_at: string;
   updated_at: string;
+  category?: PostCategory;
   // Media (added in migration 019)
   photo_urls?: string[];
   mux_asset_id?: string | null;
@@ -67,20 +77,26 @@ export interface EventRsvp {
   note: string | null;
 }
 
-// ─── POSTS LIST (for a group) ───
-export function useFamilyPosts(groupId: string | null) {
+// ─── POSTS LIST (for a group, optionally filtered by category) ───
+export function useFamilyPosts(
+  groupId: string | null,
+  category: PostCategory | 'all' = 'all',
+) {
   const qc = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['candon-posts', groupId],
+    queryKey: ['candon-posts', groupId, category],
     queryFn: async () => {
       if (!groupId) return [];
-      const { data, error } = await supabase
+      let q = supabase
         .from('candon_family_posts')
         .select('*')
         .eq('family_group_id', groupId)
-        .eq('status', 'published')
-        .order('created_at', { ascending: false });
+        .eq('status', 'published');
+      if (category !== 'all') {
+        q = q.eq('category', category);
+      }
+      const { data, error } = await q.order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as FamilyPost[];
     },
@@ -161,6 +177,8 @@ export function useFamilyPost(postId: string | null) {
 interface CreatePostInput {
   family_group_id: string;
   post_type: PostType;
+  /** Which feed tab this post lives in (defaults derived from post_type). */
+  category?: PostCategory;
   title: string;
   body?: string;
   // media
@@ -209,6 +227,13 @@ export function useCreateFamilyPost() {
         input.sensitivity ??
         (input.post_type === 'medical_update' ? 'medical' : 'normal');
 
+      // Resolve category: explicit input wins, otherwise derive from post_type.
+      const category: PostCategory =
+        input.category
+        ?? (input.post_type === 'medical_update' ? 'medical'
+          : input.post_type === 'event' ? 'event'
+          : 'general');
+
       // Build the row defensively. Only include media columns when actually
       // populated, so a text-only post still works on a database that hasn't
       // applied migration 019 yet.
@@ -216,6 +241,7 @@ export function useCreateFamilyPost() {
         family_group_id: input.family_group_id,
         created_by: userId,
         post_type: input.post_type,
+        category,
         title: input.title,
         body: input.body ?? null,
         sensitivity,

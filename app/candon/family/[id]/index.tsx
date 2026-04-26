@@ -6,14 +6,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFamilyGroup, useFamilyMembers, useLeaveFamilyGroup } from '../../../../hooks/useFamilyGroups';
-import { useFamilyPosts } from '../../../../hooks/useFamilyPosts';
+import { useFamilyPosts, type PostCategory } from '../../../../hooks/useFamilyPosts';
 import { useAuthStore } from '../../../../stores/authStore';
 import { showAlert, showConfirm } from '../../../../lib/alert';
 import { CandonColors } from '../../../../constants/candon-theme';
 import { PostCard } from '../../../../components/candon/PostCard';
 import { FamilyCrest } from '../../../../components/candon/FamilyCrest';
 
-type Tab = 'feed' | 'about';
+// Top-level family tabs:
+//   all      → every post in the group
+//   medical  → medical updates only
+//   holiday  → holiday-tagged posts (with optional Planning sub-tab)
+//   party    → party-tagged posts (with optional Planning sub-tab)
+//   about    → group settings, members, invite, spin off
+type Tab = 'all' | 'medical' | 'holiday' | 'party' | 'about';
+
+const FEED_TABS: { id: Tab; label: string; icon: any; category: PostCategory | 'all' | null }[] = [
+  { id: 'all',     label: 'Feed',     icon: 'list',           category: 'all' },
+  { id: 'medical', label: 'Medical',  icon: 'medkit-outline', category: 'medical' },
+  { id: 'holiday', label: 'Holidays', icon: 'gift-outline',   category: 'holiday' },
+  { id: 'party',   label: 'Parties',  icon: 'wine-outline',   category: 'party' },
+  { id: 'about',   label: 'About',    icon: 'information-circle-outline', category: null },
+];
+
+// Sub-tabs for the Holiday and Party tabs.
+type SubTab = 'updates' | 'planning';
 
 function DeletedGroupRedirect() {
   useEffect(() => {
@@ -30,10 +47,15 @@ function DeletedGroupRedirect() {
 export default function FamilyDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const userId = useAuthStore((s) => s.user?.id);
-  const [tab, setTab] = useState<Tab>('feed');
+  const [tab, setTab] = useState<Tab>('all');
+  const [subTab, setSubTab] = useState<SubTab>('updates');
   const { data: group, isLoading } = useFamilyGroup(id);
   const { data: members } = useFamilyMembers(id);
-  const { data: posts } = useFamilyPosts(id ?? null);
+  const activeCategory: PostCategory | 'all' =
+    tab === 'all' || tab === 'about'
+      ? 'all'
+      : (tab as PostCategory);
+  const { data: posts } = useFamilyPosts(id ?? null, activeCategory);
   const leave = useLeaveFamilyGroup();
 
   if (isLoading) {
@@ -126,32 +148,88 @@ export default function FamilyDetail() {
         </View>
       </View>
 
-      {/* Tabs */}
-      <View style={s.tabs}>
-        {(['feed', 'about'] as Tab[]).map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[s.tab, tab === t && s.tabActive]}
-            onPress={() => setTab(t)}
-          >
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>
-              {t === 'feed' ? 'Feed' : 'About'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Top-level tab bar — horizontal scroll on small screens */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.tabsScroll}
+        style={s.tabsContainer}
+      >
+        {FEED_TABS.map((t) => {
+          const active = tab === t.id;
+          const accent = group.theme_primary ?? CandonColors.primary;
+          return (
+            <TouchableOpacity
+              key={t.id}
+              style={[s.tab, active && s.tabActive, active && { borderBottomColor: accent }]}
+              onPress={() => { setTab(t.id); setSubTab('updates'); }}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={t.icon}
+                size={14}
+                color={active ? accent : CandonColors.textSecondary}
+              />
+              <Text style={[s.tabText, active && { color: accent, fontWeight: '600' }]}>
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Sub-tabs for Holiday and Party (Updates / Planning) */}
+      {(tab === 'holiday' || tab === 'party') && (
+        <View style={s.subTabRow}>
+          {(['updates', 'planning'] as SubTab[]).map((st) => (
+            <TouchableOpacity
+              key={st}
+              style={[s.subTab, subTab === st && s.subTabActive]}
+              onPress={() => setSubTab(st)}
+              activeOpacity={0.75}
+            >
+              <Text style={[s.subTabText, subTab === st && s.subTabTextActive]}>
+                {st === 'updates' ? 'Updates' : 'Planning'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={s.scroll}>
-        {tab === 'feed' && (
+        {/* Feed-style tabs (all / medical / holiday Updates / party Updates) */}
+        {tab !== 'about' && !((tab === 'holiday' || tab === 'party') && subTab === 'planning') && (
           <>
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>
-                <Ionicons name="chatbubble-outline" size={32} color={CandonColors.textMuted} />
-                <Text style={s.emptyFeedTitle}>Nothing here yet.</Text>
-                <Text style={s.emptyFeedText}>Post an update, event, or sign-up sheet.</Text>
+                <Ionicons
+                  name={
+                    tab === 'medical' ? 'medkit-outline'
+                    : tab === 'holiday' ? 'gift-outline'
+                    : tab === 'party' ? 'wine-outline'
+                    : 'chatbubble-outline'
+                  }
+                  size={32}
+                  color={CandonColors.textMuted}
+                />
+                <Text style={s.emptyFeedTitle}>
+                  {tab === 'medical' ? 'No medical updates yet.'
+                    : tab === 'holiday' ? 'No holiday plans yet.'
+                    : tab === 'party' ? 'No party plans yet.'
+                    : 'Nothing here yet.'}
+                </Text>
+                <Text style={s.emptyFeedText}>
+                  {tab === 'medical' ? 'Share patient updates, status changes, and what help is needed.'
+                    : tab === 'holiday' ? 'Plan a holiday gathering — sign-up sheets, RSVPs, updates.'
+                    : tab === 'party' ? 'Plan a party — invitations, sign-ups, day-of updates.'
+                    : 'Post an update, event, or sign-up sheet.'}
+                </Text>
                 <TouchableOpacity
                   style={s.emptyBtn}
-                  onPress={() => router.push(`/candon/family/${id}/new-post`)}
+                  onPress={() => {
+                    const cat = tab === 'all' ? '' : `?category=${tab}`;
+                    router.push(`/candon/family/${id}/new-post${cat}` as any);
+                  }}
                 >
                   <Text style={s.emptyBtnText}>Write first post</Text>
                 </TouchableOpacity>
@@ -160,6 +238,40 @@ export default function FamilyDetail() {
               posts.map((p) => <PostCard key={p.id} post={p} />)
             )}
           </>
+        )}
+
+        {/* Planning sub-tab placeholder — Holidays & Parties */}
+        {(tab === 'holiday' || tab === 'party') && subTab === 'planning' && (
+          <View style={s.planningCard}>
+            <View style={s.planningIcon}>
+              <Ionicons
+                name={tab === 'holiday' ? 'gift' : 'wine'}
+                size={22}
+                color={CandonColors.primary}
+              />
+            </View>
+            <Text style={s.planningTitle}>
+              Planning · {tab === 'holiday' ? 'Holidays' : 'Parties'}
+            </Text>
+            <Text style={s.planningText}>
+              The planning workspace is coming next: shared sign-up sheets, RSVPs, a running
+              checklist that any family member can edit. For now, post a {tab === 'holiday' ? 'Holiday' : 'Party'} update
+              or sign-up sheet from the &quot;+&quot; button — anything you post in this category
+              shows up under <Text style={{ fontWeight: '600' }}>Updates</Text> here and in the main feed.
+            </Text>
+            <TouchableOpacity
+              style={s.planningCta}
+              onPress={() =>
+                router.push(`/candon/family/${id}/new-post?category=${tab}` as any)
+              }
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add" size={16} color="#FFF" />
+              <Text style={s.planningCtaText}>
+                Start a {tab === 'holiday' ? 'holiday' : 'party'} thread
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {tab === 'about' && (
@@ -262,15 +374,57 @@ const s = StyleSheet.create({
     color: CandonColors.textSecondary, marginTop: 2,
   },
 
-  tabs: {
-    flexDirection: 'row',
+  tabsContainer: {
+    flexGrow: 0,
     backgroundColor: CandonColors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: CandonColors.border,
   },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: CandonColors.primary },
-  tabText: { fontSize: 14, color: CandonColors.textSecondary, fontWeight: '500' },
+  tabsScroll: { paddingHorizontal: 8 },
+  tab: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingVertical: 11, paddingHorizontal: 14,
+    borderBottomWidth: 2, borderBottomColor: 'transparent',
+  },
+  tabActive: { borderBottomWidth: 2 },
+  tabText: { fontSize: 13, color: CandonColors.textSecondary, fontWeight: '500' },
   tabTextActive: { color: CandonColors.primary, fontWeight: '600' },
+
+  subTabRow: {
+    flexDirection: 'row', gap: 8,
+    paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: CandonColors.surfaceRaise,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: CandonColors.border,
+  },
+  subTab: {
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
+    borderWidth: 1, borderColor: CandonColors.border,
+    backgroundColor: CandonColors.surface,
+  },
+  subTabActive: { backgroundColor: CandonColors.primary, borderColor: CandonColors.primary },
+  subTabText: { fontSize: 12, color: CandonColors.textPrimary, fontWeight: '500' },
+  subTabTextActive: { color: '#FFF', fontWeight: '600' },
+
+  planningCard: {
+    backgroundColor: CandonColors.surface, borderRadius: 14, padding: 18,
+    borderWidth: 1, borderColor: CandonColors.border, alignItems: 'center', gap: 10,
+  },
+  planningIcon: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: CandonColors.primaryFaint,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  planningTitle: { fontSize: 16, fontWeight: '600', color: CandonColors.textPrimary, marginTop: 4 },
+  planningText: {
+    fontSize: 13, color: CandonColors.textSecondary,
+    textAlign: 'center', lineHeight: 19, maxWidth: 360,
+  },
+  planningCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: CandonColors.primary,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+    marginTop: 8,
+  },
+  planningCtaText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
 
   scroll: { padding: 16, gap: 10, maxWidth: 600, alignSelf: 'center', width: '100%' },
 
