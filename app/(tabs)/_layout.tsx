@@ -14,6 +14,7 @@ import { Spacing } from '../../constants/design';
 import { RightPanel } from '../../components/shared/RightPanel';
 import { useAuthStore } from '../../stores/authStore';
 import { DEV_MODE } from '../../lib/dev-mode';
+import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
@@ -31,6 +32,7 @@ function TabIcon({ icon, iconActive, focused }: { icon: string; iconActive: stri
 
 function Sidebar() {
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
   return (
     <View style={styles.sidebar}>
       <View style={styles.sidebarLogoWrap}>
@@ -77,6 +79,23 @@ function Sidebar() {
           </View>
         </TouchableOpacity>
       </View>
+
+      {/* Sign-out at the bottom of the sidebar */}
+      {user && (
+        <View style={styles.sidebarFooter}>
+          <Text style={styles.sidebarEmail} numberOfLines={1}>
+            {user.email}
+          </Text>
+          <TouchableOpacity
+            onPress={() => hardSignOutAndRedirect()}
+            style={styles.signOutBtn}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={16} color={Colors.textSecondary} />
+            <Text style={styles.signOutText}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -146,6 +165,7 @@ const styles = StyleSheet.create({
     borderRightColor: Colors.border,
     paddingTop: 28,
     paddingHorizontal: 16,
+    flexDirection: 'column',
   },
   sidebarLogoWrap: { position: 'relative', marginBottom: 32, paddingHorizontal: 8, height: 30 },
   sidebarLogo: {
@@ -168,6 +188,21 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth, backgroundColor: Colors.border,
     marginVertical: 12, marginHorizontal: 12,
   },
+  sidebarFooter: {
+    marginTop: 'auto', paddingTop: 16, paddingBottom: 16,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
+    gap: 8,
+  },
+  sidebarEmail: {
+    fontSize: 11, color: Colors.textMuted,
+    paddingHorizontal: 12,
+  },
+  signOutBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 8,
+  },
+  signOutText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
   desktopContent: {
     width: 580,
     backgroundColor: Colors.background,

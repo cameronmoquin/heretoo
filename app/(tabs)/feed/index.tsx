@@ -8,6 +8,7 @@ import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { useFeedFormatStore, FEED_FORMATS, type FeedFormat } from '../../../stores/feedFormatStore';
 import { useFamilyGroups, useCandonNetworkStats } from '../../../hooks/useFamilyGroups';
 import { FamilyCrest } from '../../../components/candon/FamilyCrest';
+import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -41,9 +42,18 @@ export default function FeedScreen() {
             <Text style={[styles.logo, { color: '#00FF88', position: 'absolute', left: 1, top: 1, opacity: 0.6 }]}>HT</Text>
             <Text style={styles.logo}>HT</Text>
           </View>
-          <TouchableOpacity style={styles.formatBtn} onPress={() => setFormatPickerOpen(true)}>
-            <Text style={styles.formatBtnText}>{currentFormat?.label ?? 'View'}</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TouchableOpacity style={styles.formatBtn} onPress={() => setFormatPickerOpen(true)}>
+              <Text style={styles.formatBtnText}>{currentFormat?.label ?? 'View'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.signOutIconBtn}
+              onPress={() => hardSignOutAndRedirect()}
+              accessibilityLabel="Sign out"
+            >
+              <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -211,6 +221,12 @@ const styles = StyleSheet.create({
   familyBannerIcon: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: '#4A6B4A',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  signOutIconBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
     alignItems: 'center', justifyContent: 'center',
   },
   familyBannerTitle: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
