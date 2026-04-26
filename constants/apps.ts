@@ -1,28 +1,19 @@
 /**
- * Hostname-aware app config.
+ * App config — single product surface.
  *
- * One codebase, two products:
- *   - heretoo.social         → HereToo social platform
- *   - candon.heretoo.social  → Candon relationship assistant + family bulletin
- *
- * Native/mobile reads the appId from env or defaults to HereToo.
+ * The codebase used to ship two products on different subdomains. We've
+ * consolidated: family groups are a feature inside HereToo, not a separate
+ * brand. `detectAppId()` is kept for backwards compatibility but always
+ * returns 'heretoo' now.
  */
 
-import { Platform } from 'react-native';
-
-export type AppId = 'heretoo' | 'candon';
+export type AppId = 'heretoo';
 
 export interface AppConfig {
   id: AppId;
   name: string;
   tagline: string;
   rootHref: string;
-  featureFlags: {
-    heretoo_social: boolean;
-    candon_relationship: boolean;
-    candon_family: boolean;
-    candon_admin_outreach: boolean;
-  };
 }
 
 const HERETOO: AppConfig = {
@@ -30,47 +21,14 @@ const HERETOO: AppConfig = {
   name: 'HERETOO',
   tagline: 'Be real.',
   rootHref: '/(tabs)/feed',
-  featureFlags: {
-    heretoo_social: true,
-    candon_relationship: false,
-    candon_family: false,
-    candon_admin_outreach: false,
-  },
 };
 
-const CANDON: AppConfig = {
-  id: 'candon',
-  name: 'Candon',
-  tagline: 'Stay in touch.',
-  rootHref: '/candon',
-  featureFlags: {
-    heretoo_social: false,
-    candon_relationship: true,
-    candon_family: true,
-    candon_admin_outreach: false, // only enabled for admin users server-side
-  },
-};
+export const APPS: Record<AppId, AppConfig> = { heretoo: HERETOO };
 
-export const APPS: Record<AppId, AppConfig> = { heretoo: HERETOO, candon: CANDON };
-
-/**
- * Detect which app to render based on hostname.
- * Falls back to HereToo for native, or if hostname doesn't match.
- */
 export function detectAppId(): AppId {
-  if (Platform.OS !== 'web') {
-    // Native: read from env, default HereToo.
-    const envApp = (process.env.EXPO_PUBLIC_APP_ID as AppId) ?? 'heretoo';
-    return APPS[envApp] ? envApp : 'heretoo';
-  }
-
-  if (typeof window === 'undefined') return 'heretoo';
-
-  const host = window.location.hostname.toLowerCase();
-  if (host.startsWith('candon.')) return 'candon';
   return 'heretoo';
 }
 
 export function getAppConfig(): AppConfig {
-  return APPS[detectAppId()];
+  return HERETOO;
 }

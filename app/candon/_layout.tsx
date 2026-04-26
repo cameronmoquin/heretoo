@@ -51,7 +51,7 @@ export default function CandonLayout() {
         headerLeft: () => <BackToHereToo />,
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Candon' }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="reset" options={{ title: 'Reset Session', headerShown: false }} />
       <Stack.Screen name="contacts" options={{ title: 'Contacts' }} />
       <Stack.Screen name="contacts/new" options={{ title: 'New Contact' }} />
