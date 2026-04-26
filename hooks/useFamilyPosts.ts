@@ -23,6 +23,13 @@ export interface FamilyPost {
   status: 'draft' | 'published' | 'archived';
   created_at: string;
   updated_at: string;
+  // Media (added in migration 019)
+  photo_urls?: string[];
+  mux_asset_id?: string | null;
+  mux_playback_id?: string | null;
+  mux_thumbnail_url?: string | null;
+  video_duration_seconds?: number | null;
+  // Joined / nested
   event?: FamilyEvent | null;
   assignments?: FamilyAssignment[];
 }
@@ -156,6 +163,12 @@ interface CreatePostInput {
   post_type: PostType;
   title: string;
   body?: string;
+  // media
+  photo_urls?: string[];
+  mux_asset_id?: string;
+  mux_playback_id?: string;
+  mux_thumbnail_url?: string;
+  video_duration_seconds?: number;
   // visibility
   visibility_scope?: VisibilityScope;
   sensitivity?: PostSensitivity;
@@ -206,6 +219,12 @@ export function useCreateFamilyPost() {
           body: input.body ?? null,
           sensitivity,
           visibility_scope: scope,
+          // media (column added in migration 019; safe to omit if 019 not yet applied)
+          photo_urls: input.photo_urls ?? [],
+          mux_asset_id: input.mux_asset_id ?? null,
+          mux_playback_id: input.mux_playback_id ?? null,
+          mux_thumbnail_url: input.mux_thumbnail_url ?? null,
+          video_duration_seconds: input.video_duration_seconds ?? null,
         })
         .select()
         .single();

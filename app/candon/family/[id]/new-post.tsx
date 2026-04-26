@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity,
-  Platform, KeyboardAvoidingView,
+  Platform, KeyboardAvoidingView, Image, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -17,6 +17,7 @@ import { VisibilityPicker } from '../../../../components/candon/VisibilityPicker
 import { formatPgError } from '../../../../lib/error-format';
 import { hardSignOutAndRedirect } from '../../../../lib/auth-recovery';
 import type { IoniconName } from '../../../../lib/icon-types';
+import { useCandonUpload, type PickedPhoto, type PickedVideo } from '../../../../hooks/useCandonUpload';
 
 const POST_TYPES: { id: PostType; label: string; icon: IoniconName }[] = [
   { id: 'general_update', label: 'Update', icon: 'create-outline' },
@@ -38,10 +39,47 @@ const MEDICAL_STATUS_OPTIONS = [
 export default function NewPost() {
   const { id: groupId } = useLocalSearchParams<{ id: string }>();
   const createPost = useCreateFamilyPost();
+  const upload = useCandonUpload();
 
   const [postType, setPostType] = useState<PostType>('general_update');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+
+  // Media
+  const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+  const [video, setVideo] = useState<PickedVideo | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const onAddPhotos = async () => {
+    try {
+      const picked = await upload.pickPhotos(photos.length);
+      if (picked.length === 0) return;
+      // Picking photos clears any selected video — pick one or the other.
+      setVideo(null);
+      setPhotos((prev) => [...prev, ...picked]);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Could not open photo library.';
+      showAlert('Photo picker', msg);
+    }
+  };
+
+  const onAddVideo = async () => {
+    try {
+      const picked = await upload.pickVideo();
+      if (!picked) return;
+      // Selecting a video clears photos.
+      setPhotos([]);
+      setVideo(picked);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Could not open video picker.';
+      showAlert('Video picker', msg);
+    }
+  };
+
+  const removePhoto = (i: number) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
+  };
+  const removeVideo = () => setVideo(null);
 
   const [scope, setScope] = useState<VisibilityScope>('group');
   const [recipients, setRecipients] = useState<string[]>([]);
@@ -82,9 +120,10 @@ export default function NewPost() {
     setSlots((prev) => prev.filter((_, idx) => idx !== i));
   };
 
-  const save = () => {
+  const save = async () => {
     if (!title.trim()) { showAlert('Missing title', 'Give this post a title.'); return; }
     if (!groupId) return;
+    if (busy) return;
 
     const payload: any = {
       family_group_id: groupId,
@@ -94,6 +133,26 @@ export default function NewPost() {
       visibility_scope: scope,
       recipient_user_ids: recipients,
     };
+
+    // ── Upload media first, then create the post ──
+    setBusy(true);
+    try {
+      if (photos.length > 0) {
+        const urls = await upload.uploadPhotos(photos);
+        payload.photo_urls = urls;
+      } else if (video) {
+        const result = await upload.uploadVideo(video);
+        payload.mux_asset_id = result.assetId;
+        payload.mux_playback_id = result.playbackId;
+        payload.mux_thumbnail_url = result.thumbnailUrl;
+        if (result.durationSeconds != null) payload.video_duration_seconds = result.durationSeconds;
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Upload failed.';
+      showAlert('Upload failed', msg);
+      setBusy(false);
+      return;
+    }
 
     if (postType === 'event') {
       if (!dateStr) { showAlert('Missing date', 'Pick a date for the event.'); return; }
@@ -122,8 +181,13 @@ export default function NewPost() {
     }
 
     createPost.mutate(payload, {
-      onSuccess: () => router.back(),
+      onSuccess: () => {
+        setBusy(false);
+        upload.reset();
+        router.back();
+      },
       onError: (e: unknown) => {
+        setBusy(false);
         const f = formatPgError(e, 'Could not save your post.');
         // eslint-disable-next-line no-console
         console.error('[create-post] failed:', f.raw, '(code:', f.code, ')');
@@ -193,6 +257,72 @@ export default function NewPost() {
             maxLength={2000}
             textAlignVertical="top"
           />
+
+          {/* ── Media ── */}
+          <Text style={s.label}>Photos &amp; video</Text>
+          <View style={s.mediaPickerRow}>
+            <TouchableOpacity
+              style={[s.mediaBtn, video && s.mediaBtnDisabled]}
+              onPress={onAddPhotos}
+              disabled={!!video || busy}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="image-outline" size={18} color={CandonColors.primary} />
+              <Text style={s.mediaBtnText}>
+                {photos.length > 0 ? `Add more (${photos.length})` : 'Add photos'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.mediaBtn, photos.length > 0 && s.mediaBtnDisabled]}
+              onPress={onAddVideo}
+              disabled={photos.length > 0 || busy}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="videocam-outline" size={18} color={CandonColors.primary} />
+              <Text style={s.mediaBtnText}>{video ? 'Replace video' : 'Add video'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {photos.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbStrip}>
+              {photos.map((p, i) => (
+                <View key={p.uri + i} style={s.thumbWrap}>
+                  <Image source={{ uri: p.uri }} style={s.thumb} />
+                  <TouchableOpacity style={s.thumbX} onPress={() => removePhoto(i)} activeOpacity={0.8}>
+                    <Ionicons name="close" size={14} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+
+          {video && (
+            <View style={s.videoPreview}>
+              <View style={s.videoBadge}>
+                <Ionicons name="play" size={20} color="#FFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.videoLabel}>Video selected</Text>
+                <Text style={s.videoSub}>
+                  {video.fileName ?? 'video'}{' '}
+                  {video.duration ? `· ${Math.round(video.duration / 1000)}s` : ''}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={removeVideo} style={s.videoRemove} activeOpacity={0.7}>
+                <Ionicons name="close" size={18} color={CandonColors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {(busy || upload.progress.stage === 'photos' || upload.progress.stage === 'video') && (
+            <View style={s.uploadProgress}>
+              <ActivityIndicator color={CandonColors.primary} size="small" />
+              <Text style={s.uploadProgressText}>
+                {upload.progress.message || 'Working…'}
+                {upload.progress.ratio > 0 && ` (${Math.round(upload.progress.ratio * 100)}%)`}
+              </Text>
+            </View>
+          )}
 
           {postType === 'medical_update' && (
             <>
@@ -334,12 +464,12 @@ export default function NewPost() {
           </View>
 
           <TouchableOpacity
-            style={[s.saveBtn, createPost.isPending && { opacity: 0.5 }]}
+            style={[s.saveBtn, (createPost.isPending || busy) && { opacity: 0.5 }]}
             onPress={save}
-            disabled={createPost.isPending}
+            disabled={createPost.isPending || busy}
           >
             <Text style={s.saveBtnText}>
-              {createPost.isPending ? 'Posting...' : 'Post'}
+              {busy ? 'Uploading…' : createPost.isPending ? 'Posting…' : 'Post'}
             </Text>
           </TouchableOpacity>
 
@@ -394,4 +524,48 @@ const s = StyleSheet.create({
     paddingVertical: 14, alignItems: 'center',
   },
   saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
+
+  mediaPickerRow: { flexDirection: 'row', gap: 8 },
+  mediaBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 12, paddingHorizontal: 12,
+    borderRadius: 10, borderWidth: 1, borderColor: CandonColors.border,
+    backgroundColor: CandonColors.surface,
+  },
+  mediaBtnDisabled: { opacity: 0.4 },
+  mediaBtnText: { color: CandonColors.textPrimary, fontSize: 13, fontWeight: '600' },
+
+  thumbStrip: { marginTop: 4, flexGrow: 0 },
+  thumbWrap: {
+    width: 84, height: 84, marginRight: 8, borderRadius: 8,
+    overflow: 'hidden', position: 'relative', backgroundColor: CandonColors.surfaceRaise,
+  },
+  thumb: { width: '100%', height: '100%' },
+  thumbX: {
+    position: 'absolute', top: 4, right: 4,
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  videoPreview: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: CandonColors.surface, borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: CandonColors.border,
+  },
+  videoBadge: {
+    width: 40, height: 40, borderRadius: 8,
+    backgroundColor: CandonColors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  videoLabel: { fontSize: 14, fontWeight: '600', color: CandonColors.textPrimary },
+  videoSub: { fontSize: 12, color: CandonColors.textMuted, marginTop: 2 },
+  videoRemove: { padding: 6 },
+
+  uploadProgress: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 12, paddingVertical: 10,
+    backgroundColor: CandonColors.primaryFaint, borderRadius: 8,
+  },
+  uploadProgressText: { fontSize: 13, color: CandonColors.textSecondary, flex: 1 },
 });

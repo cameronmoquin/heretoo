@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { CandonColors } from '../../constants/candon-theme';
@@ -64,6 +64,31 @@ export function PostCard({ post }: { post: FamilyPost }) {
 
       <Text style={s.title}>{post.title}</Text>
       {post.body && <Text style={s.body} numberOfLines={3}>{post.body}</Text>}
+
+      {/* Media preview: first photo, or video thumbnail with play badge */}
+      {post.photo_urls && post.photo_urls.length > 0 && (
+        <View style={s.mediaWrap}>
+          <Image source={{ uri: post.photo_urls[0] }} style={s.mediaImg} resizeMode="cover" />
+          {post.photo_urls.length > 1 && (
+            <View style={s.mediaCount}>
+              <Ionicons name="copy-outline" size={11} color="#FFF" />
+              <Text style={s.mediaCountText}>{post.photo_urls.length}</Text>
+            </View>
+          )}
+        </View>
+      )}
+      {!post.photo_urls?.length && post.mux_playback_id && (
+        <View style={s.mediaWrap}>
+          {post.mux_thumbnail_url ? (
+            <Image source={{ uri: post.mux_thumbnail_url }} style={s.mediaImg} resizeMode="cover" />
+          ) : (
+            <View style={[s.mediaImg, { backgroundColor: '#000' }]} />
+          )}
+          <View style={s.playBadge}>
+            <Ionicons name="play" size={20} color="#FFF" />
+          </View>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -87,4 +112,24 @@ const s = StyleSheet.create({
   time: { fontSize: 11, color: CandonColors.textMuted },
   title: { fontSize: 16, fontWeight: '600', color: CandonColors.textPrimary },
   body: { fontSize: 14, color: CandonColors.textSecondary, lineHeight: 20 },
+  mediaWrap: {
+    marginTop: 6, position: 'relative',
+    borderRadius: 8, overflow: 'hidden',
+    backgroundColor: CandonColors.surfaceRaise,
+  },
+  mediaImg: { width: '100%', aspectRatio: 16 / 9 },
+  mediaCount: {
+    position: 'absolute', top: 8, right: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  mediaCountText: { color: '#FFF', fontSize: 11, fontWeight: '700' },
+  playBadge: {
+    position: 'absolute', top: '50%', left: '50%',
+    transform: [{ translateX: -22 }, { translateY: -22 }],
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center',
+  },
 });

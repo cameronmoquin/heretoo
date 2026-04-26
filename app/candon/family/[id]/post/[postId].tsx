@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -168,6 +168,48 @@ export default function PostDetail() {
         {/* Body */}
         {post.body && <Text style={s.body}>{post.body}</Text>}
 
+        {/* Media: photos */}
+        {post.photo_urls && post.photo_urls.length > 0 && (
+          <View style={s.photoGrid}>
+            {post.photo_urls.map((url, i) => (
+              <Image
+                key={url + i}
+                source={{ uri: url }}
+                style={[
+                  s.photoFull,
+                  post.photo_urls!.length === 1 && { aspectRatio: 4 / 3 },
+                ]}
+                resizeMode="cover"
+              />
+            ))}
+          </View>
+        )}
+
+        {/* Media: video (HLS via web video tag — works on every platform) */}
+        {post.mux_playback_id && (
+          <View style={s.videoBox}>
+            {Platform.OS === 'web' ? (
+              React.createElement('video', {
+                controls: true,
+                playsInline: true,
+                poster: post.mux_thumbnail_url ?? undefined,
+                src: `https://stream.mux.com/${post.mux_playback_id}.m3u8`,
+                style: { width: '100%', maxHeight: 480, borderRadius: 10, backgroundColor: '#000' },
+              })
+            ) : (
+              // Native players use expo-video; falling back to thumbnail until we wire that up here.
+              <View style={s.nativeVideoFallback}>
+                {post.mux_thumbnail_url && (
+                  <Image source={{ uri: post.mux_thumbnail_url }} style={s.nativeVideoThumb} resizeMode="cover" />
+                )}
+                <View style={s.nativeVideoOverlay}>
+                  <Ionicons name="play-circle" size={56} color="#FFF" />
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Acknowledgement CTA for medical posts */}
         {needsAck && (
           <TouchableOpacity
@@ -312,6 +354,16 @@ const s = StyleSheet.create({
   empty: { padding: 40, textAlign: 'center', color: CandonColors.textMuted },
   title: { fontSize: 22, fontWeight: '700', color: CandonColors.textPrimary },
   body: { fontSize: 15, color: CandonColors.textPrimary, lineHeight: 22 },
+  photoGrid: { gap: 8, marginTop: 4 },
+  photoFull: { width: '100%', aspectRatio: 4 / 3, borderRadius: 10, backgroundColor: CandonColors.surfaceRaise },
+  videoBox: { marginTop: 4, borderRadius: 10, overflow: 'hidden' },
+  nativeVideoFallback: { position: 'relative', backgroundColor: '#000', borderRadius: 10, aspectRatio: 16 / 9 },
+  nativeVideoThumb: { width: '100%', height: '100%' },
+  nativeVideoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   card: {
     backgroundColor: CandonColors.surface, borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: CandonColors.border, gap: 12,
