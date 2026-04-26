@@ -1,28 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCreateFamilyGroup, useFamilyGroup } from '../../../hooks/useFamilyGroups';
+import {
+  useCreateFamilyGroup, useFamilyGroup, useFamilyGroups,
+} from '../../../hooks/useFamilyGroups';
 import { showAlert } from '../../../lib/alert';
 import { CandonColors } from '../../../constants/candon-theme';
 import { formatPgError } from '../../../lib/error-format';
 
 export default function NewFamily() {
-  // ?from=<group_id> — required: a new family must be spawned from inside an
-  // existing one (the Candon propagation rule).
+  // ?from=<group_id>  → spinning off from an existing family (the propagation path)
+  // No `from`         → bootstrap path: only allowed if you don't already belong to any family
   const { from } = useLocalSearchParams<{ from?: string }>();
   const parentGroupId = typeof from === 'string' ? from : null;
   const { data: parent } = useFamilyGroup(parentGroupId);
+  const { data: families, isLoading: familiesLoading } = useFamilyGroups();
+  const familyCount = families?.length ?? 0;
+  const isBootstrap = !parentGroupId && familyCount === 0;
 
   const create = useCreateFamilyGroup();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
   const save = () => {
-    if (!parentGroupId) {
+    if (!parentGroupId && !isBootstrap) {
       showAlert(
         'Open from a family',
-        'A new family group has to be started from inside an existing one. Open one of yours and tap "Spin off a new family".',
+        'A new family group has to be started from inside an existing one. Open a family you belong to and tap "Spin off a new family".',
       );
       return;
     }
@@ -48,12 +53,22 @@ export default function NewFamily() {
     );
   };
 
+  if (familiesLoading) {
+    return (
+      <SafeAreaView style={s.root}>
+        <ActivityIndicator color={CandonColors.primary} style={{ marginTop: 60 }} />
+      </SafeAreaView>
+    );
+  }
+
+  const canCreate = !!parentGroupId || isBootstrap;
+
   return (
     <SafeAreaView style={s.root} edges={['bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-          {parent ? (
+          {parent && (
             <View style={s.lineageBox}>
               <Text style={s.lineageLabel}>Spinning off from</Text>
               <Text style={s.lineageName}>{parent.name}</Text>
@@ -62,7 +77,20 @@ export default function NewFamily() {
                 but the connection contributes to the public family-tree network stats.
               </Text>
             </View>
-          ) : (
+          )}
+
+          {!parent && isBootstrap && (
+            <View style={s.lineageBox}>
+              <Text style={s.lineageLabel}>Starting a new tree</Text>
+              <Text style={s.lineageName}>Root family</Text>
+              <Text style={s.lineageHint}>
+                You aren&apos;t in any family yet, so this becomes the root of a new tree.
+                Future families spawn from members of this one.
+              </Text>
+            </View>
+          )}
+
+          {!parent && !isBootstrap && (
             <View style={s.warningBox}>
               <Text style={s.warningText}>
                 A new family group has to be started from inside an existing one. Go back to a
@@ -97,9 +125,9 @@ export default function NewFamily() {
           />
 
           <TouchableOpacity
-            style={[s.saveBtn, (create.isPending || !parentGroupId) && { opacity: 0.5 }]}
+            style={[s.saveBtn, (create.isPending || !canCreate) && { opacity: 0.5 }]}
             onPress={save}
-            disabled={create.isPending || !parentGroupId}
+            disabled={create.isPending || !canCreate}
           >
             <Text style={s.saveBtnText}>
               {create.isPending ? 'Creating…' : 'Create group'}
