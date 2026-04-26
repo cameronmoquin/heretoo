@@ -19,7 +19,6 @@ import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
-import { detectAppId } from '../../constants/apps';
 
 type Mode = 'choice' | 'signin' | 'signup_code' | 'signup_form';
 
@@ -59,8 +58,9 @@ export default function WelcomeScreen() {
         setErrorMsg('Sign-in succeeded but no session was returned. Try again.');
         return;
       }
-      const appId = detectAppId();
-      const target = appId === 'candon' ? '/candon' : '/(tabs)/feed';
+      // Always land on the main HereToo feed after sign in.
+      // Family Group is reachable from there via the sidebar / feed banner.
+      const target = '/(tabs)/feed';
       // eslint-disable-next-line no-console
       console.log('[signin] navigating to', target);
       router.replace(target);
@@ -117,8 +117,7 @@ export default function WelcomeScreen() {
           }).eq('invite_code', inviteCode.trim().toUpperCase()).then(() => {});
         }
         // On Candon, no profile-setup flow — go straight to the home.
-        const appId = detectAppId();
-        router.replace(appId === 'candon' ? '/candon' : '/(auth)/profile-setup');
+        router.replace('/(auth)/profile-setup');
       } else {
         showAlert('Check email', 'Confirm your account to continue.');
       }
