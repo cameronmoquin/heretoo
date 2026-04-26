@@ -18,10 +18,11 @@ import { supabase } from './supabase';
 import { useAuthStore } from '../stores/authStore';
 
 // Postgres / PostgREST error codes / messages we treat as "the JWT is bad."
+// Note: 42501 (insufficient_privilege) is intentionally NOT here — it usually
+// means the user genuinely lacks permission, not that their session is stale.
 const AUTH_SUSPECT_CODES = new Set([
   'PGRST301', // JWT expired
   'PGRST302', // JWT invalid
-  '42501',    // insufficient_privilege — almost always means auth.uid() is wrong/null
 ]);
 
 const AUTH_SUSPECT_FRAGMENTS = [
