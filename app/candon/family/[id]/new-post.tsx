@@ -62,6 +62,7 @@ export default function NewPost() {
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [video, setVideo] = useState<PickedVideo | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const onAddPhotos = async () => {
     try {
@@ -207,7 +208,8 @@ export default function NewPost() {
         setBusy(false);
         const f = formatPgError(e, 'Could not save your post.');
         // eslint-disable-next-line no-console
-        console.error('[create-post] failed:', f.raw, '(code:', f.code, ')');
+        console.error('POST_FULL_ERROR', JSON.stringify(e, null, 2));
+        setLastError(JSON.stringify(e, null, 2));
         if (f.authSuspect) {
           showConfirm(
             'Session expired',
@@ -502,6 +504,15 @@ export default function NewPost() {
             />
           </View>
 
+          {lastError && (
+            <View style={s.debugBox}>
+              <Text style={s.debugLabel}>Debug</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={s.debugText} selectable>{lastError}</Text>
+              </ScrollView>
+            </View>
+          )}
+
           <TouchableOpacity
             style={[s.saveBtn, (createPost.isPending || busy) && { opacity: 0.5 }]}
             onPress={save}
@@ -617,4 +628,14 @@ const s = StyleSheet.create({
   catChipActive: { backgroundColor: CandonColors.primary, borderColor: CandonColors.primary },
   catChipText: { fontSize: 12, color: CandonColors.textSecondary, fontWeight: '500' },
   catChipTextActive: { color: '#FFF', fontWeight: '600' },
+
+  debugBox: {
+    marginTop: 12, padding: 10, borderRadius: 8,
+    backgroundColor: '#FFF3F0', borderWidth: 1, borderColor: '#E8C8C0',
+  },
+  debugLabel: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 1,
+    color: '#A04030', textTransform: 'uppercase', marginBottom: 4,
+  },
+  debugText: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, color: '#5A2A20' },
 });

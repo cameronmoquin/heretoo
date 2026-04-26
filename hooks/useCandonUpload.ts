@@ -7,6 +7,8 @@
 
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
@@ -75,20 +77,45 @@ export function useCandonUpload() {
     const urls: string[] = [];
     for (let i = 0; i < assets.length; i++) {
       const asset = assets[i];
-      const ext = inferExt(asset.uri, asset.mimeType, 'jpg');
-      const filename = `${userId}/${Date.now()}_${i}.${ext}`;
-      const blob = await assetToBlob(asset);
-      const { error } = await supabase.storage
-        .from('candon-photos')
-        .upload(filename, blob, {
-          contentType: blob.type || `image/${ext}`,
-          upsert: false,
-        });
-      if (error) throw new Error(`Photo upload failed: ${error.message}`);
+      try {
+        // 1. Normalize to JPEG, max width 2048, compress 0.85.
+        //    This kills HEIC (iPhone default) and EXIF / orientation issues
+        //    that break image rendering on Android and the web.
+        const normalized = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: 2048 } }],
+          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+        );
 
-      const { data } = supabase.storage.from('candon-photos').getPublicUrl(filename);
-      urls.push(data.publicUrl);
-      setProgress((p) => ({ ...p, ratio: (i + 1) / assets.length }));
+        // 2. Read the file as base64, convert to ArrayBuffer.
+        //    Required because Supabase storage upload from a React Native
+        //    fetch().blob() is unreliable on native — the request body ends
+        //    up empty or wrapped weird. Base64 → ArrayBuffer is the path
+        //    that consistently works across web + iOS + Android.
+        const filename = `${userId}/${Date.now()}_${i}.jpg`;
+        const body = await readAsArrayBuffer(normalized.uri);
+
+        const { error } = await supabase.storage
+          .from('candon-photos')
+          .upload(filename, body, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          });
+
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error('STORAGE_UPLOAD_ERROR', JSON.stringify(error, null, 2));
+          throw new Error(`Photo upload failed: ${error.message}`);
+        }
+
+        const { data } = supabase.storage.from('candon-photos').getPublicUrl(filename);
+        urls.push(data.publicUrl);
+        setProgress((p) => ({ ...p, ratio: (i + 1) / assets.length }));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('PHOTO_PROCESS_ERROR', err);
+        throw err;
+      }
     }
     return urls;
   }
@@ -121,21 +148,22 @@ export function useCandonUpload() {
 
 // ── helpers ──────────────────────────────────────────────────────────────
 
-function inferExt(uri: string, mime: string | undefined, fallback: string): string {
-  if (mime) {
-    const m = mime.match(/\/([a-z0-9]+)$/i);
-    if (m) return m[1].toLowerCase();
-  }
-  const m = uri.match(/\.([a-z0-9]+)(?:\?|$)/i);
-  return m ? m[1].toLowerCase() : fallback;
-}
-
-async function assetToBlob(asset: PickedPhoto): Promise<Blob> {
+/**
+ * Read a local file URI into an ArrayBuffer reliably across platforms.
+ * Web: fetch + arrayBuffer (works as expected).
+ * Native: base64 via FileSystem, then decode to bytes.
+ */
+async function readAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
   if (Platform.OS === 'web') {
-    const r = await fetch(asset.uri);
-    return r.blob();
+    const r = await fetch(uri);
+    return r.arrayBuffer();
   }
-  // Native: fetch the local file URI as a blob.
-  const r = await fetch(asset.uri);
-  return r.blob();
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    // SDK 54 moved EncodingType to legacy; use the string form for forward compat.
+    encoding: 'base64' as any,
+  });
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
