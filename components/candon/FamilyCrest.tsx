@@ -1,28 +1,40 @@
 import React, { useMemo } from 'react';
 import { Image, View, StyleSheet, type ImageStyle, type ViewStyle } from 'react-native';
-import { familyCrestUri } from '../../lib/family-crest';
+import {
+  customFamilyCrestUri,
+  type CrestDivision,
+  type CrestCharge,
+} from '../../lib/family-crest';
 
 export interface FamilyCrestProps {
   /** Stable seed — typically the family group id. */
   seed: string;
   /** Family name; affects monogram initials when the field is plain. */
   name?: string;
-  /** Render size (square box; the shield aspect ratio is preserved). */
+  /** Render size (the shield aspect ratio is preserved). */
   size?: number;
   /** Optional outer style override. */
   style?: ViewStyle;
+  /** Customization overrides — when present, replace the rng-derived defaults. */
+  paletteIndex?: number | null;
+  division?: CrestDivision | null;
+  charge?: CrestCharge | null;
 }
 
 /**
  * Deterministic, generated SVG family crest.
  *
- * The same `seed` always renders the same crest, so a family is recognizable
- * across the app without storing the SVG. No new dependencies — the SVG is
- * URL-encoded into a data URI and rendered through `<Image />` (works on web
- * and native via react-native-web's Image).
+ * Same seed → same crest, plus explicit overrides for families that have
+ * customized their look. No new dependencies — the SVG is URL-encoded into
+ * a data URI and rendered through `<Image />` (web + native).
  */
-export function FamilyCrest({ seed, name, size = 44, style }: FamilyCrestProps) {
-  const uri = useMemo(() => familyCrestUri(seed, name), [seed, name]);
+export function FamilyCrest({
+  seed, name, size = 44, style, paletteIndex, division, charge,
+}: FamilyCrestProps) {
+  const uri = useMemo(
+    () => customFamilyCrestUri({ seed, name, paletteIndex, division, charge }),
+    [seed, name, paletteIndex, division, charge],
+  );
   // Heater shield aspect: 100 × 120 (≈ 5:6). Keep proportional.
   const w = size;
   const h = Math.round(size * 1.2);

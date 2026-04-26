@@ -68,7 +68,14 @@ export default function FamilyList() {
               onPress={() => router.push(`/candon/family/${g.id}`)}
               activeOpacity={0.75}
             >
-              <FamilyCrest seed={g.id} name={g.name} size={42} />
+              <FamilyCrest
+                seed={g.id}
+                name={g.name}
+                size={42}
+                paletteIndex={g.crest_palette_index ?? undefined}
+                division={(g.crest_division as any) ?? undefined}
+                charge={(g.crest_charge as any) ?? undefined}
+              />
               <View style={{ width: 4 }} />
               <View style={{ flex: 1 }}>
                 <Text style={s.rowTitle}>{g.name}</Text>

@@ -13,6 +13,42 @@ export interface FamilyGroup {
   created_at: string;
   parent_family_group_id?: string | null;
   spawned_by_user_id?: string | null;
+  // Customization (migration 021)
+  motto?: string | null;
+  theme_primary?: string | null;          // hex
+  crest_palette_index?: number | null;    // 0..N
+  crest_division?: string | null;         // see lib/family-crest.ts
+  crest_charge?: string | null;           // see lib/family-crest.ts
+}
+
+export interface UpdateFamilyGroupInput {
+  motto?: string | null;
+  theme_primary?: string | null;
+  crest_palette_index?: number | null;
+  crest_division?: string | null;
+  crest_charge?: string | null;
+  name?: string;
+  description?: string | null;
+}
+
+export function useUpdateFamilyGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdateFamilyGroupInput }) => {
+      const { data, error } = await supabase
+        .from('candon_family_groups')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as FamilyGroup;
+    },
+    onSuccess: (group) => {
+      qc.invalidateQueries({ queryKey: ['candon-family-groups'] });
+      qc.invalidateQueries({ queryKey: ['candon-family-group', group.id] });
+    },
+  });
 }
 
 export interface FamilyMembership {

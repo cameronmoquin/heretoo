@@ -40,6 +40,13 @@ export default function FamilyDetail() {
   }
 
   const isOwner = group.owner_user_id === userId;
+  const myMember = members?.find((m) => m.user_id === userId);
+  const isAdmin = myMember?.role === 'owner' || myMember?.role === 'admin';
+
+  function tintBg(hex: string): string {
+    // 12% mix on the surface — header tint for that family's color.
+    return `${hex}14`; // hex + alpha 0x14 (~8% opacity)
+  }
 
   const copyInvite = async () => {
     const code = group.invite_code ?? '';
@@ -67,21 +74,46 @@ export default function FamilyDetail() {
 
   return (
     <SafeAreaView style={s.root} edges={['bottom']}>
-      {/* Group header (compact) */}
-      <View style={s.header}>
+      {/* Group header (compact). Honors per-family theme color when set. */}
+      <View style={[s.header, !!group.theme_primary && { backgroundColor: tintBg(group.theme_primary) }]}>
         <View style={s.headerLeft}>
-          <FamilyCrest seed={group.id} name={group.name} size={40} />
-          <View style={{ flex: 1, marginLeft: 4 }}>
+          <FamilyCrest
+            seed={group.id}
+            name={group.name}
+            size={44}
+            paletteIndex={group.crest_palette_index ?? undefined}
+            division={(group.crest_division as any) ?? undefined}
+            charge={(group.crest_charge as any) ?? undefined}
+          />
+          <View style={{ flex: 1, marginLeft: 6 }}>
             <Text style={s.name}>{group.name}</Text>
-            <Text style={s.metaText}>{members?.length ?? 0} members</Text>
+            {group.motto ? (
+              <Text style={[s.motto, !!group.theme_primary && { color: group.theme_primary }]}>
+                {group.motto}
+              </Text>
+            ) : (
+              <Text style={s.metaText}>{members?.length ?? 0} members</Text>
+            )}
           </View>
         </View>
-        <TouchableOpacity
-          style={s.newPostBtn}
-          onPress={() => router.push(`/candon/family/${id}/new-post`)}
-        >
-          <Ionicons name="add" size={20} color="#FFF" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          {(isOwner || isAdmin) && (
+            <TouchableOpacity
+              style={s.iconBtn}
+              onPress={() => router.push(`/candon/family/${id}/customize`)}
+              accessibilityLabel="Customize family"
+              activeOpacity={0.7}
+            >
+              <Ionicons name="color-palette-outline" size={18} color={CandonColors.textSecondary} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[s.newPostBtn, !!group.theme_primary && { backgroundColor: group.theme_primary }]}
+            onPress={() => router.push(`/candon/family/${id}/new-post`)}
+          >
+            <Ionicons name="add" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
@@ -208,6 +240,16 @@ const s = StyleSheet.create({
   newPostBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: CandonColors.primary,
     alignItems: 'center', justifyContent: 'center',
+  },
+  iconBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 1, borderColor: CandonColors.border,
+    backgroundColor: CandonColors.surface,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  motto: {
+    fontSize: 13, fontStyle: 'italic',
+    color: CandonColors.textSecondary, marginTop: 2,
   },
 
   tabs: {

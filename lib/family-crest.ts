@@ -187,16 +187,37 @@ export interface CrestOptions {
   seed: string;
   /** Optional family name; used for fallback initials in 'plain' fields. */
   name?: string;
+  /** Explicit overrides — when set, take precedence over the rng-derived defaults. */
+  paletteIndex?: number | null;
+  division?: Division | null;
+  charge?: Charge | null;
 }
 
-export function generateFamilyCrestSvg({ seed, name = '' }: CrestOptions): string {
+// Exposed for the customize UI.
+export const PALETTE_LIST = PALETTES;
+export const DIVISION_LIST = DIVISIONS;
+export const CHARGE_LIST = CHARGES;
+export type CrestDivision = Division;
+export type CrestCharge = Charge;
+
+export function generateFamilyCrestSvg({
+  seed,
+  name = '',
+  paletteIndex,
+  division: divisionOverride,
+  charge: chargeOverride,
+}: CrestOptions): string {
   const rng = rngFromSeed(seed);
 
-  const palette = rng.pick(PALETTES);
+  const defaultPalette = rng.pick(PALETTES);
+  const palette =
+    paletteIndex != null && paletteIndex >= 0 && paletteIndex < PALETTES.length
+      ? PALETTES[paletteIndex]
+      : defaultPalette;
   // 60% chance of a complementary alternate field for divided crests.
   const altPalette = PALETTES[(PALETTES.indexOf(palette) + rng.range(1, PALETTES.length - 1)) % PALETTES.length];
-  const division = rng.pick(DIVISIONS);
-  const charge = rng.pick(CHARGES);
+  const division: Division = divisionOverride ?? rng.pick(DIVISIONS);
+  const charge: Charge = chargeOverride ?? rng.pick(CHARGES);
 
   const fieldA = palette.field;
   const fieldB = altPalette.field;
@@ -252,4 +273,9 @@ export function crestDataUri(svg: string): string {
 /** Convenience: seed + name → ready-to-use data URI. */
 export function familyCrestUri(seed: string, name?: string): string {
   return crestDataUri(generateFamilyCrestSvg({ seed, name }));
+}
+
+/** Variant that honours customization overrides stored on the group row. */
+export function customFamilyCrestUri(opts: CrestOptions): string {
+  return crestDataUri(generateFamilyCrestSvg(opts));
 }
