@@ -1,7 +1,31 @@
-import { Stack, Redirect, usePathname } from 'expo-router';
+import { Stack, Redirect, usePathname, router } from 'expo-router';
+import { TouchableOpacity, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { CandonColors } from '../../constants/candon-theme';
 import { useAuthStore } from '../../stores/authStore';
 import { DEV_MODE } from '../../lib/dev-mode';
+
+/**
+ * Header-left "← HereToo" button. Returns to the main social feed
+ * regardless of how deep in the Candon stack you are.
+ */
+function BackToHereToo() {
+  return (
+    <TouchableOpacity
+      onPress={() => router.replace('/(tabs)/feed')}
+      activeOpacity={0.7}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 4, paddingVertical: 6 }}
+      accessibilityLabel="Back to HereToo feed"
+    >
+      <Ionicons name="chevron-back" size={20} color={CandonColors.textPrimary} />
+      <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+        <Text style={{ color: '#FF0040', fontSize: 13, fontWeight: '800', opacity: 0.7, position: 'absolute', left: -1, top: -1 }}>HT</Text>
+        <Text style={{ color: '#00FF88', fontSize: 13, fontWeight: '800', opacity: 0.7, position: 'absolute', left: 1, top: 1 }}>HT</Text>
+        <Text style={{ color: CandonColors.textPrimary, fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>HT</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function CandonLayout() {
   const session = useAuthStore((s) => s.session);
@@ -22,6 +46,9 @@ export default function CandonLayout() {
         headerTintColor: CandonColors.textPrimary,
         headerTitleStyle: { fontWeight: '600' },
         contentStyle: { backgroundColor: CandonColors.bg },
+        // The HereToo back button shows on every Candon screen so the user
+        // can always escape back to the main feed in one tap.
+        headerLeft: () => <BackToHereToo />,
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Candon' }} />
