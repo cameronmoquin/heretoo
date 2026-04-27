@@ -106,17 +106,48 @@ export async function hardSignOutAndRedirect(): Promise<void> {
 }
 
 /**
- * Wrap a Supabase call with auto-recovery. If the call fails with an
- * auth-suspect error, refresh the session once and retry. Falls through
- * to the original error on the second failure.
+ * Wrap a Supabase call with auto-recovery.
+ *
+ * Two cases trigger a refresh-and-retry:
+ *   1. The error is overtly auth-shaped (PGRST301 / 302 / "jwt expired" etc.)
+ *   2. The error looks like permission-denied (42501 / RLS) AND there is no
+ *      currently-valid session, OR the session's expires_at is in the past.
+ *      That distinguishes a stale JWT (recover) from a real permission
+ *      violation (let the error through).
  */
 export async function withAuthRecovery<T>(op: () => Promise<T>): Promise<T> {
   try {
     return await op();
   } catch (err) {
-    if (!isAuthSuspectError(err)) throw err;
+    let shouldRecover = isAuthSuspectError(err);
+
+    // Permission-denied + no live session → almost always a stale JWT
+    // (PostgREST sees auth.uid() as null and the RLS check fails).
+    if (!shouldRecover && looksLikePermissionDenied(err)) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const expAt = data.session?.expires_at ?? 0; // unix seconds
+        const nowSec = Math.floor(Date.now() / 1000);
+        const expired = !data.session || expAt <= nowSec;
+        if (expired) shouldRecover = true;
+      } catch {
+        shouldRecover = true; // can't even read the session — definitely auth
+      }
+    }
+
+    if (!shouldRecover) throw err;
     const recovered = await tryRefreshSession();
     if (!recovered) throw err;
     return op();
   }
+}
+
+function looksLikePermissionDenied(err: unknown): boolean {
+  if (!err) return false;
+  const e = err as SupabaseLikeError;
+  if (e.code === '42501') return true;
+  const msg = `${e.message ?? ''} ${e.details ?? ''}`.toLowerCase();
+  return msg.includes('row-level security')
+    || msg.includes('permission denied')
+    || msg.includes('insufficient privilege');
 }
