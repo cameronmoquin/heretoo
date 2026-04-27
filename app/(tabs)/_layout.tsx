@@ -11,7 +11,6 @@ import { usePathname, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
-import { RightPanel } from '../../components/shared/RightPanel';
 import { useAuthStore } from '../../stores/authStore';
 import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
@@ -120,10 +119,6 @@ export default function TabLayout() {
             <Tabs.Screen name="profile" />
           </Tabs>
         </View>
-        {/* Right gutter for balance */}
-        <View style={styles.rightPanel}>
-          <RightPanel />
-        </View>
       </View>
     );
   }
@@ -205,7 +200,6 @@ const styles = StyleSheet.create({
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: Colors.border,
   },
-  rightPanel: { width: 320, maxWidth: 320 },
 
   // Mobile
   mobileTabBar: {

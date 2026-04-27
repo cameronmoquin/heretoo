@@ -122,19 +122,6 @@ export function useAuth() {
       .single();
     if (error) throw error;
     setProfile(data as Profile);
-
-    // Genesis WAMP grant for new members
-    try {
-      await supabase.rpc('credit_wamp', {
-        p_user_id: user.id,
-        p_amount: 0.50,
-        p_type: 'genesis',
-        p_note: 'Welcome to HereToo',
-      });
-    } catch {
-      // Non-blocking
-    }
-
     return data;
   }
 

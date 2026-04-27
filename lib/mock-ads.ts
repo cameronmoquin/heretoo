@@ -17,16 +17,6 @@ export interface MockAd {
 
 export const MOCK_ADS: MockAd[] = [
   {
-    id: 'ad-001',
-    advertiser: 'WAMP Token',
-    headline: 'WAMP',
-    body: 'The token that powers real community. Built different.',
-    ctaLabel: 'Learn more',
-    ctaUrl: 'https://wamptoken.com',
-    category: 'Tech & Gadgets',
-    badgeText: 'Crypto',
-  },
-  {
     id: 'ad-002',
     advertiser: 'Cameron Moquin',
     headline: 'Cameron Moquin for office',
