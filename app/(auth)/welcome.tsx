@@ -116,7 +116,6 @@ export default function WelcomeScreen() {
             accepted_at: new Date().toISOString(),
           }).eq('invite_code', inviteCode.trim().toUpperCase()).then(() => {});
         }
-        // On Candon, no profile-setup flow — go straight to the home.
         router.replace('/(auth)/profile-setup');
       } else {
         showAlert('Check email', 'Confirm your account to continue.');

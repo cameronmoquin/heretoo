@@ -97,12 +97,26 @@ export async function hardSignOutAndRedirect(): Promise<void> {
   } catch {}
   try { useAuthStore.getState().reset(); } catch {}
 
+  // Best-effort full storage purge on web.
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    // /candon/reset will purge any remaining storage and redirect to sign-in.
-    window.location.href = '/candon/reset';
-  } else {
-    try { router.replace('/(auth)/welcome'); } catch {}
+    try {
+      const wipe = (storage: Storage) => {
+        const keys: string[] = [];
+        for (let i = 0; i < storage.length; i++) {
+          const k = storage.key(i);
+          if (!k) continue;
+          if (k.includes('supabase') || k.startsWith('sb-') || k.includes('auth')) keys.push(k);
+        }
+        keys.forEach((k) => storage.removeItem(k));
+      };
+      wipe(window.localStorage);
+      wipe(window.sessionStorage);
+    } catch {}
+    window.location.href = '/(auth)/welcome';
+    return;
   }
+
+  try { router.replace('/(auth)/welcome'); } catch {}
 }
 
 /**

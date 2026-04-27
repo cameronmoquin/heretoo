@@ -60,24 +60,6 @@ function Sidebar() {
           );
         })}
 
-        {/* Divider + Family Group entry */}
-        <View style={styles.sidebarDivider} />
-        <TouchableOpacity
-          style={[styles.navItem, pathname.startsWith('/candon') && styles.navItemActive]}
-          onPress={() => router.push('/candon/family')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.navItemInner}>
-            <Ionicons
-              name={pathname.startsWith('/candon') ? 'home' : 'home-outline'}
-              size={20}
-              color={pathname.startsWith('/candon') ? Colors.primary : Colors.textSecondary}
-            />
-            <Text style={[styles.navText, pathname.startsWith('/candon') && styles.navTextActive]}>
-              Family Group
-            </Text>
-          </View>
-        </TouchableOpacity>
       </View>
 
       {/* Sign-out at the bottom of the sidebar */}
