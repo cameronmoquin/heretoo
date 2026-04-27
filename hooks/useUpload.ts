@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
 import { uploadVideoToMux } from '../lib/mux';
@@ -77,31 +80,66 @@ export function useUpload() {
     const urls: string[] = [];
     for (let i = 0; i < assets.length; i++) {
       const asset = assets[i];
-      const ext = asset.uri.split('.').pop() ?? 'jpg';
-      const fileName = `${userId}/${Date.now()}_${i}.${ext}`;
+      try {
+        // 1. Always convert to JPEG. iPhones save HEIC by default which most
+        //    browsers can't render and which storage proxies often reject.
+        //    Resize down to 2048px max width to keep payloads small.
+        const normalized = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: 2048 } }],
+          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+        );
 
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
+        // 2. Build a typed Blob. supabase-js storage upload is unreliable
+        //    when given a raw ArrayBuffer in React Native — wrapping in a
+        //    Blob with explicit MIME type works on web AND native.
+        const fileName = `${userId}/${Date.now()}_${i}.jpg`;
+        const buffer = await readAsArrayBuffer(normalized.uri);
+        const blob = new Blob([buffer], { type: 'image/jpeg' });
 
-      const { data, error } = await supabase.storage
-        .from('post-photos')
-        .upload(fileName, arrayBuffer, {
-          contentType: `image/${ext}`,
-          upsert: false,
-        });
+        const { data, error } = await supabase.storage
+          .from('post-photos')
+          .upload(fileName, blob, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          });
 
-      if (error) throw error;
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error('STORAGE_UPLOAD_ERROR', JSON.stringify(error, null, 2));
+          throw new Error(`Photo upload failed: ${error.message}`);
+        }
 
-      const { data: urlData } = supabase.storage
-        .from('post-photos')
-        .getPublicUrl(data.path);
+        const { data: urlData } = supabase.storage
+          .from('post-photos')
+          .getPublicUrl(data.path);
 
-      urls.push(urlData.publicUrl);
-      setState((s) => ({ ...s, progress: (i + 1) / assets.length }));
+        urls.push(urlData.publicUrl);
+        setState((s) => ({ ...s, progress: (i + 1) / assets.length }));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('PHOTO_UPLOAD_FAILED', err);
+        throw err;
+      }
     }
 
     return urls;
+  }
+
+  // ── helper ──────────────────────────────────────────────────────────
+  // Reads a local file URI as an ArrayBuffer, cross-platform.
+  async function readAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
+    if (Platform.OS === 'web') {
+      const r = await fetch(uri);
+      return r.arrayBuffer();
+    }
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: 'base64' as any,
+    });
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
   }
 
   async function uploadVideo(
