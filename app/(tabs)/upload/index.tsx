@@ -73,7 +73,7 @@ export default function UploadScreen() {
       setContent('');
       setSelectedTags([]);
       upload.reset();
-      showAlert('Done', 'Live now.');
+      // Post success is implicit — the new post appears in the feed.
       router.push('/(tabs)/feed');
     } catch (error: any) {
       const msg = error?.message ?? 'Unknown error';
