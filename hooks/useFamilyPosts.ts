@@ -241,12 +241,12 @@ export function useCreateFamilyPost() {
           : input.post_type === 'event' ? 'event'
           : 'general');
 
-      // Build the row defensively. Only include media columns when actually
-      // populated, so a text-only post still works on a database that hasn't
-      // applied migration 019 yet.
+      // Build the row defensively. We DO NOT send created_by — migration 023
+      // sets a column default of auth.uid() so the database fills it from the
+      // JWT, which guarantees `created_by = auth.uid()` no matter what the
+      // client thinks the user id is.
       const row: Record<string, unknown> = {
         family_group_id: input.family_group_id,
-        created_by: userId,
         post_type: input.post_type,
         category,
         title: input.title,
