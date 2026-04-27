@@ -60,6 +60,24 @@ function Sidebar() {
           );
         })}
 
+        {/* Divider + Family entry */}
+        <View style={styles.sidebarDivider} />
+        <TouchableOpacity
+          style={[styles.navItem, pathname.startsWith('/family') && styles.navItemActive]}
+          onPress={() => router.push('/family')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navItemInner}>
+            <Ionicons
+              name={pathname.startsWith('/family') ? 'people' : 'people-outline'}
+              size={20}
+              color={pathname.startsWith('/family') ? Colors.primary : Colors.textSecondary}
+            />
+            <Text style={[styles.navText, pathname.startsWith('/family') && styles.navTextActive]}>
+              Family
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Sign-out at the bottom of the sidebar */}

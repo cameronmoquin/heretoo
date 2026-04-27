@@ -130,6 +130,10 @@ export function useUpload() {
       muxThumbnailUrl?: string;
       videoDuration?: number;
       topicTags?: string[];
+      // Optional family scope. When set, the post is private to that family
+      // group; RLS on `posts` enforces membership-only access.
+      familyGroupId?: string;
+      familyCategory?: 'general' | 'medical' | 'holiday' | 'party' | 'event';
     }) => {
       if (!userId) throw new Error('Not authenticated');
       setState((s) => ({ ...s, stage: 'creating_post' }));
@@ -139,19 +143,25 @@ export function useUpload() {
         return { id: `post-dev-${Date.now()}`, content: params.content };
       }
 
+      const row: Record<string, unknown> = {
+        author_id: userId,
+        content: params.content,
+        media_type: params.mediaType,
+        photo_urls: params.photoUrls ?? null,
+        mux_asset_id: params.muxAssetId ?? null,
+        mux_playback_id: params.muxPlaybackId ?? null,
+        mux_thumbnail_url: params.muxThumbnailUrl ?? null,
+        video_duration_seconds: params.videoDuration ?? null,
+        topic_tags: params.topicTags ?? null,
+      };
+      if (params.familyGroupId) {
+        row.family_group_id = params.familyGroupId;
+        row.family_category = params.familyCategory ?? 'general';
+      }
+
       const { data, error } = await supabase
         .from('posts')
-        .insert({
-          author_id: userId,
-          content: params.content,
-          media_type: params.mediaType,
-          photo_urls: params.photoUrls ?? null,
-          mux_asset_id: params.muxAssetId ?? null,
-          mux_playback_id: params.muxPlaybackId ?? null,
-          mux_thumbnail_url: params.muxThumbnailUrl ?? null,
-          video_duration_seconds: params.videoDuration ?? null,
-          topic_tags: params.topicTags ?? null,
-        })
+        .insert(row)
         .select()
         .single();
 
@@ -159,8 +169,11 @@ export function useUpload() {
       setState({ stage: 'done', progress: 1, error: null, selectedAssets: [] });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+      if (vars.familyGroupId) {
+        queryClient.invalidateQueries({ queryKey: ['family-feed', vars.familyGroupId] });
+      }
     },
     onError: (error) => {
       setState((s) => ({ ...s, stage: 'error', error: error.message }));
