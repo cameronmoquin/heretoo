@@ -152,28 +152,8 @@ export default function NewPost() {
       recipient_user_ids: recipients,
     };
 
-    // ── Upload media first, then create the post ──
+    // Media upload is temporarily disabled. Coming back via signed-upload-URL.
     setBusy(true);
-    try {
-      if (photos.length > 0) {
-        const urls = await upload.uploadPhotos(photos);
-        payload.photo_urls = urls;
-      } else if (video) {
-        const result = await upload.uploadVideo(video);
-        payload.mux_asset_id = result.assetId;
-        payload.mux_playback_id = result.playbackId;
-        payload.mux_thumbnail_url = result.thumbnailUrl;
-        if (result.durationSeconds != null) payload.video_duration_seconds = result.durationSeconds;
-      }
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Upload failed.';
-      // eslint-disable-next-line no-console
-      console.error('UPLOAD_FULL_ERROR', JSON.stringify(e, null, 2));
-      setLastError(JSON.stringify(e, null, 2));
-      showAlert('Upload failed', msg);
-      setBusy(false);
-      return;
-    }
 
     if (postType === 'event') {
       if (!dateStr) { showAlert('Missing date', 'Pick a date for the event.'); return; }
@@ -302,71 +282,9 @@ export default function NewPost() {
             textAlignVertical="top"
           />
 
-          {/* ── Media ── */}
-          <Text style={s.label}>Photos &amp; video</Text>
-          <View style={s.mediaPickerRow}>
-            <TouchableOpacity
-              style={[s.mediaBtn, video && s.mediaBtnDisabled]}
-              onPress={onAddPhotos}
-              disabled={!!video || busy}
-              activeOpacity={0.75}
-            >
-              <Ionicons name="image-outline" size={18} color={CandonColors.primary} />
-              <Text style={s.mediaBtnText}>
-                {photos.length > 0 ? `Add more (${photos.length})` : 'Add photos'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[s.mediaBtn, photos.length > 0 && s.mediaBtnDisabled]}
-              onPress={onAddVideo}
-              disabled={photos.length > 0 || busy}
-              activeOpacity={0.75}
-            >
-              <Ionicons name="videocam-outline" size={18} color={CandonColors.primary} />
-              <Text style={s.mediaBtnText}>{video ? 'Replace video' : 'Add video'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {photos.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbStrip}>
-              {photos.map((p, i) => (
-                <View key={p.uri + i} style={s.thumbWrap}>
-                  <Image source={{ uri: p.uri }} style={s.thumb} />
-                  <TouchableOpacity style={s.thumbX} onPress={() => removePhoto(i)} activeOpacity={0.8}>
-                    <Ionicons name="close" size={14} color="#FFF" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          )}
-
-          {video && (
-            <View style={s.videoPreview}>
-              <View style={s.videoBadge}>
-                <Ionicons name="play" size={20} color="#FFF" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.videoLabel}>Video selected</Text>
-                <Text style={s.videoSub}>
-                  {video.fileName ?? 'video'}{' '}
-                  {video.duration ? `· ${Math.round(video.duration / 1000)}s` : ''}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={removeVideo} style={s.videoRemove} activeOpacity={0.7}>
-                <Ionicons name="close" size={18} color={CandonColors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {(busy || upload.progress.stage === 'photos' || upload.progress.stage === 'video') && (
-            <View style={s.uploadProgress}>
-              <ActivityIndicator color={CandonColors.primary} size="small" />
-              <Text style={s.uploadProgressText}>
-                {upload.progress.message || 'Working…'}
-                {upload.progress.ratio > 0 && ` (${Math.round(upload.progress.ratio * 100)}%)`}
-              </Text>
-            </View>
-          )}
+          {/* Media picker temporarily hidden — being rewritten on a more reliable
+              upload path (Supabase signed-upload-URL + direct PUT). Text posts
+              are the priority right now. */}
 
           {postType === 'medical_update' && (
             <>
