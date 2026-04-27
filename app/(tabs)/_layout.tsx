@@ -18,9 +18,7 @@ import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
-  { name: 'pulse', label: 'Pulse', icon: 'pulse-outline', iconActive: 'pulse', href: '/(tabs)/pulse' },
   { name: 'upload', label: 'Post', icon: 'add-circle-outline', iconActive: 'add-circle', href: '/(tabs)/upload' },
-  { name: 'bridge', label: 'Bridge', icon: 'chatbubbles-outline', iconActive: 'chatbubbles', href: '/(tabs)/bridge' },
   { name: 'profile', label: 'Profile', icon: 'person-outline', iconActive: 'person', href: '/(tabs)/profile' },
 ] as const;
 
@@ -118,9 +116,7 @@ export default function TabLayout() {
         <View style={styles.desktopContent}>
           <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
             <Tabs.Screen name="feed" />
-            <Tabs.Screen name="pulse" />
             <Tabs.Screen name="upload" />
-            <Tabs.Screen name="bridge" />
             <Tabs.Screen name="profile" />
           </Tabs>
         </View>
