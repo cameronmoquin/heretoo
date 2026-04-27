@@ -167,6 +167,9 @@ export default function NewPost() {
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Upload failed.';
+      // eslint-disable-next-line no-console
+      console.error('UPLOAD_FULL_ERROR', JSON.stringify(e, null, 2));
+      setLastError(JSON.stringify(e, null, 2));
       showAlert('Upload failed', msg);
       setBusy(false);
       return;

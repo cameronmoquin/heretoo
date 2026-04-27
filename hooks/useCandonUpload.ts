@@ -79,25 +79,24 @@ export function useCandonUpload() {
       const asset = assets[i];
       try {
         // 1. Normalize to JPEG, max width 2048, compress 0.85.
-        //    This kills HEIC (iPhone default) and EXIF / orientation issues
-        //    that break image rendering on Android and the web.
+        //    Kills HEIC (iPhone default) + EXIF/orientation issues.
         const normalized = await ImageManipulator.manipulateAsync(
           asset.uri,
           [{ resize: { width: 2048 } }],
           { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
         );
 
-        // 2. Read the file as base64, convert to ArrayBuffer.
-        //    Required because Supabase storage upload from a React Native
-        //    fetch().blob() is unreliable on native — the request body ends
-        //    up empty or wrapped weird. Base64 → ArrayBuffer is the path
-        //    that consistently works across web + iOS + Android.
+        // 2. Build a Blob with explicit type. Supabase-js sometimes mis-sets
+        //    Content-Type when passing raw ArrayBuffer; wrapping in a Blob
+        //    with an explicit MIME type makes the upload bulletproof on
+        //    web AND native (RN's Blob polyfill respects the type field).
         const filename = `${userId}/${Date.now()}_${i}.jpg`;
-        const body = await readAsArrayBuffer(normalized.uri);
+        const buffer = await readAsArrayBuffer(normalized.uri);
+        const blob = new Blob([buffer], { type: 'image/jpeg' });
 
         const { error } = await supabase.storage
           .from('candon-photos')
-          .upload(filename, body, {
+          .upload(filename, blob, {
             contentType: 'image/jpeg',
             upsert: false,
           });
