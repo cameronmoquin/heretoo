@@ -17,7 +17,6 @@ import { MediaPicker } from '../../../components/upload/MediaPicker';
 import { MentionInput } from '../../../components/shared/MentionInput';
 import { MENTION_USERS } from '../../../lib/mention-users';
 import { Button } from '../../../components/shared/Button';
-import { VerificationGate } from '../../../components/shared/VerificationGate';
 import { Colors } from '../../../constants/colors';
 
 const TAG_OPTIONS = [
@@ -93,7 +92,6 @@ export default function UploadScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <VerificationGate action="create_post">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -184,7 +182,6 @@ export default function UploadScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-      </VerificationGate>
     </SafeAreaView>
   );
 }

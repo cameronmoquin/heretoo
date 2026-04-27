@@ -46,9 +46,12 @@ if (existsSync(indexPath)) {
     '<link rel="alternate icon" type="image/png" href="/favicon.png" />',
     '<link rel="mask-icon" href="/mask-icon.svg" color="#0A0A0F" />',
     '<link rel="apple-touch-icon" href="/favicon.svg" />',
+    '<link rel="manifest" href="/manifest.webmanifest" />',
     '<meta name="theme-color" content="#0A0A0F" />',
     '<meta name="apple-mobile-web-app-capable" content="yes" />',
     '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />',
+    '<meta name="apple-mobile-web-app-title" content="HereToo" />',
+    '<meta name="mobile-web-app-capable" content="yes" />',
   ].join('\n    ');
 
   // Strip any auto-injected default favicon link first.
