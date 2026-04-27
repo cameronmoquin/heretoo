@@ -213,11 +213,18 @@ interface CreatePostInput {
 
 export function useCreateFamilyPost() {
   const qc = useQueryClient();
-  const userId = useAuthStore((s) => s.user?.id);
 
   return useMutation({
     mutationFn: async (input: CreatePostInput) => withAuthRecovery(async () => {
-      if (!userId) throw new Error('Not authenticated');
+      // Read the user id directly from the live JWT, not from the local store.
+      // The Zustand store can drift across sign-outs; what RLS checks against
+      // is auth.uid() = JWT.sub, so we use that as the source of truth and
+      // guarantee `created_by = auth.uid()` matches every time.
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData?.session?.user?.id) {
+        throw new Error('Not authenticated');
+      }
+      const userId = sessionData.session.user.id;
 
       // Medical posts default to medical_limited scope if caller didn't set one.
       const scope: VisibilityScope =
