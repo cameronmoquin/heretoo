@@ -34,6 +34,7 @@ import { useUpload } from '../../hooks/useUpload';
 import { useMyConnections, useMyFamilies } from '../../hooks/useFamily';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { TwoWayCapture, type CapturedAsset } from '../upload/TwoWayCapture';
+import { OneWayCapture } from '../upload/OneWayCapture';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
@@ -59,6 +60,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [twoWayOpen, setTwoWayOpen] = useState(false);
+  const [oneWayOpen, setOneWayOpen] = useState(false);
 
   const hasMedia = upload.selectedAssets.length > 0;
   const canPost = body.trim().length > 0 || hasMedia;
@@ -67,6 +69,11 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const onTwoWayCapture = (asset: CapturedAsset) => {
     upload.setAssets([asset as any]);
     setTwoWayOpen(false);
+  };
+
+  const onOneWayCapture = (asset: CapturedAsset) => {
+    upload.setAssets([asset as any]);
+    setOneWayOpen(false);
   };
 
   const toggleTag = (profileId: string, handle: string | null) => {
@@ -197,6 +204,11 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           onPress={() => upload.pickVideo()}
         />
         <ActionBtn
+          icon="camera-outline"
+          label="One-Way"
+          onPress={() => setOneWayOpen(true)}
+        />
+        <ActionBtn
           icon="sync-outline"
           label="Two-Way"
           onPress={() => setTwoWayOpen(true)}
@@ -249,6 +261,19 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           </Text>
         </View>
       )}
+
+      {/* One-Way modal */}
+      <Modal
+        visible={oneWayOpen}
+        animationType="fade"
+        transparent={false}
+        onRequestClose={() => setOneWayOpen(false)}
+      >
+        <OneWayCapture
+          onCapture={onOneWayCapture}
+          onClose={() => setOneWayOpen(false)}
+        />
+      </Modal>
 
       {/* Two-Way modal */}
       <Modal
