@@ -16,18 +16,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useUpload } from '../../../hooks/useUpload';
 import { showAlert } from '../../../lib/alert';
 import { Button } from '../../../components/shared/Button';
-import { BeRealCapture, type CapturedAsset } from '../../../components/upload/BeRealCapture';
+import { TwoWayCapture, type CapturedAsset } from '../../../components/upload/TwoWayCapture';
 import { Colors } from '../../../constants/colors';
 
 export default function UploadScreen() {
   const upload = useUpload();
   const [content, setContent] = useState('');
-  const [bRealOpen, setBRealOpen] = useState(false);
+  const [twoWayOpen, setTwoWayOpen] = useState(false);
 
-  const onBRealCapture = (asset: CapturedAsset) => {
+  const onTwoWayCapture = (asset: CapturedAsset) => {
     // Inject as if it were a normal picker asset; the existing upload flow handles it.
     upload.setAssets([asset as any]);
-    setBRealOpen(false);
+    setTwoWayOpen(false);
   };
 
   const hasMedia = upload.selectedAssets.length > 0;
@@ -130,11 +130,11 @@ export default function UploadScreen() {
             {Platform.OS === 'web' && (
               <TouchableOpacity
                 style={styles.mediaBtn}
-                onPress={() => setBRealOpen(true)}
+                onPress={() => setTwoWayOpen(true)}
                 activeOpacity={0.8}
               >
                 <Ionicons name="camera-reverse-outline" size={18} color={Colors.primary} />
-                <Text style={styles.mediaBtnText}>BeReal</Text>
+                <Text style={styles.mediaBtnText}>Two-Way</Text>
               </TouchableOpacity>
             )}
             {upload.selectedAssets.length > 0 && (
@@ -183,14 +183,14 @@ export default function UploadScreen() {
       </KeyboardAvoidingView>
 
       <Modal
-        visible={bRealOpen}
+        visible={twoWayOpen}
         animationType="fade"
         transparent={false}
-        onRequestClose={() => setBRealOpen(false)}
+        onRequestClose={() => setTwoWayOpen(false)}
       >
-        <BeRealCapture
-          onCapture={onBRealCapture}
-          onClose={() => setBRealOpen(false)}
+        <TwoWayCapture
+          onCapture={onTwoWayCapture}
+          onClose={() => setTwoWayOpen(false)}
         />
       </Modal>
     </SafeAreaView>

@@ -1,17 +1,16 @@
 /**
- * BeReal-style dual-camera capture (web).
+ * Two-Way — dual-camera capture (web).
  *
  * Most browsers can't grab two camera streams simultaneously, so we capture
  * sequentially with a hard cap of a few seconds between shots. The final
  * image composites the back camera as the main frame with the selfie as a
- * small rounded inset in the top-right corner — same visual model as BeReal.
+ * small rounded inset in the top-right corner.
  *
  * Returns a synthetic ImagePicker-shaped asset via `onCapture` so the
  * existing useUpload flow handles it like any other photo.
  *
- * Native (iOS/Android) is a no-op for now — show a polite message until we
- * ship an EAS dev build with `react-native-vision-camera` for true
- * simultaneous capture.
+ * Native (iOS/Android) shows a placeholder for now — true simultaneous
+ * capture needs a native build with `react-native-vision-camera`.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -44,12 +43,12 @@ interface Props {
   onClose: () => void;
 }
 
-export function BeRealCapture({ onCapture, onClose }: Props) {
+export function TwoWayCapture({ onCapture, onClose }: Props) {
   if (Platform.OS !== 'web') {
     return (
       <View style={s.notSupported}>
         <Ionicons name="phone-portrait-outline" size={32} color={Colors.textMuted} />
-        <Text style={s.notSupportedTitle}>BeReal mode is web-only for now</Text>
+        <Text style={s.notSupportedTitle}>Two-Way is web-only for now</Text>
         <Text style={s.notSupportedText}>
           Mobile dual-camera capture needs a native build. Coming when we ship the iOS / Android app.
         </Text>

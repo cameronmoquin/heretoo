@@ -228,7 +228,7 @@ export function useUpload() {
     setState({ stage: 'idle', progress: 0, error: null, selectedAssets: [] });
   }
 
-  /** Inject a synthetic asset (e.g. from BeReal capture) as if the picker returned it. */
+  /** Inject a synthetic asset (e.g. from Two-Way capture) as if the picker returned it. */
   function setAssets(assets: ImagePicker.ImagePickerAsset[]) {
     setState((s) => ({ ...s, selectedAssets: assets }));
   }
