@@ -11,6 +11,7 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
 export default function FamilyList() {
+  const s = makeStyles();
   const qc = useQueryClient();
   useEffect(() => { qc.invalidateQueries({ queryKey: ['families'] }); }, [qc]);
   const { data: families, isLoading } = useMyFamilies();
@@ -83,7 +84,7 @@ export default function FamilyList() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40,
@@ -124,4 +125,4 @@ const s = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
-});
+}); }

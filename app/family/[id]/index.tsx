@@ -18,8 +18,9 @@ import { Spacing, Radius } from '../../../constants/design';
 type Tab = 'feed' | 'about';
 
 export default function FamilyDetail() {
+  const s = makeStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId = useAuthStore((st) => st.user?.id);
   const [tab, setTab] = useState<Tab>('feed');
   const { data: family, isLoading } = useFamily(id);
   const { data: members } = useFamilyMembers(id);
@@ -151,9 +152,10 @@ export default function FamilyDetail() {
 }
 
 function FamilyPostCard({ post }: { post: any }) {
+  const s = makeStyles();
   const author = post.author;
   const media: any[] = post.media ?? [];
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId = useAuthStore((st) => st.user?.id);
   const isMine = userId === post.author_id;
   const deletePost = useDeletePost();
 
@@ -218,7 +220,7 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -281,4 +283,4 @@ const s = StyleSheet.create({
     width: 240, height: 240, borderRadius: 8,
     marginRight: 8, backgroundColor: Colors.background,
   },
-});
+}); }

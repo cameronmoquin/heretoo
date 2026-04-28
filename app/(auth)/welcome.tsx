@@ -23,6 +23,7 @@ import { Spacing, Radius } from '../../constants/design';
 type Mode = 'choice' | 'signin' | 'signup_code' | 'signup_form';
 
 export default function WelcomeScreen() {
+  const s = makeStyles();
   const { signInWithApple } = useAuth();
   const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState<string | null>(null);
@@ -236,7 +237,7 @@ export default function WelcomeScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0A0A0F' },
   scroll: {
     flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: Spacing.xl,
@@ -274,4 +275,4 @@ const s = StyleSheet.create({
     borderRadius: Radius.md, padding: 12, marginTop: 4,
   },
   errorText: { color: '#FF6B6B', fontSize: 13, textAlign: 'center', lineHeight: 18 },
-});
+}); }

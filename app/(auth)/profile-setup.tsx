@@ -22,8 +22,9 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
 export default function ProfileSetupScreen() {
+  const s = makeStyles();
   const user = useAuthStore((s) => s.user);
-  const setProfile = useAuthStore((s) => s.setProfile);
+  const setProfile = useAuthStore((st) => st.setProfile);
   const [handle, setHandle] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -124,7 +125,7 @@ export default function ProfileSetupScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.lg, gap: 6, maxWidth: 480, alignSelf: 'center', width: '100%' },
   title: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary, marginTop: 12 },
@@ -140,4 +141,4 @@ const s = StyleSheet.create({
   },
   textarea: { minHeight: 80 },
   hint: { fontSize: 11, color: Colors.textMuted, marginTop: 4 },
-});
+}); }

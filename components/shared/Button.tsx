@@ -17,6 +17,7 @@ interface ButtonProps {
 }
 
 export function Button({ title, onPress, variant = 'primary', size = 'md', loading = false, disabled = false, style, textStyle, icon }: ButtonProps) {
+  const { s, v, sz, tv, ts } = makeStyles();
   const off = disabled || loading;
   return (
     <TouchableOpacity onPress={onPress} disabled={off} style={[s.base, v[variant], sz[size], off && s.off, style]} activeOpacity={0.75}>
@@ -29,30 +30,34 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', loadi
   );
 }
 
-const s = StyleSheet.create({
-  base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  off: { opacity: 0.4 },
-  text: { fontWeight: Weight.semibold },
-});
-const v = StyleSheet.create({
-  primary: { backgroundColor: Colors.primary, borderRadius: Radius.md },
-  secondary: { backgroundColor: Colors.surfaceLight, borderRadius: Radius.md },
-  outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md },
-  ghost: { backgroundColor: 'transparent', borderRadius: Radius.md },
-});
-const sz = StyleSheet.create({
-  sm: { paddingHorizontal: 12, paddingVertical: 7 },
-  md: { paddingHorizontal: 18, paddingVertical: 10 },
-  lg: { paddingHorizontal: 22, paddingVertical: 13 },
-});
-const tv = StyleSheet.create({
-  primary: { color: '#FFF' },
-  secondary: { color: Colors.textPrimary },
-  outline: { color: Colors.textPrimary },
-  ghost: { color: Colors.primary },
-});
-const ts = StyleSheet.create({
-  sm: { fontSize: 13 },
-  md: { fontSize: 14 },
-  lg: { fontSize: 15 },
-});
+function makeStyles() {
+  return {
+    s: StyleSheet.create({
+      base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+      off: { opacity: 0.4 },
+      text: { fontWeight: Weight.semibold },
+    }),
+    v: StyleSheet.create({
+      primary: { backgroundColor: Colors.primary, borderRadius: Radius.md },
+      secondary: { backgroundColor: Colors.surfaceLight, borderRadius: Radius.md },
+      outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md },
+      ghost: { backgroundColor: 'transparent', borderRadius: Radius.md },
+    }),
+    sz: StyleSheet.create({
+      sm: { paddingHorizontal: 12, paddingVertical: 7 },
+      md: { paddingHorizontal: 18, paddingVertical: 10 },
+      lg: { paddingHorizontal: 22, paddingVertical: 13 },
+    }),
+    tv: StyleSheet.create({
+      primary: { color: '#FFF' },
+      secondary: { color: Colors.textPrimary },
+      outline: { color: Colors.textPrimary },
+      ghost: { color: Colors.primary },
+    }),
+    ts: StyleSheet.create({
+      sm: { fontSize: 13 },
+      md: { fontSize: 14 },
+      lg: { fontSize: 15 },
+    }),
+  };
+}

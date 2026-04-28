@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { Colors } from '../../constants/colors';
 
 export default function AuthLayout() {
+  const styles = makeStyles();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
 
@@ -21,7 +22,7 @@ export default function AuthLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -43,4 +44,4 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     overflow: 'hidden',
   },
-});
+}); }

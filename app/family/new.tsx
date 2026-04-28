@@ -11,6 +11,7 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
 export default function NewFamily() {
+  const s = makeStyles();
   const create = useCreateFamily();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -78,7 +79,7 @@ export default function NewFamily() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.lg, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
   label: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginTop: 12, marginBottom: 4 },
@@ -102,4 +103,4 @@ const s = StyleSheet.create({
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
   lineageHint: { fontSize: 12, color: Colors.textSecondary, marginTop: 6, lineHeight: 18 },
-});
+}); }

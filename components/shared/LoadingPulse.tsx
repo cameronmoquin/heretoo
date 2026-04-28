@@ -36,6 +36,7 @@ export function LoadingPulse({ size = 48, color = Colors.primary }: LoadingPulse
     opacity: opacity.value,
   }));
 
+  const styles = makeStyles();
   return (
     <View style={styles.container}>
       <Animated.View
@@ -53,11 +54,11 @@ export function LoadingPulse({ size = 48, color = Colors.primary }: LoadingPulse
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.background,
   },
-});
+}); }

@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
-
+      const styles = makeStyles();
       return (
         <View style={styles.container}>
           <Text style={styles.title}>Something broke.</Text>
@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -62,4 +62,4 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
   },
-});
+}); }

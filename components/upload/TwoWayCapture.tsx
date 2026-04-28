@@ -44,6 +44,7 @@ interface Props {
 }
 
 export function TwoWayCapture({ onCapture, onClose }: Props) {
+  const s = makeStyles();
   if (Platform.OS !== 'web') {
     return (
       <View style={s.notSupported}>
@@ -286,7 +287,7 @@ function roundedRectPath(
   ctx.closePath();
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
@@ -343,4 +344,4 @@ const s = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   closeBtnText: { color: '#000', fontWeight: '600' },
-});
+}); }

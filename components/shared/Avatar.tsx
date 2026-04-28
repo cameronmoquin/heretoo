@@ -20,6 +20,7 @@ interface AvatarProps {
 }
 
 export function Avatar({ url, name, size = 38, borderColor }: AvatarProps) {
+  const styles = makeStyles();
   const display = name ?? '?';
   const initials = display.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const bg = pickColor(display);
@@ -35,7 +36,7 @@ export function Avatar({ url, name, size = 38, borderColor }: AvatarProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   initials: { fontWeight: '600', color: '#4A4A4A' },
-});
+}); }

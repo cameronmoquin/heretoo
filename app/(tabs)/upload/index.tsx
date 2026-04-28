@@ -20,6 +20,7 @@ import { TwoWayCapture, type CapturedAsset } from '../../../components/upload/Tw
 import { Colors } from '../../../constants/colors';
 
 export default function UploadScreen() {
+  const styles = makeStyles();
   const upload = useUpload();
   const [content, setContent] = useState('');
   const [twoWayOpen, setTwoWayOpen] = useState(false);
@@ -191,7 +192,7 @@ export default function UploadScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -250,4 +251,4 @@ const styles = StyleSheet.create({
   clearBtn: { paddingHorizontal: 12, paddingVertical: 10 },
   clearBtnText: { color: Colors.textMuted, fontSize: 13 },
   thumb: { width: 80, height: 80, borderRadius: 8, marginRight: 6 },
-});
+}); }

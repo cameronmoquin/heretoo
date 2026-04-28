@@ -9,6 +9,7 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
 export default function PostDetail() {
+  const s = makeStyles();
   const { postId } = useLocalSearchParams<{ postId: string }>();
 
   const { data: post, isLoading } = useQuery({
@@ -76,7 +77,7 @@ export default function PostDetail() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.md, gap: 12, maxWidth: 600, alignSelf: 'center', width: '100%' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -94,4 +95,4 @@ const s = StyleSheet.create({
     borderRadius: Radius.md, backgroundColor: Colors.surfaceLight,
   },
   empty: { padding: 40, textAlign: 'center', color: Colors.textMuted },
-});
+}); }

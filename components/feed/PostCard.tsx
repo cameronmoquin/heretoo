@@ -23,6 +23,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onHeart }: PostCardProps) {
+  const s = makeStyles();
   const author = post.author;
   const media = post.media ?? [];
   const heartCount = post.heart_count ?? 0;
@@ -142,7 +143,7 @@ function timeAgo(iso: string): string {
   return d.toLocaleDateString();
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   card: {
     backgroundColor: Colors.surfaceLight,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -180,4 +181,4 @@ const s = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 24, marginTop: 4 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
   actionCount: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
-});
+}); }

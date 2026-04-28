@@ -9,6 +9,7 @@ import { BuildInfo } from '../../constants/build-info';
  * Only visible when explicitly enabled (not in dev).
  */
 export function BuildBadge() {
+  const styles = makeStyles();
   return (
     <TouchableOpacity
       style={styles.badge}
@@ -22,7 +23,7 @@ export function BuildBadge() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   badge: {
     position: 'absolute',
     bottom: 4,
@@ -39,4 +40,4 @@ const styles = StyleSheet.create({
     color: '#8CF',
     letterSpacing: 0.5,
   },
-});
+}); }

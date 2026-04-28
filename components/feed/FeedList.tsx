@@ -19,6 +19,7 @@ interface FeedListProps {
 export function FeedList({
   posts, isLoading, isRefreshing, hasMore, onRefresh, onLoadMore, onHeart,
 }: FeedListProps) {
+  const styles = makeStyles();
   const renderItem = useCallback(
     ({ item }: { item: Post }) => <PostCard post={item} onHeart={onHeart} />,
     [onHeart],
@@ -59,10 +60,10 @@ export function FeedList({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   list: { paddingBottom: 80 },
   center: {
     flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg, minHeight: 200,
   },
   empty: { color: Colors.textMuted, fontSize: 14, textAlign: 'center' },
-});
+}); }

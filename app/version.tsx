@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase';
  * lets you verify Supabase connectivity in one click.
  */
 export default function VersionScreen() {
+  const s = makeStyles();
   const [checkResult, setCheckResult] = React.useState<string>('');
 
   const checkSupabase = async () => {
@@ -69,7 +70,7 @@ export default function VersionScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -85,4 +86,4 @@ const s = StyleSheet.create({
   checkBtn: { marginTop: 16, padding: 12, backgroundColor: Colors.primary, borderRadius: 8, alignItems: 'center' },
   checkBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
   checkResult: { marginTop: 8, fontSize: 12, fontFamily: 'monospace', color: Colors.textPrimary },
-});
+}); }

@@ -12,6 +12,7 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
 export default function NewFamilyPost() {
+  const s = makeStyles();
   const { id: familyId } = useLocalSearchParams<{ id: string }>();
   const upload = useUpload();
   const [body, setBody] = useState('');
@@ -144,7 +145,7 @@ export default function NewFamilyPost() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing.md, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
   label: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.4, marginTop: 14, marginBottom: 6 },
@@ -180,4 +181,4 @@ const s = StyleSheet.create({
     paddingVertical: 14, alignItems: 'center',
   },
   saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
-});
+}); }

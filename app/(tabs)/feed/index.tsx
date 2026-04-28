@@ -16,6 +16,7 @@ const TABS: { key: FeedTab; label: string }[] = [
 ];
 
 export default function FeedScreen() {
+  const styles = makeStyles();
   const { activeTab, setActiveTab } = useFeedStore();
   const feed = useFeed(activeTab);
   const toggleHeart = useToggleHeart();
@@ -82,7 +83,7 @@ export default function FeedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -103,4 +104,4 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 14, fontWeight: '500', color: Colors.textMuted },
   tabTextActive: { color: Colors.textPrimary, fontWeight: '600' },
   tabBar: { position: 'absolute', bottom: 0, width: 26, height: 2, borderRadius: 1, backgroundColor: Colors.primary },
-});
+}); }

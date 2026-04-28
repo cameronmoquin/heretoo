@@ -29,10 +29,11 @@ function TabIcon({ icon, iconActive, focused }: { icon: string; iconActive: stri
 }
 
 function Sidebar() {
+  const styles = makeStyles();
   const pathname = usePathname();
-  const user = useAuthStore((s) => s.user);
-  const themeMode = useThemeStore((s) => s.mode);
-  const toggleTheme = useThemeStore((s) => s.toggle);
+  const user = useAuthStore((st) => st.user);
+  const themeMode = useThemeStore((st) => st.mode);
+  const toggleTheme = useThemeStore((st) => st.toggle);
   return (
     <View style={styles.sidebar}>
       <View style={styles.sidebarLogoWrap}>
@@ -115,6 +116,7 @@ function Sidebar() {
 }
 
 export default function TabLayout() {
+  const styles = makeStyles();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
 
@@ -163,7 +165,7 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   // Desktop
   desktopRoot: { flex: 1, flexDirection: 'row', backgroundColor: Colors.surfaceLight },
   sidebar: {
@@ -228,4 +230,4 @@ const styles = StyleSheet.create({
   },
   tabLabel: { fontSize: 11, fontWeight: '500', color: Colors.textMuted },
   tabLabelActive: { color: Colors.primary, fontWeight: '600' },
-});
+}); }

@@ -10,6 +10,7 @@ import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
 
 export default function OwnProfileScreen() {
+  const styles = makeStyles();
   const { profile, signOut } = useAuth();
 
   const handleSignOut = () => {
@@ -54,7 +55,7 @@ export default function OwnProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: 20, gap: 24, paddingBottom: 100 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 16 },
@@ -63,4 +64,4 @@ const styles = StyleSheet.create({
   username: { fontSize: 15, color: Colors.textMuted },
   bio: { fontSize: 13, color: Colors.textSecondary, marginTop: 6, lineHeight: 19 },
   actions: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-});
+}); }
