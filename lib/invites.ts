@@ -53,7 +53,7 @@ export function getInviteDeepLink(code: string): string {
  */
 export async function shareInvite(code: string, inviterName: string): Promise<boolean> {
   const link = getInviteLink(code);
-  const message = `Join me on HereToo — where common ground lives. ${link}`;
+  const message = `Join my family on HereToo.social — ${link}`;
 
   try {
     const result = await Share.share(

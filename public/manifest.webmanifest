@@ -1,7 +1,7 @@
 {
   "name": "HereToo",
   "short_name": "HereToo",
-  "description": "Be real. Stay close to the people who matter.",
+  "description": "Stay close to the people who matter.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

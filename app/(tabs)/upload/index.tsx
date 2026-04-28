@@ -86,7 +86,7 @@ export default function UploadScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Say something real."
+            placeholder="Say something"
             placeholderTextColor={Colors.textMuted}
             value={content}
             onChangeText={setContent}

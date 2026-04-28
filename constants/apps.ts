@@ -19,7 +19,7 @@ export interface AppConfig {
 const HERETOO: AppConfig = {
   id: 'heretoo',
   name: 'HERETOO',
-  tagline: 'Be real.',
+  tagline: 'Stay close to the people who matter.',
   rootHref: '/(tabs)/feed',
 };
 
