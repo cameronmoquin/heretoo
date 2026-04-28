@@ -48,9 +48,9 @@ export function TwoWayCapture({ onCapture, onClose }: Props) {
     return (
       <View style={s.notSupported}>
         <Ionicons name="phone-portrait-outline" size={32} color={Colors.textMuted} />
-        <Text style={s.notSupportedTitle}>Two-Way is web-only for now</Text>
+        <Text style={s.notSupportedTitle}>Two-Way is coming on mobile</Text>
         <Text style={s.notSupportedText}>
-          Mobile dual-camera capture needs a native build. Coming when we ship the iOS / Android app.
+          Simultaneous front + back capture needs a native build. We'll wire it up when the iOS / Android app ships.
         </Text>
         <TouchableOpacity style={s.closeBtn} onPress={onClose}>
           <Text style={s.closeBtnText}>Back</Text>

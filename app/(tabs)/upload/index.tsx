@@ -127,16 +127,10 @@ export default function UploadScreen() {
               <Ionicons name="videocam-outline" size={18} color={Colors.primary} />
               <Text style={styles.mediaBtnText}>Video</Text>
             </TouchableOpacity>
-            {Platform.OS === 'web' && (
-              <TouchableOpacity
-                style={styles.mediaBtn}
-                onPress={() => setTwoWayOpen(true)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="camera-reverse-outline" size={18} color={Colors.primary} />
-                <Text style={styles.mediaBtnText}>Two-Way</Text>
-              </TouchableOpacity>
-            )}
+            {/* Two-Way: hidden until we ship a native build with simultaneous
+                front+back camera (react-native-vision-camera). Web getUserMedia
+                couldn't reliably switch streams. Component lives at
+                components/upload/TwoWayCapture.tsx for the mobile rebuild. */}
             {upload.selectedAssets.length > 0 && (
               <TouchableOpacity onPress={() => upload.reset()} style={styles.clearBtn}>
                 <Text style={styles.clearBtnText}>Clear</Text>
