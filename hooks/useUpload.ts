@@ -228,7 +228,12 @@ export function useUpload() {
     setState({ stage: 'idle', progress: 0, error: null, selectedAssets: [] });
   }
 
-  return { ...state, pickPhotos, pickVideo, uploadPhotos, uploadVideo, createPost, reset };
+  /** Inject a synthetic asset (e.g. from BeReal capture) as if the picker returned it. */
+  function setAssets(assets: ImagePicker.ImagePickerAsset[]) {
+    setState((s) => ({ ...s, selectedAssets: assets }));
+  }
+
+  return { ...state, pickPhotos, pickVideo, uploadPhotos, uploadVideo, createPost, reset, setAssets };
 }
 
 // ── helpers ──────────────────────────────────────────────────────────

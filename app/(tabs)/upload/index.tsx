@@ -11,16 +11,24 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Image } from 'react-native';
+import { Image, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useUpload } from '../../../hooks/useUpload';
 import { showAlert } from '../../../lib/alert';
 import { Button } from '../../../components/shared/Button';
+import { BeRealCapture, type CapturedAsset } from '../../../components/upload/BeRealCapture';
 import { Colors } from '../../../constants/colors';
 
 export default function UploadScreen() {
   const upload = useUpload();
   const [content, setContent] = useState('');
+  const [bRealOpen, setBRealOpen] = useState(false);
+
+  const onBRealCapture = (asset: CapturedAsset) => {
+    // Inject as if it were a normal picker asset; the existing upload flow handles it.
+    upload.setAssets([asset as any]);
+    setBRealOpen(false);
+  };
 
   const hasMedia = upload.selectedAssets.length > 0;
   const canPost = content.trim().length > 0 || hasMedia;
@@ -119,6 +127,16 @@ export default function UploadScreen() {
               <Ionicons name="videocam-outline" size={18} color={Colors.primary} />
               <Text style={styles.mediaBtnText}>Video</Text>
             </TouchableOpacity>
+            {Platform.OS === 'web' && (
+              <TouchableOpacity
+                style={styles.mediaBtn}
+                onPress={() => setBRealOpen(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="camera-reverse-outline" size={18} color={Colors.primary} />
+                <Text style={styles.mediaBtnText}>BeReal</Text>
+              </TouchableOpacity>
+            )}
             {upload.selectedAssets.length > 0 && (
               <TouchableOpacity onPress={() => upload.reset()} style={styles.clearBtn}>
                 <Text style={styles.clearBtnText}>Clear</Text>
@@ -163,6 +181,18 @@ export default function UploadScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={bRealOpen}
+        animationType="fade"
+        transparent={false}
+        onRequestClose={() => setBRealOpen(false)}
+      >
+        <BeRealCapture
+          onCapture={onBRealCapture}
+          onClose={() => setBRealOpen(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
