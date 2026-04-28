@@ -12,6 +12,7 @@ import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
 import { useDeletePost } from '../../../hooks/useFeed';
 import { useAuthStore } from '../../../stores/authStore';
 import { showConfirm } from '../../../lib/alert';
+import { FeedComposer } from '../../../components/feed/FeedComposer';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -63,18 +64,21 @@ export default function FamilyDetail() {
   return (
     <SafeAreaView style={s.root} edges={['bottom']}>
       <View style={s.header}>
+        <TouchableOpacity
+          style={s.backBtn}
+          onPress={() => router.replace('/(tabs)/feed' as any)}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel="Back to HereToo"
+        >
+          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
+          <Text style={s.backBtnText}>HereToo</Text>
+        </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.name}>{family.name}</Text>
           <Text style={s.metaText}>
             {members?.filter((m) => m.status === 'active').length ?? 0} members
           </Text>
         </View>
-        <TouchableOpacity
-          style={s.newPostBtn}
-          onPress={() => router.push(`/family/${id}/new-post`)}
-        >
-          <Ionicons name="add" size={20} color="#FFF" />
-        </TouchableOpacity>
       </View>
 
       <View style={s.tabs}>
@@ -95,16 +99,11 @@ export default function FamilyDetail() {
       <ScrollView contentContainerStyle={s.scroll}>
         {tab === 'feed' && (
           <>
+            <FeedComposer familyId={id} />
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>
                 <Ionicons name="chatbubble-outline" size={32} color={Colors.textMuted} />
-                <Text style={s.emptyTitle}>Nothing here yet.</Text>
-                <TouchableOpacity
-                  style={s.primaryBtn}
-                  onPress={() => router.push(`/family/${id}/new-post`)}
-                >
-                  <Text style={s.primaryBtnText}>Write first post</Text>
-                </TouchableOpacity>
+                <Text style={s.emptyTitle}>Nothing here yet — be the first.</Text>
               </View>
             ) : (
               posts.map((p: any) => <FamilyPostCard key={p.id} post={p} />)
@@ -310,6 +309,13 @@ function makeStyles() { return StyleSheet.create({
   newPostBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
+  },
+  backBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    paddingHorizontal: 4, paddingVertical: 4, marginRight: 4,
+  },
+  backBtnText: {
+    fontSize: 14, color: Colors.textPrimary, fontWeight: '600',
   },
   tabs: {
     flexDirection: 'row',

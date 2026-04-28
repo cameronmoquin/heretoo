@@ -38,12 +38,22 @@ import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
-export function FeedComposer() {
+interface FeedComposerProps {
+  /**
+   * When set, the composer posts to this family (visibility='family',
+   * family_id=<id>) and skips the "join a family first" gate.
+   * Leave undefined for the public/main-feed composer (visibility='public').
+   */
+  familyId?: string;
+}
+
+export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const s = makeStyles();
   const upload = useUpload();
   const { data: connections } = useMyConnections();
   const { data: families } = useMyFamilies();
   const inAFamily = (families?.length ?? 0) > 0;
+  const isFamilyScoped = !!familyId;
 
   const [body, setBody] = useState('');
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
@@ -96,7 +106,8 @@ export function FeedComposer() {
 
       await upload.createPost.mutateAsync({
         body: body.trim(),
-        visibility: 'public',
+        visibility: isFamilyScoped ? 'family' : 'public',
+        familyId: familyId,
         photoUploads,
         muxPlaybackId,
         videoDurationMs,
@@ -116,7 +127,9 @@ export function FeedComposer() {
   // Public posting requires at least one active family membership.
   // The whole point of HereToo: family ties are the anti-spam layer that
   // earns the right to post in the common area.
-  if (families !== undefined && !inAFamily) {
+  // Family-scoped composers skip this gate — if you're on the family
+  // page, you're necessarily a member of that family.
+  if (!isFamilyScoped && families !== undefined && !inAFamily) {
     return (
       <View style={s.gateCard}>
         <Ionicons name="people-outline" size={24} color={Colors.primary} />
