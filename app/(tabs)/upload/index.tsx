@@ -11,11 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useUpload } from '../../../hooks/useUpload';
 import { showAlert } from '../../../lib/alert';
-import { MediaPicker } from '../../../components/upload/MediaPicker';
-import { MentionInput } from '../../../components/shared/MentionInput';
-import { MENTION_USERS } from '../../../lib/mention-users';
 import { Button } from '../../../components/shared/Button';
 import { Colors } from '../../../constants/colors';
 
@@ -35,45 +34,36 @@ export default function UploadScreen() {
 
   const handlePost = async () => {
     try {
+      let photoUploads: { path: string; width?: number; height?: number }[] | undefined;
+      let muxPlaybackId: string | undefined;
+      let muxThumbnailUrl: string | undefined;
+      let videoDurationMs: number | undefined;
+
       if (upload.selectedAssets.length > 0) {
         const firstAsset = upload.selectedAssets[0];
         const isVideo = firstAsset.type === 'video';
-
         if (isVideo) {
-          const { assetId, playbackId, thumbnailUrl } =
-            await upload.uploadVideo(firstAsset);
-          await upload.createPost.mutateAsync({
-            content: content.trim(),
-            mediaType: 'video',
-            muxAssetId: assetId,
-            muxPlaybackId: playbackId,
-            muxThumbnailUrl: thumbnailUrl,
-            videoDuration: firstAsset.duration
-              ? Math.round(firstAsset.duration / 1000)
-              : undefined,
-            topicTags: selectedTags.length > 0 ? selectedTags : undefined,
-          });
+          const v = await upload.uploadVideo(firstAsset);
+          muxPlaybackId = v.playbackId;
+          muxThumbnailUrl = v.thumbnailUrl;
+          videoDurationMs = firstAsset.duration ?? undefined;
         } else {
-          const photoUrls = await upload.uploadPhotos(upload.selectedAssets);
-          await upload.createPost.mutateAsync({
-            content: content.trim(),
-            mediaType: 'photo',
-            photoUrls,
-            topicTags: selectedTags.length > 0 ? selectedTags : undefined,
-          });
+          photoUploads = await upload.uploadPhotos(upload.selectedAssets);
         }
-      } else {
-        await upload.createPost.mutateAsync({
-          content: content.trim(),
-          mediaType: 'none',
-          topicTags: selectedTags.length > 0 ? selectedTags : undefined,
-        });
       }
+
+      await upload.createPost.mutateAsync({
+        body: content.trim(),
+        visibility: 'public',
+        photoUploads,
+        muxPlaybackId,
+        muxThumbnailUrl,
+        videoDurationMs,
+      });
 
       setContent('');
       setSelectedTags([]);
       upload.reset();
-      // Post success is implicit — the new post appears in the feed.
       router.push('/(tabs)/feed');
     } catch (error: any) {
       const msg = error?.message ?? 'Unknown error';
@@ -102,13 +92,12 @@ export default function UploadScreen() {
         >
           <Text style={styles.title}>Post</Text>
 
-          <MentionInput
+          <TextInput
             style={styles.input}
-            placeholder="Say something real. Type @ to tag."
+            placeholder="Say something real."
             placeholderTextColor={Colors.textMuted}
             value={content}
             onChangeText={setContent}
-            users={MENTION_USERS}
             multiline
             maxLength={2000}
             textAlignVertical="top"
@@ -117,16 +106,41 @@ export default function UploadScreen() {
             onSubmitEditing={handlePost}
           />
 
-          <MediaPicker
-            selectedAssets={upload.selectedAssets}
-            onPickPhotos={async () => {
-              await upload.pickPhotos();
-            }}
-            onPickVideo={async () => {
-              await upload.pickVideo();
-            }}
-            onClear={upload.reset}
-          />
+          <View style={styles.mediaRow}>
+            <TouchableOpacity
+              style={styles.mediaBtn}
+              onPress={() => upload.pickPhotos()}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="image-outline" size={18} color={Colors.primary} />
+              <Text style={styles.mediaBtnText}>
+                {upload.selectedAssets.length > 0
+                  ? `${upload.selectedAssets.length} photo${upload.selectedAssets.length === 1 ? '' : 's'}`
+                  : 'Add photos'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.mediaBtn}
+              onPress={() => upload.pickVideo()}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="videocam-outline" size={18} color={Colors.primary} />
+              <Text style={styles.mediaBtnText}>Video</Text>
+            </TouchableOpacity>
+            {upload.selectedAssets.length > 0 && (
+              <TouchableOpacity onPress={() => upload.reset()} style={styles.clearBtn}>
+                <Text style={styles.clearBtnText}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {upload.selectedAssets.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {upload.selectedAssets.map((a, i) => (
+                <Image key={a.uri + i} source={{ uri: a.uri }} style={styles.thumb} />
+              ))}
+            </ScrollView>
+          )}
 
           {/* Topic tags */}
           <View>
@@ -265,4 +279,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  mediaRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  mediaBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderRadius: 10, borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
+  },
+  mediaBtnText: { color: Colors.textPrimary, fontSize: 13, fontWeight: '600' },
+  clearBtn: { paddingHorizontal: 12, paddingVertical: 10 },
+  clearBtnText: { color: Colors.textMuted, fontSize: 13 },
+  thumb: { width: 80, height: 80, borderRadius: 8, marginRight: 6 },
 });

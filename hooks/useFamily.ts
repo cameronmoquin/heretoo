@@ -1,223 +1,200 @@
 /**
- * Family groups + family-scoped posts.
+ * Family groups + family-scoped posts (new schema).
  *
- * Branched from the working public feed. The `posts` table is reused with
- * a new optional `family_group_id` column. RLS handles visibility — public
- * code paths are untouched.
+ * Tables:
+ *   families          - id, owner_id, name, description, cover_path, is_private
+ *   family_members    - id, family_id, profile_id, relationship_label, status, joined_at
+ *   posts             - has family_id (when visibility='family')
+ *
+ * Auto-add-owner trigger inserts the creator as an active member on insert.
  */
 
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import type { Post } from '../stores/feedStore';
+import { useAuthStore } from '../stores/authStore';
 
-// ═════════════════════════════════════════════════════════════════════════
-// TYPES
-// ═════════════════════════════════════════════════════════════════════════
+// ── types ─────────────────────────────────────────────────────────────
+export type FamilyMemberStatus = 'pending' | 'active' | 'declined' | 'removed';
+export type PostVisibility = 'public' | 'connections' | 'family' | 'private';
 
-export type FamilyRole = 'owner' | 'admin' | 'member';
-export type FamilyCategory = 'general' | 'medical' | 'holiday' | 'party' | 'event';
-
-export interface FamilyGroup {
+export interface Family {
   id: string;
+  owner_id: string;
   name: string;
   description: string | null;
-  motto: string | null;
-  theme_primary: string | null;
-  invite_code: string;
-  created_by: string;
-  parent_group_id: string | null;
+  cover_path: string | null;
+  is_private: boolean;
   created_at: string;
 }
 
 export interface FamilyMember {
   id: string;
-  family_group_id: string;
-  user_id: string;
-  role: FamilyRole;
-  joined_at: string;
+  family_id: string;
+  profile_id: string;
+  relationship_label: string;
+  invited_by: string | null;
+  status: FamilyMemberStatus;
+  joined_at: string | null;
+  created_at: string;
 }
 
-export interface FamilyPost extends Post {
-  family_group_id: string;
-  family_category: FamilyCategory | null;
-}
-
-// ═════════════════════════════════════════════════════════════════════════
-// GROUPS
-// ═════════════════════════════════════════════════════════════════════════
-
-/** All family groups the current user belongs to. */
-export function useFamilyGroups() {
+// ── families ──────────────────────────────────────────────────────────
+export function useMyFamilies() {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: ['family-groups'],
-    queryFn: async (): Promise<(FamilyGroup & { role: FamilyRole })[]> => {
+    queryKey: ['families', userId],
+    queryFn: async (): Promise<(Family & { my_role: string })[]> => {
+      if (!userId) return [];
       const { data: memberships, error: mErr } = await supabase
         .from('family_members')
-        .select('family_group_id, role');
+        .select('family_id, relationship_label, status')
+        .eq('profile_id', userId)
+        .eq('status', 'active');
       if (mErr) throw mErr;
       if (!memberships || memberships.length === 0) return [];
 
-      const ids = memberships.map((m: any) => m.family_group_id);
-      const { data: groups, error } = await supabase
-        .from('family_groups')
+      const ids = memberships.map((m: any) => m.family_id);
+      const { data: families, error } = await supabase
+        .from('families')
         .select('*')
         .in('id', ids)
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      const roleMap = new Map(memberships.map((m: any) => [m.family_group_id, m.role]));
-      return (groups ?? []).map((g: any) => ({ ...g, role: roleMap.get(g.id) as FamilyRole }));
+      const labelMap = new Map(memberships.map((m: any) => [m.family_id, m.relationship_label]));
+      return (families ?? []).map((f: any) => ({
+        ...f,
+        my_role: labelMap.get(f.id) ?? 'member',
+      }));
     },
+    enabled: !!userId,
   });
 }
 
-export function useFamilyGroup(id: string | null) {
+export function useFamily(id: string | null) {
   return useQuery({
-    queryKey: ['family-group', id],
-    queryFn: async (): Promise<FamilyGroup | null> => {
+    queryKey: ['family', id],
+    queryFn: async (): Promise<Family | null> => {
       if (!id) return null;
       const { data, error } = await supabase
-        .from('family_groups')
+        .from('families')
         .select('*')
         .eq('id', id)
         .single();
       if (error) throw error;
-      return data as FamilyGroup;
+      return data as Family;
     },
     enabled: !!id,
   });
 }
 
-export function useFamilyMembers(groupId: string | null) {
+export function useFamilyMembers(familyId: string | null) {
   return useQuery({
-    queryKey: ['family-members', groupId],
+    queryKey: ['family-members', familyId],
     queryFn: async (): Promise<FamilyMember[]> => {
-      if (!groupId) return [];
+      if (!familyId) return [];
       const { data, error } = await supabase
         .from('family_members')
         .select('*')
-        .eq('family_group_id', groupId)
+        .eq('family_id', familyId)
         .order('joined_at', { ascending: true });
       if (error) throw error;
       return (data ?? []) as FamilyMember[];
     },
-    enabled: !!groupId,
+    enabled: !!familyId,
   });
 }
 
-export function useCreateFamilyGroup() {
+export function useCreateFamily() {
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string; parent_group_id?: string | null }) => {
-      // We do NOT send created_by — the column has a default of auth.uid(),
-      // and the trigger inserts the owner membership row automatically.
-      const row: Record<string, unknown> = { name: input.name };
-      if (input.description) row.description = input.description;
-      if (input.parent_group_id) row.parent_group_id = input.parent_group_id;
-
+    mutationFn: async (input: { name: string; description?: string }) => {
+      if (!userId) throw new Error('Not authenticated');
       const { data, error } = await supabase
-        .from('family_groups')
-        .insert(row)
+        .from('families')
+        .insert({
+          owner_id: userId,
+          name: input.name,
+          description: input.description ?? null,
+        })
         .select()
         .single();
       if (error) throw error;
-      return data as FamilyGroup;
+      return data as Family;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['family-groups'] });
+      qc.invalidateQueries({ queryKey: ['families'] });
     },
   });
 }
 
-export function useJoinFamilyGroup() {
-  const qc = useQueryClient();
+/** Join via invite (in this schema there's no invite_code on families;
+ * a member is added by an existing member who knows your profile id, OR
+ * via a separate invitation flow that's TODO. For now: stub that throws. */
+export function useJoinFamily() {
   return useMutation({
-    mutationFn: async (inviteCode: string) => {
-      const code = inviteCode.trim().toUpperCase();
-      const { data: group, error: gErr } = await supabase
-        .from('family_groups')
-        .select('id')
-        .eq('invite_code', code)
-        .maybeSingle();
-      if (gErr) throw gErr;
-      if (!group) throw new Error('Invalid invite code');
-
-      // Membership insert defaults user_id to auth.uid().
-      const { error } = await supabase
-        .from('family_members')
-        .insert({ family_group_id: group.id });
-      if (error) throw error;
-      return group as { id: string };
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['family-groups'] });
+    mutationFn: async (_inviteCode: string) => {
+      throw new Error(
+        'Invitations are not wired yet — ask an existing family member to add you from the family page.',
+      );
     },
   });
 }
 
-export function useLeaveFamilyGroup() {
+export function useLeaveFamily() {
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
-    mutationFn: async (groupId: string) => {
-      // RLS allows deleting your own row.
+    mutationFn: async (familyId: string) => {
+      if (!userId) throw new Error('Not authenticated');
       const { error } = await supabase
         .from('family_members')
         .delete()
-        .eq('family_group_id', groupId);
+        .eq('family_id', familyId)
+        .eq('profile_id', userId);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['family-groups'] });
+      qc.invalidateQueries({ queryKey: ['families'] });
     },
   });
 }
 
-// ═════════════════════════════════════════════════════════════════════════
-// FAMILY-SCOPED FEED (reuses `posts` with family_group_id filter)
-// ═════════════════════════════════════════════════════════════════════════
-
-export function useFamilyFeed(
-  groupId: string | null,
-  category: FamilyCategory | 'all' = 'all',
-) {
+// ── family-scoped feed ────────────────────────────────────────────────
+export function useFamilyFeed(familyId: string | null) {
   const qc = useQueryClient();
   const query = useQuery({
-    queryKey: ['family-feed', groupId, category],
-    queryFn: async (): Promise<FamilyPost[]> => {
-      if (!groupId) return [];
-      let q = supabase
+    queryKey: ['family-feed', familyId],
+    queryFn: async () => {
+      if (!familyId) return [];
+      const { data, error } = await supabase
         .from('posts')
-        .select('*, author:profiles!author_id(username, display_name, avatar_url, cluster_id)')
-        .eq('family_group_id', groupId);
-      if (category !== 'all') q = q.eq('family_category', category);
-      const { data, error } = await q.order('created_at', { ascending: false });
+        .select(
+          '*, author:profiles!author_id(id, handle, display_name, avatar_path), media:post_media(*)',
+        )
+        .eq('family_id', familyId)
+        .eq('visibility', 'family')
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as FamilyPost[];
+      return data ?? [];
     },
-    enabled: !!groupId,
+    enabled: !!familyId,
   });
 
-  // Realtime: refetch on any new post in this group
   useEffect(() => {
-    if (!groupId) return;
+    if (!familyId) return;
     const channel = supabase
-      .channel(`family-posts:${groupId}`)
+      .channel(`family-posts:${familyId}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'posts',
-          filter: `family_group_id=eq.${groupId}`,
-        },
-        () => {
-          qc.invalidateQueries({ queryKey: ['family-feed', groupId] });
-        },
+        { event: '*', schema: 'public', table: 'posts', filter: `family_id=eq.${familyId}` },
+        () => qc.invalidateQueries({ queryKey: ['family-feed', familyId] }),
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [groupId, qc]);
+  }, [familyId, qc]);
 
   return query;
 }

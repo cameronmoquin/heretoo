@@ -21,7 +21,6 @@ export default function FamilyLayout() {
     >
       <Stack.Screen name="index" options={{ title: 'Family' }} />
       <Stack.Screen name="new" options={{ title: 'New Family' }} />
-      <Stack.Screen name="join" options={{ title: 'Join with Code' }} />
       <Stack.Screen name="[id]/index" options={{ title: 'Family' }} />
       <Stack.Screen name="[id]/new-post" options={{ title: 'New Post' }} />
     </Stack>

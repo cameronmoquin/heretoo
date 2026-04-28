@@ -1,428 +1,143 @@
+/**
+ * One-screen profile setup. New schema is lean:
+ *   - handle (3-24 chars, [a-z0-9_])
+ *   - display_name
+ *   - bio (optional)
+ * Profile row was already created by the handle_new_user trigger;
+ * this screen just lets the user fill in real values.
+ */
+
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, TextInput, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { DEV_MODE } from '../../lib/dev-mode';
-import { assignInitialCluster } from '../../lib/clusters';
+import { useAuthStore } from '../../stores/authStore';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
-import { AdCategoryPicker } from '../../components/shared/AdCategoryPicker';
 import { Colors } from '../../constants/colors';
-import { INTEREST_TOPICS, type InterestTopic } from '../../constants/clusters';
-
-type Step = 'name' | 'age' | 'location' | 'interests' | 'ads' | 'story';
+import { Spacing, Radius } from '../../constants/design';
 
 export default function ProfileSetupScreen() {
-  const { createProfile, user, hasCompletedSetup } = useAuth();
-  const [step, setStep] = useState<Step>('name');
+  const user = useAuthStore((s) => s.user);
+  const setProfile = useAuthStore((s) => s.setProfile);
+  const [handle, setHandle] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // If profile already exists, skip setup entirely
-  if (hasCompletedSetup) {
-    router.replace('/(tabs)/feed');
-    return null;
-  }
-
-  const [displayName, setDisplayName] = useState('');
-  const [username, setUsername] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [locationRegion, setLocationRegion] = useState('');
-  const [selectedInterests, setSelectedInterests] = useState<InterestTopic[]>([]);
-  const [adCategories, setAdCategories] = useState<Set<string>>(new Set());
-  const [adSubcategories, setAdSubcategories] = useState<Set<string>>(new Set());
-  const [originStory, setOriginStory] = useState('');
-
-  const steps: Step[] = ['name', 'age', 'location', 'interests', 'ads', 'story'];
-  const stepIndex = steps.indexOf(step);
-
-  function nextStep() {
-    if (stepIndex < steps.length - 1) {
-      setStep(steps[stepIndex + 1]);
-    }
-  }
-
-  function prevStep() {
-    if (stepIndex > 0) {
-      setStep(steps[stepIndex - 1]);
-    }
-  }
-
-  function toggleInterest(topic: InterestTopic) {
-    setSelectedInterests((prev) => {
-      if (prev.includes(topic)) return prev.filter((t) => t !== topic);
-      if (prev.length >= 3) return prev;
-      return [...prev, topic];
-    });
-  }
-
-  function toggleAdCategory(categoryId: string) {
-    setAdCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(categoryId)) {
-        next.delete(categoryId);
-        // Also remove subcategories
-        setAdSubcategories((subs) => {
-          const nextSubs = new Set(subs);
-          for (const sub of subs) {
-            if (sub.startsWith(categoryId + '_')) nextSubs.delete(sub);
-          }
-          return nextSubs;
-        });
-      } else {
-        next.add(categoryId);
-      }
-      return next;
-    });
-  }
-
-  function toggleAdSubcategory(_categoryId: string, subcategoryId: string) {
-    setAdSubcategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(subcategoryId)) {
-        next.delete(subcategoryId);
-      } else {
-        next.add(subcategoryId);
-      }
-      return next;
-    });
-  }
-
-  async function handleComplete() {
-    if (!displayName.trim() || !username.trim() || !birthYear) {
-      showAlert('Missing info', 'Please fill in your name, username, and birth year.');
+  const submit = async () => {
+    if (!user) return;
+    const cleanHandle = handle.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,24}$/.test(cleanHandle)) {
+      showAlert('Invalid handle', 'Use 3–24 lowercase letters, numbers, and underscores.');
       return;
     }
-
+    if (!displayName.trim()) {
+      showAlert('Missing name', 'Add a display name.');
+      return;
+    }
     setLoading(true);
     try {
-      const { clusterId, confidence } = assignInitialCluster(selectedInterests);
-
-      await createProfile({
-        username: username.trim().toLowerCase(),
-        display_name: displayName.trim(),
-        birth_year: parseInt(birthYear, 10),
-        location_region: locationRegion.trim(),
-        cluster_id: clusterId,
-        cluster_confidence: confidence,
-        origin_story: originStory.trim() || undefined,
-      });
-
-      // Save ad preferences
-      if (!DEV_MODE && adCategories.size > 0) {
-        const prefs = [...adCategories].map((catId) => ({
-          category_id: catId,
-          subcategory_id: null as string | null,
-        }));
-        for (const subId of adSubcategories) {
-          prefs.push({ category_id: subId.split('_').slice(0, -1).join('_'), subcategory_id: subId });
-        }
-        // Fire and forget — don't block signup
-        supabase.from('user_ad_preferences').insert(
-          prefs.map((p) => ({ user_id: user?.id, ...p }))
-        ).then(() => {});
-      }
-
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          handle: cleanHandle,
+          display_name: displayName.trim(),
+          bio: bio.trim() || null,
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+      if (error) throw error;
+      setProfile(data as any);
       router.replace('/(tabs)/feed');
-    } catch (error: any) {
-      showAlert('Error', error.message);
+    } catch (e: any) {
+      const msg = String(e?.message ?? 'Could not save').toLowerCase();
+      if (msg.includes('duplicate') || msg.includes('unique')) {
+        showAlert('Handle taken', 'That handle is already in use. Try another.');
+      } else {
+        showAlert('Could not save', e?.message ?? 'Try again.');
+      }
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Progress indicator */}
-          <View style={styles.progress}>
-            {steps.map((s, i) => (
-              <View
-                key={s}
-                style={[
-                  styles.progressDot,
-                  i <= stepIndex && styles.progressDotActive,
-                ]}
-              />
-            ))}
-          </View>
+    <SafeAreaView style={s.root}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+          <Text style={s.title}>Set up your profile</Text>
+          <Text style={s.sub}>One screen. You can change all of this later.</Text>
 
-          {step === 'name' && (
-            <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Who are you?</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Display name"
-                placeholderTextColor={Colors.textMuted}
-                value={displayName}
-                onChangeText={setDisplayName}
-                autoCapitalize="words"
-                returnKeyType="next"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Username (lowercase, no spaces)"
-                placeholderTextColor={Colors.textMuted}
-                value={username}
-                onChangeText={(t) => setUsername(t.replace(/[^a-z0-9_]/g, ''))}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="go"
-                onSubmitEditing={nextStep}
-              />
-              <Button
-                title="Next"
-                onPress={nextStep}
-                disabled={!displayName.trim() || !username.trim()}
-              />
-            </View>
-          )}
+          <Text style={s.label}>Handle</Text>
+          <TextInput
+            style={s.input}
+            value={handle}
+            onChangeText={(t) => setHandle(t.toLowerCase())}
+            placeholder="cameron"
+            placeholderTextColor={Colors.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            maxLength={24}
+          />
+          <Text style={s.hint}>3–24 lowercase letters, numbers, underscores.</Text>
 
-          {step === 'age' && (
-            <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>What year?</Text>
-              <Text style={styles.stepSubtitle}>
-                For generational matching. Never shown.
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Birth year (e.g. 1992)"
-                placeholderTextColor={Colors.textMuted}
-                value={birthYear}
-                onChangeText={(t) => setBirthYear(t.replace(/[^0-9]/g, ''))}
-                keyboardType="number-pad"
-                maxLength={4}
-                returnKeyType="go"
-                onSubmitEditing={nextStep}
-              />
-              <View style={styles.navButtons}>
-                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
-                <Button title="Next" onPress={nextStep} disabled={birthYear.length !== 4} />
-              </View>
-            </View>
-          )}
+          <Text style={s.label}>Display name</Text>
+          <TextInput
+            style={s.input}
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="Cameron Moquin"
+            placeholderTextColor={Colors.textMuted}
+            maxLength={80}
+          />
 
-          {step === 'location' && (
-            <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Where are you?</Text>
-              <Text style={styles.stepSubtitle}>
-                State or region. Helps find local topics.
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. California, Texas, Ontario"
-                placeholderTextColor={Colors.textMuted}
-                value={locationRegion}
-                onChangeText={setLocationRegion}
-                returnKeyType="go"
-                onSubmitEditing={nextStep}
-              />
-              <View style={styles.navButtons}>
-                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
-                <Button title="Next" onPress={nextStep} />
-              </View>
-            </View>
-          )}
+          <Text style={s.label}>Bio (optional)</Text>
+          <TextInput
+            style={[s.input, s.textarea]}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="A line or two about you."
+            placeholderTextColor={Colors.textMuted}
+            multiline
+            maxLength={300}
+            textAlignVertical="top"
+          />
 
-          {step === 'interests' && (
-            <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Pick 3.</Text>
-              <Text style={styles.stepSubtitle}>
-                Your real community emerges from how you vote.
-              </Text>
-              <View style={styles.interestGrid}>
-                {INTEREST_TOPICS.map((topic) => (
-                  <TouchableOpacity
-                    key={topic}
-                    style={[
-                      styles.interestChip,
-                      selectedInterests.includes(topic) && styles.interestChipActive,
-                    ]}
-                    onPress={() => toggleInterest(topic)}
-                  >
-                    <Text
-                      style={[
-                        styles.interestChipText,
-                        selectedInterests.includes(topic) && styles.interestChipTextActive,
-                      ]}
-                    >
-                      {topic}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <View style={styles.navButtons}>
-                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
-                <Button
-                  title="Next"
-                  onPress={nextStep}
-                  disabled={selectedInterests.length < 3}
-                />
-              </View>
-            </View>
-          )}
-
-          {step === 'ads' && (
-            <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>What do you want to see?</Text>
-              <Text style={styles.stepSubtitle}>
-                Ads keep HereToo free. Pick at least 3 categories so they are relevant to you. Change anytime.
-              </Text>
-              <AdCategoryPicker
-                selectedCategories={adCategories}
-                selectedSubcategories={adSubcategories}
-                onToggleCategory={toggleAdCategory}
-                onToggleSubcategory={toggleAdSubcategory}
-              />
-              <View style={styles.navButtons}>
-                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
-                <Button
-                  title="Next"
-                  onPress={nextStep}
-                  disabled={adCategories.size < 3}
-                />
-              </View>
-            </View>
-          )}
-
-          {step === 'story' && (
-            <View style={styles.stepContainer}>
-              <Text style={styles.stepTitle}>Origin story</Text>
-              <Text style={styles.stepSubtitle}>
-                Where do you come from? What shaped you? You do not have to explain your politics. Just be real.
-              </Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="I grew up in a small town where..."
-                placeholderTextColor={Colors.textMuted}
-                value={originStory}
-                onChangeText={setOriginStory}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                returnKeyType="done"
-                blurOnSubmit={true}
-                onSubmitEditing={handleComplete}
-              />
-              <View style={styles.navButtons}>
-                <Button title="Back" onPress={prevStep} variant="ghost" size="sm" />
-                <Button
-                  title="Show up"
-                  onPress={handleComplete}
-                  loading={loading}
-                  size="lg"
-                />
-              </View>
-            </View>
-          )}
+          <Button
+            title={loading ? 'Saving…' : 'Continue'}
+            onPress={submit}
+            loading={loading}
+            disabled={loading}
+            variant="primary"
+            size="lg"
+            style={{ marginTop: 24 }}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  progress: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    marginBottom: 40,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.surfaceLight,
-  },
-  progressDotActive: {
-    backgroundColor: Colors.primary,
-    width: 24,
-  },
-  stepContainer: {
-    flex: 1,
-    gap: 16,
-  },
-  stepTitle: {
-    fontWeight: '800',
-    fontSize: 20,
-    color: Colors.textPrimary,
-  },
-  stepSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.background },
+  scroll: { padding: Spacing.lg, gap: 6, maxWidth: 480, alignSelf: 'center', width: '100%' },
+  title: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary, marginTop: 12 },
+  sub: { fontSize: 14, color: Colors.textSecondary, marginTop: 4, marginBottom: 12 },
+  label: {
+    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
+    textTransform: 'uppercase', letterSpacing: 1, marginTop: 18, marginBottom: 6,
   },
   input: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: Colors.textPrimary,
+    backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: Colors.textPrimary,
   },
-  textArea: {
-    minHeight: 120,
-    paddingTop: 14,
-  },
-  navButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  interestGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 8,
-  },
-  interestChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  interestChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  interestChipText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  interestChipTextActive: {
-    color: Colors.brandDark,
-    fontWeight: '600',
-  },
+  textarea: { minHeight: 80 },
+  hint: { fontSize: 11, color: Colors.textMuted, marginTop: 4 },
 });

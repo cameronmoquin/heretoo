@@ -1,3 +1,8 @@
+/**
+ * Auth state — reads from supabase, syncs into the Zustand store.
+ * Profile shape matches the new schema (handle, display_name, bio, avatar_path).
+ */
+
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
@@ -6,18 +11,18 @@ import { useAuthStore } from '../stores/authStore';
 import type { Profile } from '../stores/authStore';
 
 export function useAuth() {
-  const { session, user, profile, isLoading, hasCompletedSetup, setSession, setProfile, setLoading } =
-    useAuthStore();
+  const {
+    session, user, profile, isLoading, hasCompletedSetup,
+    setSession, setProfile, setLoading,
+  } = useAuthStore();
 
   useEffect(() => {
     if (DEV_MODE) {
-      // In dev mode, auto-login with mock user
       setProfile(MOCK_USER);
       setLoading(false);
       return;
     }
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
@@ -27,7 +32,6 @@ export function useAuth() {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -37,32 +41,20 @@ export function useAuth() {
           setProfile(null);
           setLoading(false);
         }
-      }
+      },
     );
 
     return () => subscription.unsubscribe();
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
-
-    if (data) {
-      setProfile(data as Profile);
-    }
+    if (data) setProfile(data as Profile);
     setLoading(false);
-  }
-
-  async function signInWithGoogle() {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: 'heretoo://auth/callback' },
-    });
-    if (error) throw error;
-    return data;
   }
 
   async function signInWithApple(identityToken: string) {
@@ -100,44 +92,14 @@ export function useAuth() {
     return data;
   }
 
-  async function createProfile(profileData: {
-    username: string;
-    display_name: string;
-    birth_year: number;
-    location_region: string;
-    cluster_id: number;
-    cluster_confidence: number;
-    origin_story?: string;
-  }) {
-    if (DEV_MODE) {
-      const newProfile = { ...MOCK_USER, ...profileData };
-      setProfile(newProfile);
-      return newProfile;
-    }
-    if (!user) throw new Error('Not authenticated');
-    const { data, error } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, ...profileData }, { onConflict: 'id' })
-      .select()
-      .single();
-    if (error) throw error;
-    setProfile(data as Profile);
-    return data;
-  }
-
-  // In dev mode, always treat as logged in and setup complete
-  const devHasCompletedSetup = DEV_MODE ? true : hasCompletedSetup;
-
   return {
     session,
     user,
     profile: DEV_MODE ? (profile ?? MOCK_USER) : profile,
     isLoading,
-    hasCompletedSetup: devHasCompletedSetup,
-    signInWithGoogle,
+    hasCompletedSetup: DEV_MODE ? true : hasCompletedSetup,
     signInWithApple,
     signOut,
     updateProfile,
-    createProfile,
   };
 }

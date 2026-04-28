@@ -1,69 +1,64 @@
+/**
+ * Public/connections feed.
+ *
+ * Reads from `posts` joined with `profiles` and `post_media`. RLS handles
+ * visibility — the query just asks for everything it can see, ordered by
+ * recency. Family-scoped posts are filtered out (those live in /family/*).
+ *
+ * Engagement (hearts) is wired through `post_reactions`.
+ */
+
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
 import { MOCK_POSTS } from '../lib/mock-data';
-import { checkRateLimit } from '../lib/moderation';
-import { useFeedStore, type EngagementType, type FeedTab, type Post } from '../stores/feedStore';
 import { useAuthStore } from '../stores/authStore';
 
 const PAGE_SIZE = 20;
 
+export type FeedTab = 'for_you' | 'connections';
+
 export function useFeed(tab: FeedTab = 'for_you') {
-  const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
 
-  const query = useInfiniteQuery({
-    queryKey: ['feed', tab],
+  return useInfiniteQuery({
+    queryKey: ['feed', tab, userId],
     queryFn: async ({ pageParam = 0 }) => {
       if (DEV_MODE) {
-        const sorted = tab === 'bridging'
-          ? [...MOCK_POSTS].sort((a, b) => b.bridging_score - a.bridging_score)
-          : MOCK_POSTS;
-        return sorted.slice(pageParam, pageParam + PAGE_SIZE);
+        return MOCK_POSTS.slice(pageParam, pageParam + PAGE_SIZE);
       }
 
-      // Try real data first, fall back to mock if empty
       let q = supabase
         .from('posts')
         .select(`
           *,
-          author:profiles!author_id(username, display_name, avatar_url, cluster_id)
+          author:profiles!author_id(id, handle, display_name, avatar_path),
+          media:post_media(*)
         `)
+        .neq('visibility', 'family')   // family posts live on /family/[id]
+        .order('created_at', { ascending: false })
         .range(pageParam, pageParam + PAGE_SIZE - 1);
 
-      if (tab === 'bridging') {
-        q = q.order('bridging_score', { ascending: false });
-      } else {
-        q = q.order('created_at', { ascending: false });
+      if (tab === 'connections') {
+        q = q.eq('visibility', 'connections');
       }
 
       const { data, error } = await q;
       if (error) throw error;
 
-      let postsWithEngagements = data as Post[];
-      if (userId && data.length > 0) {
-        const postIds = data.map((p: any) => p.id);
-        const { data: engagements } = await supabase
-          .from('engagements')
-          .select('post_id, engagement_type')
-          .eq('user_id', userId)
+      // Enrich with viewer's reactions if signed in
+      let posts = (data ?? []) as any[];
+      if (userId && posts.length > 0) {
+        const postIds = posts.map((p) => p.id);
+        const { data: reactions } = await supabase
+          .from('post_reactions')
+          .select('post_id, reaction_type')
+          .eq('profile_id', userId)
           .in('post_id', postIds);
-
-        if (engagements) {
-          const engagementMap = new Map<string, string[]>();
-          for (const e of engagements) {
-            const existing = engagementMap.get(e.post_id) ?? [];
-            existing.push(e.engagement_type);
-            engagementMap.set(e.post_id, existing);
-          }
-          postsWithEngagements = data.map((p: any) => ({
-            ...p,
-            user_engagements: engagementMap.get(p.id) ?? [],
-          }));
-        }
+        const set = new Set((reactions ?? []).map((r: any) => r.post_id));
+        posts = posts.map((p) => ({ ...p, viewer_hearted: set.has(p.id) }));
       }
-
-      return postsWithEngagements;
+      return posts;
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < PAGE_SIZE) return undefined;
@@ -71,51 +66,34 @@ export function useFeed(tab: FeedTab = 'for_you') {
     },
     initialPageParam: 0,
   });
-
-  return query;
 }
 
-export function useToggleEngagement() {
+export function useToggleHeart() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
 
   return useMutation({
-    mutationFn: async ({
-      postId,
-      type,
-    }: {
-      postId: string;
-      type: EngagementType;
-    }) => {
+    mutationFn: async (postId: string) => {
       if (!userId) throw new Error('Not authenticated');
 
-      if (DEV_MODE) {
-        // Toggle in mock data — just return success
-        return { action: 'added' as const, type };
-      }
-
-      const rateCheck = await checkRateLimit('engage');
-      if (!rateCheck.allowed) throw new Error(rateCheck.reason ?? 'Rate limited');
-
       const { data: existing } = await supabase
-        .from('engagements')
+        .from('post_reactions')
         .select('id')
         .eq('post_id', postId)
-        .eq('user_id', userId)
-        .eq('engagement_type', type)
-        .single();
+        .eq('profile_id', userId)
+        .eq('reaction_type', 'heart')
+        .maybeSingle();
 
       if (existing) {
-        await supabase.from('engagements').delete().eq('id', existing.id);
-        return { action: 'removed' as const, type };
-      } else {
-        await supabase.from('engagements').insert({
-          post_id: postId,
-          user_id: userId,
-          engagement_type: type,
-        });
-        return { action: 'added' as const, type };
+        await supabase.from('post_reactions').delete().eq('id', existing.id);
+        return { action: 'removed' as const };
       }
+      await supabase.from('post_reactions').insert({
+        post_id: postId,
+        profile_id: userId,
+        reaction_type: 'heart',
+      });
+      return { action: 'added' as const };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
