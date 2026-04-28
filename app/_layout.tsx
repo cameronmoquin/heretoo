@@ -14,6 +14,7 @@ import { useAuth } from '../hooks/useAuth';
 import { LoadingPulse } from '../components/shared/LoadingPulse';
 import { ErrorBoundary } from '../components/shared/ErrorBoundary';
 import { BuildBadge } from '../components/shared/BuildBadge';
+import { PWAInstallPrompt } from '../components/shared/PWAInstallPrompt';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -35,6 +36,18 @@ function RootLayoutInner() {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', Colors.background);
   }, [themeMode]);
+
+  // Register the service worker for offline read mode (web only).
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') return;
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.warn('SW register failed:', err);
+      });
+  }, []);
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
@@ -59,6 +72,7 @@ function RootLayoutInner() {
         <Stack.Screen name="family" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
+      <PWAInstallPrompt />
       <BuildBadge />
     </View>
   );

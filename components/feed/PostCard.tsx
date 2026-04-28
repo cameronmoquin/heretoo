@@ -5,15 +5,17 @@
  * counts off the `posts` row. Heart toggle is wired through onHeart prop.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { Post } from '../../stores/feedStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { useDeletePost } from '../../hooks/useFeed';
+import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
+import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
-import { showConfirm } from '../../lib/alert';
+import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -27,9 +29,12 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const author = post.author;
   const media = post.media ?? [];
   const heartCount = post.heart_count ?? 0;
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId = useAuthStore((st) => st.user?.id);
   const isMine = userId === post.author_id;
   const deletePost = useDeletePost();
+  const [boostOpen, setBoostOpen] = useState(false);
+  const boost = useBoostPost();
+  const { data: families } = useMyFamilies();
 
   const onDelete = () => {
     showConfirm(
@@ -119,13 +124,89 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={s.actionBtn}
+          activeOpacity={0.7}
+          onPress={(e) => { e.stopPropagation(); setBoostOpen(true); }}
+        >
           <Ionicons name="repeat-outline" size={18} color={Colors.textSecondary} />
           {(post.boost_count ?? 0) > 0 && (
             <Text style={s.actionCount}>{post.boost_count}</Text>
           )}
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={boostOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBoostOpen(false)}
+      >
+        <Pressable style={s.modalBackdrop} onPress={() => setBoostOpen(false)}>
+          <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={s.modalTitle}>Boost this post</Text>
+            <Text style={s.modalSub}>Where should it appear?</Text>
+
+            <TouchableOpacity
+              style={s.scopeRow}
+              onPress={() => {
+                setBoostOpen(false);
+                boost.mutate(
+                  { originalPostId: post.id, scope: 'public' },
+                  { onError: (e: any) => showAlert('Could not boost', e?.message ?? 'Try again.') },
+                );
+              }}
+            >
+              <Ionicons name="globe-outline" size={20} color={Colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.scopeLabel}>Public</Text>
+                <Text style={s.scopeHint}>Anyone signed in</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={s.scopeRow}
+              onPress={() => {
+                setBoostOpen(false);
+                boost.mutate(
+                  { originalPostId: post.id, scope: 'connections' },
+                  { onError: (e: any) => showAlert('Could not boost', e?.message ?? 'Try again.') },
+                );
+              }}
+            >
+              <Ionicons name="git-network-outline" size={20} color={Colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.scopeLabel}>Your network</Text>
+                <Text style={s.scopeHint}>Anyone in your family graph</Text>
+              </View>
+            </TouchableOpacity>
+
+            {(families ?? []).map((f: any) => (
+              <TouchableOpacity
+                key={f.id}
+                style={s.scopeRow}
+                onPress={() => {
+                  setBoostOpen(false);
+                  boost.mutate(
+                    { originalPostId: post.id, scope: 'family', familyId: f.id },
+                    { onError: (e: any) => showAlert('Could not boost', e?.message ?? 'Try again.') },
+                  );
+                }}
+              >
+                <Ionicons name="people-outline" size={20} color={Colors.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.scopeLabel}>{f.name}</Text>
+                  <Text style={s.scopeHint}>Only members of this family</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity style={s.modalCancel} onPress={() => setBoostOpen(false)}>
+              <Text style={s.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Pressable>
   );
 }
@@ -181,4 +262,25 @@ function makeStyles() { return StyleSheet.create({
   actions: { flexDirection: 'row', gap: 24, marginTop: 4 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
   actionCount: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center', justifyContent: 'center', padding: 24,
+  },
+  modalCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14, padding: 18, gap: 4,
+    width: '100%', maxWidth: 420,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 12 },
+  scopeRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8,
+  },
+  scopeLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  scopeHint: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  modalCancel: { alignItems: 'center', paddingVertical: 10, marginTop: 6 },
+  modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }

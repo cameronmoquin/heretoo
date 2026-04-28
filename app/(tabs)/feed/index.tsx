@@ -2,13 +2,15 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useFeed, useToggleHeart } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { useThemeStore } from '../../../stores/themeStore';
+import { useMyNetworkStats } from '../../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
-import { Spacing } from '../../../constants/design';
+import { Spacing, Radius } from '../../../constants/design';
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: 'for_you', label: 'For You' },
@@ -22,6 +24,7 @@ export default function FeedScreen() {
   const toggleHeart = useToggleHeart();
   const themeMode = useThemeStore((s) => s.mode);
   const toggleTheme = useThemeStore((s) => s.toggle);
+  const { data: stats } = useMyNetworkStats();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
   const posts = feed.data?.pages.flat() ?? [];
@@ -70,6 +73,22 @@ export default function FeedScreen() {
         })}
       </View>
 
+      {stats && stats.reachable_profiles > 1 && (
+        <TouchableOpacity
+          style={styles.statsBanner}
+          onPress={() => router.push('/family')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="git-network-outline" size={14} color={Colors.primary} />
+          <Text style={styles.statsText}>
+            <Text style={{ fontWeight: '700' }}>{stats.reachable_profiles}</Text>
+            {' people in your network · '}
+            <Text style={{ fontWeight: '700' }}>{stats.reachable_families}</Text>
+            {stats.reachable_families === 1 ? ' family connected' : ' families connected'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <FeedList
         posts={posts as any}
         isLoading={feed.isLoading}
@@ -104,4 +123,13 @@ function makeStyles() { return StyleSheet.create({
   tabText: { fontSize: 14, fontWeight: '500', color: Colors.textMuted },
   tabTextActive: { color: Colors.textPrimary, fontWeight: '600' },
   tabBar: { position: 'absolute', bottom: 0, width: 26, height: 2, borderRadius: 1, backgroundColor: Colors.primary },
+  statsBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginHorizontal: Spacing.md, marginTop: 10,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
+    backgroundColor: Colors.primaryFaint,
+    borderWidth: 1, borderColor: Colors.border,
+    alignSelf: 'flex-start',
+  },
+  statsText: { fontSize: 12, color: Colors.textSecondary },
 }); }

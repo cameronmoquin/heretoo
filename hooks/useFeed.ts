@@ -89,7 +89,6 @@ export function useToggleHeart() {
   return useMutation({
     mutationFn: async (postId: string) => {
       if (!userId) throw new Error('Not authenticated');
-
       const { data: existing } = await supabase
         .from('post_reactions')
         .select('id')
@@ -97,19 +96,48 @@ export function useToggleHeart() {
         .eq('profile_id', userId)
         .eq('reaction_type', 'heart')
         .maybeSingle();
-
       if (existing) {
         await supabase.from('post_reactions').delete().eq('id', existing.id);
         return { action: 'removed' as const };
       }
       await supabase.from('post_reactions').insert({
-        post_id: postId,
-        profile_id: userId,
-        reaction_type: 'heart',
+        post_id: postId, profile_id: userId, reaction_type: 'heart',
       });
       return { action: 'added' as const };
     },
-    onSuccess: () => {
+    // Optimistic UI: flip the icon + counter on the next paint, before
+    // the server confirms. If the call fails, onError rolls it back.
+    onMutate: async (postId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['feed'] });
+      const snapshot = queryClient.getQueriesData({ queryKey: ['feed'] });
+
+      queryClient.setQueriesData({ queryKey: ['feed'] }, (old: any) => {
+        if (!old) return old;
+        const flip = (post: any) => {
+          if (post.id !== postId) return post;
+          const wasHearted = !!post.viewer_hearted;
+          return {
+            ...post,
+            viewer_hearted: !wasHearted,
+            heart_count: Math.max(0, (post.heart_count ?? 0) + (wasHearted ? -1 : 1)),
+          };
+        };
+        // Infinite-query pages structure
+        if (old.pages) {
+          return { ...old, pages: old.pages.map((p: any[]) => p.map(flip)) };
+        }
+        if (Array.isArray(old)) return old.map(flip);
+        return old;
+      });
+      return { snapshot };
+    },
+    onError: (_err, _postId, ctx: any) => {
+      // Rollback
+      if (ctx?.snapshot) {
+        ctx.snapshot.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
     },
   });

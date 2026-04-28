@@ -25,6 +25,7 @@ export interface Family {
   description: string | null;
   cover_path: string | null;
   is_private: boolean;
+  invite_code?: string;
   created_at: string;
 }
 
@@ -130,15 +131,36 @@ export function useCreateFamily() {
   });
 }
 
-/** Join via invite (in this schema there's no invite_code on families;
- * a member is added by an existing member who knows your profile id, OR
- * via a separate invitation flow that's TODO. For now: stub that throws. */
+/** Join a family by invite code (after migration 004). */
 export function useJoinFamily() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
-    mutationFn: async (_inviteCode: string) => {
-      throw new Error(
-        'Invitations are not wired yet — ask an existing family member to add you from the family page.',
-      );
+    mutationFn: async (inviteCode: string) => {
+      if (!userId) throw new Error('Not authenticated');
+      const code = inviteCode.trim().toUpperCase();
+      const { data: family, error: gErr } = await supabase
+        .from('families')
+        .select('id, name')
+        .eq('invite_code', code)
+        .maybeSingle();
+      if (gErr) throw gErr;
+      if (!family) throw new Error('Invalid invite code');
+
+      const { error } = await supabase
+        .from('family_members')
+        .insert({
+          family_id: family.id,
+          // profile_id defaults to auth.uid() server-side
+          relationship_label: 'family',
+          status: 'active',
+          joined_at: new Date().toISOString(),
+        } as any);
+      if (error) throw error;
+      return family as { id: string; name: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['families'] });
     },
   });
 }
@@ -163,6 +185,27 @@ export function useLeaveFamily() {
 }
 
 // ── family-scoped feed ────────────────────────────────────────────────
+// ── Network stats (RPC from migration 003) ──────────────────────────────
+export function useMyNetworkStats() {
+  const userId = useAuthStore((s) => s.user?.id);
+  return useQuery({
+    queryKey: ['network-stats', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('my_network_stats');
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) return { reachable_profiles: 0, reachable_families: 0, direct_family_count: 0 };
+      return {
+        reachable_profiles: Number(row.reachable_profiles ?? 0),
+        reachable_families: Number(row.reachable_families ?? 0),
+        direct_family_count: Number(row.direct_family_count ?? 0),
+      };
+    },
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+}
+
 export function useFamilyFeed(familyId: string | null) {
   const qc = useQueryClient();
   const query = useQuery({

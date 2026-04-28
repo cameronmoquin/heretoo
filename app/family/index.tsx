@@ -36,15 +36,25 @@ export default function FamilyList() {
             </View>
             <Text style={s.emptyTitle}>You're not in a family yet</Text>
             <Text style={s.emptyText}>
-              Family groups are private. Start your own and invite people in.
+              Family groups are private. Start your own and invite people in,
+              or join with a code from someone who invited you.
             </Text>
-            <TouchableOpacity
-              style={[s.primaryBtn, { marginTop: 20 }]}
-              onPress={() => router.push('/family/new')}
-              activeOpacity={0.85}
-            >
-              <Text style={s.primaryBtnText}>Start a family</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <TouchableOpacity
+                style={s.primaryBtn}
+                onPress={() => router.push('/family/new')}
+                activeOpacity={0.85}
+              >
+                <Text style={s.primaryBtnText}>Start a family</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.primaryBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary }]}
+                onPress={() => router.push('/family/join')}
+                activeOpacity={0.7}
+              >
+                <Text style={[s.primaryBtnText, { color: Colors.primary }]}>I have a code</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 

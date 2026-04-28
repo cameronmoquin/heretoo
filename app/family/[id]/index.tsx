@@ -121,6 +121,30 @@ export default function FamilyDetail() {
               </View>
             )}
 
+            {!!(family as any).invite_code && (
+              <View style={s.inviteCard}>
+                <Text style={s.sectionLabel}>Invite code</Text>
+                <Text style={s.inviteCode} selectable>{(family as any).invite_code}</Text>
+                <Text style={s.inviteHint}>
+                  Share this with someone you want to add. They enter it on the
+                  Join screen and they're in.
+                </Text>
+                <TouchableOpacity
+                  style={s.copyBtn}
+                  onPress={async () => {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      await navigator.clipboard.writeText((family as any).invite_code);
+                      showConfirm('Copied', 'Code on your clipboard.', () => {}, 'OK');
+                    }
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons name="copy-outline" size={14} color={Colors.primary} />
+                  <Text style={s.copyBtnText}>Copy code</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <View style={s.card}>
               <Text style={s.sectionLabel}>Members ({members?.length ?? 0})</Text>
               {members?.map((m) => (
@@ -283,4 +307,21 @@ function makeStyles() { return StyleSheet.create({
     width: 240, height: 240, borderRadius: 8,
     marginRight: 8, backgroundColor: Colors.background,
   },
+  inviteCard: {
+    backgroundColor: Colors.surfaceLight, borderRadius: Radius.md, padding: 14,
+    borderWidth: 1, borderColor: Colors.border, gap: 8, alignItems: 'center',
+  },
+  inviteCode: {
+    fontSize: 26, fontWeight: '800', color: Colors.primary, letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginVertical: 4,
+  },
+  inviteHint: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', maxWidth: 320 },
+  copyBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+    borderWidth: 1, borderColor: Colors.primary,
+    backgroundColor: 'transparent',
+  },
+  copyBtnText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
 }); }
