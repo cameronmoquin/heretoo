@@ -18,16 +18,9 @@ import { showAlert } from '../../../lib/alert';
 import { Button } from '../../../components/shared/Button';
 import { Colors } from '../../../constants/colors';
 
-const TAG_OPTIONS = [
-  'Food & Cooking', 'Fitness & Health', 'Music', 'Sports',
-  'Outdoors & Nature', 'Tech & Gadgets', 'Books & Learning',
-  'Art & Design', 'Travel', 'Parenting & Family', 'Pets', 'Local Community',
-];
-
 export default function UploadScreen() {
   const upload = useUpload();
   const [content, setContent] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const hasMedia = upload.selectedAssets.length > 0;
   const canPost = content.trim().length > 0 || hasMedia;
@@ -62,7 +55,6 @@ export default function UploadScreen() {
       });
 
       setContent('');
-      setSelectedTags([]);
       upload.reset();
       router.push('/(tabs)/feed');
     } catch (error: any) {
@@ -141,31 +133,6 @@ export default function UploadScreen() {
               ))}
             </ScrollView>
           )}
-
-          {/* Topic tags */}
-          <View>
-            <Text style={styles.tagLabel}>Tag it</Text>
-            <View style={styles.tagGrid}>
-              {TAG_OPTIONS.map((tag) => {
-                const active = selectedTags.includes(tag);
-                return (
-                  <TouchableOpacity
-                    key={tag}
-                    style={[styles.tagChip, active && styles.tagChipActive]}
-                    onPress={() => {
-                      setSelectedTags((prev) =>
-                        active ? prev.filter((t) => t !== tag) : [...prev, tag]
-                      );
-                    }}
-                  >
-                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
-                      {tag}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
 
           {/* Upload progress */}
           {isUploading && (
@@ -247,37 +214,6 @@ const styles = StyleSheet.create({
   },
   postButton: {
     width: '100%',
-  },
-  tagLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    color: Colors.textPrimary,
-    marginBottom: 8,
-  },
-  tagGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tagChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  tagChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  tagChipText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  tagChipTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
   mediaRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   mediaBtn: {
