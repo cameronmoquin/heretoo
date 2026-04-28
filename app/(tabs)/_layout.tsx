@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 import { useAuthStore } from '../../stores/authStore';
+import { useThemeStore } from '../../stores/themeStore';
 import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 
@@ -30,6 +31,8 @@ function TabIcon({ icon, iconActive, focused }: { icon: string; iconActive: stri
 function Sidebar() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+  const themeMode = useThemeStore((s) => s.mode);
+  const toggleTheme = useThemeStore((s) => s.toggle);
   return (
     <View style={styles.sidebar}>
       <View style={styles.sidebarLogoWrap}>
@@ -83,6 +86,20 @@ function Sidebar() {
           <Text style={styles.sidebarEmail} numberOfLines={1}>
             {user.email}
           </Text>
+          <TouchableOpacity
+            onPress={toggleTheme}
+            style={styles.signOutBtn}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'}
+              size={16}
+              color={Colors.textSecondary}
+            />
+            <Text style={styles.signOutText}>
+              {themeMode === 'dark' ? 'Light theme' : 'Dark theme'}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => hardSignOutAndRedirect()}
             style={styles.signOutBtn}

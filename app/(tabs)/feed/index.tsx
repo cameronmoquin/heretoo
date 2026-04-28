@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFeed, useToggleHeart } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
+import { useThemeStore } from '../../../stores/themeStore';
 import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
@@ -18,6 +19,8 @@ export default function FeedScreen() {
   const { activeTab, setActiveTab } = useFeedStore();
   const feed = useFeed(activeTab);
   const toggleHeart = useToggleHeart();
+  const themeMode = useThemeStore((s) => s.mode);
+  const toggleTheme = useThemeStore((s) => s.toggle);
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
   const posts = feed.data?.pages.flat() ?? [];
@@ -31,13 +34,26 @@ export default function FeedScreen() {
             <Text style={[styles.logo, { color: '#00FF88', position: 'absolute', left: 1, top: 1, opacity: 0.6 }]}>HT</Text>
             <Text style={styles.logo}>HT</Text>
           </View>
-          <TouchableOpacity
-            style={styles.signOutIconBtn}
-            onPress={() => hardSignOutAndRedirect()}
-            accessibilityLabel="Sign out"
-          >
-            <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={styles.signOutIconBtn}
+              onPress={toggleTheme}
+              accessibilityLabel="Toggle light/dark theme"
+            >
+              <Ionicons
+                name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'}
+                size={18}
+                color={Colors.textSecondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.signOutIconBtn}
+              onPress={() => hardSignOutAndRedirect()}
+              accessibilityLabel="Sign out"
+            >
+              <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
