@@ -1,5 +1,4 @@
 import React from 'react';
-import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -11,10 +10,8 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import { useAuth } from '../hooks/useAuth';
-import { useAuthStore } from '../stores/authStore';
 import { LoadingPulse } from '../components/shared/LoadingPulse';
 import { ErrorBoundary } from '../components/shared/ErrorBoundary';
-import { SuspendedBanner } from '../components/shared/SuspendedBanner';
 import { BuildBadge } from '../components/shared/BuildBadge';
 import { Colors } from '../constants/colors';
 
@@ -29,7 +26,6 @@ const queryClient = new QueryClient({
 
 function RootLayoutInner() {
   const { isLoading } = useAuth();
-  const profile = useAuthStore((s) => s.profile);
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -45,11 +41,6 @@ function RootLayoutInner() {
   return (
     <>
       <StatusBar style="light" />
-      {profile?.is_suspended && (
-        <View style={{ backgroundColor: Colors.background }}>
-          <SuspendedBanner reason={profile.suspension_reason ?? undefined} />
-        </View>
-      )}
       <Stack
         screenOptions={{
           headerShown: false,

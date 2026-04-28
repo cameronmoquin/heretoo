@@ -1,27 +1,15 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 
+/** Profile row shape — matches public.profiles (migration 001). */
 export interface Profile {
   id: string;
-  username: string;
+  handle: string;
   display_name: string | null;
-  avatar_url: string | null;
-  birth_year: number | null;
-  location_region: string | null;
-  origin_story: string | null;
-  trust_score: number;
-  cluster_id: number;
-  cluster_confidence: number;
-  is_verified: boolean;
-  is_human_verified: boolean;
-  is_suspended: boolean;
-  suspension_reason: string | null;
-  bot_score: number;
-  invite_count: number;
-  invited_by: string | null;
+  bio: string | null;
+  avatar_path: string | null;
+  phone_e164: string | null;
   phone_verified: boolean;
-  behavioral_verified: boolean;
-  pulse_votes_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -47,10 +35,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   hasCompletedSetup: false,
 
-  setSession: (session) =>
-    set({ session, user: session?.user ?? null }),
+  setSession: (session) => set({ session, user: session?.user ?? null }),
   setProfile: (profile) =>
-    set({ profile, hasCompletedSetup: !!profile?.username }),
+    set({ profile, hasCompletedSetup: !!profile?.handle }),
   setLoading: (isLoading) => set({ isLoading }),
   setHasCompletedSetup: (hasCompletedSetup) => set({ hasCompletedSetup }),
   reset: () =>

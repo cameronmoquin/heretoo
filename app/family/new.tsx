@@ -4,17 +4,14 @@ import {
   Platform, KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCreateFamilyGroup } from '../../hooks/useFamily';
+import { router } from 'expo-router';
+import { useCreateFamily } from '../../hooks/useFamily';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
 export default function NewFamily() {
-  // Optional `?from=<group_id>` to mark this as spun off from another family.
-  const { from } = useLocalSearchParams<{ from?: string }>();
-  const parentGroupId = typeof from === 'string' ? from : null;
-  const create = useCreateFamilyGroup();
+  const create = useCreateFamily();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
@@ -24,11 +21,7 @@ export default function NewFamily() {
       return;
     }
     create.mutate(
-      {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        parent_group_id: parentGroupId,
-      },
+      { name: name.trim(), description: description.trim() || undefined },
       {
         onSuccess: (g) => router.replace(`/family/${g.id}`),
         onError: (e: any) => showAlert('Could not create', e?.message ?? 'Try again.'),
@@ -40,20 +33,14 @@ export default function NewFamily() {
     <SafeAreaView style={s.root} edges={['bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-
           <View style={s.lineageBox}>
-            <Text style={s.lineageLabel}>
-              {parentGroupId ? 'Spinning off' : 'Starting a new tree'}
-            </Text>
+            <Text style={s.lineageLabel}>Starting a family</Text>
             <Text style={s.lineageHint}>
-              Family groups are private. Members read and post via an invite code.
-              {parentGroupId
-                ? ' Your new family will be linked to its parent in the network stats.'
-                : ' You\'ll be the owner; invite people in once you save.'}
+              You'll be the owner and the first member. Invite people in once it's saved.
             </Text>
           </View>
 
-          <Text style={s.label}>Family name</Text>
+          <Text style={s.label}>Name</Text>
           <TextInput
             style={s.input}
             value={name}
@@ -83,11 +70,8 @@ export default function NewFamily() {
             onPress={save}
             disabled={create.isPending}
           >
-            <Text style={s.saveBtnText}>
-              {create.isPending ? 'Creating…' : 'Create family'}
-            </Text>
+            <Text style={s.saveBtnText}>{create.isPending ? 'Creating…' : 'Create family'}</Text>
           </TouchableOpacity>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
