@@ -9,6 +9,7 @@ import {
   useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
 } from '../../../hooks/useFamily';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
+import { useDeletePost } from '../../../hooks/useFeed';
 import { useAuthStore } from '../../../stores/authStore';
 import { showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
@@ -152,6 +153,20 @@ export default function FamilyDetail() {
 function FamilyPostCard({ post }: { post: any }) {
   const author = post.author;
   const media: any[] = post.media ?? [];
+  const userId = useAuthStore((s) => s.user?.id);
+  const isMine = userId === post.author_id;
+  const deletePost = useDeletePost();
+
+  const onDelete = () => {
+    showConfirm(
+      'Delete post?',
+      'This cannot be undone.',
+      () => deletePost.mutate(post.id),
+      'Delete',
+      'Cancel',
+    );
+  };
+
   return (
     <View style={s.postCard}>
       <View style={s.postHeader}>
@@ -164,6 +179,15 @@ function FamilyPostCard({ post }: { post: any }) {
           <Text style={s.postAuthor}>{author?.display_name ?? 'Unknown'}</Text>
           <Text style={s.postTime}>{timeAgo(post.created_at)}</Text>
         </View>
+        {isMine && (
+          <TouchableOpacity
+            onPress={onDelete}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Delete post"
+          >
+            <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+        )}
       </View>
       {!!post.body && <Text style={s.postBody}>{post.body}</Text>}
       {media.length > 0 && (

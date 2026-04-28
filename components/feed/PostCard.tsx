@@ -11,6 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { Post } from '../../stores/feedStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
+import { useDeletePost } from '../../hooks/useFeed';
+import { useAuthStore } from '../../stores/authStore';
+import { showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -23,6 +26,19 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const author = post.author;
   const media = post.media ?? [];
   const heartCount = post.heart_count ?? 0;
+  const userId = useAuthStore((s) => s.user?.id);
+  const isMine = userId === post.author_id;
+  const deletePost = useDeletePost();
+
+  const onDelete = () => {
+    showConfirm(
+      'Delete post?',
+      'This cannot be undone.',
+      () => deletePost.mutate(post.id),
+      'Delete',
+      'Cancel',
+    );
+  };
 
   return (
     <Pressable
@@ -43,6 +59,15 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           <Text style={s.author}>{author?.display_name ?? author?.handle ?? 'Unknown'}</Text>
           <Text style={s.time}>{timeAgo(post.created_at)}</Text>
         </View>
+        {isMine && (
+          <TouchableOpacity
+            onPress={(e) => { e.stopPropagation(); onDelete(); }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Delete post"
+          >
+            <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {!!post.body && <Text style={s.body}>{post.body}</Text>}
