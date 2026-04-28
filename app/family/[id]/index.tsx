@@ -129,19 +129,52 @@ export default function FamilyDetail() {
                   Share this with someone you want to add. They enter it on the
                   Join screen and they're in.
                 </Text>
-                <TouchableOpacity
-                  style={s.copyBtn}
-                  onPress={async () => {
-                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                      await navigator.clipboard.writeText((family as any).invite_code);
-                      showConfirm('Copied', 'Code on your clipboard.', () => {}, 'OK');
-                    }
-                  }}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons name="copy-outline" size={14} color={Colors.primary} />
-                  <Text style={s.copyBtnText}>Copy code</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <TouchableOpacity
+                    style={s.copyBtn}
+                    onPress={async () => {
+                      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        await navigator.clipboard.writeText((family as any).invite_code);
+                        showConfirm('Copied', 'Code on your clipboard.', () => {}, 'OK');
+                      }
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="copy-outline" size={14} color={Colors.primary} />
+                    <Text style={s.copyBtnText}>Copy code</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={s.copyBtn}
+                    onPress={async () => {
+                      const code = (family as any).invite_code;
+                      const origin =
+                        typeof window !== 'undefined' && window.location?.origin
+                          ? window.location.origin
+                          : 'https://heretoo.social';
+                      const url = `${origin}/join/${code}`;
+                      const shareText = `Join the ${family.name} family on HereToo: ${url}`;
+                      // Prefer the native share sheet when available (mobile + some desktop browsers).
+                      const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
+                      if (nav?.share) {
+                        try {
+                          await nav.share({ title: family.name, text: shareText, url });
+                          return;
+                        } catch {
+                          // user cancelled or share unavailable — fall through to clipboard
+                        }
+                      }
+                      if (nav?.clipboard) {
+                        await nav.clipboard.writeText(url);
+                        showConfirm('Link copied', `${url}`, () => {}, 'OK');
+                      }
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="share-outline" size={14} color={Colors.primary} />
+                    <Text style={s.copyBtnText}>Share invite link</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
 

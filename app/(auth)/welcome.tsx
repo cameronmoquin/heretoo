@@ -59,12 +59,13 @@ export default function WelcomeScreen() {
         setErrorMsg('Sign-in succeeded but no session was returned. Try again.');
         return;
       }
-      // Always land on the main HereToo feed after sign in.
-      // Family Group is reachable from there via the sidebar / feed banner.
-      const target = '/(tabs)/feed';
+      // Resume a pending invite link (someone shared /join/CODE while
+      // signed-out). Otherwise land on the main feed.
+      const pending = consumePendingInviteCode();
+      const target = pending ? `/join/${pending}` : '/(tabs)/feed';
       // eslint-disable-next-line no-console
       console.log('[signin] navigating to', target);
-      router.replace(target);
+      router.replace(target as any);
     } catch (error: any) {
       // eslint-disable-next-line no-console
       console.error('[signin] failed:', error);
@@ -235,6 +236,22 @@ export default function WelcomeScreen() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+/**
+ * Reads-and-clears any /join/CODE invite stashed in localStorage by the
+ * shareable invite landing page. If present, the post-auth flow routes
+ * the user to /join/<code> so they can accept the invite.
+ */
+function consumePendingInviteCode(): string | null {
+  try {
+    const code = localStorage.getItem('heretoo:pending_invite_code');
+    if (code) {
+      localStorage.removeItem('heretoo:pending_invite_code');
+      return code;
+    }
+  } catch {}
+  return null;
 }
 
 function makeStyles() { return StyleSheet.create({

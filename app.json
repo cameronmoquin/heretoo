@@ -16,7 +16,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "social.heretoo.app",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "HereToo uses your front + back cameras together for Two-Way moments.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +28,13 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "social.heretoo.app"
+      "package": "social.heretoo.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro"
@@ -47,7 +57,28 @@
           "color": "#10B981"
         }
       ],
-      "expo-video"
-    ]
+      "expo-video",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "HereToo uses your front + back cameras together for Two-Way moments.",
+          "enableMicrophonePermission": false,
+          "enableLocation": false
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d8401891-6c12-4304-b4b9-abae9e04d71f"
+      }
+    },
+    "owner": "cameronmoquin",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d8401891-6c12-4304-b4b9-abae9e04d71f"
+    }
   }
 }

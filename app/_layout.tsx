@@ -70,6 +70,7 @@ function RootLayoutInner() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="family" options={{ headerShown: false }} />
+        <Stack.Screen name="join" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
       <PWAInstallPrompt />

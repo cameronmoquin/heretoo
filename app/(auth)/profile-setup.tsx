@@ -55,7 +55,18 @@ export default function ProfileSetupScreen() {
         .single();
       if (error) throw error;
       setProfile(data as any);
-      router.replace('/(tabs)/feed');
+      // Resume a pending /join/CODE invite if the user landed here from
+      // a shared family invite link.
+      let pending: string | null = null;
+      try {
+        pending = typeof localStorage !== 'undefined'
+          ? localStorage.getItem('heretoo:pending_invite_code')
+          : null;
+        if (pending && typeof localStorage !== 'undefined') {
+          localStorage.removeItem('heretoo:pending_invite_code');
+        }
+      } catch {}
+      router.replace((pending ? `/join/${pending}` : '/(tabs)/feed') as any);
     } catch (e: any) {
       const msg = String(e?.message ?? 'Could not save').toLowerCase();
       if (msg.includes('duplicate') || msg.includes('unique')) {

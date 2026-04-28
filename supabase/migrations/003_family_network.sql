@@ -27,7 +27,7 @@
 -- Bidirectional: a row blocks visibility BOTH ways. Either party can
 -- create the row; nobody but the creator can read it (so blocked users
 -- can't tell they've been blocked).
-create table public.profile_blocks (
+create table if not exists public.profile_blocks (
   id          uuid primary key default gen_random_uuid(),
   blocker_id  uuid not null references public.profiles(id) on delete cascade,
   blocked_id  uuid not null references public.profiles(id) on delete cascade,
@@ -37,14 +37,16 @@ create table public.profile_blocks (
   unique (blocker_id, blocked_id)
 );
 
-create index profile_blocks_blocker_idx on public.profile_blocks(blocker_id);
-create index profile_blocks_blocked_idx on public.profile_blocks(blocked_id);
+create index if not exists profile_blocks_blocker_idx on public.profile_blocks(blocker_id);
+create index if not exists profile_blocks_blocked_idx on public.profile_blocks(blocked_id);
 
 alter table public.profile_blocks enable row level security;
 
+drop policy if exists blocks_self_read on public.profile_blocks;
 create policy blocks_self_read on public.profile_blocks
   for select to authenticated using (auth.uid() = blocker_id);
 
+drop policy if exists blocks_self_write on public.profile_blocks;
 create policy blocks_self_write on public.profile_blocks
   for all to authenticated
   using (auth.uid() = blocker_id)

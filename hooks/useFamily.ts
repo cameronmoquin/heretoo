@@ -206,6 +206,46 @@ export function useMyNetworkStats() {
   });
 }
 
+/**
+ * The list of profiles the current user can tag in a post — i.e. everyone
+ * reachable through their family graph (≤3 hops), excluding themselves
+ * and anyone they've blocked. Used by the New Post composer's tag picker.
+ */
+export function useMyConnections() {
+  const userId = useAuthStore((s) => s.user?.id);
+  return useQuery({
+    queryKey: ['my-connections', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      // Step 1: get reachable profile IDs from the family network reach RPC.
+      const { data: reach, error: rErr } = await supabase
+        .rpc('family_network_reach', { viewer: userId, max_depth: 3 });
+      if (rErr) throw rErr;
+
+      const ids = (reach ?? [])
+        .map((r: any) => r.profile_id as string)
+        .filter((id: string) => id !== userId);
+
+      if (ids.length === 0) return [];
+
+      // Step 2: hydrate profile rows.
+      const { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, handle, display_name, avatar_path')
+        .in('id', ids);
+      if (pErr) throw pErr;
+      return (profiles ?? []) as Array<{
+        id: string;
+        handle: string | null;
+        display_name: string | null;
+        avatar_path: string | null;
+      }>;
+    },
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+}
+
 export function useFamilyFeed(familyId: string | null) {
   const qc = useQueryClient();
   const query = useQuery({
