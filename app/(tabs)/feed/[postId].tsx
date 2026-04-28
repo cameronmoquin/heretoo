@@ -8,7 +8,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../../lib/supabase';
-import { mediaPathToUrl } from '../../../hooks/useUpload';
+import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
 import { useComments, useAddComment, useDeleteComment } from '../../../hooks/useComments';
 import { useAuthStore } from '../../../stores/authStore';
 import { showAlert, showConfirm } from '../../../lib/alert';
@@ -88,12 +88,39 @@ export default function PostDetail() {
           {!!post.body && <Text style={s.body}>{post.body}</Text>}
 
           {media.map((m: any) => (
-            <Image
-              key={m.id}
-              source={{ uri: mediaPathToUrl(m.storage_path) }}
-              style={s.image}
-              resizeMode="cover"
-            />
+            m.media_type === 'video' ? (
+              Platform.OS === 'web'
+                ? React.createElement('video', {
+                    key: m.id,
+                    src: mediaPathToUrl(m.storage_path),
+                    poster: mediaPathToThumb(m.storage_path) ?? undefined,
+                    autoPlay: true,
+                    loop: true,
+                    muted: true,
+                    playsInline: true,
+                    controls: true,
+                    style: {
+                      width: '100%', aspectRatio: 9 / 16,
+                      backgroundColor: '#000', borderRadius: 12,
+                      objectFit: 'cover',
+                    },
+                  })
+                : (
+                  <Image
+                    key={m.id}
+                    source={{ uri: mediaPathToThumb(m.storage_path) ?? mediaPathToUrl(m.storage_path) }}
+                    style={s.image}
+                    resizeMode="cover"
+                  />
+                )
+            ) : (
+              <Image
+                key={m.id}
+                source={{ uri: mediaPathToUrl(m.storage_path) }}
+                style={s.image}
+                resizeMode="cover"
+              />
+            )
           ))}
 
           <View style={s.commentsHeader}>

@@ -10,7 +10,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable, Modal } fro
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { Post } from '../../stores/feedStore';
-import { mediaPathToUrl } from '../../hooks/useUpload';
+import { Platform } from 'react-native';
+import { mediaPathToUrl, mediaPathToThumb } from '../../hooks/useUpload';
 import { useDeletePost } from '../../hooks/useFeed';
 import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
 import { useMyFamilies } from '../../hooks/useFamily';
@@ -81,12 +82,27 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       {media.length > 0 && (
         <View style={s.mediaWrap}>
           {media[0].media_type === 'video' ? (
-            <View style={s.videoBox}>
-              <Image source={{ uri: mediaPathToUrl(media[0].storage_path) }} style={s.videoThumb} />
-              <View style={s.playOverlay}>
-                <Ionicons name="play" size={32} color="#FFF" />
+            Platform.OS === 'web' ? (
+              React.createElement('video', {
+                src: mediaPathToUrl(media[0].storage_path),
+                poster: mediaPathToThumb(media[0].storage_path) ?? undefined,
+                autoPlay: true,
+                loop: true,
+                muted: true,
+                playsInline: true,
+                style: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#000', borderRadius: 8, objectFit: 'cover' },
+              })
+            ) : (
+              <View style={s.videoBox}>
+                <Image
+                  source={{ uri: mediaPathToThumb(media[0].storage_path) ?? mediaPathToUrl(media[0].storage_path) }}
+                  style={s.videoThumb}
+                />
+                <View style={s.playOverlay}>
+                  <Ionicons name="play" size={32} color="#FFF" />
+                </View>
               </View>
-            </View>
+            )
           ) : (
             <Image
               source={{ uri: mediaPathToUrl(media[0].storage_path) }}

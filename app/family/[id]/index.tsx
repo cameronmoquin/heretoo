@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
 } from '../../../hooks/useFamily';
-import { mediaPathToUrl } from '../../../hooks/useUpload';
+import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
 import { useDeletePost } from '../../../hooks/useFeed';
 import { useAuthStore } from '../../../stores/authStore';
 import { showConfirm } from '../../../lib/alert';
@@ -218,13 +218,33 @@ function FamilyPostCard({ post }: { post: any }) {
       {!!post.body && <Text style={s.postBody}>{post.body}</Text>}
       {media.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-          {media.map((m) => (
-            <Image
-              key={m.id}
-              source={{ uri: mediaPathToUrl(m.storage_path) }}
-              style={s.postImage}
-              resizeMode="cover"
-            />
+          {media.map((m: any) => (
+            m.media_type === 'video' && Platform.OS === 'web' ? (
+              React.createElement('video', {
+                key: m.id,
+                src: mediaPathToUrl(m.storage_path),
+                poster: mediaPathToThumb(m.storage_path) ?? undefined,
+                autoPlay: true,
+                loop: true,
+                muted: true,
+                playsInline: true,
+                style: {
+                  width: 240, height: 240, borderRadius: 8,
+                  marginRight: 8, backgroundColor: '#000', objectFit: 'cover',
+                },
+              })
+            ) : (
+              <Image
+                key={m.id}
+                source={{
+                  uri: m.media_type === 'video'
+                    ? (mediaPathToThumb(m.storage_path) ?? mediaPathToUrl(m.storage_path))
+                    : mediaPathToUrl(m.storage_path),
+                }}
+                style={s.postImage}
+                resizeMode="cover"
+              />
+            )
           ))}
         </ScrollView>
       )}

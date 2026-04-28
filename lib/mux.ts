@@ -1,157 +1,124 @@
+/**
+ * Client-side Mux uploader.
+ *
+ * Calls the Netlify function /.netlify/functions/mux-upload-create which
+ * holds the Mux secret server-side. The browser only ever sees the
+ * one-time direct-upload URL, never the Mux API token.
+ *
+ * Hard cap: VIDEO_MAX_SECONDS — clips longer than this are rejected
+ * client-side so we don't waste an upload slot.
+ */
+
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
+import { supabase } from './supabase';
 
-const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID ?? '';
-const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET ?? '';
-const MUX_BASE_URL = 'https://api.mux.com';
+const FUNCTION_PATH = '/.netlify/functions/mux-upload-create';
 
-function getMuxAuth(): string {
-  return btoa(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`);
-}
+export const VIDEO_MAX_SECONDS = 7;
 
 interface MuxUploadResult {
   assetId: string;
   playbackId: string;
   thumbnailUrl: string;
+  durationSeconds: number | null;
 }
 
-/**
- * Create a Mux direct upload URL.
- * In production this should go through an Edge Function.
- * For dev/testing we call Mux directly.
- */
-async function createDirectUpload(): Promise<{ uploadUrl: string; uploadId: string }> {
-  const res = await fetch(`${MUX_BASE_URL}/video/v1/uploads`, {
+interface MuxAsset {
+  id: string;
+  status: string;
+  duration?: number;
+  playback_ids?: { id: string; policy: string }[];
+}
+
+async function authedPost(body: unknown): Promise<Response> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token ?? '';
+  return fetch(FUNCTION_PATH, {
     method: 'POST',
     headers: {
-      'Authorization': `Basic ${getMuxAuth()}`,
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      new_asset_settings: {
-        playback_policy: ['public'],
-        encoding_tier: 'baseline',
-      },
-      cors_origin: '*',
-    }),
+    body: JSON.stringify(body ?? {}),
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Mux upload creation failed: ${text}`);
-  }
-
-  const data = await res.json();
-  return {
-    uploadUrl: data.data.url,
-    uploadId: data.data.id,
-  };
 }
 
-/**
- * Check if a Mux upload has finished processing.
- */
-async function checkUploadStatus(uploadId: string): Promise<any> {
-  const res = await fetch(`${MUX_BASE_URL}/video/v1/uploads/${uploadId}`, {
-    headers: { 'Authorization': `Basic ${getMuxAuth()}` },
-  });
-  if (!res.ok) throw new Error('Failed to check upload status');
-  const data = await res.json();
-
-  if (data.data?.asset_id) {
-    const assetRes = await fetch(
-      `${MUX_BASE_URL}/video/v1/assets/${data.data.asset_id}`,
-      { headers: { 'Authorization': `Basic ${getMuxAuth()}` } }
-    );
-    if (!assetRes.ok) throw new Error('Failed to get asset');
-    const assetData = await assetRes.json();
-    return assetData.data;
+async function createDirectUpload(): Promise<{ uploadUrl: string; uploadId: string }> {
+  const r = await authedPost({});
+  if (!r.ok) {
+    let detail = '';
+    try { detail = (await r.json())?.error ?? ''; } catch {}
+    throw new Error(`Could not start video upload: ${detail || r.status}`);
   }
-
-  return null;
+  return (await r.json()) as { uploadUrl: string; uploadId: string };
 }
 
-/**
- * Upload a video to Mux and return the playback info.
- */
-export async function uploadVideoToMux(
-  localUri: string,
-  onProgress: (progress: number) => void
-): Promise<MuxUploadResult> {
-  // 1. Create upload URL
-  const { uploadUrl, uploadId } = await createDirectUpload();
-  onProgress(0.1);
-
-  // 2. Upload the file
-  if (Platform.OS === 'web') {
-    // Web: fetch the file and PUT it
-    const response = await fetch(localUri);
-    const blob = await response.blob();
-    await fetch(uploadUrl, {
-      method: 'PUT',
-      body: blob,
-      headers: { 'Content-Type': 'video/*' },
-    });
-  } else {
-    // Native: use FileSystem upload
-    const uploadTask = FileSystem.createUploadTask(
-      uploadUrl,
-      localUri,
-      {
-        httpMethod: 'PUT',
-        headers: { 'Content-Type': 'video/*' },
-      },
-      (progressEvent) => {
-        const p = progressEvent.totalBytesSent / progressEvent.totalBytesExpectedToSend;
-        onProgress(0.1 + p * 0.7);
-      }
-    );
-    await uploadTask.uploadAsync();
-  }
-
-  onProgress(0.8);
-
-  // 3. Poll for asset ready
-  const asset = await pollMuxAssetReady(uploadId);
-  onProgress(1.0);
-
-  return {
-    assetId: asset.id,
-    playbackId: asset.playback_ids[0].id,
-    thumbnailUrl: `https://image.mux.com/${asset.playback_ids[0].id}/thumbnail.jpg`,
-  };
-}
-
-async function pollMuxAssetReady(
-  uploadId: string,
-  maxAttempts = 60,
-  intervalMs = 3000
-): Promise<any> {
+async function pollAssetReady(uploadId: string, maxAttempts = 60, intervalMs = 3000): Promise<MuxAsset> {
   for (let i = 0; i < maxAttempts; i++) {
-    const asset = await checkUploadStatus(uploadId);
-    if (asset?.status === 'ready') return asset;
-    await new Promise((r) => setTimeout(r, intervalMs));
+    const r = await authedPost({ action: 'check', uploadId });
+    if (r.ok) {
+      const data = (await r.json()) as { asset?: MuxAsset | null };
+      if (data.asset?.status === 'ready') return data.asset;
+    }
+    await new Promise((res) => setTimeout(res, intervalMs));
   }
   throw new Error('Video processing timed out. Try again.');
 }
 
-/**
- * Get the Mux stream URL for a playback ID.
- */
+export async function uploadVideoToMux(
+  localUri: string,
+  onProgress: (progress: number) => void,
+): Promise<MuxUploadResult> {
+  const { uploadUrl, uploadId } = await createDirectUpload();
+  onProgress(0.05);
+
+  if (Platform.OS === 'web') {
+    const r = await fetch(localUri);
+    const blob = await r.blob();
+    const put = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: blob,
+      headers: { 'Content-Type': 'video/*' },
+    });
+    if (!put.ok) throw new Error(`Mux upload failed: ${put.status}`);
+  } else {
+    const task = FileSystem.createUploadTask(
+      uploadUrl,
+      localUri,
+      { httpMethod: 'PUT', headers: { 'Content-Type': 'video/*' } },
+      (e) => {
+        const p = e.totalBytesSent / Math.max(1, e.totalBytesExpectedToSend);
+        onProgress(0.05 + p * 0.7);
+      },
+    );
+    await task.uploadAsync();
+  }
+  onProgress(0.8);
+
+  const asset = await pollAssetReady(uploadId);
+  onProgress(1);
+
+  const playbackId = asset.playback_ids?.[0]?.id ?? '';
+  if (!playbackId) throw new Error('Mux returned no playback ID');
+
+  return {
+    assetId: asset.id,
+    playbackId,
+    thumbnailUrl: `https://image.mux.com/${playbackId}/thumbnail.jpg`,
+    durationSeconds: typeof asset.duration === 'number' ? Math.round(asset.duration) : null,
+  };
+}
+
 export function getMuxStreamUrl(playbackId: string): string {
   return `https://stream.mux.com/${playbackId}.m3u8`;
 }
 
-/**
- * Get the Mux thumbnail URL.
- */
-export function getMuxThumbnailUrl(playbackId: string, options?: {
-  width?: number;
-  time?: number;
-}): string {
+/** Quick-look thumbnail URL (with optional time + width). */
+export function getMuxThumbnailUrl(playbackId: string, opts: { width?: number; time?: number } = {}): string {
   const params = new URLSearchParams();
-  if (options?.width) params.set('width', String(options.width));
-  if (options?.time) params.set('time', String(options.time));
-  const query = params.toString();
-  return `https://image.mux.com/${playbackId}/thumbnail.jpg${query ? '?' + query : ''}`;
+  if (opts.width) params.set('width', String(opts.width));
+  if (opts.time != null) params.set('time', String(opts.time));
+  const q = params.toString();
+  return `https://image.mux.com/${playbackId}/thumbnail.jpg${q ? '?' + q : ''}`;
 }

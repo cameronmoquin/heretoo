@@ -18,7 +18,7 @@ import { Platform } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
-import { uploadVideoToMux } from '../lib/mux';
+import { uploadVideoToMux, VIDEO_MAX_SECONDS } from '../lib/mux';
 import { useAuthStore } from '../stores/authStore';
 import type { PostVisibility } from './useFamily';
 
@@ -64,13 +64,26 @@ export function useUpload() {
       mediaTypes: ['videos'],
       allowsMultipleSelection: false,
       quality: 0.85,
+      videoMaxDuration: VIDEO_MAX_SECONDS,
     });
     if (result.canceled) {
       setState((s) => ({ ...s, stage: 'idle' }));
       return null;
     }
+    const asset = result.assets[0];
+    // duration is in milliseconds (ImagePicker convention)
+    const durSec = asset?.duration ? asset.duration / 1000 : 0;
+    if (durSec > VIDEO_MAX_SECONDS + 0.5) {
+      setState((s) => ({
+        ...s,
+        stage: 'error',
+        error: `Video must be ${VIDEO_MAX_SECONDS}s or shorter (your clip is ${Math.round(durSec)}s).`,
+        selectedAssets: [],
+      }));
+      return null;
+    }
     setState((s) => ({ ...s, stage: 'idle', selectedAssets: result.assets }));
-    return result.assets[0];
+    return asset;
   }
 
   /**
@@ -249,13 +262,31 @@ async function readAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
   return bytes.buffer;
 }
 
-/** Resolve a post_media.storage_path to a public URL for rendering. */
+/**
+ * Resolve a post_media.storage_path to a renderable URL.
+ *
+ * Storage path conventions:
+ *   - "mux:{playback_id}"      → Mux video. Returns MP4 rendition (works in
+ *                                every modern browser; Mux's mp4_support:
+ *                                'standard' guarantees it).
+ *   - starts with "http"       → already a URL
+ *   - otherwise                → Supabase Storage path under bucket 'posts'
+ */
 export function mediaPathToUrl(storagePath: string): string {
   if (storagePath.startsWith('mux:')) {
     const playbackId = storagePath.slice(4);
-    return `https://stream.mux.com/${playbackId}.m3u8`;
+    return `https://stream.mux.com/${playbackId}/medium.mp4`;
   }
   if (storagePath.startsWith('http')) return storagePath;
   const { data } = supabase.storage.from('posts').getPublicUrl(storagePath);
   return data.publicUrl;
+}
+
+/** Mux thumbnail (poster) URL for a post_media row. Returns null for non-Mux. */
+export function mediaPathToThumb(storagePath: string): string | null {
+  if (storagePath.startsWith('mux:')) {
+    const playbackId = storagePath.slice(4);
+    return `https://image.mux.com/${playbackId}/thumbnail.jpg`;
+  }
+  return null;
 }
