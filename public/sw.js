@@ -12,7 +12,7 @@
  * the network — otherwise we'd lose writes.
  */
 
-const VERSION = 'heretoo-v16';
+const VERSION = 'heretoo-v17';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSETS_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;
@@ -65,16 +65,17 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   if (isHtml(req)) {
+    // Network-only for HTML during active development. Caching index.html
+    // and falling back to it is the classic PWA cache-trap: cached HTML
+    // pins users to a stale fingerprinted-bundle URL that no longer
+    // exists on the CDN, breaking the whole app. Refusing the cache
+    // means users always see the live HTML pointing to live bundles.
+    // We give up offline support for HTML; assets + Supabase GETs are
+    // still cached so the feed loads offline once seen.
     event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(SHELL_CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          return res;
-        })
-        .catch(async () =>
-          (await caches.match(req)) ?? (await caches.match('/index.html')) ?? Response.error(),
-        ),
+      fetch(req).catch(async () =>
+        (await caches.match('/index.html')) ?? Response.error(),
+      ),
     );
     return;
   }
