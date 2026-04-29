@@ -8,11 +8,12 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
 } from '../../../hooks/useFamily';
-import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
-import { useDeletePost } from '../../../hooks/useFeed';
+import { mediaPathToUrl } from '../../../hooks/useUpload';
+import { useToggleHeart } from '../../../hooks/useFeed';
 import { useAuthStore } from '../../../stores/authStore';
 import { showConfirm } from '../../../lib/alert';
 import { FeedComposer } from '../../../components/feed/FeedComposer';
+import { PostCard } from '../../../components/feed/PostCard';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -27,6 +28,7 @@ export default function FamilyDetail() {
   const { data: members } = useFamilyMembers(id);
   const { data: posts } = useFamilyFeed(id ?? null);
   const leave = useLeaveFamily();
+  const toggleHeart = useToggleHeart();
 
   if (isLoading || !id) {
     return (
@@ -106,7 +108,13 @@ export default function FamilyDetail() {
                 <Text style={s.emptyTitle}>Nothing here yet — be the first.</Text>
               </View>
             ) : (
-              posts.map((p: any) => <FamilyPostCard key={p.id} post={p} />)
+              posts.map((p: any) => (
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  onHeart={(postId) => toggleHeart.mutate(postId)}
+                />
+              ))
             )}
           </>
         )}
@@ -205,95 +213,6 @@ export default function FamilyDetail() {
       </ScrollView>
     </SafeAreaView>
   );
-}
-
-function FamilyPostCard({ post }: { post: any }) {
-  const s = makeStyles();
-  const author = post.author;
-  const media: any[] = post.media ?? [];
-  const userId = useAuthStore((st) => st.user?.id);
-  const isMine = userId === post.author_id;
-  const deletePost = useDeletePost();
-
-  const onDelete = () => {
-    showConfirm(
-      'Delete post?',
-      'This cannot be undone.',
-      () => deletePost.mutate(post.id),
-      'Delete',
-      'Cancel',
-    );
-  };
-
-  return (
-    <View style={s.postCard}>
-      <View style={s.postHeader}>
-        <View style={s.postAvatar}>
-          <Text style={s.postAvatarText}>
-            {(author?.display_name ?? '?').slice(0, 1).toUpperCase()}
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.postAuthor}>{author?.display_name ?? 'Unknown'}</Text>
-          <Text style={s.postTime}>{timeAgo(post.created_at)}</Text>
-        </View>
-        {isMine && (
-          <TouchableOpacity
-            onPress={onDelete}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityLabel="Delete post"
-          >
-            <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
-          </TouchableOpacity>
-        )}
-      </View>
-      {!!post.body && <Text style={s.postBody}>{post.body}</Text>}
-      {media.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-          {media.map((m: any) => (
-            m.media_type === 'video' && Platform.OS === 'web' ? (
-              React.createElement('video', {
-                key: m.id,
-                src: mediaPathToUrl(m.storage_path),
-                poster: mediaPathToThumb(m.storage_path) ?? undefined,
-                autoPlay: true,
-                loop: true,
-                muted: true,
-                playsInline: true,
-                style: {
-                  width: 240, height: 240, borderRadius: 8,
-                  marginRight: 8, backgroundColor: '#000', objectFit: 'cover',
-                },
-              })
-            ) : (
-              <Image
-                key={m.id}
-                source={{
-                  uri: m.media_type === 'video'
-                    ? (mediaPathToThumb(m.storage_path) ?? mediaPathToUrl(m.storage_path))
-                    : mediaPathToUrl(m.storage_path),
-                }}
-                style={s.postImage}
-                resizeMode="cover"
-              />
-            )
-          ))}
-        </ScrollView>
-      )}
-    </View>
-  );
-}
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d ago`;
-  return new Date(iso).toLocaleDateString();
 }
 
 function makeStyles() { return StyleSheet.create({

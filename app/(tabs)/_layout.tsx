@@ -16,9 +16,17 @@ import { useThemeStore } from '../../stores/themeStore';
 import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 
+/**
+ * Mobile bottom nav.
+ *
+ * Upload tab was dropped: the New Post composer is pinned to the top of
+ * the feed (and inside every family page), so a dedicated upload screen
+ * was redundant. Profile now sits center where it has the visual weight
+ * to be the user's launchpad — settings, theme, families, sign out, the
+ * whole personal hub.
+ */
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
-  { name: 'upload', label: 'Post', icon: 'add-circle-outline', iconActive: 'add-circle', href: '/(tabs)/upload' },
   { name: 'profile', label: 'Profile', icon: 'person-outline', iconActive: 'person', href: '/(tabs)/profile' },
 ] as const;
 
@@ -134,8 +142,9 @@ export default function TabLayout() {
         <View style={styles.desktopContent}>
           <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
             <Tabs.Screen name="feed" />
-            <Tabs.Screen name="upload" />
             <Tabs.Screen name="profile" />
+            {/* `upload` is still routable (older deep links) but hidden from nav. */}
+            <Tabs.Screen name="upload" options={{ href: null }} />
           </Tabs>
         </View>
       </View>
@@ -161,6 +170,8 @@ export default function TabLayout() {
           }}
         />
       ))}
+      {/* Hidden tab so the route still resolves but it doesn't appear in the nav bar. */}
+      <Tabs.Screen name="upload" options={{ href: null }} />
     </Tabs>
   );
 }

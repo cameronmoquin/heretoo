@@ -40,6 +40,13 @@ export default function FeedScreen() {
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
+              style={styles.signOutIconBtn}
+              onPress={() => router.push('/chat' as any)}
+              accessibilityLabel="Messages"
+            >
+              <Ionicons name="chatbubbles-outline" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.familyPill}
               onPress={() => router.push('/family' as any)}
               accessibilityLabel="Go to families"

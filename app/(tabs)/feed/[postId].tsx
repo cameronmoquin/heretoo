@@ -1,3 +1,12 @@
+/**
+ * Post detail page — renders the post + the recursive comment tree.
+ *
+ * Comments now nest infinitely. Each node has a Reply button that
+ * targets the composer at the bottom (which gets a "Replying to …"
+ * pill until the user submits or cancels). Owner-only: a "Disable
+ * comments" toggle that flips `posts.comments_disabled`.
+ */
+
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, Image,
@@ -9,20 +18,27 @@ import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../../lib/supabase';
 import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
-import { useComments, useAddComment, useDeleteComment } from '../../../hooks/useComments';
+import {
+  useCommentTree, useAddComment, useDeleteComment, useToggleCommentsDisabled,
+  type CommentNode,
+} from '../../../hooks/useComments';
 import { useAuthStore } from '../../../stores/authStore';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
+
+const MAX_INDENT = 4; // visual cap — beyond 4 levels deep all replies share the same indent
 
 export default function PostDetail() {
   const s = makeStyles();
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const userId = useAuthStore((st) => st.user?.id);
   const [draft, setDraft] = useState('');
-  const { data: comments } = useComments(postId);
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
+  const { data: comments } = useCommentTree(postId);
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
+  const toggleMute = useToggleCommentsDisabled();
 
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', postId],
@@ -55,13 +71,17 @@ export default function PostDetail() {
   }
 
   const media = post.media ?? [];
+  const isOwner = post.author_id === userId;
+  const commentsDisabled = !!post.comments_disabled;
+  const totalCount: number = post.comment_count ?? countTree(comments ?? []);
+
   const submitComment = () => {
     const body = draft.trim();
     if (!body) return;
     addComment.mutate(
-      { postId, body },
+      { postId, body, parentCommentId: replyTo?.id },
       {
-        onSuccess: () => setDraft(''),
+        onSuccess: () => { setDraft(''); setReplyTo(null); },
         onError: (e: any) => showAlert('Could not post', e?.message ?? 'Try again.'),
       },
     );
@@ -83,6 +103,22 @@ export default function PostDetail() {
               </Text>
               <Text style={s.time}>{new Date(post.created_at).toLocaleString()}</Text>
             </View>
+            {isOwner && (
+              <TouchableOpacity
+                onPress={() => toggleMute.mutate({ postId, disabled: !commentsDisabled })}
+                style={s.muteBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={commentsDisabled ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+                  size={14}
+                  color={commentsDisabled ? Colors.textMuted : Colors.textPrimary}
+                />
+                <Text style={s.muteBtnText}>
+                  {commentsDisabled ? 'Comments off' : 'Comments on'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {!!post.body && <Text style={s.body}>{post.body}</Text>}
@@ -125,73 +161,140 @@ export default function PostDetail() {
 
           <View style={s.commentsHeader}>
             <Text style={s.commentsLabel}>
-              Comments {comments?.length ? `(${comments.length})` : ''}
+              Comments {totalCount ? `(${totalCount})` : ''}
             </Text>
           </View>
 
-          {comments && comments.length === 0 && (
+          {commentsDisabled && (
+            <Text style={s.noComments}>The author has turned off comments.</Text>
+          )}
+
+          {!commentsDisabled && comments && comments.length === 0 && (
             <Text style={s.noComments}>No comments yet. Say something.</Text>
           )}
 
-          {comments?.map((c) => {
-            const isMine = c.author_id === userId;
-            return (
-              <View key={c.id} style={s.commentRow}>
-                <View style={s.commentAvatar}>
-                  <Text style={s.commentAvatarText}>
-                    {(c.author?.display_name ?? '?').slice(0, 1).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={s.commentMeta}>
-                    <Text style={s.commentAuthor}>
-                      {c.author?.display_name ?? c.author?.handle ?? 'Unknown'}
-                    </Text>
-                    <Text style={s.commentTime}>{relTime(c.created_at)}</Text>
-                  </View>
-                  <Text style={s.commentBody}>{c.body}</Text>
-                </View>
-                {isMine && (
-                  <TouchableOpacity
-                    onPress={() => showConfirm(
-                      'Delete comment?', '',
-                      () => deleteComment.mutate(c.id), 'Delete', 'Cancel',
-                    )}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Ionicons name="trash-outline" size={14} color={Colors.textMuted} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
+          {(comments ?? []).map((c) => (
+            <CommentRow
+              key={c.id}
+              node={c}
+              depth={0}
+              userId={userId ?? null}
+              onReply={(node) =>
+                setReplyTo({
+                  id: node.id,
+                  name: node.author?.display_name ?? node.author?.handle ?? 'them',
+                })
+              }
+              onDelete={(id) =>
+                showConfirm(
+                  'Delete comment?', '',
+                  () => deleteComment.mutate(id), 'Delete', 'Cancel',
+                )
+              }
+            />
+          ))}
         </ScrollView>
 
         {/* Comment composer pinned to the bottom */}
-        <View style={s.composer}>
-          <TextInput
-            style={s.composerInput}
-            value={draft}
-            onChangeText={setDraft}
-            placeholder="Write a comment…"
-            placeholderTextColor={Colors.textMuted}
-            multiline
-            maxLength={2000}
-            returnKeyType="send"
-            blurOnSubmit
-            onSubmitEditing={submitComment}
-          />
-          <TouchableOpacity
-            style={[s.composerSend, !draft.trim() && { opacity: 0.4 }]}
-            onPress={submitComment}
-            disabled={!draft.trim() || addComment.isPending}
-          >
-            <Ionicons name="send" size={18} color="#FFF" />
-          </TouchableOpacity>
-        </View>
+        {!commentsDisabled && (
+          <View style={s.composer}>
+            {replyTo && (
+              <View style={s.replyPill}>
+                <Text style={s.replyPillText} numberOfLines={1}>
+                  Replying to <Text style={{ fontWeight: '700' }}>{replyTo.name}</Text>
+                </Text>
+                <TouchableOpacity onPress={() => setReplyTo(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Ionicons name="close" size={14} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={s.composerRow}>
+              <TextInput
+                style={s.composerInput}
+                value={draft}
+                onChangeText={setDraft}
+                placeholder={replyTo ? `Reply to ${replyTo.name}…` : 'Write a comment…'}
+                placeholderTextColor={Colors.textMuted}
+                multiline
+                maxLength={2000}
+                returnKeyType="send"
+                blurOnSubmit
+                onSubmitEditing={submitComment}
+              />
+              <TouchableOpacity
+                style={[s.composerSend, !draft.trim() && { opacity: 0.4 }]}
+                onPress={submitComment}
+                disabled={!draft.trim() || addComment.isPending}
+              >
+                <Ionicons name="send" size={18} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+function CommentRow({
+  node, depth, userId, onReply, onDelete,
+}: {
+  node: CommentNode;
+  depth: number;
+  userId: string | null;
+  onReply: (n: CommentNode) => void;
+  onDelete: (id: string) => void;
+}) {
+  const s = makeStyles();
+  const isMine = node.author_id === userId;
+  const indent = Math.min(depth, MAX_INDENT) * 16;
+
+  return (
+    <View>
+      <View style={[s.commentRow, { marginLeft: indent }]}>
+        <View style={s.commentAvatar}>
+          <Text style={s.commentAvatarText}>
+            {(node.author?.display_name ?? '?').slice(0, 1).toUpperCase()}
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={s.commentMeta}>
+            <Text style={s.commentAuthor}>
+              {node.author?.display_name ?? node.author?.handle ?? 'Unknown'}
+            </Text>
+            <Text style={s.commentTime}>{relTime(node.created_at)}</Text>
+          </View>
+          <Text style={s.commentBody}>{node.body}</Text>
+          <View style={s.commentActions}>
+            <TouchableOpacity onPress={() => onReply(node)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+              <Text style={s.commentActionLink}>Reply</Text>
+            </TouchableOpacity>
+            {isMine && (
+              <TouchableOpacity onPress={() => onDelete(node.id)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                <Text style={[s.commentActionLink, { color: Colors.textMuted }]}>Delete</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+      {node.children.map((child) => (
+        <CommentRow
+          key={child.id}
+          node={child}
+          depth={depth + 1}
+          userId={userId}
+          onReply={onReply}
+          onDelete={onDelete}
+        />
+      ))}
+    </View>
+  );
+}
+
+function countTree(nodes: CommentNode[]): number {
+  let n = 0;
+  for (const c of nodes) n += 1 + countTree(c.children);
+  return n;
 }
 
 function relTime(iso: string): string {
@@ -225,6 +328,13 @@ function makeStyles() { return StyleSheet.create({
   },
   empty: { padding: 40, textAlign: 'center', color: Colors.textMuted },
 
+  muteBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  muteBtnText: { fontSize: 11, color: Colors.textPrimary, fontWeight: '600' },
+
   commentsHeader: { marginTop: 16, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border },
   commentsLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.4 },
   noComments: { fontSize: 13, color: Colors.textMuted, fontStyle: 'italic', marginTop: 4 },
@@ -240,13 +350,22 @@ function makeStyles() { return StyleSheet.create({
   commentAuthor: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
   commentTime: { fontSize: 11, color: Colors.textMuted },
   commentBody: { fontSize: 14, color: Colors.textPrimary, marginTop: 2, lineHeight: 19 },
+  commentActions: { flexDirection: 'row', gap: 14, marginTop: 4 },
+  commentActionLink: { fontSize: 12, fontWeight: '600', color: Colors.primary },
 
   composer: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
     backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.md, paddingVertical: 10,
+    gap: 6,
   },
+  replyPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: Colors.primaryFaint, alignSelf: 'flex-start',
+  },
+  replyPillText: { fontSize: 12, color: Colors.textPrimary },
+  composerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   composerInput: {
     flex: 1, backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 10,
