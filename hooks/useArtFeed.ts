@@ -35,7 +35,11 @@ export interface ArtWork {
   genre?: string[] | null;
 }
 
-const POOL_SIZE = 100; // wide enough to survive aggressive filtering
+// Reservoir is small enough (~300 rows total) that we just pull the whole
+// thing in one go. That way the prefs filter applies AFTER fetch and we
+// never hit the "0 matches because the SQL limit cut the relevant rows"
+// trap. Bumping limit so we don't accidentally cap as the gallery grows.
+const POOL_SIZE = 1000;
 
 export function useArtFeed() {
   // Read prefs as primitives so the query key changes when they do.
@@ -50,7 +54,7 @@ export function useArtFeed() {
         .from('art_works')
         .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre')
         .eq('source', 'ad')
-        .limit(5);
+        .limit(20);
 
       const { data: art, error } = await supabase
         .from('art_works')
@@ -59,14 +63,15 @@ export function useArtFeed() {
         .limit(POOL_SIZE);
       if (error) throw error;
 
-      let pool = [...(ads ?? []), ...(art ?? [])] as ArtWork[];
+      const fullPool = [...(ads ?? []), ...(art ?? [])] as ArtWork[];
 
       // Apply prefs. Empty selections == "no filter on that axis".
       const erasSet = new Set<ArtEra>(eras);
       const schoolsSet = new Set(schools.map((x) => x.toLowerCase()));
       const genresSet = new Set(genres.map((x) => x.toLowerCase()));
+      const filtersActive = erasSet.size > 0 || schoolsSet.size > 0 || genresSet.size > 0;
 
-      pool = pool.filter((w) => {
+      let pool = fullPool.filter((w) => {
         if (erasSet.size > 0) {
           const era = yearToEra(parseYear(w.year_created));
           if (!era || !erasSet.has(era)) return false;
@@ -82,6 +87,14 @@ export function useArtFeed() {
         }
         return true;
       });
+
+      // Graceful empty: if the filter combo zeroes out our pool, fall
+      // back to the unfiltered set so banners / slots don't just go
+      // blank with no explanation. The UI can surface "your filter
+      // matched nothing" elsewhere if needed.
+      if (filtersActive && pool.length === 0) {
+        pool = fullPool;
+      }
 
       // Shuffle so banner / inline / sidebar slots all get variety.
       for (let i = pool.length - 1; i > 0; i--) {
