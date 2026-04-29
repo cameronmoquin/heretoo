@@ -246,6 +246,86 @@ export function useMyConnections() {
   });
 }
 
+/**
+ * Update the viewer's stature (and inferred generation) within a single
+ * family. RLS lets a user update their own `family_members` row via the
+ * `fm_self_respond` policy from migration 001.
+ *
+ * Generation is derived from the stature so the user only has to pick
+ * the role and we figure out where on the tree they sit:
+ *   matriarch / patriarch / elder  → generation 2
+ *   parent / guardian              → generation 1
+ *   sibling / offspring / child    → generation 0
+ */
+export type FamilyStature =
+  | 'matriarch' | 'patriarch' | 'elder' | 'parent'
+  | 'guardian' | 'sibling' | 'offspring' | 'child';
+
+const GENERATION_BY_STATURE: Record<FamilyStature, number> = {
+  matriarch: 2, patriarch: 2, elder: 2,
+  parent: 1, guardian: 1,
+  sibling: 0, offspring: 0, child: 0,
+};
+
+export const STATURE_LABELS: Record<FamilyStature, string> = {
+  matriarch: 'Matriarch',
+  patriarch: 'Patriarch',
+  elder: 'Elder',
+  parent: 'Parent',
+  guardian: 'Guardian',
+  sibling: 'Sibling',
+  offspring: 'Adult child',
+  child: 'Child',
+};
+
+export function useUpdateMyStature() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  return useMutation({
+    mutationFn: async (input: { familyId: string; stature: FamilyStature }) => {
+      if (!userId) throw new Error('Not signed in');
+      const generation = GENERATION_BY_STATURE[input.stature];
+      const { error } = await supabase
+        .from('family_members')
+        .update({ stature: input.stature, generation })
+        .eq('family_id', input.familyId)
+        .eq('profile_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['families'] });
+      qc.invalidateQueries({ queryKey: ['family-members'] });
+      qc.invalidateQueries({ queryKey: ['stature-summary'] });
+    },
+  });
+}
+
+/**
+ * Returns the viewer's current stature in each family they're in.
+ * Used by the profile-hub stature picker so the row preselects the
+ * value the user already has.
+ */
+export function useMyStatures() {
+  const userId = useAuthStore((s) => s.user?.id);
+  return useQuery({
+    queryKey: ['my-statures', userId],
+    queryFn: async (): Promise<Record<string, FamilyStature | null>> => {
+      if (!userId) return {};
+      const { data, error } = await supabase
+        .from('family_members')
+        .select('family_id, stature')
+        .eq('profile_id', userId)
+        .eq('status', 'active');
+      if (error) throw error;
+      const out: Record<string, FamilyStature | null> = {};
+      for (const r of data ?? []) out[r.family_id] = (r.stature ?? null) as FamilyStature | null;
+      return out;
+    },
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+}
+
 export function useFamilyFeed(familyId: string | null) {
   const qc = useQueryClient();
   const query = useQuery({

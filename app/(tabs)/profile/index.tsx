@@ -12,17 +12,21 @@
  * page, just framed by the sidebar.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../hooks/useAuth';
-import { useMyFamilies, useMyNetworkStats } from '../../../hooks/useFamily';
+import {
+  useMyFamilies, useMyNetworkStats,
+  useMyStatures, useUpdateMyStature,
+  STATURE_LABELS, type FamilyStature,
+} from '../../../hooks/useFamily';
 import { useThemeStore } from '../../../stores/themeStore';
-import { showConfirm } from '../../../lib/alert';
+import { showConfirm, showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
@@ -35,6 +39,9 @@ export default function OwnProfileScreen() {
   const { data: stats } = useMyNetworkStats();
   const themeMode = useThemeStore((st) => st.mode);
   const toggleTheme = useThemeStore((st) => st.toggle);
+  const { data: statures } = useMyStatures();
+  const updateStature = useUpdateMyStature();
+  const [picker, setPicker] = useState<{ familyId: string; familyName: string } | null>(null);
 
   const handleSignOut = () => showConfirm('Sign out', 'Are you sure?', signOut, 'Sign out');
 
@@ -91,29 +98,43 @@ export default function OwnProfileScreen() {
               <Text style={s.sectionLink}>See all →</Text>
             </TouchableOpacity>
           </View>
-          {(families ?? []).slice(0, 4).map((f: any) => (
-            <TouchableOpacity
-              key={f.id}
-              style={s.familyRow}
-              onPress={() => router.push(`/family/${f.id}` as any)}
-              activeOpacity={0.7}
-            >
-              <View style={s.familyIcon}>
-                {f.cover_path ? (
-                  <Image source={{ uri: mediaPathToUrl(f.cover_path) }} style={s.familyIconImg} />
-                ) : (
-                  <Ionicons name="people" size={18} color={Colors.primary} />
-                )}
+          {(families ?? []).slice(0, 4).map((f: any) => {
+            const myStature = (statures?.[f.id] ?? null) as FamilyStature | null;
+            const myRoleLabel = myStature ? STATURE_LABELS[myStature] : 'Set role';
+            return (
+              <View key={f.id} style={s.familyRow}>
+                <TouchableOpacity
+                  style={s.familyIcon}
+                  onPress={() => router.push(`/family/${f.id}` as any)}
+                  activeOpacity={0.7}
+                >
+                  {f.cover_path ? (
+                    <Image source={{ uri: mediaPathToUrl(f.cover_path) }} style={s.familyIconImg} />
+                  ) : (
+                    <Ionicons name="people" size={18} color={Colors.primary} />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ flex: 1 }}
+                  onPress={() => router.push(`/family/${f.id}` as any)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={s.familyName}>{f.name}</Text>
+                  <Text style={s.familyRoleSub}>Tap pill to change your role</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={s.rolePill}
+                  onPress={() => setPicker({ familyId: f.id, familyName: f.name })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[s.rolePillText, !myStature && { color: Colors.textMuted }]}>
+                    {myRoleLabel}
+                  </Text>
+                  <Ionicons name="chevron-down" size={12} color={Colors.textMuted} />
+                </TouchableOpacity>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.familyName}>{f.name}</Text>
-                {!!f.my_role && f.my_role !== 'family' && (
-                  <Text style={s.familyRole}>{f.my_role}</Text>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-            </TouchableOpacity>
-          ))}
+            );
+          })}
           {(!families || families.length === 0) && (
             <View style={s.emptyFamilies}>
               <Text style={s.emptyText}>You're not in a family yet.</Text>
@@ -168,6 +189,53 @@ export default function OwnProfileScreen() {
           <Text style={s.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Stature picker modal */}
+      <Modal
+        visible={!!picker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPicker(null)}
+      >
+        <Pressable style={s.modalBackdrop} onPress={() => setPicker(null)}>
+          <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={s.modalTitle}>Your role in {picker?.familyName}</Text>
+            <Text style={s.modalSub}>This sets the letter on your avatar.</Text>
+            <ScrollView style={{ maxHeight: 380 }}>
+              {(Object.keys(STATURE_LABELS) as FamilyStature[]).map((key) => {
+                const isCurrent = picker && statures?.[picker.familyId] === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[s.statureRow, isCurrent && s.statureRowActive]}
+                    onPress={() => {
+                      if (!picker) return;
+                      updateStature.mutate(
+                        { familyId: picker.familyId, stature: key },
+                        {
+                          onSuccess: () => setPicker(null),
+                          onError: (e: any) => showAlert('Could not update', e?.message ?? 'Try again.'),
+                        },
+                      );
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[s.statureLabel, isCurrent && s.statureLabelActive]}>
+                      {STATURE_LABELS[key]}
+                    </Text>
+                    {isCurrent && (
+                      <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity style={s.modalCancel} onPress={() => setPicker(null)}>
+              <Text style={s.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -268,4 +336,34 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   signOutText: { fontSize: 13, color: Colors.error, fontWeight: '600' },
+
+  familyRoleSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
+  rolePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
+  },
+  rolePillText: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center', padding: 20,
+  },
+  modalCard: {
+    backgroundColor: Colors.surface, borderRadius: 14,
+    width: '100%', maxWidth: 420, padding: 18, gap: 4,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  statureRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10,
+  },
+  statureRowActive: { backgroundColor: Colors.primaryFaint },
+  statureLabel: { fontSize: 15, color: Colors.textPrimary },
+  statureLabelActive: { fontWeight: '700' },
+  modalCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
+  modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }
