@@ -1,25 +1,33 @@
 /**
- * Web build of TwoWayCapture.
+ * Two-Way — dual-camera capture (web).
  *
- * Two paths:
- *   - **Mobile browser** (phone via heretoo.social) → sequential capture:
- *     back camera → user taps shutter → switch to front camera → tap
- *     again → composite via canvas. Browsers can't grab two camera
- *     streams at once, so sequential is the only honest answer here.
- *   - **Desktop browser** → "Two-Way is mobile only" stub. Two-Way is
- *     a phone experience; on a laptop it just doesn't make sense, and
- *     `getUserMedia({ facingMode: 'environment' })` rarely works on
- *     desktops anyway.
+ * One shutter tap → back snap, auto-flip to front, auto-snap, composite.
+ * The user does not have to tap twice. Flow:
  *
- * The native (iOS/Android app) path uses TwoWayCapture.tsx with
- * react-native-vision-camera for true simultaneous capture. Metro picks
- * `.web.tsx` over `.tsx` when targeting web.
+ *   1. Mount, attach back camera to <video>, wait for first frame.
+ *   2. User taps shutter.
+ *   3. Capture frame from back stream → cache as backShot.
+ *   4. Swap stream to front camera, wait for first frame.
+ *   5. Capture frame from front stream → cache as frontShot.
+ *   6. Composite: back full-bleed, front rounded inset top-right (mirrored).
+ *   7. Hand off via onCapture as a single JPEG.
+ *
+ * Browsers can't grab two camera streams simultaneously (yet — WebRTC
+ * spec issue), so the swap is sequential. End-to-end is ~600–900 ms
+ * which is short enough that the subject doesn't move noticeably.
+ *
+ * Mobile-only: desktop browsers see a stub that points to the phone.
+ *
+ * The native iOS/Android version (TwoWayCapture.tsx) uses
+ * react-native-vision-camera with two simultaneously-active <Camera>
+ * components — true at-the-same-instant capture.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { waitForFrame } from './OneWayCapture.web';
 
 export interface CapturedAsset {
   uri: string;
@@ -35,14 +43,11 @@ interface Props {
   onClose: () => void;
 }
 
-type Stage =
-  | 'idle' | 'requesting' | 'preview-back' | 'capturing-back'
-  | 'preview-front' | 'capturing-front' | 'composing' | 'done' | 'error';
+type Stage = 'requesting' | 'preview' | 'snapping' | 'composing' | 'error';
+type Facing = 'environment' | 'user';
 
 function isMobileBrowser(): boolean {
   if (typeof navigator === 'undefined') return false;
-  // Coarse pointer + touch + small viewport is the most reliable signal
-  // that we're on a phone, regardless of UA spoofing.
   const coarse = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(pointer: coarse)').matches
     : false;
@@ -77,15 +82,35 @@ export function TwoWayCapture({ onCapture, onClose }: Props) {
 
 function TwoWayWebCapture({ onCapture, onClose }: Props) {
   const s = makeStyles();
-  const videoRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const backShotRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [stage, setStage] = useState<Stage>('idle');
+  const [stage, setStage] = useState<Stage>('requesting');
+  const [facing, setFacing] = useState<Facing>('environment');
   const [error, setError] = useState<string | null>(null);
 
+  // (Re)acquire camera whenever facing changes.
   useEffect(() => {
-    startBackCamera();
+    let cancelled = false;
+    (async () => {
+      // Don't drop back into the spinner during the auto-flip step;
+      // we want a smooth transition. The orchestrator manages stage.
+      try {
+        await acquire(facing);
+        if (cancelled) return;
+      } catch (e: any) {
+        if (cancelled) return;
+        // eslint-disable-next-line no-console
+        console.error('CAMERA_ACCESS_ERROR', e);
+        setError(e?.message ?? 'Could not access camera. Allow permission and try again.');
+        setStage('error');
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facing]);
+
+  useEffect(() => {
     return () => stopStream();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -97,162 +122,115 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
     }
   }
 
-  async function startCamera(facing: 'environment' | 'user') {
-    setStage('requesting');
+  async function acquire(f: Facing) {
+    // Stop the previous stream first to free the camera hardware
+    // (some phones won't let you open a second camera while another
+    // is live).
     stopStream();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: f },
+        width: { ideal: 1920 },
+        height: { ideal: 1920 },
+      },
+      audio: false,
+    });
+    streamRef.current = stream;
+    const v = videoRef.current;
+    if (!v) {
+      stream.getTracks().forEach((t) => t.stop());
+      throw new Error('Video element not mounted');
+    }
+    v.srcObject = stream;
+    await waitForFrame(v);
+    if (stage === 'requesting') setStage('preview');
+  }
+
+  /**
+   * Single-tap, two-photo orchestration.
+   */
+  async function snapBoth() {
+    const v = videoRef.current;
+    if (!v) return;
+    setStage('snapping');
+    setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: 1280 },
-          height: { ideal: 1280 },
-        },
-        audio: false,
+      // 1. Capture back frame from current stream.
+      const backCanvas = drawToCanvas(v, false);
+      if (!backCanvas) throw new Error('Canvas unavailable.');
+
+      // 2. Auto-flip to front. Update state so transform / facing flips,
+      //    then re-acquire stream and wait for frame.
+      setFacing('user');
+      // Wait for the new effect to fire and acquire the front camera.
+      await waitForFacing(videoRef, 'user');
+
+      // 3. Capture front frame.
+      const frontCanvas = drawToCanvas(v, true);
+      if (!frontCanvas) throw new Error('Canvas unavailable for front capture.');
+
+      // 4. Composite.
+      setStage('composing');
+      const blob = await composite(backCanvas, frontCanvas);
+      if (!blob) throw new Error('Composite encode failed.');
+
+      const url = URL.createObjectURL(blob);
+      stopStream();
+      onCapture({
+        uri: url,
+        width: backCanvas.width,
+        height: backCanvas.height,
+        type: 'image',
+        mimeType: 'image/jpeg',
+        fileSize: blob.size,
       });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-      setStage(facing === 'environment' ? 'preview-back' : 'preview-front');
     } catch (e: any) {
       // eslint-disable-next-line no-console
-      console.error('CAMERA_ACCESS_ERROR', e);
-      setError(e?.message ?? 'Could not access camera. Allow camera permission and try again.');
+      console.error('TWOWAY_WEB_CAPTURE_ERROR', e);
+      setError(e?.message ?? 'Capture failed. Try again.');
       setStage('error');
     }
-  }
-
-  async function startBackCamera() {
-    setError(null);
-    await startCamera('environment');
-  }
-
-  async function snapBack() {
-    if (!videoRef.current) return;
-    setStage('capturing-back');
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 1280;
-    canvas.height = videoRef.current.videoHeight || 1280;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      setError('Canvas unavailable.');
-      setStage('error');
-      return;
-    }
-    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    backShotRef.current = canvas;
-    await startCamera('user');
-  }
-
-  async function snapFront() {
-    if (!videoRef.current || !backShotRef.current) return;
-    setStage('capturing-front');
-
-    const back = backShotRef.current;
-    const W = back.width;
-    const H = back.height;
-
-    const out = document.createElement('canvas');
-    out.width = W;
-    out.height = H;
-    const ctx = out.getContext('2d');
-    if (!ctx) {
-      setError('Canvas unavailable.');
-      setStage('error');
-      return;
-    }
-
-    // Back fills.
-    ctx.drawImage(back, 0, 0, W, H);
-
-    // Front inset top-right, mirrored.
-    const insetW = Math.round(W * 0.28);
-    const insetH = Math.round(insetW * (videoRef.current.videoHeight / Math.max(1, videoRef.current.videoWidth)));
-    const margin = Math.round(W * 0.025);
-    const x = W - insetW - margin;
-    const y = margin;
-    const r = Math.round(insetW * 0.06);
-
-    ctx.save();
-    roundedRectPath(ctx, x - 4, y - 4, insetW + 8, insetH + 8, r + 4);
-    ctx.fillStyle = '#000000';
-    ctx.fill();
-    ctx.restore();
-
-    ctx.save();
-    roundedRectPath(ctx, x, y, insetW, insetH, r);
-    ctx.clip();
-    ctx.translate(x + insetW, y);
-    ctx.scale(-1, 1);
-    ctx.drawImage(videoRef.current, 0, 0, insetW, insetH);
-    ctx.restore();
-
-    setStage('composing');
-    out.toBlob(
-      (blob) => {
-        if (!blob) {
-          setError('Could not encode image.');
-          setStage('error');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        stopStream();
-        setStage('done');
-        onCapture({
-          uri: url,
-          width: W,
-          height: H,
-          type: 'image',
-          mimeType: 'image/jpeg',
-          fileSize: blob.size,
-        });
-      },
-      'image/jpeg',
-      0.9,
-    );
   }
 
   return (
     <View style={s.root}>
-      <View style={s.preview}>
-        {(stage === 'preview-back' || stage === 'preview-front') &&
-          React.createElement('video', {
-            ref: videoRef,
-            autoPlay: true,
-            playsInline: true,
-            muted: true,
-            style: {
-              width: '100%', height: '100%', objectFit: 'cover',
-              transform: stage === 'preview-front' ? 'scaleX(-1)' : 'none',
-            },
-          })}
-        {(stage === 'requesting' || stage === 'composing') && (
-          <View style={s.center}>
-            <ActivityIndicator size="large" color="#FFF" />
-            <Text style={s.statusText}>
-              {stage === 'requesting' ? 'Asking for camera access…' : 'Composing…'}
-            </Text>
-          </View>
-        )}
-        {stage === 'error' && (
-          <View style={s.center}>
-            <Ionicons name="alert-circle-outline" size={42} color="#FF6B6B" />
-            <Text style={[s.statusText, { color: '#FF6B6B' }]}>{error}</Text>
-            <TouchableOpacity style={s.retryBtn} onPress={() => startBackCamera()}>
-              <Text style={s.retryBtnText}>Try again</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      {React.createElement('video', {
+        ref: videoRef,
+        autoPlay: true,
+        playsInline: true,
+        muted: true,
+        style: {
+          width: '100%', height: '100%', objectFit: 'cover',
+          transform: facing === 'user' ? 'scaleX(-1)' : 'none',
+          backgroundColor: '#000',
+        },
+      })}
 
-      <View style={s.hud}>
-        <Text style={s.hudLabel}>
-          {stage === 'preview-back' ? 'Step 1 of 2 — back camera' :
-           stage === 'preview-front' ? 'Step 2 of 2 — selfie' :
-           stage === 'capturing-back' || stage === 'capturing-front' ? 'Hold still…' :
-           stage === 'composing' ? 'Stitching…' : ''}
-        </Text>
+      {(stage === 'requesting' || stage === 'snapping' || stage === 'composing') && (
+        <View style={s.overlay}>
+          <ActivityIndicator size="large" color="#FFF" />
+          <Text style={s.statusText}>
+            {stage === 'requesting' ? 'Asking for camera access…' :
+             stage === 'snapping' ? 'Hold still — both cameras…' :
+             'Stitching…'}
+          </Text>
+        </View>
+      )}
+      {stage === 'error' && (
+        <View style={s.overlay}>
+          <Ionicons name="alert-circle-outline" size={42} color="#FF6B6B" />
+          <Text style={[s.statusText, { color: '#FF6B6B' }]}>{error}</Text>
+          <TouchableOpacity
+            style={s.retryBtn}
+            onPress={() => { setFacing('environment'); setStage('requesting'); setError(null); }}
+          >
+            <Text style={s.retryBtnText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={s.hud} pointerEvents="none">
+        <Text style={s.hudLabel}>Two-Way · one tap, both cameras</Text>
       </View>
 
       <View style={s.controls}>
@@ -260,25 +238,104 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
           <Ionicons name="close" size={26} color="#FFF" />
         </TouchableOpacity>
 
-        {stage === 'preview-back' && (
-          <TouchableOpacity onPress={snapBack} style={s.shutter} activeOpacity={0.8}>
+        {stage === 'preview' ? (
+          <TouchableOpacity onPress={snapBoth} style={s.shutter} activeOpacity={0.8}>
             <View style={s.shutterInner} />
           </TouchableOpacity>
-        )}
-        {stage === 'preview-front' && (
-          <TouchableOpacity onPress={snapFront} style={s.shutter} activeOpacity={0.8}>
-            <View style={[s.shutterInner, { backgroundColor: '#FFD60A' }]} />
-          </TouchableOpacity>
-        )}
-        {(stage === 'requesting' || stage === 'capturing-back' ||
-          stage === 'capturing-front' || stage === 'composing') && (
+        ) : (
           <View style={[s.shutter, { opacity: 0.4 }]}><View style={s.shutterInner} /></View>
         )}
 
-        <View style={{ width: 40 }} />
+        <View style={{ width: 44 }} />
       </View>
     </View>
   );
+}
+
+// ── helpers ────────────────────────────────────────────────────────────
+
+/** Snapshot the current <video> frame to a fresh canvas. */
+function drawToCanvas(v: HTMLVideoElement, mirror: boolean): HTMLCanvasElement | null {
+  const W = v.videoWidth || 1280;
+  const H = v.videoHeight || 1280;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext('2d');
+  if (!ctx) return null;
+  if (mirror) {
+    ctx.translate(W, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(v, 0, 0, W, H);
+  return c;
+}
+
+/**
+ * Wait for the next stream change to land on the requested facing.
+ * The acquire() effect in TwoWayWebCapture sets srcObject + waits for
+ * the first frame; we just poll videoRef.current.readyState until
+ * the new stream is live.
+ */
+async function waitForFacing(
+  videoRef: React.MutableRefObject<HTMLVideoElement | null>,
+  _facing: Facing,
+  timeoutMs = 5000,
+): Promise<void> {
+  const start = Date.now();
+  // Wait up to one tick for setFacing to flush + effect to start.
+  await new Promise((r) => setTimeout(r, 16));
+  while (Date.now() - start < timeoutMs) {
+    const v = videoRef.current;
+    if (v && v.readyState >= 2 && v.videoWidth > 0) {
+      // Give it one extra frame to be safe (avoid encoded but
+      // not-yet-painted frame).
+      await new Promise((r) => setTimeout(r, 80));
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 40));
+  }
+  throw new Error('Front camera did not start in time.');
+}
+
+/** Composite back + front into a single JPEG. */
+async function composite(back: HTMLCanvasElement, front: HTMLCanvasElement): Promise<Blob | null> {
+  const W = back.width;
+  const H = back.height;
+  const out = document.createElement('canvas');
+  out.width = W;
+  out.height = H;
+  const ctx = out.getContext('2d');
+  if (!ctx) return null;
+
+  // Back full-bleed.
+  ctx.drawImage(back, 0, 0, W, H);
+
+  // Front inset top-right, ~28% of width, rounded, with black border.
+  const insetW = Math.round(W * 0.28);
+  const insetH = Math.round(insetW * (front.height / Math.max(1, front.width)));
+  const margin = Math.round(W * 0.025);
+  const x = W - insetW - margin;
+  const y = margin;
+  const r = Math.round(insetW * 0.06);
+
+  // Outer black border behind the inset for separation.
+  ctx.save();
+  roundedRectPath(ctx, x - 4, y - 4, insetW + 8, insetH + 8, r + 4);
+  ctx.fillStyle = '#000';
+  ctx.fill();
+  ctx.restore();
+
+  // Clipped front draw.
+  ctx.save();
+  roundedRectPath(ctx, x, y, insetW, insetH, r);
+  ctx.clip();
+  ctx.drawImage(front, x, y, insetW, insetH);
+  ctx.restore();
+
+  return new Promise((resolve) => {
+    out.toBlob((b) => resolve(b), 'image/jpeg', 0.9);
+  });
 }
 
 function roundedRectPath(
@@ -300,8 +357,11 @@ function roundedRectPath(
 
 function makeStyles() { return StyleSheet.create({
   root: { ...StyleSheet.absoluteFillObject, backgroundColor: '#000', zIndex: 1000 },
-  preview: { flex: 1, backgroundColor: '#000' },
-  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center', gap: 12,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
   statusText: { color: '#FFF', fontSize: 14, marginTop: 8, textAlign: 'center', maxWidth: 320 },
   hud: { position: 'absolute', top: 30, left: 0, right: 0, alignItems: 'center' },
   hudLabel: {
@@ -315,7 +375,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 24,
   },
   iconBtn: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center', justifyContent: 'center',
   },
   shutter: {

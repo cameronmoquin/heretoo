@@ -1,17 +1,18 @@
 /**
  * One-Way — single-camera live capture (web).
  *
- * Live viewfinder with a flip-camera toggle. Tap shutter, get a JPEG
- * back as an ImagePicker-shaped asset so the existing useUpload pipeline
- * handles it like any other photo.
+ * Live viewfinder with a flip-camera toggle. Tap shutter, get a JPEG.
  *
- * Why have this when "Add Photo" exists? Speed and intent: One-Way is
- * an in-the-moment capture that never leaves the app. Add Photo opens
- * the OS library / picker, which is two extra taps and breaks flow.
+ * Why "always-mount" the <video>: React Native Web only passes `ref` to
+ * a real DOM node when the element is mounted. Conditionally rendering
+ * `<video>` based on stage made `videoRef.current` null at the moment
+ * we tried to attach `srcObject`, leaving the camera disconnected and
+ * the canvas drawing pure black. The fix is to keep <video> in the DOM
+ * the whole time and toggle overlays on top of it.
  *
- * Mobile browsers run the live camera. Desktop browsers can run it too
- * (most laptops have a webcam) but `facingMode: 'environment'` falls
- * back to the only camera available, which is fine.
+ * Why we wait for `readyState >= HAVE_CURRENT_DATA` before capture:
+ * `getUserMedia()` resolves before the first frame paints. Drawing to
+ * canvas immediately gives you the empty 0x0 backbuffer.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -33,23 +34,67 @@ interface Props {
   onClose: () => void;
 }
 
-type Stage = 'idle' | 'requesting' | 'preview' | 'capturing' | 'done' | 'error';
+type Stage = 'requesting' | 'preview' | 'capturing' | 'error';
 type Facing = 'environment' | 'user';
 
 export function OneWayCapture({ onCapture, onClose }: Props) {
   const s = makeStyles();
-  const videoRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [facing, setFacing] = useState<Facing>('environment');
-  const [stage, setStage] = useState<Stage>('idle');
+  const [stage, setStage] = useState<Stage>('requesting');
   const [error, setError] = useState<string | null>(null);
 
+  // (Re)acquire camera whenever facing changes.
   useEffect(() => {
-    startCamera(facing);
-    return () => stopStream();
+    let cancelled = false;
+    (async () => {
+      setStage('requesting');
+      setError(null);
+      stopStream();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1920 },
+            height: { ideal: 1920 },
+          },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        const v = videoRef.current;
+        if (v) {
+          v.srcObject = stream;
+          // Wait for first frame before letting the user shoot.
+          await waitForFrame(v);
+          if (!cancelled) setStage('preview');
+        }
+      } catch (e: any) {
+        // eslint-disable-next-line no-console
+        console.error('CAMERA_ACCESS_ERROR', e);
+        if (!cancelled) {
+          setError(e?.message ?? 'Could not access camera. Allow permission and try again.');
+          setStage('error');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facing]);
+
+  // Cleanup on unmount.
+  useEffect(() => {
+    return () => stopStream();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function stopStream() {
     if (streamRef.current) {
@@ -58,118 +103,74 @@ export function OneWayCapture({ onCapture, onClose }: Props) {
     }
   }
 
-  async function startCamera(f: Facing) {
-    setStage('requesting');
-    setError(null);
-    stopStream();
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: f },
-          width: { ideal: 1920 },
-          height: { ideal: 1920 },
-        },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-      setStage('preview');
-    } catch (e: any) {
-      // eslint-disable-next-line no-console
-      console.error('CAMERA_ACCESS_ERROR', e);
-      setError(e?.message ?? 'Could not access camera. Allow permission and try again.');
-      setStage('error');
-    }
-  }
-
   async function snap() {
-    if (!videoRef.current) return;
+    const v = videoRef.current;
+    if (!v) return;
     setStage('capturing');
-    const W = videoRef.current.videoWidth || 1280;
-    const H = videoRef.current.videoHeight || 1280;
-
-    const out = document.createElement('canvas');
-    out.width = W;
-    out.height = H;
-    const ctx = out.getContext('2d');
-    if (!ctx) {
-      setError('Canvas unavailable.');
+    const blob = await captureFrame(v, facing);
+    if (!blob) {
+      setError('Could not encode image.');
       setStage('error');
       return;
     }
-
-    if (facing === 'user') {
-      // Mirror the selfie horizontally so the captured image matches
-      // what the user saw in the viewfinder.
-      ctx.translate(W, 0);
-      ctx.scale(-1, 1);
-    }
-    ctx.drawImage(videoRef.current, 0, 0, W, H);
-
-    out.toBlob(
-      (blob) => {
-        if (!blob) {
-          setError('Could not encode image.');
-          setStage('error');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        stopStream();
-        setStage('done');
-        onCapture({
-          uri: url,
-          width: W,
-          height: H,
-          type: 'image',
-          mimeType: 'image/jpeg',
-          fileSize: blob.size,
-        });
-      },
-      'image/jpeg',
-      0.92,
-    );
+    const url = URL.createObjectURL(blob);
+    stopStream();
+    onCapture({
+      uri: url,
+      width: v.videoWidth,
+      height: v.videoHeight,
+      type: 'image',
+      mimeType: 'image/jpeg',
+      fileSize: blob.size,
+    });
   }
 
   return (
     <View style={s.root}>
-      <View style={s.preview}>
-        {stage === 'preview' &&
-          React.createElement('video', {
-            ref: videoRef,
-            autoPlay: true,
-            playsInline: true,
-            muted: true,
-            style: {
-              width: '100%', height: '100%', objectFit: 'cover',
-              transform: facing === 'user' ? 'scaleX(-1)' : 'none',
-            },
-          })}
-        {(stage === 'requesting' || stage === 'capturing') && (
-          <View style={s.center}>
-            <ActivityIndicator size="large" color="#FFF" />
-            <Text style={s.statusText}>
-              {stage === 'requesting' ? 'Asking for camera access…' : 'Snap…'}
-            </Text>
-          </View>
-        )}
-        {stage === 'error' && (
-          <View style={s.center}>
-            <Ionicons name="alert-circle-outline" size={42} color="#FF6B6B" />
-            <Text style={[s.statusText, { color: '#FF6B6B' }]}>{error}</Text>
-            <TouchableOpacity style={s.retryBtn} onPress={() => startCamera(facing)}>
-              <Text style={s.retryBtnText}>Try again</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      {/*
+        Always-mounted <video>. Hidden visually behind overlays during
+        non-preview stages but kept in the DOM so videoRef stays valid.
+      */}
+      {React.createElement('video', {
+        ref: videoRef,
+        autoPlay: true,
+        playsInline: true,
+        muted: true,
+        style: {
+          width: '100%', height: '100%', objectFit: 'cover',
+          transform: facing === 'user' ? 'scaleX(-1)' : 'none',
+          backgroundColor: '#000',
+        },
+      })}
 
-      <View style={s.hud}>
-        <Text style={s.hudLabel}>
-          {facing === 'environment' ? 'Back camera' : 'Selfie'}
-        </Text>
+      {(stage === 'requesting' || stage === 'capturing') && (
+        <View style={s.overlay}>
+          <ActivityIndicator size="large" color="#FFF" />
+          <Text style={s.statusText}>
+            {stage === 'requesting' ? 'Asking for camera access…' : 'Snap…'}
+          </Text>
+        </View>
+      )}
+      {stage === 'error' && (
+        <View style={s.overlay}>
+          <Ionicons name="alert-circle-outline" size={42} color="#FF6B6B" />
+          <Text style={[s.statusText, { color: '#FF6B6B' }]}>{error}</Text>
+          <TouchableOpacity
+            style={s.retryBtn}
+            onPress={() => {
+              // Trigger effect re-run by toggling facing back to itself.
+              setFacing((f) => f);
+              setStage('requesting');
+              setError(null);
+            }}
+          >
+            <Text style={s.retryBtnText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={s.hud} pointerEvents="none">
+        <Text style={s.hudLabel}>{facing === 'environment' ? 'Back camera' : 'Selfie'}</Text>
       </View>
 
       <View style={s.controls}>
@@ -197,10 +198,74 @@ export function OneWayCapture({ onCapture, onClose }: Props) {
   );
 }
 
+// ── helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Wait until the <video> has a real frame to draw. `getUserMedia`
+ * resolves before the first frame, and `play()` resolves when playback
+ * starts but not necessarily after a frame is decoded — so we listen
+ * for `loadeddata` and double-check `readyState >= HAVE_CURRENT_DATA`.
+ */
+export function waitForFrame(v: HTMLVideoElement, timeoutMs = 4000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (v.readyState >= 2 && v.videoWidth > 0) {
+      resolve();
+      return;
+    }
+    const t = setTimeout(() => {
+      cleanup();
+      reject(new Error('Camera frame timeout'));
+    }, timeoutMs);
+    const onReady = () => {
+      if (v.readyState >= 2 && v.videoWidth > 0) {
+        cleanup();
+        resolve();
+      }
+    };
+    const cleanup = () => {
+      clearTimeout(t);
+      v.removeEventListener('loadeddata', onReady);
+      v.removeEventListener('canplay', onReady);
+      v.removeEventListener('playing', onReady);
+    };
+    v.addEventListener('loadeddata', onReady);
+    v.addEventListener('canplay', onReady);
+    v.addEventListener('playing', onReady);
+    // Try playing in case it's paused.
+    v.play().catch(() => {});
+  });
+}
+
+/**
+ * Draw the current video frame to a canvas, mirroring the selfie if
+ * needed, and encode as a JPEG blob.
+ */
+export function captureFrame(v: HTMLVideoElement, facing: Facing): Promise<Blob | null> {
+  const W = v.videoWidth || 1280;
+  const H = v.videoHeight || 1280;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return Promise.resolve(null);
+
+  if (facing === 'user') {
+    ctx.translate(W, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(v, 0, 0, W, H);
+  return new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.92);
+  });
+}
+
 function makeStyles() { return StyleSheet.create({
   root: { ...StyleSheet.absoluteFillObject, backgroundColor: '#000', zIndex: 1000 },
-  preview: { flex: 1, backgroundColor: '#000' },
-  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center', gap: 12,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
   statusText: { color: '#FFF', fontSize: 14, marginTop: 8, textAlign: 'center', maxWidth: 320 },
   hud: { position: 'absolute', top: 30, left: 0, right: 0, alignItems: 'center' },
   hudLabel: {
