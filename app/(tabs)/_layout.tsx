@@ -69,11 +69,11 @@ function Sidebar() {
           );
         })}
 
-        {/* Divider + Family entry */}
+        {/* Divider + Family + Messages entries (out-of-tab routes) */}
         <View style={styles.sidebarDivider} />
         <TouchableOpacity
           style={[styles.navItem, pathname.startsWith('/family') && styles.navItemActive]}
-          onPress={() => router.push('/family')}
+          onPress={() => router.push('/family' as any)}
           activeOpacity={0.7}
         >
           <View style={styles.navItemInner}>
@@ -84,6 +84,22 @@ function Sidebar() {
             />
             <Text style={[styles.navText, pathname.startsWith('/family') && styles.navTextActive]}>
               Family
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.navItem, pathname.startsWith('/chat') && styles.navItemActive]}
+          onPress={() => router.push('/chat' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navItemInner}>
+            <Ionicons
+              name={pathname.startsWith('/chat') ? 'chatbubbles' : 'chatbubbles-outline'}
+              size={20}
+              color={pathname.startsWith('/chat') ? Colors.primary : Colors.textSecondary}
+            />
+            <Text style={[styles.navText, pathname.startsWith('/chat') && styles.navTextActive]}>
+              Messages
             </Text>
           </View>
         </TouchableOpacity>
