@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Platform,
+  View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
+  Modal, Pressable, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
+  useDeleteFamily, usePendingRename, useProposeRename, useVoteRename,
 } from '../../../hooks/useFamily';
-import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { useToggleHeart } from '../../../hooks/useFeed';
 import { useAuthStore } from '../../../stores/authStore';
-import { showConfirm } from '../../../lib/alert';
+import { showAlert, showConfirm } from '../../../lib/alert';
 import { FeedComposer } from '../../../components/feed/FeedComposer';
 import { PostCard } from '../../../components/feed/PostCard';
 import { Colors } from '../../../constants/colors';
@@ -28,7 +29,13 @@ export default function FamilyDetail() {
   const { data: members } = useFamilyMembers(id);
   const { data: posts } = useFamilyFeed(id ?? null);
   const leave = useLeaveFamily();
+  const deleteFamily = useDeleteFamily();
   const toggleHeart = useToggleHeart();
+  const { data: pendingRename } = usePendingRename(id ?? null);
+  const proposeRename = useProposeRename();
+  const voteRename = useVoteRename();
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameDraft, setRenameDraft] = useState('');
 
   if (isLoading || !id) {
     return (
@@ -51,6 +58,48 @@ export default function FamilyDetail() {
   }
 
   const isOwner = family.owner_id === userId;
+  const activeMembers = members?.filter((m) => m.status === 'active') ?? [];
+  const isSoloMember = activeMembers.length <= 1;
+  const totalActive = activeMembers.length;
+  const yesCount = pendingRename?.votes?.filter((v) => v.vote).length ?? 0;
+  const noCount = pendingRename?.votes?.filter((v) => !v.vote).length ?? 0;
+  const myVote = pendingRename?.votes?.find((v) => v.voter_id === userId);
+  const yesNeeded = Math.max(1, Math.floor(totalActive / 2) + 1);
+
+  const onProposeRename = () => {
+    const next = renameDraft.trim();
+    if (next.length < 2) {
+      showAlert('Too short', 'Pick a name with at least 2 characters.');
+      return;
+    }
+    if (next === family.name) {
+      showAlert('Same name', "That's already this family's name.");
+      return;
+    }
+    proposeRename.mutate(
+      { familyId: family.id, newName: next },
+      {
+        onSuccess: () => { setRenameOpen(false); setRenameDraft(''); },
+        onError: (e: any) => showAlert('Could not propose', e?.message ?? 'Try again.'),
+      },
+    );
+  };
+
+  const onDeleteFamily = () => {
+    showConfirm(
+      'Delete this family?',
+      "This is permanent — all posts and chat history go with it. Allowed only because you're the only member.",
+      () => {
+        deleteFamily.mutate(family.id, {
+          onSuccess: () => router.replace('/family' as any),
+          onError: (e: any) => showAlert('Could not delete', e?.message ?? 'Try again.'),
+        });
+      },
+      'Delete forever',
+      'Cancel',
+    );
+  };
+
   const onLeave = () => {
     showConfirm(
       isOwner ? 'You own this group' : 'Leave this family?',
@@ -121,6 +170,50 @@ export default function FamilyDetail() {
 
         {tab === 'about' && (
           <>
+            {/* Active rename proposal — shown to everyone in the family */}
+            {pendingRename?.proposal && (
+              <View style={s.proposalCard}>
+                <Text style={s.sectionLabel}>Pending rename</Text>
+                <Text style={s.proposalText}>
+                  Someone proposed renaming this family to{'\n'}
+                  <Text style={{ fontWeight: '700', color: Colors.textPrimary }}>
+                    "{pendingRename.proposal.proposed_name}"
+                  </Text>
+                </Text>
+                <Text style={s.proposalTally}>
+                  {yesCount} yes · {noCount} no · {yesNeeded} needed of {totalActive} members
+                </Text>
+                <View style={s.voteRow}>
+                  <TouchableOpacity
+                    style={[s.voteBtn, myVote?.vote === false && s.voteBtnNoActive]}
+                    onPress={() =>
+                      voteRename.mutate({
+                        proposalId: pendingRename.proposal!.id,
+                        vote: false,
+                        familyId: family.id,
+                      })
+                    }
+                  >
+                    <Ionicons name="close" size={16} color={myVote?.vote === false ? '#FFF' : Colors.textPrimary} />
+                    <Text style={[s.voteBtnText, myVote?.vote === false && { color: '#FFF' }]}>No</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[s.voteBtn, myVote?.vote === true && s.voteBtnYesActive]}
+                    onPress={() =>
+                      voteRename.mutate({
+                        proposalId: pendingRename.proposal!.id,
+                        vote: true,
+                        familyId: family.id,
+                      })
+                    }
+                  >
+                    <Ionicons name="checkmark" size={16} color={myVote?.vote === true ? '#000' : Colors.textPrimary} />
+                    <Text style={[s.voteBtnText, myVote?.vote === true && { color: '#000' }]}>Yes</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {!!family.description && (
               <View style={s.card}>
                 <Text style={s.sectionLabel}>About</Text>
@@ -203,14 +296,86 @@ export default function FamilyDetail() {
               ))}
             </View>
 
+            {/* Active-member actions: anyone can propose a rename */}
+            {!pendingRename?.proposal && (
+              <TouchableOpacity
+                style={s.secondaryBtn}
+                onPress={() => { setRenameDraft(family.name); setRenameOpen(true); }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="create-outline" size={16} color={Colors.textPrimary} />
+                <Text style={s.secondaryBtnText}>Propose new name</Text>
+              </TouchableOpacity>
+            )}
+
             {!isOwner && (
               <TouchableOpacity style={s.leaveBtn} onPress={onLeave}>
                 <Text style={s.leaveBtnText}>Leave family</Text>
               </TouchableOpacity>
             )}
+
+            {/* Owner-only: delete only allowed when no other active members */}
+            {isOwner && isSoloMember && (
+              <TouchableOpacity style={s.deleteBtn} onPress={onDeleteFamily} activeOpacity={0.85}>
+                <Ionicons name="trash-outline" size={15} color="#FFF" />
+                <Text style={s.deleteBtnText}>Delete this family</Text>
+              </TouchableOpacity>
+            )}
+            {isOwner && !isSoloMember && (
+              <Text style={s.deleteHint}>
+                Once another person joins, the family is theirs too — you can't delete it on your own.
+              </Text>
+            )}
           </>
         )}
       </ScrollView>
+
+      {/* Rename proposal modal */}
+      <Modal
+        visible={renameOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRenameOpen(false)}
+      >
+        <Pressable style={s.modalBackdrop} onPress={() => setRenameOpen(false)}>
+          <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={s.modalTitle}>Propose a new name</Text>
+            <Text style={s.modalSub}>
+              {totalActive <= 1
+                ? "You're the only active member, so this passes immediately."
+                : `Other family members will vote — strictly more than half (${yesNeeded} of ${totalActive}) must agree.`}
+            </Text>
+            <TextInput
+              style={s.modalInput}
+              value={renameDraft}
+              onChangeText={setRenameDraft}
+              placeholder="New family name"
+              placeholderTextColor={Colors.textMuted}
+              maxLength={80}
+              autoFocus
+              returnKeyType="go"
+              onSubmitEditing={onProposeRename}
+            />
+            <View style={s.modalRow}>
+              <TouchableOpacity
+                style={[s.modalBtn, s.modalBtnGhost]}
+                onPress={() => setRenameOpen(false)}
+              >
+                <Text style={s.modalBtnGhostText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.modalBtn, s.modalBtnPrimary, proposeRename.isPending && { opacity: 0.5 }]}
+                onPress={onProposeRename}
+                disabled={proposeRename.isPending}
+              >
+                <Text style={s.modalBtnPrimaryText}>
+                  {proposeRename.isPending ? 'Submitting…' : 'Propose'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -266,6 +431,79 @@ function makeStyles() { return StyleSheet.create({
   memberRole: { fontSize: 11, color: Colors.textMuted, textTransform: 'capitalize' },
   leaveBtn: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 14, marginTop: 8 },
   leaveBtnText: { color: Colors.error, fontSize: 14, fontWeight: '500' },
+
+  // Rename proposal banner
+  proposalCard: {
+    backgroundColor: Colors.primaryFaint,
+    borderColor: Colors.primary, borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: 14, gap: 8,
+  },
+  proposalText: { fontSize: 14, color: Colors.textSecondary, lineHeight: 19 },
+  proposalTally: { fontSize: 12, color: Colors.textMuted },
+  voteRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  voteBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  voteBtnText: { fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },
+  voteBtnYesActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  voteBtnNoActive: { backgroundColor: Colors.error, borderColor: Colors.error },
+
+  // Rename + delete buttons in About footer
+  secondaryBtn: {
+    alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    marginTop: 8,
+  },
+  secondaryBtnText: { fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },
+  deleteBtn: {
+    alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+    backgroundColor: Colors.error,
+    marginTop: 8,
+  },
+  deleteBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  deleteHint: {
+    textAlign: 'center', fontSize: 11, color: Colors.textMuted,
+    marginTop: 8, paddingHorizontal: 24, lineHeight: 16,
+  },
+
+  // Rename proposal modal
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center', padding: 20,
+  },
+  modalCard: {
+    backgroundColor: Colors.surface, borderRadius: 14,
+    width: '100%', maxWidth: 420, padding: 18, gap: 8,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  modalSub: { fontSize: 12, color: Colors.textMuted, lineHeight: 17 },
+  modalInput: {
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: Colors.textPrimary,
+    marginTop: 4,
+  },
+  modalRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  modalBtn: {
+    flex: 1, paddingVertical: 11, borderRadius: 999,
+    alignItems: 'center',
+  },
+  modalBtnGhost: { borderWidth: 1, borderColor: Colors.border },
+  modalBtnGhostText: { color: Colors.textPrimary, fontWeight: '600', fontSize: 13 },
+  modalBtnPrimary: { backgroundColor: Colors.primary },
+  modalBtnPrimaryText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
 
   postCard: {
     backgroundColor: Colors.surfaceLight, borderRadius: Radius.md, padding: 14,

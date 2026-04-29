@@ -184,6 +184,114 @@ export function useLeaveFamily() {
   });
 }
 
+// ── Delete a family (only allowed when the owner is the sole member) ──
+export function useDeleteFamily() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (familyId: string) => {
+      const { error } = await supabase
+        .from('families')
+        .delete()
+        .eq('id', familyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['families'] });
+      qc.invalidateQueries({ queryKey: ['network-stats'] });
+    },
+  });
+}
+
+// ── Collective-vote rename (migration 010) ────────────────────────────
+export interface RenameProposal {
+  id: string;
+  family_id: string;
+  proposed_name: string;
+  proposed_by: string;
+  status: 'pending' | 'passed' | 'failed' | 'cancelled';
+  resolved_at: string | null;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface RenameVote {
+  proposal_id: string;
+  voter_id: string;
+  vote: boolean;
+  created_at: string;
+}
+
+/**
+ * The currently-pending rename proposal for a family, if any. Each
+ * family can only have one pending at a time (enforced by partial
+ * unique index in the migration).
+ */
+export function usePendingRename(familyId: string | null) {
+  return useQuery({
+    queryKey: ['pending-rename', familyId],
+    queryFn: async (): Promise<{ proposal: RenameProposal | null; votes: RenameVote[] } | null> => {
+      if (!familyId) return null;
+      const { data: proposal, error } = await supabase
+        .from('family_rename_proposals')
+        .select('*')
+        .eq('family_id', familyId)
+        .eq('status', 'pending')
+        .maybeSingle();
+      if (error) throw error;
+      if (!proposal) return { proposal: null, votes: [] };
+
+      const { data: votes, error: vErr } = await supabase
+        .from('family_rename_votes')
+        .select('*')
+        .eq('proposal_id', proposal.id);
+      if (vErr) throw vErr;
+
+      return {
+        proposal: proposal as RenameProposal,
+        votes: (votes ?? []) as RenameVote[],
+      };
+    },
+    enabled: !!familyId,
+    staleTime: 10_000,
+  });
+}
+
+export function useProposeRename() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { familyId: string; newName: string }) => {
+      const { error } = await supabase.rpc('propose_family_rename', {
+        p_family_id: input.familyId,
+        p_new_name: input.newName,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_v, vars) => {
+      qc.invalidateQueries({ queryKey: ['pending-rename', vars.familyId] });
+      qc.invalidateQueries({ queryKey: ['family', vars.familyId] });
+      qc.invalidateQueries({ queryKey: ['families'] });
+    },
+  });
+}
+
+export function useVoteRename() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { proposalId: string; vote: boolean; familyId: string }) => {
+      const { error } = await supabase.rpc('vote_family_rename', {
+        p_proposal_id: input.proposalId,
+        p_vote: input.vote,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_v, vars) => {
+      qc.invalidateQueries({ queryKey: ['pending-rename', vars.familyId] });
+      qc.invalidateQueries({ queryKey: ['family', vars.familyId] });
+      qc.invalidateQueries({ queryKey: ['families'] });
+    },
+  });
+}
+
 // ── family-scoped feed ────────────────────────────────────────────────
 // ── Network stats (RPC from migration 003) ──────────────────────────────
 export function useMyNetworkStats() {
