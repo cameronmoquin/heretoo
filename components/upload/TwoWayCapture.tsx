@@ -253,11 +253,14 @@ function TwoWayNative({ onCapture, onClose }: Props) {
           <View style={[
             s.compositeInset,
             {
-              width: Math.round(shots.w * 0.28),
-              height: Math.round(shots.w * 0.28 * 4 / 3),
-              top: Math.round(shots.w * 0.025),
-              right: Math.round(shots.w * 0.025),
-              borderRadius: Math.round(shots.w * 0.018),
+              // Bigger inset (32% of width), portrait aspect, white rim,
+              // soft shadow — matches the polish of the web composite.
+              width: Math.round(shots.w * 0.32),
+              height: Math.round(shots.w * 0.32 * 4 / 3),
+              top: Math.round(shots.w * 0.03),
+              right: Math.round(shots.w * 0.03),
+              borderRadius: Math.round(shots.w * 0.026),
+              borderWidth: Math.round(shots.w * 0.006),
             },
           ]}>
             <Image
@@ -287,12 +290,18 @@ function makeStyles() { return StyleSheet.create({
   pip: {
     position: 'absolute',
     top: 60, right: 18,
-    width: 110, height: 150,
-    borderRadius: 14,
-    borderWidth: 3, borderColor: '#000',
+    width: 130, height: 175,
+    borderRadius: 18,
+    borderWidth: 4, borderColor: '#FFFFFF',
     overflow: 'hidden',
     backgroundColor: '#222',
     transform: [{ scaleX: -1 }], // mirror the live front preview
+    // Soft shadow so the PIP separates from any background.
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 8,
   },
   hud: {
     position: 'absolute', top: 30, left: 0, right: 0,
@@ -341,8 +350,16 @@ function makeStyles() { return StyleSheet.create({
   compositeInset: {
     position: 'absolute',
     overflow: 'hidden',
-    borderWidth: 4, borderColor: '#000',
+    borderColor: '#FFFFFF',
     backgroundColor: '#222',
+    // borderWidth set inline so it scales with image dimensions.
+    // Native shadow for iOS:
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    // Android elevation:
+    elevation: 8,
   },
 
   notSupported: {

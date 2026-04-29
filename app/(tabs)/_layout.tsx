@@ -16,6 +16,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 import { HereTooLogo } from '../../components/shared/Logo';
+import { SidebarArt } from '../../components/shared/SidebarArt';
 
 /**
  * Mobile bottom nav.
@@ -88,6 +89,9 @@ function Sidebar() {
         </TouchableOpacity>
       </View>
 
+      {/* Art slot — quiet rotating gallery / ad inventory */}
+      <SidebarArt />
+
       {/* Sign-out at the bottom of the sidebar */}
       {user && (
         <View style={styles.sidebarFooter}>
@@ -142,8 +146,6 @@ export default function TabLayout() {
           <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
             <Tabs.Screen name="feed" />
             <Tabs.Screen name="profile" />
-            {/* `upload` is still routable (older deep links) but hidden from nav. */}
-            <Tabs.Screen name="upload" options={{ href: null }} />
           </Tabs>
         </View>
       </View>
@@ -169,8 +171,6 @@ export default function TabLayout() {
           }}
         />
       ))}
-      {/* Hidden tab so the route still resolves but it doesn't appear in the nav bar. */}
-      <Tabs.Screen name="upload" options={{ href: null }} />
     </Tabs>
   );
 }

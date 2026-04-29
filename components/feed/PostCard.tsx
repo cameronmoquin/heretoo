@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import type { Post } from '../../stores/feedStore';
 import { Platform } from 'react-native';
 import { mediaPathToUrl, mediaPathToThumb } from '../../hooks/useUpload';
+import { StatureAvatar } from '../shared/StatureAvatar';
 import { useDeletePost } from '../../hooks/useFeed';
 import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
 import { useMyFamilies } from '../../hooks/useFamily';
@@ -53,15 +54,12 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       onPress={() => router.push(`/(tabs)/feed/${post.id}` as any)}
     >
       <View style={s.header}>
-        <View style={s.avatar}>
-          {author?.avatar_path ? (
-            <Image source={{ uri: mediaPathToUrl(author.avatar_path) }} style={s.avatarImg} />
-          ) : (
-            <Text style={s.avatarText}>
-              {(author?.display_name ?? '?').slice(0, 1).toUpperCase()}
-            </Text>
-          )}
-        </View>
+        <StatureAvatar
+          profileId={post.author_id}
+          name={author?.display_name ?? author?.handle ?? null}
+          photoUrl={author?.avatar_path ? mediaPathToUrl(author.avatar_path) : null}
+          size={40}
+        />
         <View style={{ flex: 1 }}>
           <Text style={s.author}>{author?.display_name ?? author?.handle ?? 'Unknown'}</Text>
           <Text style={s.time}>{timeAgo(post.created_at)}</Text>

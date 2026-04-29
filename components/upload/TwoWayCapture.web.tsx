@@ -291,7 +291,18 @@ function drawToCanvas(v: HTMLVideoElement, mirror: boolean): HTMLCanvasElement |
   return c;
 }
 
-/** Composite back + front into a single JPEG. */
+/**
+ * Composite back + front into a single JPEG.
+ *
+ * Layout:
+ *   - Back image full-bleed background.
+ *   - Front portrait-style inset in the top-right at 32% of canvas
+ *     width (matches what BeReal-era UX accustomed people to). The
+ *     inset is taller-than-wide on a phone (front camera's portrait
+ *     aspect) which reads more naturally than a square crop.
+ *   - White outer rim around the inset for a "polaroid" pop, then a
+ *     soft shadow beneath, then rounded corners.
+ */
 async function composite(back: HTMLCanvasElement, front: HTMLCanvasElement): Promise<Blob | null> {
   const W = back.width;
   const H = back.height;
@@ -304,18 +315,23 @@ async function composite(back: HTMLCanvasElement, front: HTMLCanvasElement): Pro
   // Back full-bleed.
   ctx.drawImage(back, 0, 0, W, H);
 
-  // Front inset top-right, ~28% of width, rounded, with black border.
-  const insetW = Math.round(W * 0.28);
-  const insetH = Math.round(insetW * (front.height / Math.max(1, front.width)));
-  const margin = Math.round(W * 0.025);
+  // Inset geometry — slightly bigger than before, portrait aspect.
+  const insetW = Math.round(W * 0.32);
+  const aspect = front.height / Math.max(1, front.width);
+  const insetH = Math.round(insetW * aspect);
+  const margin = Math.round(W * 0.03);
   const x = W - insetW - margin;
   const y = margin;
-  const r = Math.round(insetW * 0.06);
+  const r = Math.round(insetW * 0.08);   // softer corners
+  const rim = Math.round(W * 0.006);     // white rim thickness, ~6 px on a 1000-px canvas
 
-  // Outer black border behind the inset for separation.
+  // Soft shadow beneath the inset for separation from busy backgrounds.
   ctx.save();
-  roundedRectPath(ctx, x - 4, y - 4, insetW + 8, insetH + 8, r + 4);
-  ctx.fillStyle = '#000';
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = Math.round(W * 0.025);
+  ctx.shadowOffsetY = Math.round(W * 0.008);
+  roundedRectPath(ctx, x - rim, y - rim, insetW + rim * 2, insetH + rim * 2, r + rim);
+  ctx.fillStyle = '#FFFFFF';
   ctx.fill();
   ctx.restore();
 

@@ -23,7 +23,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useMyFamilies, useMyNetworkStats } from '../../../hooks/useFamily';
 import { useThemeStore } from '../../../stores/themeStore';
 import { showConfirm } from '../../../lib/alert';
-import { Avatar } from '../../../components/shared/Avatar';
+import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -45,11 +45,11 @@ export default function OwnProfileScreen() {
       <ScrollView contentContainerStyle={s.scroll}>
         {/* ── Identity ── */}
         <View style={s.identity}>
-          <Avatar
-            url={profile.avatar_path ? mediaPathToUrl(profile.avatar_path) : null}
+          <StatureAvatar
+            profileId={profile.id}
             name={profile.display_name}
+            photoUrl={profile.avatar_path ? mediaPathToUrl(profile.avatar_path) : null}
             size={84}
-            borderColor={Colors.primary}
           />
           <Text style={s.displayName}>{profile.display_name ?? 'Member'}</Text>
           <Text style={s.handle}>@{profile.handle}</Text>

@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../../lib/supabase';
 import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
+import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import {
   useCommentTree, useAddComment, useDeleteComment, useToggleCommentsDisabled,
   type CommentNode,
@@ -35,6 +36,7 @@ export default function PostDetail() {
   const userId = useAuthStore((st) => st.user?.id);
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
+  const [submitErr, setSubmitErr] = useState<string | null>(null);
   const { data: comments } = useCommentTree(postId);
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
@@ -78,11 +80,19 @@ export default function PostDetail() {
   const submitComment = () => {
     const body = draft.trim();
     if (!body) return;
+    setSubmitErr(null);
     addComment.mutate(
       { postId, body, parentCommentId: replyTo?.id },
       {
         onSuccess: () => { setDraft(''); setReplyTo(null); },
-        onError: (e: any) => showAlert('Could not post', e?.message ?? 'Try again.'),
+        onError: (e: any) => {
+          // Inline error so the user always sees what failed — popups
+          // get blocked or missed on mobile web.
+          // eslint-disable-next-line no-console
+          console.error('COMMENT_INSERT_ERROR', e);
+          const msg = e?.message ?? 'Could not post — try again.';
+          setSubmitErr(msg);
+        },
       },
     );
   };
@@ -92,11 +102,12 @@ export default function PostDetail() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
           <View style={s.header}>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>
-                {(post.author?.display_name ?? '?').slice(0, 1).toUpperCase()}
-              </Text>
-            </View>
+            <StatureAvatar
+              profileId={post.author_id}
+              name={post.author?.display_name ?? post.author?.handle ?? null}
+              photoUrl={post.author?.avatar_path ? mediaPathToUrl(post.author.avatar_path) : null}
+              size={48}
+            />
             <View style={{ flex: 1 }}>
               <Text style={s.author}>
                 {post.author?.display_name ?? post.author?.handle ?? 'Unknown'}
@@ -208,25 +219,39 @@ export default function PostDetail() {
                 </TouchableOpacity>
               </View>
             )}
+            {submitErr && (
+              <View style={s.errorBox}>
+                <Text style={s.errorText}>{submitErr}</Text>
+              </View>
+            )}
             <View style={s.composerRow}>
               <TextInput
                 style={s.composerInput}
                 value={draft}
-                onChangeText={setDraft}
+                onChangeText={(t) => { setDraft(t); if (submitErr) setSubmitErr(null); }}
                 placeholder={replyTo ? `Reply to ${replyTo.name}…` : 'Write a comment…'}
                 placeholderTextColor={Colors.textMuted}
                 multiline
                 maxLength={2000}
-                returnKeyType="send"
-                blurOnSubmit
-                onSubmitEditing={submitComment}
+                blurOnSubmit={false}
+                onKeyPress={(e: any) => {
+                  // Web/keyboard: Cmd+Enter or Ctrl+Enter submits a comment;
+                  // plain Enter inserts a newline (multiline default).
+                  const ne: any = e?.nativeEvent ?? {};
+                  if (ne.key === 'Enter' && (ne.metaKey || ne.ctrlKey)) {
+                    e.preventDefault?.();
+                    submitComment();
+                  }
+                }}
               />
               <TouchableOpacity
-                style={[s.composerSend, !draft.trim() && { opacity: 0.4 }]}
+                style={[s.composerSend, (!draft.trim() || addComment.isPending) && { opacity: 0.4 }]}
                 onPress={submitComment}
                 disabled={!draft.trim() || addComment.isPending}
               >
-                <Ionicons name="send" size={18} color="#FFF" />
+                {addComment.isPending
+                  ? <ActivityIndicator size="small" color="#FFF" />
+                  : <Ionicons name="send" size={18} color="#FFF" />}
               </TouchableOpacity>
             </View>
           </View>
@@ -376,4 +401,11 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
+  errorBox: {
+    backgroundColor: 'rgba(255,64,80,0.10)',
+    borderWidth: 1, borderColor: 'rgba(255,64,80,0.30)',
+    borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 8,
+  },
+  errorText: { fontSize: 12, color: Colors.error },
 }); }

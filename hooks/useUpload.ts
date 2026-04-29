@@ -99,39 +99,45 @@ export function useUpload() {
       return assets.map((a) => ({ path: a.uri, width: a.width, height: a.height }));
     }
 
-    const out: { path: string; width?: number; height?: number }[] = [];
-    for (let i = 0; i < assets.length; i++) {
-      const asset = assets[i];
-      try {
-        const normalized = await ImageManipulator.manipulateAsync(
-          asset.uri,
-          [{ resize: { width: 2048 } }],
-          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
-        );
+    // Run uploads in parallel — sequential was the single biggest cause
+    // of the "post takes forever" feel. Photos rarely need 2048px on
+    // mobile; 1600px @ 0.78 quality is visually indistinguishable on a
+    // phone screen and cuts file size roughly in half.
+    const ts = Date.now();
+    let done = 0;
+    const tasks = assets.map(async (asset, i) => {
+      const normalized = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [{ resize: { width: 1600 } }],
+        { compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
+      );
 
-        const filename = `${userId}/${Date.now()}_${i}.jpg`;
-        const buffer = await readAsArrayBuffer(normalized.uri);
-        const blob = new Blob([buffer], { type: 'image/jpeg' });
+      const filename = `${userId}/${ts}_${i}.jpg`;
+      const buffer = await readAsArrayBuffer(normalized.uri);
+      const blob = new Blob([buffer], { type: 'image/jpeg' });
 
-        const { data, error } = await supabase.storage
-          .from('posts')
-          .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
+      const { data, error } = await supabase.storage
+        .from('posts')
+        .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
 
-        if (error) {
-          // eslint-disable-next-line no-console
-          console.error('STORAGE_UPLOAD_ERROR', JSON.stringify(error, null, 2));
-          throw new Error(`Photo upload failed: ${error.message}`);
-        }
-
-        out.push({ path: data.path, width: normalized.width, height: normalized.height });
-        setState((s) => ({ ...s, progress: (i + 1) / assets.length }));
-      } catch (err) {
+      if (error) {
         // eslint-disable-next-line no-console
-        console.error('PHOTO_UPLOAD_FAILED', err);
-        throw err;
+        console.error('STORAGE_UPLOAD_ERROR', JSON.stringify(error, null, 2));
+        throw new Error(`Photo upload failed: ${error.message}`);
       }
+
+      done += 1;
+      setState((s) => ({ ...s, progress: done / assets.length }));
+      return { path: data.path, width: normalized.width, height: normalized.height };
+    });
+
+    try {
+      return await Promise.all(tasks);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('PHOTO_UPLOAD_FAILED', err);
+      throw err;
     }
-    return out;
   }
 
   async function uploadVideo(asset: ImagePicker.ImagePickerAsset) {
