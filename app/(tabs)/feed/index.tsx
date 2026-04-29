@@ -40,6 +40,14 @@ export default function FeedScreen() {
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
+              style={styles.familyPill}
+              onPress={() => router.push('/family' as any)}
+              accessibilityLabel="Go to families"
+            >
+              <Ionicons name="people-outline" size={15} color={Colors.primary} />
+              <Text style={styles.familyPillText}>Families</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.signOutIconBtn}
               onPress={toggleTheme}
               accessibilityLabel="Toggle light/dark theme"
@@ -115,6 +123,14 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center', justifyContent: 'center',
   },
+  familyPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 11, paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.primaryFaint,
+  },
+  familyPillText: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
   tabRow: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,

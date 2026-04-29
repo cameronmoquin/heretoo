@@ -89,14 +89,14 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
   const [facing, setFacing] = useState<Facing>('environment');
   const [error, setError] = useState<string | null>(null);
 
-  // (Re)acquire camera whenever facing changes.
+  // Acquire the back camera once on mount. The auto-flip during a
+  // capture is handled imperatively inside snapBoth() so we don't get
+  // a re-acquire race when state churns mid-snap.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Don't drop back into the spinner during the auto-flip step;
-      // we want a smooth transition. The orchestrator manages stage.
       try {
-        await acquire(facing);
+        await acquire('environment');
         if (cancelled) return;
       } catch (e: any) {
         if (cancelled) return;
@@ -106,12 +106,10 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
         setStage('error');
       }
     })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facing]);
-
-  useEffect(() => {
-    return () => stopStream();
+    return () => {
+      cancelled = true;
+      stopStream();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -148,6 +146,14 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
 
   /**
    * Single-tap, two-photo orchestration.
+   *
+   * IMPORTANT: we do not bounce through React state to swap cameras.
+   * `setFacing` would queue a re-render, the effect would fire async,
+   * and meanwhile the <video>'s `readyState` and `videoWidth` would
+   * still report the OLD stream's values — leading to a black inset
+   * (we'd `drawImage` before the new stream paints). Instead we run
+   * the second getUserMedia imperatively and `await waitForFrame()`
+   * on the same <video> element so the timing is bulletproof.
    */
   async function snapBoth() {
     const v = videoRef.current;
@@ -159,13 +165,27 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
       const backCanvas = drawToCanvas(v, false);
       if (!backCanvas) throw new Error('Canvas unavailable.');
 
-      // 2. Auto-flip to front. Update state so transform / facing flips,
-      //    then re-acquire stream and wait for frame.
+      // 2. Imperatively swap to the front camera.
+      stopStream();
+      const frontStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'user' },
+          width: { ideal: 1920 },
+          height: { ideal: 1920 },
+        },
+        audio: false,
+      });
+      streamRef.current = frontStream;
+      v.srcObject = frontStream;
+      // Mirror the live preview while we wait.
       setFacing('user');
-      // Wait for the new effect to fire and acquire the front camera.
-      await waitForFacing(videoRef, 'user');
+      // Block until the new stream has actually painted a frame.
+      await waitForFrame(v);
+      // One extra rAF tick to make sure the painted frame is the
+      // current one, not the leftover from the back stream.
+      await new Promise((r) => requestAnimationFrame(() => r(undefined)));
 
-      // 3. Capture front frame.
+      // 3. Capture front frame, mirrored to match the live preview.
       const frontCanvas = drawToCanvas(v, true);
       if (!frontCanvas) throw new Error('Canvas unavailable for front capture.');
 
@@ -269,33 +289,6 @@ function drawToCanvas(v: HTMLVideoElement, mirror: boolean): HTMLCanvasElement |
   }
   ctx.drawImage(v, 0, 0, W, H);
   return c;
-}
-
-/**
- * Wait for the next stream change to land on the requested facing.
- * The acquire() effect in TwoWayWebCapture sets srcObject + waits for
- * the first frame; we just poll videoRef.current.readyState until
- * the new stream is live.
- */
-async function waitForFacing(
-  videoRef: React.MutableRefObject<HTMLVideoElement | null>,
-  _facing: Facing,
-  timeoutMs = 5000,
-): Promise<void> {
-  const start = Date.now();
-  // Wait up to one tick for setFacing to flush + effect to start.
-  await new Promise((r) => setTimeout(r, 16));
-  while (Date.now() - start < timeoutMs) {
-    const v = videoRef.current;
-    if (v && v.readyState >= 2 && v.videoWidth > 0) {
-      // Give it one extra frame to be safe (avoid encoded but
-      // not-yet-painted frame).
-      await new Promise((r) => setTimeout(r, 80));
-      return;
-    }
-    await new Promise((r) => setTimeout(r, 40));
-  }
-  throw new Error('Front camera did not start in time.');
 }
 
 /** Composite back + front into a single JPEG. */

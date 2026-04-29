@@ -20,6 +20,15 @@ export default function FamilyList() {
   return (
     <SafeAreaView style={s.root} edges={['bottom']}>
       <ScrollView contentContainerStyle={s.scroll}>
+        <TouchableOpacity
+          style={s.backBtn}
+          onPress={() => router.replace('/(tabs)/feed' as any)}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel="Back to HereToo"
+        >
+          <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+          <Text style={s.backBtnText}>HereToo</Text>
+        </TouchableOpacity>
         <View style={s.header}>
           <View>
             <Text style={s.eyebrow}>Your circles</Text>
@@ -100,6 +109,11 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40,
     gap: 8, maxWidth: 600, alignSelf: 'center', width: '100%',
   },
+  backBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    paddingVertical: 6, marginBottom: 6,
+  },
+  backBtnText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 18 },
   eyebrow: { fontSize: 11, color: Colors.textMuted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.6 },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary, marginTop: 2 },
