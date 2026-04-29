@@ -1,27 +1,27 @@
 /**
  * Shareable family-invite landing page.
  *
+ * Anyone can land here — signed in, signed out, never been on the site
+ * before. The whole flow happens on a single screen so a non-technical
+ * recipient (your aunt, your brother) just enters an email and a
+ * password, taps Accept, and is in the family within ten seconds.
+ *
+ * Family preview is fetched via the SECURITY DEFINER RPC
+ * `find_family_by_invite_code` (migration 008) so anon visitors can
+ * see what they're joining without RLS blocking them.
+ *
+ * Express signup auto-generates a handle from the email's local-part
+ * (the `handle_new_user` trigger handles uniqueness and fallback).
+ * The user never has to pick one up-front.
+ *
  * URL: https://heretoo.social/join/<CODE>
- *
- * Flow:
- *   1. Look up the family by invite_code (RLS opened in migration 004).
- *   2. If signed-out → show a "Sign in to accept" CTA. Stash the invite
- *      code in localStorage so the welcome screen can resume the flow
- *      after auth and route the user back here.
- *   3. If signed-in but already a member → show that and link into the
- *      family page.
- *   4. If signed-in and not a member → show family preview + "Accept
- *      invite" button. On accept, insert the family_member row and
- *      redirect to /family/<id>.
- *
- * Why this shape: a single canonical URL works for SMS, email, group
- * chats, social sharing — copy it once, send it anywhere. No native app
- * required to receive it; the web flow signs them up just fine, and the
- * eventual native app can handle the same URL via deep-link routing.
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image, TextInput,
+  KeyboardAvoidingView, Platform, ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,90 +29,111 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
-import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
-const PENDING_KEY = 'heretoo:pending_invite_code';
+interface FamilyPreview {
+  id: string;
+  name: string;
+  description: string | null;
+  cover_path: string | null;
+}
 
 export default function JoinByCode() {
   const s = makeStyles();
   const { code } = useLocalSearchParams<{ code: string }>();
   const userId = useAuthStore((st) => st.user?.id);
   const qc = useQueryClient();
-  const normalized = (code ?? '').toUpperCase();
+  const normalized = (code ?? '').toUpperCase().trim();
 
-  // Look up family by invite code.
+  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState<'auth' | 'join' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Family preview via anon-callable RPC.
   const family = useQuery({
-    queryKey: ['family-by-code', normalized],
-    queryFn: async () => {
+    queryKey: ['family-preview', normalized],
+    queryFn: async (): Promise<FamilyPreview | null> => {
       if (!normalized) return null;
-      const { data, error } = await supabase
-        .from('families')
-        .select('id, name, description, cover_path, invite_code')
-        .eq('invite_code', normalized)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
+      const { data, error: e } = await supabase.rpc('find_family_by_invite_code', {
+        code: normalized,
+      });
+      if (e) throw e;
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row ?? null) as FamilyPreview | null;
     },
     enabled: !!normalized,
   });
 
-  // Existing membership check.
-  const member = useQuery({
-    queryKey: ['my-membership', family.data?.id, userId],
-    queryFn: async () => {
-      if (!family.data?.id || !userId) return null;
-      const { data, error } = await supabase
-        .from('family_members')
-        .select('id, status')
-        .eq('family_id', family.data.id)
-        .eq('profile_id', userId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!family.data?.id && !!userId,
-  });
-
+  // If signed-in, auto-join immediately. Otherwise show the inline auth form.
   const accept = useMutation({
     mutationFn: async () => {
-      if (!family.data?.id || !userId) throw new Error('Not signed in');
-      const { error } = await supabase
-        .from('family_members')
-        .insert({
-          family_id: family.data.id,
-          relationship_label: 'family',
-          status: 'active',
-          joined_at: new Date().toISOString(),
-        } as any);
-      if (error) throw error;
+      if (!family.data?.id) throw new Error('Invite not loaded');
+      const { error: e } = await supabase.from('family_members').insert({
+        family_id: family.data.id,
+        relationship_label: 'family',
+        status: 'active',
+        joined_at: new Date().toISOString(),
+      } as any);
+      if (e && !/duplicate/i.test(e.message)) throw e;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['families'] });
-      qc.invalidateQueries({ queryKey: ['my-membership'] });
       qc.invalidateQueries({ queryKey: ['network-stats'] });
-      clearPendingInvite();
       if (family.data?.id) router.replace(`/family/${family.data.id}` as any);
     },
-    onError: (e: any) => showAlert('Could not join', e?.message ?? 'Try again.'),
+    onError: (e: any) => setError(e?.message ?? 'Could not join.'),
   });
 
-  // If we landed here signed-out, stash the code so the welcome screen
-  // can resume after auth.
+  // Already signed in? Skip the form, go straight to Accept.
   useEffect(() => {
-    if (!userId && normalized) {
-      try { localStorage.setItem(PENDING_KEY, normalized); } catch {}
+    if (userId && family.data?.id) {
+      // Don't auto-join — let them confirm. But hide the auth form.
     }
-  }, [userId, normalized]);
+  }, [userId, family.data?.id]);
 
-  // Already a member? Bounce straight to the family page.
-  useEffect(() => {
-    if (member.data?.status === 'active' && family.data?.id) {
-      clearPendingInvite();
-      router.replace(`/family/${family.data.id}` as any);
+  const submitAuth = async () => {
+    setError(null);
+    if (!email.trim() || password.length < 6) {
+      setError('Email and a 6+ character password required.');
+      return;
     }
-  }, [member.data, family.data]);
+    if (!family.data?.id) {
+      setError('This invite is not loaded yet.');
+      return;
+    }
+    setBusy('auth');
+    try {
+      if (mode === 'signup') {
+        const { data, error: e } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+        });
+        if (e) throw e;
+        if (!data.session) {
+          // Email confirmation required — tell them.
+          setError('Check your email to confirm your account, then come back to this link.');
+          return;
+        }
+      } else {
+        const { error: e } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (e) throw e;
+      }
+      setBusy('join');
+      // Tiny delay so authStore picks up the new session before insert RLS fires.
+      await new Promise((r) => setTimeout(r, 200));
+      await accept.mutateAsync();
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not authenticate.');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   // ── render ──
   if (family.isLoading) {
@@ -133,7 +154,7 @@ export default function JoinByCode() {
             That code is invalid or the family was deleted.
             Double-check the link, or ask whoever sent it for a fresh one.
           </Text>
-          <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed')}>
+          <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
             <Text style={s.ctaText}>Go to HereToo</Text>
           </TouchableOpacity>
         </View>
@@ -145,52 +166,108 @@ export default function JoinByCode() {
 
   return (
     <SafeAreaView style={s.root}>
-      <View style={s.card}>
-        {f.cover_path ? (
-          <Image source={{ uri: mediaPathToUrl(f.cover_path) }} style={s.cover} />
-        ) : (
-          <View style={[s.cover, s.coverFallback]}>
-            <Ionicons name="people" size={36} color={Colors.primary} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+          <View style={s.card}>
+            {f.cover_path ? (
+              <Image source={{ uri: mediaPathToUrl(f.cover_path) }} style={s.cover} />
+            ) : (
+              <View style={[s.cover, s.coverFallback]}>
+                <Ionicons name="people" size={36} color={Colors.primary} />
+              </View>
+            )}
+
+            <Text style={s.eyebrow}>You're invited to join</Text>
+            <Text style={s.familyName}>{f.name}</Text>
+            {!!f.description && <Text style={s.sub}>{f.description}</Text>}
+
+            {!!error && (
+              <View style={s.errorBox}>
+                <Text style={s.errorText}>{error}</Text>
+              </View>
+            )}
+
+            {userId ? (
+              // Signed in already — single-tap accept.
+              <TouchableOpacity
+                style={[s.cta, accept.isPending && { opacity: 0.5 }]}
+                onPress={() => accept.mutate()}
+                disabled={accept.isPending}
+                activeOpacity={0.85}
+              >
+                <Text style={s.ctaText}>
+                  {accept.isPending ? 'Joining…' : 'Accept invite'}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              // Signed out — express signup right here.
+              <View style={s.formWrap}>
+                <View style={s.modeRow}>
+                  <TouchableOpacity
+                    onPress={() => setMode('signup')}
+                    style={[s.modeTab, mode === 'signup' && s.modeTabActive]}
+                  >
+                    <Text style={[s.modeText, mode === 'signup' && s.modeTextActive]}>New here</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setMode('signin')}
+                    style={[s.modeTab, mode === 'signin' && s.modeTabActive]}
+                  >
+                    <Text style={[s.modeText, mode === 'signin' && s.modeTextActive]}>I have an account</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={s.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Email"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  returnKeyType="next"
+                />
+                <TextInput
+                  style={s.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder={mode === 'signup' ? 'Choose a password (6+)' : 'Password'}
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  returnKeyType="go"
+                  onSubmitEditing={submitAuth}
+                />
+
+                <TouchableOpacity
+                  style={[s.cta, busy && { opacity: 0.5 }]}
+                  onPress={submitAuth}
+                  disabled={!!busy}
+                  activeOpacity={0.85}
+                >
+                  <Text style={s.ctaText}>
+                    {busy === 'auth' ? 'Setting up your account…' :
+                     busy === 'join' ? 'Joining the family…' :
+                     mode === 'signup' ? `Join ${f.name}` : 'Sign in & accept'}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={s.fineprint}>
+                  {mode === 'signup'
+                    ? "We'll pick a username for you from your email. You can change it later in your profile."
+                    : "Use the email and password you signed up with."}
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-
-        <Text style={s.eyebrow}>You're invited to join</Text>
-        <Text style={s.familyName}>{f.name}</Text>
-        {!!f.description && <Text style={s.sub}>{f.description}</Text>}
-
-        {!userId ? (
-          <>
-            <TouchableOpacity
-              style={s.cta}
-              onPress={() => router.replace('/(auth)/welcome' as any)}
-              activeOpacity={0.85}
-            >
-              <Text style={s.ctaText}>Sign in to accept</Text>
-            </TouchableOpacity>
-            <Text style={s.fineprint}>
-              New here? You can create an account on the next screen.
-              We'll bring you right back to this invite.
-            </Text>
-          </>
-        ) : (
-          <TouchableOpacity
-            style={[s.cta, accept.isPending && { opacity: 0.5 }]}
-            onPress={() => accept.mutate()}
-            disabled={accept.isPending}
-            activeOpacity={0.85}
-          >
-            <Text style={s.ctaText}>
-              {accept.isPending ? 'Joining…' : 'Accept invite'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
-}
-
-function clearPendingInvite() {
-  try { localStorage.removeItem(PENDING_KEY); } catch {}
 }
 
 function makeStyles() { return StyleSheet.create({
@@ -220,11 +297,39 @@ function makeStyles() { return StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: 8 },
   sub: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
-  cta: {
-    marginTop: 14, paddingVertical: 14, paddingHorizontal: 28,
-    borderRadius: 999, backgroundColor: Colors.primary,
-    minWidth: 200, alignItems: 'center',
+
+  formWrap: { width: '100%', gap: 10, marginTop: 12 },
+  modeRow: {
+    flexDirection: 'row', gap: 6,
+    backgroundColor: Colors.surfaceLight, borderRadius: 999, padding: 4,
   },
-  ctaText: { color: '#000', fontSize: 15, fontWeight: '700' },
-  fineprint: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', marginTop: 4, lineHeight: 18 },
+  modeTab: {
+    flex: 1, paddingVertical: 8, borderRadius: 999, alignItems: 'center',
+  },
+  modeTabActive: { backgroundColor: Colors.surface },
+  modeText: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
+  modeTextActive: { color: Colors.textPrimary },
+  input: {
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: Colors.textPrimary,
+  },
+
+  cta: {
+    marginTop: 6, paddingVertical: 14, paddingHorizontal: 28,
+    borderRadius: 999, backgroundColor: Colors.primary,
+    minWidth: 200, alignItems: 'center', alignSelf: 'stretch',
+  },
+  ctaText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+
+  fineprint: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', lineHeight: 18 },
+
+  errorBox: {
+    width: '100%', backgroundColor: 'rgba(255,64,80,0.10)',
+    borderWidth: 1, borderColor: 'rgba(255,64,80,0.30)',
+    borderRadius: Radius.md, padding: 10,
+  },
+  errorText: { color: Colors.error, fontSize: 13, textAlign: 'center' },
 }); }
