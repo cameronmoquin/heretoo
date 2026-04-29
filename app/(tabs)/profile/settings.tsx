@@ -12,7 +12,7 @@
 
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image,
+  View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,8 +25,8 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { useAuthStore } from '../../../stores/authStore';
-import { showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
+import { HeadshotCapture, type HeadshotResult } from '../../../components/upload/HeadshotCapture';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -41,6 +41,8 @@ export default function ProfileSettings() {
   const [avatarPath, setAvatarPath] = useState<string | null>(profile?.avatar_path ?? null);
   const [busy, setBusy] = useState<'avatar' | 'save' | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [headshotOpen, setHeadshotOpen] = useState(false);
 
   if (!profile) {
     return (
@@ -50,39 +52,84 @@ export default function ProfileSettings() {
     );
   }
 
-  const onPickAvatar = async () => {
+  /**
+   * Library path: open the OS picker with explicit square cropping
+   * (`allowsEditing` + `aspect: [1,1]` gives the user the native crop
+   * UI on iOS/Android). On web there's no crop UI so we center-crop
+   * to square ourselves before resizing.
+   */
+  const onPickFromLibrary = async () => {
+    setChooserOpen(false);
     setErr(null);
     try {
       const r = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsMultipleSelection: false,
-        quality: 0.85,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.92,
       });
       if (r.canceled || !r.assets[0]) return;
       setBusy('avatar');
       const asset = r.assets[0];
 
-      // Normalize HEIC → JPEG, downscale to a sane avatar size.
+      // Make sure we end up with a square 512×512. allowsEditing already
+      // produces a 1:1 crop on native, but on web it's a no-op, so we
+      // center-crop here either way for safety.
+      const W = asset.width ?? 0;
+      const H = asset.height ?? 0;
+      const ops: ImageManipulator.Action[] = [];
+      if (W > 0 && H > 0 && W !== H) {
+        const side = Math.min(W, H);
+        ops.push({
+          crop: {
+            originX: Math.round((W - side) / 2),
+            originY: Math.round((H - side) / 2),
+            width: side,
+            height: side,
+          },
+        });
+      }
+      ops.push({ resize: { width: 512, height: 512 } });
+
       const norm = await ImageManipulator.manipulateAsync(
         asset.uri,
-        [{ resize: { width: 512 } }],
-        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+        ops,
+        { compress: 0.92, format: ImageManipulator.SaveFormat.JPEG },
       );
 
-      const filename = `${profile.id}/avatar_${Date.now()}.jpg`;
-      const buffer = await readAsArrayBuffer(norm.uri);
-      const blob = new Blob([buffer], { type: 'image/jpeg' });
-      const { data, error } = await supabase.storage
-        .from('posts')
-        .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
-      if (error) throw error;
-      setAvatarPath(data.path);
+      await uploadAvatarBlob(norm.uri);
     } catch (e: any) {
       setErr(e?.message ?? 'Avatar upload failed.');
     } finally {
       setBusy(null);
     }
   };
+
+  /** Live-camera path: HeadshotCapture already emits a 512×512 JPEG. */
+  const onHeadshotCapture = async (asset: HeadshotResult) => {
+    setHeadshotOpen(false);
+    setErr(null);
+    setBusy('avatar');
+    try {
+      await uploadAvatarBlob(asset.uri);
+    } catch (e: any) {
+      setErr(e?.message ?? 'Avatar upload failed.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  async function uploadAvatarBlob(uri: string) {
+    const filename = `${profile!.id}/avatar_${Date.now()}.jpg`;
+    const buffer = await readAsArrayBuffer(uri);
+    const blob = new Blob([buffer], { type: 'image/jpeg' });
+    const { data, error } = await supabase.storage
+      .from('posts')
+      .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
+    if (error) throw error;
+    setAvatarPath(data.path);
+  }
 
   const onSave = async () => {
     setErr(null);
@@ -136,7 +183,7 @@ export default function ProfileSettings() {
         </View>
 
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={onPickAvatar} style={s.avatarWrap} activeOpacity={0.75}>
+          <TouchableOpacity onPress={() => setChooserOpen(true)} style={s.avatarWrap} activeOpacity={0.75}>
             <StatureAvatar
               profileId={profile.id}
               name={displayName || profile.display_name}
@@ -212,6 +259,74 @@ export default function ProfileSettings() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Avatar source chooser */}
+      <Modal
+        visible={chooserOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setChooserOpen(false)}
+      >
+        <Pressable style={s.modalBackdrop} onPress={() => setChooserOpen(false)}>
+          <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={s.modalTitle}>Profile photo</Text>
+            <Text style={s.modalSub}>
+              Headshots are square — both options crop to a clean 1:1.
+            </Text>
+            <TouchableOpacity
+              style={s.modalRow}
+              onPress={() => { setChooserOpen(false); setHeadshotOpen(true); }}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="camera-outline" size={20} color={Colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.modalRowLabel}>Take a selfie</Text>
+                <Text style={s.modalRowHint}>Front camera with a circle viewfinder</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.modalRow}
+              onPress={onPickFromLibrary}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="images-outline" size={20} color={Colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.modalRowLabel}>Choose from library</Text>
+                <Text style={s.modalRowHint}>You'll get a square crop tool on the next step</Text>
+              </View>
+            </TouchableOpacity>
+            {avatarPath && (
+              <TouchableOpacity
+                style={s.modalRow}
+                onPress={() => { setChooserOpen(false); setAvatarPath(null); }}
+                activeOpacity={0.75}
+              >
+                <Ionicons name="trash-outline" size={20} color={Colors.error} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.modalRowLabel, { color: Colors.error }]}>Remove current photo</Text>
+                  <Text style={s.modalRowHint}>Falls back to your stature letter</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={s.modalCancel} onPress={() => setChooserOpen(false)}>
+              <Text style={s.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Live headshot camera */}
+      <Modal
+        visible={headshotOpen}
+        animationType="fade"
+        transparent={false}
+        onRequestClose={() => setHeadshotOpen(false)}
+      >
+        <HeadshotCapture
+          onCapture={onHeadshotCapture}
+          onClose={() => setHeadshotOpen(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -293,4 +408,24 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center', padding: 20,
+  },
+  modalCard: {
+    backgroundColor: Colors.surface, borderRadius: 14,
+    width: '100%', maxWidth: 420, padding: 18, gap: 4,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  modalRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 10, paddingHorizontal: 4, borderRadius: 8,
+  },
+  modalRowLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  modalRowHint: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  modalCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
+  modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }
