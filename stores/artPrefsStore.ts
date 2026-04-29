@@ -1,16 +1,19 @@
 /**
  * Art preferences — what the user wants to see in the gallery / banner /
- * inline-feed art slots. Persisted to localStorage on web (so refresh
- * keeps your taste), in-memory on native (a future migration can move
- * this server-side, keyed by profile_id, when we want it cross-device).
+ * inline-feed art slots.
  *
- * Eras + schools + genres each carry a Set of selected values. An empty
- * Set means "no filter applied" — the gallery shows everything from
- * that axis. This makes the default state inclusive instead of empty.
+ * Hand-rolled localStorage persistence on web (matches the pattern used
+ * by themeStore — zustand's persist middleware was throwing on init for
+ * us). Native is in-memory for now; we'll move to AsyncStorage when we
+ * ship the native build, or migrate to a `profiles.art_prefs` jsonb
+ * column once we want it cross-device.
+ *
+ * Eras + schools + genres each carry an array of selected values. Empty
+ * array means "no filter applied" — the gallery shows everything from
+ * that axis. Default state is inclusive, not empty.
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { Platform } from 'react-native';
 
 export type ArtEra =
@@ -43,60 +46,73 @@ export const ERA_RANGES: Record<ArtEra, [number, number]> = {
   contemporary: [2000, 9999],
 };
 
-interface ArtPrefsState {
+interface Persisted {
   schools: string[];
   eras: ArtEra[];
   genres: string[];
+}
+
+const STORAGE_KEY = 'heretoo:art-prefs';
+
+function loadInitial(): Persisted {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          schools: Array.isArray(parsed.schools) ? parsed.schools : [],
+          eras: Array.isArray(parsed.eras) ? parsed.eras : [],
+          genres: Array.isArray(parsed.genres) ? parsed.genres : [],
+        };
+      }
+    } catch {}
+  }
+  return { schools: [], eras: [], genres: [] };
+}
+
+function persist(state: Persisted) {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+interface ArtPrefsState extends Persisted {
   toggleSchool: (s: string) => void;
   toggleEra: (e: ArtEra) => void;
   toggleGenre: (g: string) => void;
   clear: () => void;
 }
 
-const safeStorage = (): Storage => {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') {
-    // No-op storage for native; we'll add real native persistence later.
-    return {
-      length: 0,
-      clear: () => {},
-      getItem: () => null,
-      key: () => null,
-      removeItem: () => {},
-      setItem: () => {},
-    };
-  }
-  return window.localStorage;
-};
-
-export const useArtPrefs = create<ArtPrefsState>()(
-  persist(
-    (set, get) => ({
-      schools: [],
-      eras: [],
-      genres: [],
-      toggleSchool: (s) => set({
-        schools: get().schools.includes(s)
-          ? get().schools.filter((x) => x !== s)
-          : [...get().schools, s],
-      }),
-      toggleEra: (e) => set({
-        eras: get().eras.includes(e)
-          ? get().eras.filter((x) => x !== e)
-          : [...get().eras, e],
-      }),
-      toggleGenre: (g) => set({
-        genres: get().genres.includes(g)
-          ? get().genres.filter((x) => x !== g)
-          : [...get().genres, g],
-      }),
-      clear: () => set({ schools: [], eras: [], genres: [] }),
-    }),
-    {
-      name: 'heretoo:art-prefs',
-      storage: createJSONStorage(() => safeStorage()),
-    },
-  ),
-);
+export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
+  ...loadInitial(),
+  toggleSchool: (s) => {
+    const next = get().schools.includes(s)
+      ? get().schools.filter((x) => x !== s)
+      : [...get().schools, s];
+    set({ schools: next });
+    persist({ schools: next, eras: get().eras, genres: get().genres });
+  },
+  toggleEra: (e) => {
+    const next = get().eras.includes(e)
+      ? get().eras.filter((x) => x !== e)
+      : [...get().eras, e];
+    set({ eras: next });
+    persist({ schools: get().schools, eras: next, genres: get().genres });
+  },
+  toggleGenre: (g) => {
+    const next = get().genres.includes(g)
+      ? get().genres.filter((x) => x !== g)
+      : [...get().genres, g];
+    set({ genres: next });
+    persist({ schools: get().schools, eras: get().eras, genres: next });
+  },
+  clear: () => {
+    set({ schools: [], eras: [], genres: [] });
+    persist({ schools: [], eras: [], genres: [] });
+  },
+}));
 
 /** Pull a 4-digit year out of free-form `year_created`. */
 export function parseYear(s: string | null | undefined): number | null {
@@ -122,7 +138,6 @@ export function yearToEra(year: number | null): ArtEra | null {
 export function normalizeSchool(s: string | null | undefined): string | null {
   if (!s) return null;
   const v = s.trim().toLowerCase();
-  // Light de-duplication for the messiest cases in our data.
   if (/19th|nineteenth/.test(v)) return '19th century';
   if (/18th/.test(v)) return '18th century';
   if (/17th/.test(v)) return '17th century';
