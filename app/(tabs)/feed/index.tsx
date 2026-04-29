@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useFeed, useToggleHeart } from '../../../hooks/useFeed';
+import { useFeed, useToggleHeart, useFeedRealtime } from '../../../hooks/useFeed';
 import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { useThemeStore } from '../../../stores/themeStore';
 import { useMyNetworkStats } from '../../../hooks/useFamily';
@@ -22,6 +22,7 @@ export default function FeedScreen() {
   const styles = makeStyles();
   const { activeTab, setActiveTab } = useFeedStore();
   const feed = useFeed(activeTab);
+  useFeedRealtime(activeTab);
   const toggleHeart = useToggleHeart();
   const themeMode = useThemeStore((s) => s.mode);
   const toggleTheme = useThemeStore((s) => s.toggle);

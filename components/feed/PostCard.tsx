@@ -14,6 +14,7 @@ import { Platform } from 'react-native';
 import { mediaPathToUrl, mediaPathToThumb } from '../../hooks/useUpload';
 import { StatureAvatar } from '../shared/StatureAvatar';
 import { useDeletePost } from '../../hooks/useFeed';
+import { useLatestComments } from '../../hooks/useComments';
 import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
 import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
@@ -54,16 +55,24 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       onPress={() => router.push(`/(tabs)/feed/${post.id}` as any)}
     >
       <View style={s.header}>
-        <StatureAvatar
-          profileId={post.author_id}
-          name={author?.display_name ?? author?.handle ?? null}
-          photoUrl={author?.avatar_path ? mediaPathToUrl(author.avatar_path) : null}
-          size={40}
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={s.author}>{author?.display_name ?? author?.handle ?? 'Unknown'}</Text>
-          <Text style={s.time}>{timeAgo(post.created_at)}</Text>
-        </View>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            if (author?.handle) router.push(`/u/${author.handle}` as any);
+          }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
+        >
+          <StatureAvatar
+            profileId={post.author_id}
+            name={author?.display_name ?? author?.handle ?? null}
+            photoUrl={author?.avatar_path ? mediaPathToUrl(author.avatar_path) : null}
+            size={40}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={s.author}>{author?.display_name ?? author?.handle ?? 'Unknown'}</Text>
+            <Text style={s.time}>{timeAgo(post.created_at)}</Text>
+          </View>
+        </Pressable>
         {isMine && (
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); onDelete(); }}
@@ -150,6 +159,9 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         </TouchableOpacity>
       </View>
 
+      {/* Inline comment preview — latest 2 top-level comments. */}
+      <CommentPreview postId={post.id} commentCount={post.comment_count ?? 0} />
+
       <Modal
         visible={boostOpen}
         transparent
@@ -225,6 +237,42 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   );
 }
 
+/**
+ * Inline comment preview shown directly under the actions row.
+ * Pulls the latest 2 top-level comments. If there are more than what
+ * we show, surfaces a "View all N comments" link that drops into the
+ * post detail page.
+ */
+function CommentPreview({ postId, commentCount }: { postId: string; commentCount: number }) {
+  const s = makeStyles();
+  const { data: comments } = useLatestComments(postId, 2);
+  if (!comments || comments.length === 0) return null;
+
+  const moreToSee = commentCount > comments.length;
+
+  return (
+    <View style={s.commentPreview}>
+      {comments.map((c) => (
+        <View key={c.id} style={s.commentLine}>
+          <Text style={s.commentName} numberOfLines={1}>
+            {c.author?.display_name ?? c.author?.handle ?? 'someone'}
+          </Text>
+          <Text style={s.commentBody} numberOfLines={2}>{c.body}</Text>
+        </View>
+      ))}
+      {moreToSee && (
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); router.push(`/(tabs)/feed/${postId}` as any); }}
+        >
+          <Text style={s.commentMore}>
+            View all {commentCount} comment{commentCount === 1 ? '' : 's'} →
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 function timeAgo(iso: string): string {
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
@@ -276,6 +324,16 @@ function makeStyles() { return StyleSheet.create({
   actions: { flexDirection: 'row', gap: 24, marginTop: 4 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
   actionCount: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+
+  commentPreview: {
+    marginTop: 4, paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
+    gap: 4,
+  },
+  commentLine: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
+  commentName: { fontSize: 12, fontWeight: '700', color: Colors.textPrimary, flexShrink: 0 },
+  commentBody: { fontSize: 12, color: Colors.textSecondary, lineHeight: 17, flex: 1 },
+  commentMore: { fontSize: 12, color: Colors.primary, fontWeight: '600', marginTop: 2 },
 
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',

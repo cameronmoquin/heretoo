@@ -72,6 +72,33 @@ export function useAddComment() {
 }
 
 /**
+ * Latest top-level comments on a post for the inline preview that
+ * appears under the PostCard in the feed. Limit defaults to 2 so the
+ * card doesn't get tall. Cheap query because we hit the index on
+ * (post_id, created_at).
+ */
+export function useLatestComments(postId: string | null, limit = 2) {
+  return useQuery({
+    queryKey: ['comments-latest', postId, limit],
+    queryFn: async (): Promise<Comment[]> => {
+      if (!postId) return [];
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*, author:profiles!author_id(id, handle, display_name, avatar_path)')
+        .eq('post_id', postId)
+        .is('parent_comment_id', null)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      // Reverse so the oldest of the latest N reads first → flows naturally.
+      return ((data ?? []) as Comment[]).reverse();
+    },
+    enabled: !!postId,
+    staleTime: 30_000,
+  });
+}
+
+/**
  * Comment with materialized children. `children` is an array of the
  * same shape, sorted by created_at ascending. Top-level returns are
  * the comments whose `parent_comment_id` is null.

@@ -8,6 +8,7 @@
  * Engagement (hearts) is wired through `post_reactions`.
  */
 
+import { useEffect } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
@@ -66,6 +67,35 @@ export function useFeed(tab: FeedTab = 'for_you') {
     },
     initialPageParam: 0,
   });
+}
+
+/**
+ * Subscribe to new public posts in real time. When the channel receives
+ * an INSERT for a post that isn't visibility='family' (those have their
+ * own feed channel inside useFamilyFeed), we invalidate the feed query
+ * so it refetches the head of the list. Cheap because the postgres_changes
+ * stream is filtered server-side.
+ */
+export function useFeedRealtime(tab: FeedTab) {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  useEffect(() => {
+    if (DEV_MODE) return;
+    const channel = supabase
+      .channel(`feed-${tab}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts' },
+        (payload: any) => {
+          const v = payload?.new?.visibility;
+          if (v === 'family' || v === 'private') return;
+          if (tab === 'connections' && v !== 'connections') return;
+          qc.invalidateQueries({ queryKey: ['feed', tab, userId] });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc, tab, userId]);
 }
 
 export function useDeletePost() {
