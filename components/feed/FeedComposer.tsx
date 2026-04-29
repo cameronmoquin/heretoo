@@ -55,6 +55,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const { data: families } = useMyFamilies();
   const inAFamily = (families?.length ?? 0) > 0;
   const isFamilyScoped = !!familyId;
+  const [postKind, setPostKind] = useState<'post' | 'update'>('post');
 
   const [body, setBody] = useState('');
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
@@ -115,6 +116,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         body: body.trim(),
         visibility: isFamilyScoped ? 'family' : 'public',
         familyId: familyId,
+        kind: isFamilyScoped ? postKind : 'post',
         photoUploads,
         muxPlaybackId,
         videoDurationMs,
@@ -123,6 +125,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       // reset
       setBody('');
       setTaggedIds(new Set());
+      setPostKind('post');
       upload.reset();
     } catch (e: any) {
       showAlert('Could not post', e?.message ?? 'Try again.');
@@ -168,7 +171,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   return (
     <View style={s.card}>
       <View style={s.headerRow}>
-        <Text style={s.title}>New post</Text>
+        <Text style={s.title}>{isFamilyScoped && postKind === 'update' ? 'New update' : 'New post'}</Text>
         <TouchableOpacity
           style={[s.postBtn, (!canPost || isUploading) && s.postBtnDisabled]}
           onPress={handlePost}
@@ -177,9 +180,39 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         >
           {isUploading
             ? <ActivityIndicator color="#000" size="small" />
-            : <Text style={s.postBtnText}>Post</Text>}
+            : <Text style={s.postBtnText}>{postKind === 'update' ? 'Send update' : 'Post'}</Text>}
         </TouchableOpacity>
       </View>
+
+      {/* Update / Post toggle — family-scoped composers only. */}
+      {isFamilyScoped && (
+        <View style={s.kindRow}>
+          <TouchableOpacity
+            style={[s.kindBtn, postKind === 'post' && s.kindBtnActive]}
+            onPress={() => setPostKind('post')}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="chatbubble-outline"
+              size={13}
+              color={postKind === 'post' ? Colors.primary : Colors.textMuted}
+            />
+            <Text style={[s.kindBtnText, postKind === 'post' && s.kindBtnTextActive]}>Post</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.kindBtn, postKind === 'update' && s.kindBtnActive]}
+            onPress={() => setPostKind('update')}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="medkit-outline"
+              size={13}
+              color={postKind === 'update' ? Colors.primary : Colors.textMuted}
+            />
+            <Text style={[s.kindBtnText, postKind === 'update' && s.kindBtnTextActive]}>Update</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <TextInput
         style={s.input}
@@ -389,6 +422,19 @@ function makeStyles() { return StyleSheet.create({
   },
   postBtnDisabled: { opacity: 0.4 },
   postBtnText: { color: '#000', fontSize: 13, fontWeight: '700' },
+
+  kindRow: {
+    flexDirection: 'row', gap: 6,
+    backgroundColor: Colors.surfaceLight, borderRadius: 999,
+    padding: 4, alignSelf: 'flex-start',
+  },
+  kindBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+  },
+  kindBtnActive: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
+  kindBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
+  kindBtnTextActive: { color: Colors.textPrimary },
 
   input: {
     backgroundColor: Colors.surfaceLight,

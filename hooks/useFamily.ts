@@ -447,6 +447,7 @@ export function useFamilyFeed(familyId: string | null) {
         )
         .eq('family_id', familyId)
         .eq('visibility', 'family')
+        .eq('kind', 'post')               // updates have their own tab
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -461,11 +462,41 @@ export function useFamilyFeed(familyId: string | null) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'posts', filter: `family_id=eq.${familyId}` },
-        () => qc.invalidateQueries({ queryKey: ['family-feed', familyId] }),
+        () => {
+          qc.invalidateQueries({ queryKey: ['family-feed', familyId] });
+          qc.invalidateQueries({ queryKey: ['family-updates', familyId] });
+        },
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [familyId, qc]);
 
   return query;
+}
+
+/**
+ * Family updates feed — only posts marked kind='update'. The original
+ * use case for HereToo: keep time-sensitive family news (medical
+ * updates, milestones, the brother in the hospital) in their own
+ * dedicated, easy-to-find lane instead of buried in daily chatter.
+ */
+export function useFamilyUpdates(familyId: string | null) {
+  return useQuery({
+    queryKey: ['family-updates', familyId],
+    queryFn: async () => {
+      if (!familyId) return [];
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          '*, author:profiles!author_id(id, handle, display_name, avatar_path), media:post_media(*)',
+        )
+        .eq('family_id', familyId)
+        .eq('visibility', 'family')
+        .eq('kind', 'update')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!familyId,
+  });
 }

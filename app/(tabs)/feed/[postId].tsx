@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../../lib/supabase';
 import { mediaPathToUrl, mediaPathToThumb } from '../../../hooks/useUpload';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
+import { Lightbox } from '../../../components/shared/Lightbox';
 import {
   useCommentTree, useAddComment, useDeleteComment, useToggleCommentsDisabled,
   type CommentNode,
@@ -37,6 +38,7 @@ export default function PostDetail() {
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const { data: comments } = useCommentTree(postId);
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
@@ -134,7 +136,7 @@ export default function PostDetail() {
 
           {!!post.body && <Text style={s.body}>{post.body}</Text>}
 
-          {media.map((m: any) => (
+          {media.map((m: any, i: number) => (
             m.media_type === 'video' ? (
               Platform.OS === 'web'
                 ? React.createElement('video', {
@@ -153,20 +155,22 @@ export default function PostDetail() {
                     },
                   })
                 : (
-                  <Image
-                    key={m.id}
-                    source={{ uri: mediaPathToThumb(m.storage_path) ?? mediaPathToUrl(m.storage_path) }}
-                    style={s.image}
-                    resizeMode="cover"
-                  />
+                  <TouchableOpacity key={m.id} onPress={() => setLightboxIdx(i)} activeOpacity={0.85}>
+                    <Image
+                      source={{ uri: mediaPathToThumb(m.storage_path) ?? mediaPathToUrl(m.storage_path) }}
+                      style={s.image}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
                 )
             ) : (
-              <Image
-                key={m.id}
-                source={{ uri: mediaPathToUrl(m.storage_path) }}
-                style={s.image}
-                resizeMode="cover"
-              />
+              <TouchableOpacity key={m.id} onPress={() => setLightboxIdx(i)} activeOpacity={0.85}>
+                <Image
+                  source={{ uri: mediaPathToUrl(m.storage_path) }}
+                  style={s.image}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
             )
           ))}
 
@@ -257,6 +261,12 @@ export default function PostDetail() {
           </View>
         )}
       </KeyboardAvoidingView>
+      <Lightbox
+        media={media}
+        startIndex={lightboxIdx ?? 0}
+        visible={lightboxIdx !== null}
+        onClose={() => setLightboxIdx(null)}
+      />
     </SafeAreaView>
   );
 }

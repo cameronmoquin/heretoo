@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
-  Modal, Pressable, Platform,
+  Modal, Pressable, RefreshControl, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
+  useFamily, useFamilyMembers, useFamilyFeed, useFamilyUpdates, useLeaveFamily,
   useDeleteFamily, usePendingRename, useProposeRename, useVoteRename,
 } from '../../../hooks/useFamily';
 import { useToggleHeart } from '../../../hooks/useFeed';
@@ -18,7 +19,7 @@ import { PostCard } from '../../../components/feed/PostCard';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
-type Tab = 'feed' | 'about';
+type Tab = 'feed' | 'updates' | 'about';
 
 export default function FamilyDetail() {
   const s = makeStyles();
@@ -28,6 +29,7 @@ export default function FamilyDetail() {
   const { data: family, isLoading } = useFamily(id);
   const { data: members } = useFamilyMembers(id);
   const { data: posts } = useFamilyFeed(id ?? null);
+  const { data: updates } = useFamilyUpdates(id ?? null);
   const leave = useLeaveFamily();
   const deleteFamily = useDeleteFamily();
   const toggleHeart = useToggleHeart();
@@ -36,6 +38,23 @@ export default function FamilyDetail() {
   const voteRename = useVoteRename();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const qc = useQueryClient();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['family', id] }),
+        qc.invalidateQueries({ queryKey: ['family-members', id] }),
+        qc.invalidateQueries({ queryKey: ['family-feed', id] }),
+        qc.invalidateQueries({ queryKey: ['family-updates', id] }),
+        qc.invalidateQueries({ queryKey: ['pending-rename', id] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (isLoading || !id) {
     return (
@@ -133,21 +152,30 @@ export default function FamilyDetail() {
       </View>
 
       <View style={s.tabs}>
-        {(['feed', 'about'] as Tab[]).map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[s.tab, tab === t && s.tabActive]}
-            onPress={() => setTab(t)}
-            activeOpacity={0.75}
-          >
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>
-              {t === 'feed' ? 'Feed' : 'About'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {(['feed', 'updates', 'about'] as Tab[]).map((t) => {
+          const label =
+            t === 'feed' ? 'Feed' :
+            t === 'updates' ? `Updates${updates && updates.length ? ` · ${updates.length}` : ''}` :
+            'About';
+          return (
+            <TouchableOpacity
+              key={t}
+              style={[s.tab, tab === t && s.tabActive]}
+              onPress={() => setTab(t)}
+              activeOpacity={0.75}
+            >
+              <Text style={[s.tabText, tab === t && s.tabTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <ScrollView contentContainerStyle={s.scroll}>
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+        }
+      >
         {tab === 'feed' && (
           <>
             <FeedComposer familyId={id} />
@@ -164,6 +192,24 @@ export default function FamilyDetail() {
                   onHeart={(postId) => toggleHeart.mutate(postId)}
                 />
               ))
+            )}
+          </>
+        )}
+
+        {tab === 'updates' && (
+          <>
+            <FeedComposer familyId={id} />
+            {(!updates || updates.length === 0) ? (
+              <View style={s.emptyFeed}>
+                <Ionicons name="medkit-outline" size={32} color={Colors.textMuted} />
+                <Text style={s.emptyTitle}>No updates yet.</Text>
+                <Text style={s.emptySub}>
+                  Share time-sensitive family news here — milestones, medical updates,
+                  the things everyone is waiting to hear.
+                </Text>
+              </View>
+            ) : (
+              updates.map((p: any) => <UpdateCard key={p.id} post={p} />)
             )}
           </>
         )}
@@ -380,6 +426,56 @@ export default function FamilyDetail() {
   );
 }
 
+/**
+ * UpdateCard — visually distinct from a regular PostCard:
+ *   - Bold timestamp + "Update from <author>" header on top
+ *   - Left-side accent strip in the primary color so the card reads
+ *     as time-sensitive at a glance
+ *   - Body in slightly larger type
+ *   - Tappable to the post detail (where comments + reactions live)
+ */
+function UpdateCard({ post }: { post: any }) {
+  const s = makeStyles();
+  const author = post.author;
+  const media: any[] = post.media ?? [];
+  const dt = new Date(post.created_at);
+  const dateLine = dt.toLocaleDateString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric',
+  });
+  const timeLine = dt.toLocaleTimeString(undefined, {
+    hour: 'numeric', minute: '2-digit',
+  });
+
+  return (
+    <Pressable
+      style={s.updateCard}
+      onPress={() => router.push(`/(tabs)/feed/${post.id}` as any)}
+    >
+      <View style={s.updateAccent} />
+      <View style={s.updateBody}>
+        <View style={s.updateHeader}>
+          <Text style={s.updateDate}>{dateLine} · {timeLine}</Text>
+          <Text style={s.updateFrom}>
+            from <Text style={{ fontWeight: '700' }}>
+              {author?.display_name ?? author?.handle ?? 'someone'}
+            </Text>
+          </Text>
+        </View>
+        {!!post.body && <Text style={s.updateText}>{post.body}</Text>}
+        {media.length > 0 && (
+          <View style={s.updateMedia}>
+            {/* Just a static thumb here — full media renders on detail */}
+            <Ionicons name="image-outline" size={14} color={Colors.textMuted} />
+            <Text style={s.updateMediaHint}>
+              {media.length} attachment{media.length === 1 ? '' : 's'}
+            </Text>
+          </View>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   header: {
@@ -431,6 +527,34 @@ function makeStyles() { return StyleSheet.create({
   memberRole: { fontSize: 11, color: Colors.textMuted, textTransform: 'capitalize' },
   leaveBtn: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 14, marginTop: 8 },
   leaveBtnText: { color: Colors.error, fontSize: 14, fontWeight: '500' },
+
+  emptySub: {
+    fontSize: 13, color: Colors.textMuted, textAlign: 'center',
+    maxWidth: 320, marginTop: 6, lineHeight: 19,
+  },
+
+  // Update card — emphatic, time-sensitive
+  updateCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1, borderColor: Colors.border,
+    overflow: 'hidden',
+    marginVertical: 4,
+  },
+  updateAccent: { width: 4, backgroundColor: Colors.primary },
+  updateBody: { flex: 1, padding: 14, gap: 6 },
+  updateHeader: { gap: 2 },
+  updateDate: {
+    fontSize: 12, fontWeight: '700', color: Colors.primary,
+    textTransform: 'uppercase', letterSpacing: 1.2,
+  },
+  updateFrom: { fontSize: 12, color: Colors.textMuted },
+  updateText: { fontSize: 16, color: Colors.textPrimary, lineHeight: 23, marginTop: 4 },
+  updateMedia: {
+    flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6,
+  },
+  updateMediaHint: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
 
   // Rename proposal banner
   proposalCard: {

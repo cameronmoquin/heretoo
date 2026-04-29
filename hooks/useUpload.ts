@@ -165,6 +165,8 @@ export function useUpload() {
       body: string;
       visibility: PostVisibility;
       familyId?: string;
+      /** 'post' (default) or 'update' for time-sensitive family news. */
+      kind?: 'post' | 'update';
       photoUploads?: { path: string; width?: number; height?: number }[];
       muxPlaybackId?: string;
       muxThumbnailUrl?: string;
@@ -183,6 +185,7 @@ export function useUpload() {
         author_id: userId,
         body: params.body || null,
         visibility: params.visibility,
+        kind: params.kind ?? 'post',
       };
       if (params.familyId) row.family_id = params.familyId;
 
@@ -236,6 +239,7 @@ export function useUpload() {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       if (vars.familyId) {
         queryClient.invalidateQueries({ queryKey: ['family-feed', vars.familyId] });
+        queryClient.invalidateQueries({ queryKey: ['family-updates', vars.familyId] });
       }
     },
     onError: (error: any) => {
