@@ -16,6 +16,8 @@ import { ErrorBoundary } from '../components/shared/ErrorBoundary';
 import { BuildBadge } from '../components/shared/BuildBadge';
 import { PWAInstallPrompt } from '../components/shared/PWAInstallPrompt';
 import { UpdateNudge } from '../components/shared/UpdateNudge';
+import { ToastHost } from '../components/shared/Toast';
+import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -76,6 +78,8 @@ function RootLayoutInner() {
         <Stack.Screen name="u" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
+      <ToastHost />
+      <ConfirmHost />
       <UpdateNudge />
       <PWAInstallPrompt />
       <BuildBadge />

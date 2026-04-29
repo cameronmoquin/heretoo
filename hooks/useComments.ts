@@ -56,15 +56,66 @@ export function useAddComment() {
           body: input.body,
           parent_comment_id: input.parentCommentId ?? null,
         })
-        .select()
+        .select('*, author:profiles!author_id(id, handle, display_name, avatar_path)')
         .single();
       if (error) throw error;
       return data as Comment;
     },
-    onSuccess: (_c, vars) => {
+    // Optimistic: drop a placeholder into the tree + flat list and the
+    // latest-comments preview the moment the user taps Send.
+    onMutate: async (vars) => {
+      const id = `optimistic-${Date.now()}`;
+      const tempComment: Comment = {
+        id,
+        post_id: vars.postId,
+        author_id: userId ?? 'me',
+        parent_comment_id: vars.parentCommentId ?? null,
+        body: vars.body,
+        created_at: new Date().toISOString(),
+        author: undefined,
+      };
+
+      await qc.cancelQueries({ queryKey: ['comments', vars.postId] });
+      await qc.cancelQueries({ queryKey: ['comments-tree', vars.postId] });
+      await qc.cancelQueries({ queryKey: ['comments-latest', vars.postId] });
+
+      const prev = {
+        flat: qc.getQueryData<Comment[]>(['comments', vars.postId]),
+        tree: qc.getQueryData<any[]>(['comments-tree', vars.postId]),
+        latest: qc.getQueryData<Comment[]>(['comments-latest', vars.postId, 2]),
+      };
+
+      qc.setQueryData<Comment[]>(['comments', vars.postId], (old) => [...(old ?? []), tempComment]);
+      qc.setQueryData<any[]>(['comments-tree', vars.postId], (old) => {
+        const node: any = { ...tempComment, children: [] };
+        if (!vars.parentCommentId) return [...(old ?? []), node];
+        const insertReply = (nodes: any[]): any[] =>
+          nodes.map((n) =>
+            n.id === vars.parentCommentId
+              ? { ...n, children: [...n.children, node] }
+              : { ...n, children: insertReply(n.children) },
+          );
+        return insertReply(old ?? []);
+      });
+      // Latest preview only shows top-level comments
+      if (!vars.parentCommentId) {
+        qc.setQueryData<Comment[]>(['comments-latest', vars.postId, 2], (old) => {
+          const next = [...(old ?? []), tempComment];
+          return next.slice(-2);
+        });
+      }
+      return prev;
+    },
+    onError: (_err, vars, ctx: any) => {
+      if (!ctx) return;
+      qc.setQueryData(['comments', vars.postId], ctx.flat);
+      qc.setQueryData(['comments-tree', vars.postId], ctx.tree);
+      qc.setQueryData(['comments-latest', vars.postId, 2], ctx.latest);
+    },
+    onSettled: (_c, _err, vars) => {
       qc.invalidateQueries({ queryKey: ['comments', vars.postId] });
       qc.invalidateQueries({ queryKey: ['comments-tree', vars.postId] });
-      // Comment count on the post is denormalized; refetch the feed too.
+      qc.invalidateQueries({ queryKey: ['comments-latest', vars.postId] });
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['family-feed'] });
     },

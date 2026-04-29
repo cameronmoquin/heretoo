@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react
 import { FlashList } from '@shopify/flash-list';
 import { PostCard } from './PostCard';
 import { ArtSlot } from './ArtSlot';
+import { ArtBanner } from './ArtBanner';
 import { FeedComposer } from './FeedComposer';
 import { useArtFeed, type ArtWork } from '../../hooks/useArtFeed';
 import { Colors } from '../../constants/colors';
@@ -23,7 +24,8 @@ type FeedItem =
   | { kind: 'post'; post: Post }
   | { kind: 'art'; art: ArtWork };
 
-const ART_INTERVAL = 6; // one art slot every N posts
+const ART_INTERVAL = 6;       // a new piece every N posts after the first slot
+const FIRST_ART_AT = 1;       // show the first art piece right after the very first post
 
 export function FeedList({
   posts, isLoading, isRefreshing, hasMore, onRefresh, onLoadMore, onHeart,
@@ -31,17 +33,32 @@ export function FeedList({
   const styles = makeStyles();
   const { data: art } = useArtFeed();
 
-  // Interleave: post, post, ..., art (every ART_INTERVAL posts).
+  // Interleave: post, art (right after the first post), then more art
+  // every ART_INTERVAL after that. The earlier-cadence start matters
+  // when the feed is brand-new and only has a handful of posts —
+  // otherwise users go a long way before seeing any gallery content.
   const items = useMemo<FeedItem[]>(() => {
     const out: FeedItem[] = [];
     let artIdx = 0;
+    const haveArt = !!art && art.length > 0;
     posts.forEach((p, i) => {
       out.push({ kind: 'post', post: p });
-      if ((i + 1) % ART_INTERVAL === 0 && art && art.length > 0) {
+      const idx1 = i + 1;
+      const shouldSlot =
+        haveArt && (
+          idx1 === FIRST_ART_AT
+          || (idx1 > FIRST_ART_AT && (idx1 - FIRST_ART_AT) % ART_INTERVAL === 0)
+        );
+      if (shouldSlot && art) {
         out.push({ kind: 'art', art: art[artIdx % art.length] });
         artIdx++;
       }
     });
+    // If the feed is *empty* but we have art, show one piece anyway so
+    // the page doesn't feel desolate.
+    if (posts.length === 0 && haveArt && art) {
+      out.push({ kind: 'art', art: art[0] });
+    }
     return out;
   }, [posts, art]);
 
@@ -82,7 +99,17 @@ export function FeedList({
       data={items}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      ListHeaderComponent={FeedComposer}
+      ListHeaderComponent={() => (
+        <View>
+          <ArtBanner slot="top" />
+          <FeedComposer />
+        </View>
+      )}
+      ListFooterComponent={() => (
+        <View>
+          <ArtBanner slot="bottom" />
+        </View>
+      )}
       onEndReached={hasMore ? onLoadMore : undefined}
       onEndReachedThreshold={0.6}
       refreshControl={

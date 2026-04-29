@@ -400,9 +400,50 @@ export function useUpdateMyStature() {
         .eq('profile_id', userId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    // Optimistic: write the new stature into the my-statures cache and
+    // the per-profile stature-summary cache *before* the request lands
+    // so the UI updates the moment the user taps a role.
+    onMutate: async (input) => {
+      if (!userId) return;
+      await qc.cancelQueries({ queryKey: ['my-statures', userId] });
+      await qc.cancelQueries({ queryKey: ['stature-summary', userId] });
+
+      const prevStatures = qc.getQueryData<Record<string, FamilyStature | null>>(['my-statures', userId]);
+      const prevSummary = qc.getQueryData<any>(['stature-summary', userId]);
+
+      qc.setQueryData(['my-statures', userId], (old: any) => ({
+        ...(old ?? {}),
+        [input.familyId]: input.stature,
+      }));
+      // Recompute summary's stature optimistically: the highest stature
+      // across all the user's families, by enum order.
+      const order: FamilyStature[] = [
+        'matriarch', 'patriarch', 'elder', 'parent',
+        'guardian', 'sibling', 'offspring', 'child',
+      ];
+      const merged: Record<string, FamilyStature | null> = {
+        ...(prevStatures ?? {}),
+        [input.familyId]: input.stature,
+      };
+      const ranks = Object.values(merged).filter(Boolean) as FamilyStature[];
+      const top = order.find((o) => ranks.includes(o)) ?? null;
+      qc.setQueryData(['stature-summary', userId], (old: any) => ({
+        stature: top,
+        generation: Math.max(GENERATION_BY_STATURE[input.stature], old?.generation ?? 0),
+        network_reach: old?.network_reach ?? 0,
+      }));
+
+      return { prevStatures, prevSummary };
+    },
+    onError: (_err, _vars, ctx: any) => {
+      if (!userId || !ctx) return;
+      qc.setQueryData(['my-statures', userId], ctx.prevStatures);
+      qc.setQueryData(['stature-summary', userId], ctx.prevSummary);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['families'] });
       qc.invalidateQueries({ queryKey: ['family-members'] });
+      qc.invalidateQueries({ queryKey: ['my-statures'] });
       qc.invalidateQueries({ queryKey: ['stature-summary'] });
     },
   });
