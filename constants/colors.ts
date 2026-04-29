@@ -19,17 +19,18 @@ const dark = {
   primary: '#4F6EFF',
   primaryDark: '#3B5AE8',
   primaryLight: '#7B93FF',
-  primaryFaint: 'rgba(79, 110, 255, 0.08)',
+  primaryFaint: 'rgba(79, 110, 255, 0.10)',
 
-  // Surfaces
-  background: '#0A0A0F',
-  surface: '#12121A',
-  surfaceLight: '#1A1A25',
-  border: '#252535',
-  borderLight: '#1E1E2A',
-  textPrimary: '#E8E8F0',
-  textSecondary: '#8888A0',
-  textMuted: '#555568',
+  // Surfaces — dialed back from near-black to a warm graphite so the
+  // app feels lived-in instead of OLED-void.
+  background: '#1A1A24',
+  surface: '#23232F',
+  surfaceLight: '#2C2C3A',
+  border: '#3A3A4A',
+  borderLight: '#2E2E3D',
+  textPrimary: '#EDEDF3',
+  textSecondary: '#9999AE',
+  textMuted: '#6A6A80',
 
   // Accents (kept consistent across themes)
   agree: '#00FF88',
@@ -70,15 +71,16 @@ const light = {
   primaryLight: '#7B93FF',
   primaryFaint: 'rgba(59, 90, 232, 0.10)',
 
-  // Light surfaces
-  background: '#FAFAFC',
-  surface: '#FFFFFF',
-  surfaceLight: '#F2F2F7',
-  border: '#D8D8E0',
-  borderLight: '#E8E8EE',
-  textPrimary: '#0A0A0F',
-  textSecondary: '#4A4A5A',
-  textMuted: '#888897',
+  // Light surfaces — warmer paper-tone instead of stark white so reading
+  // long stretches doesn't fatigue, and elevated cards still pop.
+  background: '#EAE9EE',
+  surface: '#F4F3F7',
+  surfaceLight: '#E1E0E6',
+  border: '#C8C7D0',
+  borderLight: '#D8D7DE',
+  textPrimary: '#1A1A24',
+  textSecondary: '#54546A',
+  textMuted: '#80808F',
 
   // Accents — same identity but slightly less neon for light mode
   agree: '#00B864',

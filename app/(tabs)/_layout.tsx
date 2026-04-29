@@ -15,6 +15,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
+import { HereTooLogo } from '../../components/shared/Logo';
 
 /**
  * Mobile bottom nav.
@@ -45,9 +46,7 @@ function Sidebar() {
   return (
     <View style={styles.sidebar}>
       <View style={styles.sidebarLogoWrap}>
-        <Text style={[styles.sidebarLogo, { color: '#FF0040', position: 'absolute', left: -1, top: -1, opacity: 0.6 }]}>HT</Text>
-        <Text style={[styles.sidebarLogo, { color: '#00FF88', position: 'absolute', left: 1, top: 1, opacity: 0.6 }]}>HT</Text>
-        <Text style={styles.sidebarLogo}>HT</Text>
+        <HereTooLogo size={36} color={Colors.textPrimary} />
       </View>
       <View style={styles.sidebarNav}>
         {NAV.map((item) => {
@@ -188,13 +187,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 16,
     flexDirection: 'column',
   },
-  sidebarLogoWrap: { position: 'relative', marginBottom: 32, paddingHorizontal: 8, height: 30 },
-  sidebarLogo: {
-    fontWeight: '900',
-    fontSize: 28,
-    letterSpacing: 4,
-    color: Colors.textPrimary,
-  },
+  sidebarLogoWrap: { marginBottom: 32, paddingHorizontal: 4, height: 44 },
   sidebarNav: { gap: 2 },
   navItem: {
     paddingVertical: 10,

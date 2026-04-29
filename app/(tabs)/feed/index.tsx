@@ -8,6 +8,7 @@ import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
 import { useThemeStore } from '../../../stores/themeStore';
 import { useMyNetworkStats } from '../../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
+import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -33,11 +34,7 @@ export default function FeedScreen() {
     <SafeAreaView style={styles.safe} edges={isDesktop ? [] : ['top']}>
       {!isDesktop && (
         <View style={styles.header}>
-          <View style={{ position: 'relative' }}>
-            <Text style={[styles.logo, { color: '#FF0040', position: 'absolute', left: -1, top: -1, opacity: 0.6 }]}>HT</Text>
-            <Text style={[styles.logo, { color: '#00FF88', position: 'absolute', left: 1, top: 1, opacity: 0.6 }]}>HT</Text>
-            <Text style={styles.logo}>HT</Text>
-          </View>
+          <HereTooLogo size={28} color={Colors.textPrimary} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
               style={styles.signOutIconBtn}
@@ -123,7 +120,6 @@ function makeStyles() { return StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 10,
   },
-  logo: { fontWeight: '800', fontSize: 22, letterSpacing: -0.5, color: Colors.textPrimary },
   signOutIconBtn: {
     width: 36, height: 36, borderRadius: 18,
     borderWidth: 1, borderColor: Colors.border,

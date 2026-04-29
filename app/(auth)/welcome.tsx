@@ -17,6 +17,7 @@ import { DEV_MODE } from '../../lib/dev-mode';
 import { useAuth } from '../../hooks/useAuth';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
+import { HereTooLogo } from '../../components/shared/Logo';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -147,11 +148,7 @@ export default function WelcomeScreen() {
 
           {/* Logo */}
           <View style={s.logoArea}>
-            <View style={s.glitchLogo}>
-              <Text style={[s.logoText, s.glitchR]}>HT</Text>
-              <Text style={[s.logoText, s.glitchG]}>HT</Text>
-              <Text style={s.logoText}>HT</Text>
-            </View>
+            <HereTooLogo size={64} color="#FFFFFF" />
             <Text style={s.logoSub}>heretoo</Text>
           </View>
 
@@ -261,10 +258,6 @@ function makeStyles() { return StyleSheet.create({
     maxWidth: 400, alignSelf: 'center', width: '100%',
   },
   logoArea: { alignItems: 'center', marginBottom: 32 },
-  glitchLogo: { position: 'relative', width: 100, height: 60, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 48, fontWeight: '900', color: '#FFFFFF', letterSpacing: 4, position: 'absolute' },
-  glitchR: { color: '#FF0040', left: -2, top: -1, opacity: 0.7 },
-  glitchG: { color: '#00FF88', left: 2, top: 1, opacity: 0.7 },
   logoSub: { fontSize: 13, fontWeight: '500', color: '#666', letterSpacing: 6, textTransform: 'uppercase', marginTop: 8 },
   section: { gap: 12, marginBottom: 24 },
   headline: { fontSize: 22, fontWeight: '700', color: '#FFFFFF', textAlign: 'center' },
