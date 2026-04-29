@@ -17,6 +17,7 @@ import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 import { HereTooLogo } from '../../components/shared/Logo';
 import { SidebarArt } from '../../components/shared/SidebarArt';
+import { ArtPreferences } from '../../components/shared/ArtPreferences';
 
 /**
  * Mobile bottom nav.
@@ -105,7 +106,8 @@ function Sidebar() {
         </TouchableOpacity>
       </View>
 
-      {/* Art slot — quiet rotating gallery / ad inventory */}
+      {/* Art preferences + rotating piece */}
+      <ArtPreferences compact />
       <SidebarArt />
 
       {/* Sign-out at the bottom of the sidebar */}

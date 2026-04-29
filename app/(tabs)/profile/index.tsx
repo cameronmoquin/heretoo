@@ -28,6 +28,7 @@ import {
 import { useThemeStore } from '../../../stores/themeStore';
 import { showConfirm, showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
+import { ArtPreferences } from '../../../components/shared/ArtPreferences';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -182,6 +183,9 @@ export default function OwnProfileScreen() {
             onPress={toggleTheme}
           />
         </View>
+
+        {/* Gallery filter — collapsed by default; tap to set art prefs */}
+        <ArtPreferences compact />
 
         {/* ── Sign out ── */}
         <TouchableOpacity style={s.signOutBtn} onPress={handleSignOut} activeOpacity={0.75}>
