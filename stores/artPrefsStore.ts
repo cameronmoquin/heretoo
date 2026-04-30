@@ -142,6 +142,7 @@ export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
 export const SOURCE_LABELS: Record<string, string> = {
   met: 'The Met',
   aic: 'Art Institute of Chicago',
+  cma: 'Cleveland Museum of Art',
   rijks: 'Rijksmuseum',
 };
 

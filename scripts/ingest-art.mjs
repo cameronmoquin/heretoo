@@ -195,12 +195,62 @@ async function ingestRijks(count) {
   console.log(`Rijks: inserted ${inserted}`);
 }
 
+// ── Cleveland Museum of Art (CC0; no key needed) ───────────────────────
+//
+// We attempted to add RISD here but they don't expose a public API
+// (Drupal site, search-only HTML). CMA has a great open-access REST
+// endpoint: 41k+ CC0 works, full metadata, no auth.
+async function ingestCma(count) {
+  console.log('── Cleveland Museum of Art (CC0) ──');
+  let inserted = 0;
+  let skip = 0;
+  const PAGE = 100;
+  while (inserted < count && skip < 5000) {
+    const r = await fetch(
+      `https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&cc0=1&limit=${PAGE}&skip=${skip}`,
+    );
+    const j = await r.json();
+    const rows = j?.data ?? [];
+    if (rows.length === 0) break;
+    for (const a of rows) {
+      if (inserted >= count) break;
+      const img = a?.images?.web?.url ?? a?.images?.print?.url;
+      if (!img) continue;
+      const thumb = a?.images?.web?.url ?? null;
+      const artistName = (a?.creators ?? [])[0]?.description?.split('(')[0]?.trim() ?? null;
+      const ok = await upsertWork({
+        source: 'cma',
+        source_id: String(a.id),
+        title: a.title ?? null,
+        artist: artistName,
+        year_created: a.creation_date || null,
+        genre: a.technique ? [a.technique] : null,
+        school: a.culture?.[0] ?? null,
+        medium: a.technique || null,
+        storage_path: img,
+        thumb_path: thumb,
+        license: 'CC0',
+        source_url: a.url ?? null,
+        description: a.description ?? a.tombstone ?? null,
+      });
+      if (ok) {
+        inserted++;
+        process.stdout.write(`  [${inserted}/${count}] ${(a.title ?? '').slice(0, 60)}\n`);
+      }
+    }
+    skip += PAGE;
+  }
+  console.log(`CMA: inserted ${inserted}`);
+}
+
 // ── dispatch ─────────────────────────────────────────────────────────────
 const sources = {
   met: ingestMet,
   aic: ingestAic,
   rijks: ingestRijks,
+  cma: ingestCma,
   all: async (n) => {
+    await ingestCma(n);
     await ingestMet(n);
     await ingestAic(n);
     await ingestRijks(n);
