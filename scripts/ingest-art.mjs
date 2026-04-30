@@ -396,5 +396,20 @@ if (!fn) {
   process.exit(1);
 }
 
-await fn(count);
+// Outer retry: even after the per-loop try/catches, a sustained DNS
+// outage or other surprise can throw past the inner handlers. Wrap
+// the whole run so the script bounces right back instead of exiting.
+const KEEPALIVE = setInterval(() => {}, 60_000); // hold the event loop open
+let attempts = 0;
+while (attempts < 50) {
+  attempts++;
+  try {
+    await fn(count);
+    break;                                   // clean finish
+  } catch (e) {
+    console.warn(`  outer loop error (attempt ${attempts}), sleeping 60s:`, e?.code ?? e?.message);
+    await sleep(60_000);
+  }
+}
+clearInterval(KEEPALIVE);
 console.log(`Done. inserted=${stats.inserted} skipped=${stats.skipped} failed=${stats.failed}`);
