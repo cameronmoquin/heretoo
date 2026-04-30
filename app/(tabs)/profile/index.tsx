@@ -29,6 +29,7 @@ import { useThemeStore } from '../../../stores/themeStore';
 import { showConfirm, showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { ArtPreferences } from '../../../components/shared/ArtPreferences';
+import { PlantTreeModal } from '../../../components/shared/PlantTreeModal';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
@@ -43,6 +44,7 @@ export default function OwnProfileScreen() {
   const { data: statures } = useMyStatures();
   const updateStature = useUpdateMyStature();
   const [picker, setPicker] = useState<{ familyId: string; familyName: string } | null>(null);
+  const [plantOpen, setPlantOpen] = useState(false);
 
   const handleSignOut = () => showConfirm('Sign out', 'Are you sure?', signOut, 'Sign out');
 
@@ -178,6 +180,12 @@ export default function OwnProfileScreen() {
             onPress={() => router.push('/family/join' as any)}
           />
           <ActionRow
+            icon="leaf-outline"
+            label="Plant a tree with a friend"
+            sub="Sow a seed for someone outside your network"
+            onPress={() => setPlantOpen(true)}
+          />
+          <ActionRow
             icon={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'}
             label={themeMode === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             onPress={toggleTheme}
@@ -193,6 +201,9 @@ export default function OwnProfileScreen() {
           <Text style={s.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Plant-a-tree (founding seed invite) modal */}
+      <PlantTreeModal visible={plantOpen} onClose={() => setPlantOpen(false)} />
 
       {/* Stature picker modal */}
       <Modal
