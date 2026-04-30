@@ -67,9 +67,40 @@ const count = rawCount === 'all' ? Number.MAX_SAFE_INTEGER : (parseInt(rawCount,
 
 const stats = { inserted: 0, skipped: 0, failed: 0 };
 
+// Don't crash the whole multi-hour ingest on a transient network blip.
+// Long-running fetches over flaky residential WiFi otherwise die from
+// ECONNRESET / ENOTFOUND / UND_ERR_CONNECT_TIMEOUT and lose their
+// progress. We log and keep going.
+process.on('uncaughtException', (err) => {
+  console.warn('  uncaught:', err?.code ?? err?.message ?? err);
+});
+process.on('unhandledRejection', (err) => {
+  console.warn('  unhandled rejection:', err?.code ?? err?.message ?? err);
+});
+
+/**
+ * Resilient fetch — wraps the global fetch() with a retry loop so a
+ * single dropped connection doesn't end the run. Backs off
+ * exponentially up to ~30 seconds and gives up after 8 tries.
+ */
+async function fetchWithRetry(url, init, attempts = 8) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const r = await fetch(url, init);
+      return r;
+    } catch (e) {
+      lastErr = e;
+      const wait = Math.min(30_000, 500 * Math.pow(2, i)); // 0.5s ... 30s cap
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────
 async function upsertWork(row) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/art_works`, {
+  const r = await fetchWithRetry(`${SUPABASE_URL}/rest/v1/art_works`, {
     method: 'POST',
     headers: {
       apikey: SERVICE_ROLE,
@@ -108,9 +139,21 @@ async function ingestMet(target) {
   // The Met's `/objects` endpoint returns ALL object IDs (~470k).
   // We walk them in order and skip silently on duplicate-key. This
   // makes long runs fully resumable.
-  const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/objects');
-  const j = await r.json();
-  const ids = j.objectIDs ?? [];
+  let ids = [];
+  while (ids.length === 0) {
+    try {
+      const r = await fetchWithRetry('https://collectionapi.metmuseum.org/public/collection/v1/objects');
+      const j = await r.json();
+      ids = j.objectIDs ?? [];
+      if (ids.length === 0) {
+        console.warn('  empty Met catalog — retrying in 30s');
+        await sleep(30_000);
+      }
+    } catch (e) {
+      console.warn('  Met catalog fetch failed, retrying in 30s:', e?.code ?? e?.message);
+      await sleep(30_000);
+    }
+  }
   // Light shuffle so multiple runs cover different parts of the catalog.
   ids.sort(() => Math.random() - 0.5);
 
@@ -119,7 +162,7 @@ async function ingestMet(target) {
     if (stats.inserted >= target) break;
     processed++;
     try {
-      const dr = await fetch(
+      const dr = await fetchWithRetry(
         `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`,
       );
       if (!dr.ok) continue;
@@ -157,12 +200,19 @@ async function ingestMet(target) {
 async function ingestAic(target) {
   console.log('── Art Institute of Chicago (CC0) ──');
   let page = 1;
-  while (stats.inserted < target && page <= 200) {
-    const r = await fetch(
-      `https://api.artic.edu/api/v1/artworks?limit=100&fields=id,title,artist_display,date_display,classification_titles,style_titles,medium_display,image_id,is_public_domain&page=${page}`,
-    );
-    const j = await r.json();
-    const rows = j.data ?? [];
+  while (stats.inserted < target && page <= 1500) {
+    let rows = [];
+    try {
+      const r = await fetchWithRetry(
+        `https://api.artic.edu/api/v1/artworks?limit=100&fields=id,title,artist_display,date_display,classification_titles,style_titles,medium_display,image_id,is_public_domain&page=${page}`,
+      );
+      const j = await r.json();
+      rows = j.data ?? [];
+    } catch (e) {
+      console.warn(`  AIC page ${page} fetch failed, sleeping 30s and continuing:`, e?.code ?? e?.message);
+      await sleep(30_000);
+      continue;            // retry the same page
+    }
     if (rows.length === 0) break;
     for (const a of rows) {
       if (stats.inserted >= target) break;
@@ -196,11 +246,18 @@ async function ingestCma(target) {
   let skip = 0;
   const PAGE = 100;
   while (stats.inserted < target && skip < 100000) {
-    const r = await fetch(
-      `https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&cc0=1&limit=${PAGE}&skip=${skip}`,
-    );
-    const j = await r.json();
-    const rows = j?.data ?? [];
+    let rows = [];
+    try {
+      const r = await fetchWithRetry(
+        `https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&cc0=1&limit=${PAGE}&skip=${skip}`,
+      );
+      const j = await r.json();
+      rows = j?.data ?? [];
+    } catch (e) {
+      console.warn(`  CMA skip=${skip} fetch failed, sleeping 30s:`, e?.code ?? e?.message);
+      await sleep(30_000);
+      continue;             // retry the same skip offset
+    }
     if (rows.length === 0) break;
     for (const a of rows) {
       if (stats.inserted >= target) break;
@@ -239,7 +296,7 @@ async function ingestCma(target) {
 async function ingestMoma(target) {
   console.log('── Museum of Modern Art (research dataset) ──');
   const url = 'https://media.githubusercontent.com/media/MuseumofModernArt/collection/main/Artworks.json';
-  const r = await fetch(url);
+  const r = await fetchWithRetry(url);
   if (!r.ok) {
     console.warn('MoMA dataset fetch failed:', r.status);
     return;
@@ -288,7 +345,7 @@ async function ingestRijks(target) {
   }
   let page = 1;
   while (stats.inserted < target && page <= 100) {
-    const r = await fetch(
+    const r = await fetchWithRetry(
       `https://www.rijksmuseum.nl/api/en/collection?key=${key}&format=json&imgonly=true&ps=100&p=${page}`,
     );
     const j = await r.json();
