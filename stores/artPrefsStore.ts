@@ -50,6 +50,8 @@ interface Persisted {
   schools: string[];
   eras: ArtEra[];
   genres: string[];
+  mediums: string[];
+  sources: string[];          // museum origins: 'met', 'aic', 'rijks', etc.
 }
 
 const STORAGE_KEY = 'heretoo:art-prefs';
@@ -64,11 +66,13 @@ function loadInitial(): Persisted {
           schools: Array.isArray(parsed.schools) ? parsed.schools : [],
           eras: Array.isArray(parsed.eras) ? parsed.eras : [],
           genres: Array.isArray(parsed.genres) ? parsed.genres : [],
+          mediums: Array.isArray(parsed.mediums) ? parsed.mediums : [],
+          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
         };
       }
     } catch {}
   }
-  return { schools: [], eras: [], genres: [] };
+  return { schools: [], eras: [], genres: [], mediums: [], sources: [] };
 }
 
 function persist(state: Persisted) {
@@ -82,7 +86,14 @@ interface ArtPrefsState extends Persisted {
   toggleSchool: (s: string) => void;
   toggleEra: (e: ArtEra) => void;
   toggleGenre: (g: string) => void;
+  toggleMedium: (m: string) => void;
+  toggleSource: (s: string) => void;
   clear: () => void;
+}
+
+function snapshot(get: () => ArtPrefsState): Persisted {
+  const st = get();
+  return { schools: st.schools, eras: st.eras, genres: st.genres, mediums: st.mediums, sources: st.sources };
 }
 
 export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
@@ -92,27 +103,47 @@ export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
       ? get().schools.filter((x) => x !== s)
       : [...get().schools, s];
     set({ schools: next });
-    persist({ schools: next, eras: get().eras, genres: get().genres });
+    persist({ ...snapshot(get) });
   },
   toggleEra: (e) => {
     const next = get().eras.includes(e)
       ? get().eras.filter((x) => x !== e)
       : [...get().eras, e];
     set({ eras: next });
-    persist({ schools: get().schools, eras: next, genres: get().genres });
+    persist({ ...snapshot(get) });
   },
   toggleGenre: (g) => {
     const next = get().genres.includes(g)
       ? get().genres.filter((x) => x !== g)
       : [...get().genres, g];
     set({ genres: next });
-    persist({ schools: get().schools, eras: get().eras, genres: next });
+    persist({ ...snapshot(get) });
+  },
+  toggleMedium: (m) => {
+    const next = get().mediums.includes(m)
+      ? get().mediums.filter((x) => x !== m)
+      : [...get().mediums, m];
+    set({ mediums: next });
+    persist({ ...snapshot(get) });
+  },
+  toggleSource: (s) => {
+    const next = get().sources.includes(s)
+      ? get().sources.filter((x) => x !== s)
+      : [...get().sources, s];
+    set({ sources: next });
+    persist({ ...snapshot(get) });
   },
   clear: () => {
-    set({ schools: [], eras: [], genres: [] });
-    persist({ schools: [], eras: [], genres: [] });
+    set({ schools: [], eras: [], genres: [], mediums: [], sources: [] });
+    persist({ schools: [], eras: [], genres: [], mediums: [], sources: [] });
   },
 }));
+
+export const SOURCE_LABELS: Record<string, string> = {
+  met: 'The Met',
+  aic: 'Art Institute of Chicago',
+  rijks: 'Rijksmuseum',
+};
 
 /** Pull a 4-digit year out of free-form `year_created`. */
 export function parseYear(s: string | null | undefined): number | null {

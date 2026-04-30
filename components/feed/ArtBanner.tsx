@@ -62,15 +62,8 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
         </Text>
       </View>
 
-      {/*
-        Bottom gradient scrim — pure-CSS on web (linear-gradient via
-        background-color hack with a stacked View stack on native).
-        Implemented as three stacked translucent slabs so we don't need
-        a gradient library; gives a soft fade to readable text contrast.
-      */}
+      {/* Bottom scrim — single translucent slab for legibility. */}
       <View pointerEvents="none" style={[s.scrim, s.scrim1]} />
-      <View pointerEvents="none" style={[s.scrim, s.scrim2]} />
-      <View pointerEvents="none" style={[s.scrim, s.scrim3]} />
 
       {/* Bottom-left text */}
       <View style={s.text} pointerEvents="none">
@@ -92,24 +85,24 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
 
 function makeStyles() { return StyleSheet.create({
   banner: {
-    width: 'auto',
-    aspectRatio: 16 / 6,
+    width: '100%',
+    height: 140,
     backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.md,
     overflow: 'hidden',
-    marginHorizontal: Spacing.md,
     marginVertical: 8,
     position: 'relative',
+    alignSelf: 'center',
+    maxWidth: 600,
   },
   bg: {
     ...StyleSheet.absoluteFillObject,
   },
 
-  // Stacked scrim for bottom-left readability.
-  scrim: { position: 'absolute', left: 0, right: 0 },
-  scrim1: { bottom: 0, height: '40%', backgroundColor: 'rgba(0,0,0,0.55)' },
-  scrim2: { bottom: '40%', height: '20%', backgroundColor: 'rgba(0,0,0,0.30)' },
-  scrim3: { bottom: '60%', height: '20%', backgroundColor: 'rgba(0,0,0,0.10)' },
+  // Single bottom scrim — rgba layered on top of the image. Avoids the
+  // percentage-height stack that was wedging RN-Web layout earlier.
+  scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 90 },
+  scrim1: { backgroundColor: 'rgba(0,0,0,0.55)' },
 
   text: {
     position: 'absolute',

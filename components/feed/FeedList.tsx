@@ -95,33 +95,40 @@ export function FeedList({
   }
 
   return (
-    <FlashList
-      data={items}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      ListHeaderComponent={() => (
-        <View>
-          <ArtBanner slot="top" />
-          <FeedComposer />
-        </View>
-      )}
-      ListFooterComponent={() => (
-        <View>
-          <ArtBanner slot="bottom" />
-        </View>
-      )}
-      onEndReached={hasMore ? onLoadMore : undefined}
-      onEndReachedThreshold={0.6}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={onRefresh}
-          tintColor={Colors.primary}
-        />
-      }
-      contentContainerStyle={styles.list}
-    />
+    <View style={{ flex: 1 }}>
+      {/*
+        Banners and composer are siblings of the list, not its
+        ListHeaderComponent. FlashList's header receives a new render
+        prop on every parent re-render, which on RN-Web can wedge the
+        layout when the child has an aspectRatio-driven height. As a
+        sibling View the banner measures once and stays stable.
+      */}
+      <ArtBanner slot="top" />
+      <FeedComposer />
+      <FlashList
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListFooterComponent={ListFooter}
+        onEndReached={hasMore ? onLoadMore : undefined}
+        onEndReachedThreshold={0.6}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+          />
+        }
+        contentContainerStyle={styles.list}
+      />
+    </View>
   );
+}
+
+// Module-scope so FlashList sees a stable reference instead of a fresh
+// inline arrow on every parent render.
+function ListFooter() {
+  return <ArtBanner slot="bottom" />;
 }
 
 function makeStyles() { return StyleSheet.create({

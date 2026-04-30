@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useArtPrefs,
   ERA_LABELS,
+  SOURCE_LABELS,
   type ArtEra,
 } from '../../stores/artPrefsStore';
 import { useArtFacets } from '../../hooks/useArtFeed';
@@ -36,13 +37,17 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
   const schools = useArtPrefs((st) => st.schools);
   const eras = useArtPrefs((st) => st.eras);
   const genres = useArtPrefs((st) => st.genres);
+  const mediums = useArtPrefs((st) => st.mediums);
+  const sources = useArtPrefs((st) => st.sources);
   const toggleSchool = useArtPrefs((st) => st.toggleSchool);
   const toggleEra = useArtPrefs((st) => st.toggleEra);
   const toggleGenre = useArtPrefs((st) => st.toggleGenre);
+  const toggleMedium = useArtPrefs((st) => st.toggleMedium);
+  const toggleSource = useArtPrefs((st) => st.toggleSource);
   const clear = useArtPrefs((st) => st.clear);
   const { data: facets } = useArtFacets();
 
-  const total = schools.length + eras.length + genres.length;
+  const total = schools.length + eras.length + genres.length + mediums.length + sources.length;
 
   return (
     <View style={s.wrap}>
@@ -119,6 +124,52 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
                     >
                       <Text style={[s.pillText, on && s.pillTextActive]}>
                         {capitalize(row.key)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Section>
+          )}
+
+          {/* Medium */}
+          {(facets?.topMediums?.length ?? 0) > 0 && (
+            <Section label="Medium">
+              <View style={s.pillRow}>
+                {facets!.topMediums!.map((row) => {
+                  const on = mediums.includes(row.key);
+                  return (
+                    <TouchableOpacity
+                      key={row.key}
+                      onPress={() => toggleMedium(row.key)}
+                      style={[s.pill, on && s.pillActive]}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[s.pillText, on && s.pillTextActive]}>
+                        {capitalize(row.key)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Section>
+          )}
+
+          {/* Source / museum */}
+          {(facets?.sources?.length ?? 0) > 0 && (
+            <Section label="Museum">
+              <View style={s.pillRow}>
+                {facets!.sources!.map((row) => {
+                  const on = sources.includes(row.key);
+                  return (
+                    <TouchableOpacity
+                      key={row.key}
+                      onPress={() => toggleSource(row.key)}
+                      style={[s.pill, on && s.pillActive]}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[s.pillText, on && s.pillTextActive]}>
+                        {SOURCE_LABELS[row.key] ?? capitalize(row.key)}
                       </Text>
                     </TouchableOpacity>
                   );

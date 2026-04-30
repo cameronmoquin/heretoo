@@ -33,6 +33,7 @@ export interface ArtWork {
   height: number | null;
   school?: string | null;
   genre?: string[] | null;
+  medium?: string | null;
 }
 
 // Reservoir is small enough (~300 rows total) that we just pull the whole
@@ -46,19 +47,21 @@ export function useArtFeed() {
   const schools = useArtPrefs((s) => s.schools);
   const eras = useArtPrefs((s) => s.eras);
   const genres = useArtPrefs((s) => s.genres);
+  const mediums = useArtPrefs((s) => s.mediums);
+  const sources = useArtPrefs((s) => s.sources);
 
   return useQuery({
-    queryKey: ['art-feed', schools, eras, genres],
+    queryKey: ['art-feed', schools, eras, genres, mediums, sources],
     queryFn: async (): Promise<ArtWork[]> => {
       const { data: ads } = await supabase
         .from('art_works')
-        .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre')
+        .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre,medium')
         .eq('source', 'ad')
         .limit(20);
 
       const { data: art, error } = await supabase
         .from('art_works')
-        .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre')
+        .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre,medium')
         .neq('source', 'ad')
         .limit(POOL_SIZE);
       if (error) throw error;
@@ -69,7 +72,10 @@ export function useArtFeed() {
       const erasSet = new Set<ArtEra>(eras);
       const schoolsSet = new Set(schools.map((x) => x.toLowerCase()));
       const genresSet = new Set(genres.map((x) => x.toLowerCase()));
-      const filtersActive = erasSet.size > 0 || schoolsSet.size > 0 || genresSet.size > 0;
+      const mediumsSet = new Set(mediums.map((x) => x.toLowerCase()));
+      const sourcesSet = new Set(sources.map((x) => x.toLowerCase()));
+      const filtersActive =
+        erasSet.size + schoolsSet.size + genresSet.size + mediumsSet.size + sourcesSet.size > 0;
 
       let pool = fullPool.filter((w) => {
         if (erasSet.size > 0) {
@@ -84,6 +90,16 @@ export function useArtFeed() {
           const tags = (w.genre ?? []).map((x) => x.toLowerCase());
           const hit = tags.some((t) => genresSet.has(t));
           if (!hit) return false;
+        }
+        if (mediumsSet.size > 0) {
+          const m = (w.medium ?? '').toLowerCase();
+          // Substring-match each selected medium token so "oil on canvas"
+          // and "oil paint" both pass when "oil" is the chosen filter.
+          const hit = [...mediumsSet].some((token) => m.includes(token));
+          if (!hit) return false;
+        }
+        if (sourcesSet.size > 0) {
+          if (!sourcesSet.has((w.source ?? '').toLowerCase())) return false;
         }
         return true;
       });
@@ -107,16 +123,16 @@ export function useArtFeed() {
   });
 }
 
-/** Distinct schools (normalized) + era counts for the prefs UI. */
+/** Distinct facet counts for the prefs UI. */
 export function useArtFacets() {
   return useQuery({
     queryKey: ['art-facets'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('art_works')
-        .select('school, year_created, genre')
+        .select('school, year_created, genre, medium, source')
         .neq('source', 'ad')
-        .limit(1000);
+        .limit(2000);
       if (error) throw error;
 
       const schoolCounts = new Map<string, number>();
@@ -125,6 +141,8 @@ export function useArtFacets() {
         nineteenth: 0, modern: 0, contemporary: 0,
       };
       const genreCounts = new Map<string, number>();
+      const mediumCounts = new Map<string, number>();
+      const sourceCounts = new Map<string, number>();
 
       for (const r of (data ?? []) as any[]) {
         const sch = normalizeSchool(r.school);
@@ -134,22 +152,34 @@ export function useArtFacets() {
         if (era) eraCounts[era] += 1;
 
         for (const g of (r.genre ?? []) as string[]) {
-          const k = g.trim().toLowerCase();
+          const k = (g ?? '').trim().toLowerCase();
           if (k) genreCounts.set(k, (genreCounts.get(k) ?? 0) + 1);
         }
+
+        // Mediums: museum strings are messy ("oil on canvas",
+        // "Oil paintings (visual works)", "oil paint"). Bucket by the
+        // first significant word so "oil" / "marble" / "wood" emerge.
+        const med = (r.medium ?? '').toLowerCase().trim();
+        if (med) {
+          const top = med.split(/[\s,;()]+/).find((tok: string) => tok.length > 2) ?? med;
+          mediumCounts.set(top, (mediumCounts.get(top) ?? 0) + 1);
+        }
+
+        const src = (r.source ?? '').toLowerCase().trim();
+        if (src) sourceCounts.set(src, (sourceCounts.get(src) ?? 0) + 1);
       }
 
-      const topSchools = [...schoolCounts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12)
-        .map(([k, c]) => ({ key: k, count: c }));
+      const topN = (m: Map<string, number>, n: number) =>
+        [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n)
+          .map(([k, c]) => ({ key: k, count: c }));
 
-      const topGenres = [...genreCounts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12)
-        .map(([k, c]) => ({ key: k, count: c }));
-
-      return { topSchools, topGenres, eraCounts };
+      return {
+        topSchools: topN(schoolCounts, 14),
+        topGenres: topN(genreCounts, 14),
+        topMediums: topN(mediumCounts, 14),
+        sources: topN(sourceCounts, 10),
+        eraCounts,
+      };
     },
     staleTime: 1000 * 60 * 30,
   });
