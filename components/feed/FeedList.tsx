@@ -6,6 +6,7 @@ import { ArtSlot } from './ArtSlot';
 import { ArtBanner } from './ArtBanner';
 import { FeedComposer } from './FeedComposer';
 import { useArtFeed, type ArtWork } from '../../hooks/useArtFeed';
+import { useArtPrefs } from '../../stores/artPrefsStore';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 import type { Post } from '../../stores/feedStore';
@@ -32,6 +33,8 @@ export function FeedList({
 }: FeedListProps) {
   const styles = makeStyles();
   const { data: art } = useArtFeed();
+  const feedMix = useArtPrefs((s) => s.feedMix);
+  const showBetweenSlots = feedMix !== 'posts_only';
 
   // Interleave: post, art (right after the first post), then more art
   // every ART_INTERVAL after that.
@@ -44,7 +47,7 @@ export function FeedList({
   //                     from banner picks as long as pool is large enough)
   const items = useMemo<FeedItem[]>(() => {
     const out: FeedItem[] = [];
-    const haveArt = !!art && art.length > 0;
+    const haveArt = !!art && art.length > 0 && showBetweenSlots;
     let inlineIdx = 1; // start AFTER the top banner's index 0
     posts.forEach((p, i) => {
       out.push({ kind: 'post', post: p });
@@ -70,7 +73,7 @@ export function FeedList({
       out.push({ kind: 'art', art: art[1] ?? art[0] });
     }
     return out;
-  }, [posts, art]);
+  }, [posts, art, showBetweenSlots]);
 
   const renderItem = useCallback(
     ({ item }: { item: FeedItem }) => {
@@ -112,14 +115,16 @@ export function FeedList({
         prop on every parent re-render, which on RN-Web can wedge the
         layout when the child has an aspectRatio-driven height. As a
         sibling View the banner measures once and stays stable.
+
+        When feedMix === 'posts_only' we skip the banner entirely.
       */}
-      <ArtBanner slot="top" />
+      {showBetweenSlots && <ArtBanner slot="top" />}
       <FeedComposer />
       <FlashList
         data={items}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        ListFooterComponent={ListFooter}
+        ListFooterComponent={showBetweenSlots ? ListFooter : undefined}
         onEndReached={hasMore ? onLoadMore : undefined}
         onEndReachedThreshold={0.6}
         refreshControl={

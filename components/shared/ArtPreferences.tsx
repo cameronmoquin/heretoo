@@ -21,7 +21,9 @@ import {
   useArtPrefs,
   ERA_LABELS,
   SOURCE_LABELS,
+  FEED_MIX_LABELS,
   type ArtEra,
+  type FeedMix,
 } from '../../stores/artPrefsStore';
 import { useArtFacets } from '../../hooks/useArtFeed';
 import { Colors } from '../../constants/colors';
@@ -39,11 +41,13 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
   const genres = useArtPrefs((st) => st.genres);
   const mediums = useArtPrefs((st) => st.mediums);
   const sources = useArtPrefs((st) => st.sources);
+  const feedMix = useArtPrefs((st) => st.feedMix);
   const toggleSchool = useArtPrefs((st) => st.toggleSchool);
   const toggleEra = useArtPrefs((st) => st.toggleEra);
   const toggleGenre = useArtPrefs((st) => st.toggleGenre);
   const toggleMedium = useArtPrefs((st) => st.toggleMedium);
   const toggleSource = useArtPrefs((st) => st.toggleSource);
+  const setFeedMix = useArtPrefs((st) => st.setFeedMix);
   const clear = useArtPrefs((st) => st.clear);
   const { data: facets } = useArtFacets();
 
@@ -63,6 +67,31 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
 
       {expanded && (
         <ScrollView style={s.body} contentContainerStyle={{ gap: 12 }}>
+          {/* Feed Mix — what shows up between posts */}
+          <Section label="Between posts">
+            <View style={s.mixCol}>
+              {(Object.keys(FEED_MIX_LABELS) as FeedMix[]).map((m) => {
+                const on = feedMix === m;
+                return (
+                  <TouchableOpacity
+                    key={m}
+                    onPress={() => setFeedMix(m)}
+                    style={[s.mixRow, on && s.mixRowActive]}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[s.mixDot, on && s.mixDotActive]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.mixTitle, on && s.mixTitleActive]}>
+                        {FEED_MIX_LABELS[m].title}
+                      </Text>
+                      <Text style={s.mixSub}>{FEED_MIX_LABELS[m].sub}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </Section>
+
           {/* Era */}
           <Section label="Era">
             <View style={s.pillRow}>
@@ -244,4 +273,19 @@ function makeStyles() { return StyleSheet.create({
     alignSelf: 'flex-start', paddingHorizontal: 4, paddingVertical: 4,
   },
   clearBtnText: { fontSize: 11, color: Colors.textMuted, fontWeight: '600' },
+
+  mixCol: { gap: 4 },
+  mixRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 8, paddingHorizontal: 8, borderRadius: 8,
+  },
+  mixRowActive: { backgroundColor: Colors.primaryFaint },
+  mixDot: {
+    width: 14, height: 14, borderRadius: 7,
+    borderWidth: 2, borderColor: Colors.border,
+  },
+  mixDotActive: { borderColor: Colors.primary, backgroundColor: Colors.primary },
+  mixTitle: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+  mixTitleActive: { color: Colors.primary },
+  mixSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
 }); }

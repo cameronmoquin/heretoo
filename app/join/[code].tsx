@@ -67,17 +67,22 @@ export default function JoinByCode() {
     enabled: !!normalized,
   });
 
-  // If signed-in, auto-join immediately. Otherwise show the inline auth form.
+  // Accept-invite goes through a SECURITY DEFINER RPC instead of a
+  // direct family_members insert. The direct insert was hitting the
+  // RLS policy that requires the inserter to be either the family
+  // owner or responding to a pre-existing pending invite — neither
+  // of which a brand-new joiner is. Migration 012 added
+  // `accept_family_invite(invite_code, relationship_label)` which
+  // validates the code server-side and inserts with elevated
+  // privileges. Idempotent: existing rows get reactivated.
   const accept = useMutation({
     mutationFn: async () => {
-      if (!family.data?.id) throw new Error('Invite not loaded');
-      const { error: e } = await supabase.from('family_members').insert({
-        family_id: family.data.id,
-        relationship_label: 'family',
-        status: 'active',
-        joined_at: new Date().toISOString(),
-      } as any);
-      if (e && !/duplicate/i.test(e.message)) throw e;
+      if (!normalized) throw new Error('Invite not loaded');
+      const { error: e } = await supabase.rpc('accept_family_invite', {
+        invite_code_in: normalized,
+        relationship_label_in: 'family',
+      });
+      if (e) throw e;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['families'] });

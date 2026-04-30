@@ -91,11 +91,11 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
 function makeStyles() { return StyleSheet.create({
   banner: {
     width: '100%',
-    height: 140,
+    height: 88,                       // slimmer — was 140; was eating the feed
     backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.md,
     overflow: 'hidden',
-    marginVertical: 8,
+    marginVertical: 6,
     position: 'relative',
     alignSelf: 'center',
     maxWidth: 600,
@@ -106,19 +106,19 @@ function makeStyles() { return StyleSheet.create({
 
   // Single bottom scrim — rgba layered on top of the image. Avoids the
   // percentage-height stack that was wedging RN-Web layout earlier.
-  scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 90 },
+  scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 60 },
   scrim1: { backgroundColor: 'rgba(0,0,0,0.55)' },
 
   text: {
     position: 'absolute',
-    left: 14, right: 14, bottom: 12,
+    left: 12, right: 12, bottom: 8,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 14,                       // was 18 — fits the slimmer bar
     fontWeight: '800',
-    letterSpacing: -0.2,
-    lineHeight: 22,
+    letterSpacing: -0.1,
+    lineHeight: 18,
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,

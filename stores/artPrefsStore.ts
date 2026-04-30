@@ -46,12 +46,32 @@ export const ERA_RANGES: Record<ArtEra, [number, number]> = {
   contemporary: [2000, 9999],
 };
 
+/**
+ * What's allowed in the between-post slots (banners, inline art slots,
+ * sidebar). The same surface eventually serves ads, so this preference
+ * is a single dial that controls both:
+ *   - 'art_only'    Public-domain artwork only (no ads). Default.
+ *   - 'art_and_ads' Mix of art + sponsored placements (where they
+ *                   exist; right now there are zero, so behaves like
+ *                   art_only until ad inventory lands).
+ *   - 'posts_only'  Skip every between-post slot entirely. The
+ *                   eventual $5/mo subscription preview.
+ */
+export type FeedMix = 'art_only' | 'art_and_ads' | 'posts_only';
+
+export const FEED_MIX_LABELS: Record<FeedMix, { title: string; sub: string }> = {
+  art_only:    { title: 'Art only',    sub: 'Public-domain works between posts.' },
+  art_and_ads: { title: 'Art + ads',   sub: 'Same gallery + occasional sponsored picks.' },
+  posts_only:  { title: 'Posts only',  sub: 'Hide everything between posts. (Subscription preview.)' },
+};
+
 interface Persisted {
   schools: string[];
   eras: ArtEra[];
   genres: string[];
   mediums: string[];
   sources: string[];          // museum origins: 'met', 'aic', 'rijks', etc.
+  feedMix: FeedMix;
 }
 
 const STORAGE_KEY = 'heretoo:art-prefs';
@@ -62,17 +82,22 @@ function loadInitial(): Persisted {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        const mix: FeedMix =
+          parsed.feedMix === 'art_and_ads' || parsed.feedMix === 'posts_only'
+            ? parsed.feedMix
+            : 'art_only';
         return {
           schools: Array.isArray(parsed.schools) ? parsed.schools : [],
           eras: Array.isArray(parsed.eras) ? parsed.eras : [],
           genres: Array.isArray(parsed.genres) ? parsed.genres : [],
           mediums: Array.isArray(parsed.mediums) ? parsed.mediums : [],
           sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+          feedMix: mix,
         };
       }
     } catch {}
   }
-  return { schools: [], eras: [], genres: [], mediums: [], sources: [] };
+  return { schools: [], eras: [], genres: [], mediums: [], sources: [], feedMix: 'art_only' };
 }
 
 function persist(state: Persisted) {
@@ -88,12 +113,13 @@ interface ArtPrefsState extends Persisted {
   toggleGenre: (g: string) => void;
   toggleMedium: (m: string) => void;
   toggleSource: (s: string) => void;
+  setFeedMix: (m: FeedMix) => void;
   clear: () => void;
 }
 
 function snapshot(get: () => ArtPrefsState): Persisted {
   const st = get();
-  return { schools: st.schools, eras: st.eras, genres: st.genres, mediums: st.mediums, sources: st.sources };
+  return { schools: st.schools, eras: st.eras, genres: st.genres, mediums: st.mediums, sources: st.sources, feedMix: st.feedMix };
 }
 
 export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
@@ -133,9 +159,17 @@ export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
     set({ sources: next });
     persist({ ...snapshot(get) });
   },
+  setFeedMix: (m) => {
+    set({ feedMix: m });
+    persist({ ...snapshot(get) });
+  },
   clear: () => {
-    set({ schools: [], eras: [], genres: [], mediums: [], sources: [] });
-    persist({ schools: [], eras: [], genres: [], mediums: [], sources: [] });
+    const cur = get();
+    const next: Persisted = {
+      schools: [], eras: [], genres: [], mediums: [], sources: [], feedMix: cur.feedMix,
+    };
+    set(next);
+    persist(next);
   },
 }));
 

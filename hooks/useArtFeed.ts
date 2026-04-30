@@ -49,15 +49,26 @@ export function useArtFeed() {
   const genres = useArtPrefs((s) => s.genres);
   const mediums = useArtPrefs((s) => s.mediums);
   const sources = useArtPrefs((s) => s.sources);
+  const feedMix = useArtPrefs((s) => s.feedMix);
 
   return useQuery({
-    queryKey: ['art-feed', schools, eras, genres, mediums, sources],
+    queryKey: ['art-feed', schools, eras, genres, mediums, sources, feedMix],
     queryFn: async (): Promise<ArtWork[]> => {
-      const { data: ads } = await supabase
-        .from('art_works')
-        .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre,medium')
-        .eq('source', 'ad')
-        .limit(20);
+      // posts_only: don't even fetch art. The components that consume
+      // this hook will see an empty array and skip rendering their
+      // slots entirely.
+      if (feedMix === 'posts_only') return [];
+
+      // art_only: skip the ad sub-query so source='ad' rows never enter the pool.
+      const wantAds = feedMix === 'art_and_ads';
+
+      const ads = wantAds
+        ? (await supabase
+            .from('art_works')
+            .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre,medium')
+            .eq('source', 'ad')
+            .limit(20)).data ?? []
+        : [];
 
       const { data: art, error } = await supabase
         .from('art_works')
@@ -66,7 +77,7 @@ export function useArtFeed() {
         .limit(POOL_SIZE);
       if (error) throw error;
 
-      const fullPool = [...(ads ?? []), ...(art ?? [])] as ArtWork[];
+      const fullPool = [...ads, ...(art ?? [])] as ArtWork[];
 
       // Apply prefs. Empty selections == "no filter on that axis".
       const erasSet = new Set<ArtEra>(eras);
