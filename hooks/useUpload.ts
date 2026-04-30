@@ -235,6 +235,78 @@ export function useUpload() {
       setState({ stage: 'done', progress: 1, error: null, selectedAssets: [] });
       return post;
     },
+    // Optimistic insert: drop a placeholder post into the relevant
+    // feed cache immediately so the new post appears the moment the
+    // user taps Post, not after the network roundtrip + refetch.
+    onMutate: async (vars) => {
+      if (!userId) return;
+      const tempId = `optimistic-${Date.now()}`;
+      const tempMedia = (vars.photoUploads ?? []).map((pu, i) => ({
+        id: `${tempId}-m${i}`,
+        post_id: tempId,
+        storage_path: pu.path,
+        media_type: 'image',
+        width: pu.width ?? null,
+        height: pu.height ?? null,
+        position: i,
+      }));
+      if (vars.muxPlaybackId) {
+        tempMedia.push({
+          id: `${tempId}-vid`,
+          post_id: tempId,
+          storage_path: `mux:${vars.muxPlaybackId}`,
+          media_type: 'video',
+          width: null, height: null, position: 0,
+        });
+      }
+      const tempPost: any = {
+        id: tempId,
+        author_id: userId,
+        body: vars.body || null,
+        visibility: vars.visibility,
+        family_id: vars.familyId ?? null,
+        kind: vars.kind ?? 'post',
+        heart_count: 0, boost_count: 0, comment_count: 0,
+        viewer_hearted: false,
+        comments_disabled: false,
+        created_at: new Date().toISOString(),
+        author: undefined,           // PostCard handles this gracefully
+        media: tempMedia,
+        _optimistic: true,
+      };
+
+      const isFamilyPost = !!vars.familyId && vars.visibility === 'family';
+      const isUpdate = vars.kind === 'update';
+
+      if (isFamilyPost && isUpdate) {
+        await queryClient.cancelQueries({ queryKey: ['family-updates', vars.familyId] });
+        const prev = queryClient.getQueryData<any[]>(['family-updates', vars.familyId]);
+        queryClient.setQueryData<any[]>(['family-updates', vars.familyId],
+          (old) => [tempPost, ...(old ?? [])]);
+        return { undo: () => queryClient.setQueryData(['family-updates', vars.familyId], prev) };
+      }
+      if (isFamilyPost) {
+        await queryClient.cancelQueries({ queryKey: ['family-feed', vars.familyId] });
+        const prev = queryClient.getQueryData<any[]>(['family-feed', vars.familyId]);
+        queryClient.setQueryData<any[]>(['family-feed', vars.familyId],
+          (old) => [tempPost, ...(old ?? [])]);
+        return { undo: () => queryClient.setQueryData(['family-feed', vars.familyId], prev) };
+      }
+      // Public / connections: prepend to every infinite-feed page-set we know about.
+      const feedKeys = queryClient.getQueryCache().findAll({ queryKey: ['feed'] });
+      const undos: Array<() => void> = [];
+      for (const q of feedKeys) {
+        const key = q.queryKey;
+        const data: any = queryClient.getQueryData(key);
+        if (!data?.pages) continue;
+        const prev = data;
+        const nextPages = [...data.pages];
+        nextPages[0] = [tempPost, ...(nextPages[0] ?? [])];
+        queryClient.setQueryData(key, { ...data, pages: nextPages });
+        undos.push(() => queryClient.setQueryData(key, prev));
+      }
+      return { undo: () => undos.forEach((u) => u()) };
+    },
     onSuccess: (_post, vars) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       if (vars.familyId) {
@@ -242,7 +314,9 @@ export function useUpload() {
         queryClient.invalidateQueries({ queryKey: ['family-updates', vars.familyId] });
       }
     },
-    onError: (error: any) => {
+    onError: (error: any, _vars, context: any) => {
+      // Roll back the optimistic insert.
+      if (context?.undo) try { context.undo(); } catch {}
       setState((s) => ({ ...s, stage: 'error', error: error?.message ?? 'Post failed' }));
     },
   });
