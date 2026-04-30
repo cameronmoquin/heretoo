@@ -7,18 +7,30 @@
  * no scraping. (Each museum's terms allow direct hot-linking for
  * non-commercial display of public-domain works.)
  *
+ * Sources:
+ *   - met    The Metropolitan Museum of Art (CC0)         — no key
+ *   - aic    Art Institute of Chicago (CC0)               — no key
+ *   - cma    Cleveland Museum of Art (CC0)                — no key
+ *   - moma   Museum of Modern Art (research dataset)      — no key
+ *   - rijks  Rijksmuseum (CC-BY where applicable)         — needs RIJKS_API_KEY
+ *
+ * Note on RISD: the RISD Museum does not expose a public collection
+ * API. We chose not to scrape their HTML site.
+ *
  * Usage:
- *   node scripts/ingest-art.mjs --source met --count 50
- *   node scripts/ingest-art.mjs --source rijks --count 50
- *   node scripts/ingest-art.mjs --source aic --count 50
+ *   node scripts/ingest-art.mjs --source met --count 1000
+ *   node scripts/ingest-art.mjs --source cma --count all
+ *   node scripts/ingest-art.mjs --source all --count 1000
+ *
+ * `--count all` (or any non-numeric / very large number) means: pull
+ * as much as the source will give before stopping. Safe to leave
+ * running for hours; the (source, source_id) UNIQUE constraint makes
+ * re-runs idempotent — already-ingested rows are silently skipped.
  *
  * Env vars required:
  *   SUPABASE_URL                  (or EXPO_PUBLIC_SUPABASE_URL)
  *   SUPABASE_SERVICE_ROLE_KEY     (server-only — bypasses RLS for inserts)
- *   RIJKS_API_KEY                 (only if --source rijks)
- *
- * The script is idempotent: a `(source, source_id)` UNIQUE constraint
- * means re-running just upserts.
+ *   RIJKS_API_KEY                 (only if --source rijks or all)
  */
 
 import { readFileSync } from 'node:fs';
@@ -50,7 +62,10 @@ const argMap = Object.fromEntries(
   args.map((a, i) => (a.startsWith('--') ? [a.slice(2), args[i + 1]] : null)).filter(Boolean),
 );
 const source = argMap.source ?? 'met';
-const count = parseInt(argMap.count ?? '20', 10);
+const rawCount = argMap.count ?? '20';
+const count = rawCount === 'all' ? Number.MAX_SAFE_INTEGER : (parseInt(rawCount, 10) || 20);
+
+const stats = { inserted: 0, skipped: 0, failed: 0 };
 
 // ── helpers ──────────────────────────────────────────────────────────────
 async function upsertWork(row) {
@@ -64,33 +79,54 @@ async function upsertWork(row) {
     },
     body: JSON.stringify(row),
   });
-  if (!r.ok) {
-    console.warn(`  failed [${row.source_id}]:`, await r.text());
-    return false;
+  if (r.ok) {
+    stats.inserted++;
+    return 'inserted';
   }
-  return true;
+  // Duplicate-key from a retry / overlap is fine — silently skip.
+  const text = await r.text();
+  if (/duplicate key|23505/i.test(text)) {
+    stats.skipped++;
+    return 'skipped';
+  }
+  stats.failed++;
+  console.warn(`  failed [${row.source_id}]:`, text.slice(0, 120));
+  return 'failed';
 }
 
-// ── Met Museum (open access; CC0) ───────────────────────────────────────
-async function ingestMet(count) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function tickLog(label, n, total) {
+  if (n % 25 === 0 || n === total) {
+    process.stdout.write(`  ${label} ${n}/${total === Number.MAX_SAFE_INTEGER ? '∞' : total} (ins=${stats.inserted} skip=${stats.skipped} fail=${stats.failed})\n`);
+  }
+}
+
+// ── Met Museum (open access; CC0) ────────────────────────────────────────
+async function ingestMet(target) {
   console.log('── Met Museum (CC0) ──');
-  // The Met has no built-in random-sample API, so we hit their search
-  // for a broad term and walk results.
-  const r = await fetch(
-    'https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=portrait',
-  );
+  // The Met's `/objects` endpoint returns ALL object IDs (~470k).
+  // We walk them in order and skip silently on duplicate-key. This
+  // makes long runs fully resumable.
+  const r = await fetch('https://collectionapi.metmuseum.org/public/collection/v1/objects');
   const j = await r.json();
-  const ids = (j.objectIDs ?? []).slice(0, count * 3); // overshoot, some won't have images
-  let inserted = 0;
+  const ids = j.objectIDs ?? [];
+  // Light shuffle so multiple runs cover different parts of the catalog.
+  ids.sort(() => Math.random() - 0.5);
+
+  let processed = 0;
   for (const id of ids) {
-    if (inserted >= count) break;
+    if (stats.inserted >= target) break;
+    processed++;
     try {
       const dr = await fetch(
         `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`,
       );
+      if (!dr.ok) continue;
       const d = await dr.json();
       if (!d.isPublicDomain || !d.primaryImage) continue;
-      const ok = await upsertWork({
+
+      await upsertWork({
         source: 'met',
         source_id: String(d.objectID),
         title: d.title ?? null,
@@ -105,33 +141,35 @@ async function ingestMet(count) {
         source_url: d.objectURL ?? null,
         description: d.creditLine ?? null,
       });
-      if (ok) {
-        inserted++;
-        process.stdout.write(`  [${inserted}/${count}] ${(d.title ?? '').slice(0, 60)}\n`);
-      }
-    } catch (e) {
-      // swallow per-record failures; Met API rate-limits aren't our enemy here
+      tickLog('Met', processed, target);
+
+      // Met asks ~1 req/sec; we batch via objectIDs but the per-object
+      // fetch above is the rate-limited path. Light pacing.
+      await sleep(120);
+    } catch {
+      stats.failed++;
     }
   }
-  console.log(`Met: inserted ${inserted}`);
+  console.log(`Met: ${stats.inserted} inserted, ${stats.skipped} skipped`);
 }
 
-// ── Art Institute of Chicago (open access; CC0) ─────────────────────────
-async function ingestAic(count) {
+// ── Art Institute of Chicago (CC0) ───────────────────────────────────────
+async function ingestAic(target) {
   console.log('── Art Institute of Chicago (CC0) ──');
-  let inserted = 0;
   let page = 1;
-  while (inserted < count && page <= 5) {
+  while (stats.inserted < target && page <= 200) {
     const r = await fetch(
-      `https://api.artic.edu/api/v1/artworks?limit=100&fields=id,title,artist_display,date_display,classification_titles,style_titles,image_id,is_public_domain&page=${page}`,
+      `https://api.artic.edu/api/v1/artworks?limit=100&fields=id,title,artist_display,date_display,classification_titles,style_titles,medium_display,image_id,is_public_domain&page=${page}`,
     );
     const j = await r.json();
-    for (const a of j.data ?? []) {
-      if (inserted >= count) break;
+    const rows = j.data ?? [];
+    if (rows.length === 0) break;
+    for (const a of rows) {
+      if (stats.inserted >= target) break;
       if (!a.is_public_domain || !a.image_id) continue;
       const url = `https://www.artic.edu/iiif/2/${a.image_id}/full/843,/0/default.jpg`;
       const thumb = `https://www.artic.edu/iiif/2/${a.image_id}/full/200,/0/default.jpg`;
-      const ok = await upsertWork({
+      await upsertWork({
         source: 'aic',
         source_id: String(a.id),
         title: a.title ?? null,
@@ -139,73 +177,25 @@ async function ingestAic(count) {
         year_created: a.date_display || null,
         genre: a.classification_titles ?? null,
         school: (a.style_titles ?? [])[0] ?? null,
+        medium: a.medium_display || null,
         storage_path: url,
         thumb_path: thumb,
         license: 'CC0',
         source_url: `https://www.artic.edu/artworks/${a.id}`,
       });
-      if (ok) {
-        inserted++;
-        process.stdout.write(`  [${inserted}/${count}] ${(a.title ?? '').slice(0, 60)}\n`);
-      }
     }
+    tickLog('AIC page', page, '∞');
     page++;
   }
-  console.log(`AIC: inserted ${inserted}`);
+  console.log(`AIC: ${stats.inserted} inserted, ${stats.skipped} skipped`);
 }
 
-// ── Rijksmuseum (CC-BY where applicable; needs API key) ─────────────────
-async function ingestRijks(count) {
-  console.log('── Rijksmuseum ──');
-  const key = process.env.RIJKS_API_KEY;
-  if (!key) {
-    console.warn('Set RIJKS_API_KEY in .env to ingest from Rijksmuseum (free at rijksmuseum.nl/en/api).');
-    return;
-  }
-  let inserted = 0;
-  let page = 1;
-  while (inserted < count && page <= 5) {
-    const r = await fetch(
-      `https://www.rijksmuseum.nl/api/en/collection?key=${key}&format=json&imgonly=true&ps=100&p=${page}&toppieces=true`,
-    );
-    const j = await r.json();
-    for (const a of j.artObjects ?? []) {
-      if (inserted >= count) break;
-      const url = a.webImage?.url;
-      if (!url) continue;
-      const ok = await upsertWork({
-        source: 'rijks',
-        source_id: a.objectNumber,
-        title: a.title ?? null,
-        artist: a.principalOrFirstMaker ?? null,
-        year_created: null,
-        storage_path: url,
-        thumb_path: a.headerImage?.url ?? null,
-        license: 'CC-BY',
-        source_url: a.links?.web ?? null,
-        description: a.longTitle ?? null,
-      });
-      if (ok) {
-        inserted++;
-        process.stdout.write(`  [${inserted}/${count}] ${(a.title ?? '').slice(0, 60)}\n`);
-      }
-    }
-    page++;
-  }
-  console.log(`Rijks: inserted ${inserted}`);
-}
-
-// ── Cleveland Museum of Art (CC0; no key needed) ───────────────────────
-//
-// We attempted to add RISD here but they don't expose a public API
-// (Drupal site, search-only HTML). CMA has a great open-access REST
-// endpoint: 41k+ CC0 works, full metadata, no auth.
-async function ingestCma(count) {
+// ── Cleveland Museum of Art (CC0) ────────────────────────────────────────
+async function ingestCma(target) {
   console.log('── Cleveland Museum of Art (CC0) ──');
-  let inserted = 0;
   let skip = 0;
   const PAGE = 100;
-  while (inserted < count && skip < 5000) {
+  while (stats.inserted < target && skip < 100000) {
     const r = await fetch(
       `https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&cc0=1&limit=${PAGE}&skip=${skip}`,
     );
@@ -213,12 +203,12 @@ async function ingestCma(count) {
     const rows = j?.data ?? [];
     if (rows.length === 0) break;
     for (const a of rows) {
-      if (inserted >= count) break;
+      if (stats.inserted >= target) break;
       const img = a?.images?.web?.url ?? a?.images?.print?.url;
       if (!img) continue;
       const thumb = a?.images?.web?.url ?? null;
       const artistName = (a?.creators ?? [])[0]?.description?.split('(')[0]?.trim() ?? null;
-      const ok = await upsertWork({
+      await upsertWork({
         source: 'cma',
         source_id: String(a.id),
         title: a.title ?? null,
@@ -233,26 +223,112 @@ async function ingestCma(count) {
         source_url: a.url ?? null,
         description: a.description ?? a.tombstone ?? null,
       });
-      if (ok) {
-        inserted++;
-        process.stdout.write(`  [${inserted}/${count}] ${(a.title ?? '').slice(0, 60)}\n`);
-      }
     }
+    tickLog('CMA skip', skip + PAGE, '∞');
     skip += PAGE;
   }
-  console.log(`CMA: inserted ${inserted}`);
+  console.log(`CMA: ${stats.inserted} inserted, ${stats.skipped} skipped`);
+}
+
+// ── Museum of Modern Art (research dataset on GitHub) ────────────────────
+//
+// MoMA publishes their full Artworks dataset as JSON on GitHub. They
+// don't host an image CDN with stable URLs for all works, but a subset
+// have ThumbnailURL / OnView fields. We pull the JSON once, filter to
+// rows that have a usable image URL, then upsert.
+async function ingestMoma(target) {
+  console.log('── Museum of Modern Art (research dataset) ──');
+  const url = 'https://media.githubusercontent.com/media/MuseumofModernArt/collection/main/Artworks.json';
+  const r = await fetch(url);
+  if (!r.ok) {
+    console.warn('MoMA dataset fetch failed:', r.status);
+    return;
+  }
+  const all = await r.json();
+  // Shuffle so different runs cover different slices of ~140k rows.
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+
+  let processed = 0;
+  for (const a of all) {
+    if (stats.inserted >= target) break;
+    processed++;
+    const img = a.ThumbnailURL || a.URL; // ThumbnailURL is the most reliable image field
+    if (!img || !/^https?:/.test(img)) continue;
+    if (!/(\.jpg|\.jpeg|\.png|\.gif|\.webp)/i.test(img) && !img.includes('moma.org')) continue;
+    await upsertWork({
+      source: 'moma',
+      source_id: String(a.ObjectID ?? a.AccessionNumber),
+      title: a.Title ?? null,
+      artist: Array.isArray(a.Artist) ? a.Artist.join(', ') : (a.Artist ?? null),
+      year_created: a.Date ?? null,
+      genre: a.Classification ? [String(a.Classification)] : null,
+      school: a.Nationality?.[0] ?? null,
+      medium: a.Medium ?? null,
+      storage_path: img,
+      thumb_path: a.ThumbnailURL ?? null,
+      license: 'unknown',
+      source_url: a.URL ?? null,
+      description: a.Dimensions ?? null,
+    });
+    if (processed % 100 === 0) tickLog('MoMA', processed, target);
+  }
+  console.log(`MoMA: ${stats.inserted} inserted, ${stats.skipped} skipped`);
+}
+
+// ── Rijksmuseum (CC-BY where applicable; needs API key) ─────────────────
+async function ingestRijks(target) {
+  console.log('── Rijksmuseum ──');
+  const key = process.env.RIJKS_API_KEY;
+  if (!key) {
+    console.warn('Set RIJKS_API_KEY in .env to ingest from Rijksmuseum (free at rijksmuseum.nl/en/api).');
+    return;
+  }
+  let page = 1;
+  while (stats.inserted < target && page <= 100) {
+    const r = await fetch(
+      `https://www.rijksmuseum.nl/api/en/collection?key=${key}&format=json&imgonly=true&ps=100&p=${page}`,
+    );
+    const j = await r.json();
+    const rows = j.artObjects ?? [];
+    if (rows.length === 0) break;
+    for (const a of rows) {
+      if (stats.inserted >= target) break;
+      const url = a.webImage?.url;
+      if (!url) continue;
+      await upsertWork({
+        source: 'rijks',
+        source_id: a.objectNumber,
+        title: a.title ?? null,
+        artist: a.principalOrFirstMaker ?? null,
+        year_created: null,
+        storage_path: url,
+        thumb_path: a.headerImage?.url ?? null,
+        license: 'CC-BY',
+        source_url: a.links?.web ?? null,
+        description: a.longTitle ?? null,
+      });
+    }
+    tickLog('Rijks page', page, '∞');
+    page++;
+  }
+  console.log(`Rijks: ${stats.inserted} inserted, ${stats.skipped} skipped`);
 }
 
 // ── dispatch ─────────────────────────────────────────────────────────────
 const sources = {
   met: ingestMet,
   aic: ingestAic,
-  rijks: ingestRijks,
   cma: ingestCma,
+  moma: ingestMoma,
+  rijks: ingestRijks,
   all: async (n) => {
     await ingestCma(n);
-    await ingestMet(n);
     await ingestAic(n);
+    await ingestMet(n);
+    await ingestMoma(n);
     await ingestRijks(n);
   },
 };
@@ -264,4 +340,4 @@ if (!fn) {
 }
 
 await fn(count);
-console.log('Done.');
+console.log(`Done. inserted=${stats.inserted} skipped=${stats.skipped} failed=${stats.failed}`);

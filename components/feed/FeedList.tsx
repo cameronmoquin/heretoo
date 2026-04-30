@@ -34,13 +34,18 @@ export function FeedList({
   const { data: art } = useArtFeed();
 
   // Interleave: post, art (right after the first post), then more art
-  // every ART_INTERVAL after that. The earlier-cadence start matters
-  // when the feed is brand-new and only has a handful of posts —
-  // otherwise users go a long way before seeing any gallery content.
+  // every ART_INTERVAL after that.
+  //
+  // Anchor distribution (so we never repeat across the screen):
+  //   idx 0           → top banner
+  //   idx length-1    → bottom banner
+  //   idx length/2    → desktop sidebar
+  //   idx 1, 2, 3...  → inline slots (so they're guaranteed different
+  //                     from banner picks as long as pool is large enough)
   const items = useMemo<FeedItem[]>(() => {
     const out: FeedItem[] = [];
-    let artIdx = 0;
     const haveArt = !!art && art.length > 0;
+    let inlineIdx = 1; // start AFTER the top banner's index 0
     posts.forEach((p, i) => {
       out.push({ kind: 'post', post: p });
       const idx1 = i + 1;
@@ -50,14 +55,19 @@ export function FeedList({
           || (idx1 > FIRST_ART_AT && (idx1 - FIRST_ART_AT) % ART_INTERVAL === 0)
         );
       if (shouldSlot && art) {
-        out.push({ kind: 'art', art: art[artIdx % art.length] });
-        artIdx++;
+        // Skip the indices reserved for banner-bottom and sidebar.
+        const reserved = new Set([
+          art.length - 1,                   // bottom banner
+          Math.floor(art.length / 2),       // sidebar
+        ]);
+        while (reserved.has(inlineIdx) && inlineIdx < art.length - 1) inlineIdx++;
+        out.push({ kind: 'art', art: art[inlineIdx % art.length] });
+        inlineIdx++;
       }
     });
-    // If the feed is *empty* but we have art, show one piece anyway so
-    // the page doesn't feel desolate.
+    // If the feed is empty but we have art, show one piece anyway.
     if (posts.length === 0 && haveArt && art) {
-      out.push({ kind: 'art', art: art[0] });
+      out.push({ kind: 'art', art: art[1] ?? art[0] });
     }
     return out;
   }, [posts, art]);

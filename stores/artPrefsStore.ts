@@ -143,6 +143,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   met: 'The Met',
   aic: 'Art Institute of Chicago',
   cma: 'Cleveland Museum of Art',
+  moma: 'MoMA',
   rijks: 'Rijksmuseum',
 };
 

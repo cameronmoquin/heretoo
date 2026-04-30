@@ -27,11 +27,16 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
   const s = makeStyles();
   const { data: art } = useArtFeed();
 
+  // Each consumer of useArtFeed picks from a distinct anchor in the
+  // shuffled pool so the same image never appears on screen twice.
+  // Top banner anchors at index 0, bottom anchors at length-1, sidebar
+  // and inline slots get the middle. Pool re-shuffles whenever filter
+  // prefs change, so the picks rotate naturally.
   const piece = useMemo(() => {
     const pool = art ?? [];
     if (pool.length === 0) return null;
-    const offset = slot === 'top' ? 0 : Math.floor(pool.length / 2);
-    return pool[(Math.floor(Math.random() * pool.length) + offset) % pool.length];
+    const idx = slot === 'top' ? 0 : pool.length - 1;
+    return pool[idx];
   }, [art, slot]);
 
   if (!piece) return null;

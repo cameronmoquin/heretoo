@@ -17,12 +17,14 @@ export function SidebarArt() {
   const s = makeStyles();
   const { data: art } = useArtFeed();
 
-  // Pick one piece at random per mount so the sidebar feels alive without
-  // re-shuffling on every render.
+  // The sidebar takes the middle of the shuffled pool so it doesn't
+  // collide with the top/bottom feed banners (which take index 0 and
+  // length-1). Reroll when the pool reference changes (filter pref
+  // change re-shuffles upstream).
   const piece = useMemo(() => {
     const pool = art ?? [];
     if (pool.length === 0) return null;
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pool[Math.floor(pool.length / 2)];
   }, [art]);
 
   if (!piece) return null;
