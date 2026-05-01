@@ -187,6 +187,10 @@ grant execute on function public.accept_seed_invite(text, text) to authenticated
 -- it so an accepted `connections` edge counts as a 1-hop link too.
 -- Same depth bound, same block-list filter.
 
+-- Postgres only allows one recursive reference inside a recursive CTE,
+-- so we collapse the two edge types (family-membership + accepted
+-- connections) into a single `edges` subquery and reference `mesh`
+-- only once on the recursive side.
 create or replace function public.family_network_reach(
   viewer    uuid,
   max_depth int default 3
@@ -201,30 +205,29 @@ as $$
 
     union
 
-    -- Family-mate edge
-    select fm_other.profile_id, m.hops + 1
+    -- Step: anyone reachable through a family-mate edge OR an accepted
+    -- connection edge from someone already in the mesh.
+    select e.to_id as profile_id, m.hops + 1
     from mesh m
-    join public.family_members fm_self
-      on fm_self.profile_id = m.profile_id
-     and fm_self.status = 'active'
-    join public.family_members fm_other
-      on fm_other.family_id = fm_self.family_id
-     and fm_other.status = 'active'
-     and fm_other.profile_id <> m.profile_id
-    where m.hops < max_depth
-
-    union
-
-    -- Connection edge (accepted only)
-    select case
-             when c.requester_id = m.profile_id then c.recipient_id
-             else c.requester_id
-           end as profile_id,
-           m.hops + 1
-    from mesh m
-    join public.connections c
-      on c.status = 'accepted'
-     and (c.requester_id = m.profile_id or c.recipient_id = m.profile_id)
+    join (
+      -- family-mate edges
+      select fm_self.profile_id as from_id, fm_other.profile_id as to_id
+        from public.family_members fm_self
+        join public.family_members fm_other
+          on fm_other.family_id = fm_self.family_id
+         and fm_other.profile_id <> fm_self.profile_id
+       where fm_self.status = 'active'
+         and fm_other.status = 'active'
+      union
+      -- connection edges (both directions, since the table records one row per pair)
+      select c.requester_id as from_id, c.recipient_id as to_id
+        from public.connections c
+       where c.status = 'accepted'
+      union
+      select c.recipient_id as from_id, c.requester_id as to_id
+        from public.connections c
+       where c.status = 'accepted'
+    ) e on e.from_id = m.profile_id
     where m.hops < max_depth
   )
   select

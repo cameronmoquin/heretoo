@@ -56,6 +56,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const inAFamily = (families?.length ?? 0) > 0;
   const isFamilyScoped = !!familyId;
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
+  const [expanded, setExpanded] = useState(false);
 
   const [body, setBody] = useState('');
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
@@ -126,6 +127,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       setBody('');
       setTaggedIds(new Set());
       setPostKind('post');
+      setExpanded(false);
       upload.reset();
     } catch (e: any) {
       showAlert('Could not post', e?.message ?? 'Try again.');
@@ -168,20 +170,59 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     );
   }
 
+  // Collapsed: tiny one-row entry point. The user taps it (or the
+  // direct camera/photo buttons) to expand into the full composer.
+  // Posting volume is low enough that giving the feed back ~200px of
+  // vertical real-estate is worth the extra tap to expand.
+  const isQuiet = !expanded && body.length === 0 && !hasMedia && !isUploading;
+  if (isQuiet) {
+    return (
+      <View style={s.collapsedRow}>
+        <TouchableOpacity
+          style={s.collapsedInput}
+          onPress={() => setExpanded(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="create-outline" size={14} color={Colors.textMuted} />
+          <Text style={s.collapsedPlaceholder}>
+            {isFamilyScoped ? 'Share with the family…' : "What's happening?"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={s.collapsedIcon}
+          onPress={() => { setExpanded(true); upload.pickPhotos(); }}
+          accessibilityLabel="Add photo"
+        >
+          <Ionicons name="image-outline" size={18} color={Colors.primary} />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={s.card}>
       <View style={s.headerRow}>
         <Text style={s.title}>{isFamilyScoped && postKind === 'update' ? 'New update' : 'New post'}</Text>
-        <TouchableOpacity
-          style={[s.postBtn, (!canPost || isUploading) && s.postBtnDisabled]}
-          onPress={handlePost}
-          disabled={!canPost || isUploading}
-          activeOpacity={0.85}
-        >
-          {isUploading
-            ? <ActivityIndicator color="#000" size="small" />
-            : <Text style={s.postBtnText}>{postKind === 'update' ? 'Send update' : 'Post'}</Text>}
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <TouchableOpacity
+            onPress={() => { setExpanded(false); setBody(''); upload.reset(); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={s.collapseBtn}
+            accessibilityLabel="Collapse composer"
+          >
+            <Ionicons name="chevron-up" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.postBtn, (!canPost || isUploading) && s.postBtnDisabled]}
+            onPress={handlePost}
+            disabled={!canPost || isUploading}
+            activeOpacity={0.85}
+          >
+            {isUploading
+              ? <ActivityIndicator color="#000" size="small" />
+              : <Text style={s.postBtnText}>{postKind === 'update' ? 'Send update' : 'Post'}</Text>}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Update / Post toggle — family-scoped composers only. */}
@@ -402,6 +443,32 @@ function escapeRe(s: string) {
 }
 
 function makeStyles() { return StyleSheet.create({
+  // Collapsed: a single ~48px row at the top of the feed.
+  collapsedRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: Spacing.md, paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  collapsedInput: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: 999,
+    paddingHorizontal: 14, paddingVertical: 9,
+  },
+  collapsedPlaceholder: { color: Colors.textMuted, fontSize: 13 },
+  collapsedIcon: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  collapseBtn: {
+    width: 28, height: 28, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
   card: {
     backgroundColor: Colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -440,9 +507,9 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 14, paddingVertical: 12,
+    paddingHorizontal: 14, paddingVertical: 10,
     fontSize: 15, color: Colors.textPrimary,
-    minHeight: 80, lineHeight: 22,
+    minHeight: 48, lineHeight: 22,    // was 80; multiline still grows naturally
   },
 
   actionRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
