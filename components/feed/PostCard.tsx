@@ -20,7 +20,7 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type, Shadow } from '../../constants/design';
 
 interface PostCardProps {
   post: Post;
@@ -287,26 +287,44 @@ function timeAgo(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
+  // Cleaner card: thin top border, no bottom hairline (next card supplies
+  // its own), tighter vertical rhythm.
   card: {
-    backgroundColor: Colors.surfaceLight,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    padding: Spacing.md,
-    gap: 8,
+    backgroundColor: Colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
+    gap: Spacing.xs,
   },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   avatar: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40, height: 40, borderRadius: Radius.full,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  author: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  time: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
-  body: { fontSize: 15, color: Colors.textPrimary, lineHeight: 21 },
-  mediaWrap: { position: 'relative', marginTop: 4, borderRadius: Radius.md, overflow: 'hidden' },
+  avatarText: { color: '#FFF', fontSize: Type.body.size, fontWeight: '700' },
+  author: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: Type.uiBold.weight, color: Colors.textPrimary,
+  },
+  time: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 1,
+  },
+  body: {
+    fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+    color: Colors.textPrimary,
+  },
+  mediaWrap: {
+    position: 'relative', marginTop: Spacing.xs,
+    borderRadius: Radius.md, overflow: 'hidden',
+    backgroundColor: Colors.surfaceLight,
+    ...(Shadow.sm as object),
+  },
   image: { width: '100%', aspectRatio: 4 / 3, backgroundColor: Colors.background },
   videoBox: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
   videoThumb: { width: '100%', height: '100%', opacity: 0.7 },
@@ -316,17 +334,26 @@ function makeStyles() { return StyleSheet.create({
   },
   mediaCount: {
     position: 'absolute', top: 8, right: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.sm,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
-  mediaCountText: { color: '#FFF', fontSize: 11, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: 24, marginTop: 4 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
-  actionCount: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+  mediaCountText: {
+    color: '#FFF', fontSize: Type.caption.size,
+    fontWeight: '700', letterSpacing: 0.2,
+  },
+  actions: { flexDirection: 'row', gap: Spacing.lg, marginTop: Spacing.xxs },
+  actionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: Spacing.xxs,
+  },
+  actionCount: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary, fontWeight: '600',
+  },
 
   commentPreview: {
-    marginTop: 4, paddingTop: 6,
+    marginTop: Spacing.xxs, paddingTop: Spacing.xxs,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
     gap: 4,
   },

@@ -119,37 +119,49 @@ function makeStyles() { return StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
+    paddingHorizontal: Spacing.md, paddingVertical: 8,
+    height: 52,
   },
+  // Borderless icon buttons read as cleaner — the surface depth comes
+  // from background contrast rather than a hard outline.
   signOutIconBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 1, borderColor: Colors.border,
-    backgroundColor: Colors.surfaceLight,
+    width: 36, height: 36, borderRadius: Radius.full,
+    backgroundColor: Colors.surface,
     alignItems: 'center', justifyContent: 'center',
   },
   familyPill: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 11, paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
   },
-  familyPillText: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+  familyPillText: {
+    fontSize: 13, fontWeight: '600', color: Colors.primary,
+    letterSpacing: 0.1,
+  },
   tabRow: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 11 },
-  tabText: { fontSize: 14, fontWeight: '500', color: Colors.textMuted },
-  tabTextActive: { color: Colors.textPrimary, fontWeight: '600' },
-  tabBar: { position: 'absolute', bottom: 0, width: 26, height: 2, borderRadius: 1, backgroundColor: Colors.primary },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 12 },
+  tabText: {
+    fontSize: 14, fontWeight: '500', color: Colors.textMuted,
+    letterSpacing: 0.1,
+  },
+  tabTextActive: { color: Colors.textPrimary, fontWeight: '700' },
+  tabBar: {
+    position: 'absolute', bottom: -1,
+    width: 32, height: 2.5, borderRadius: 2,
+    backgroundColor: Colors.primary,
+  },
   statsBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginHorizontal: Spacing.md, marginTop: 10,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
+    marginHorizontal: Spacing.md, marginTop: Spacing.sm,
+    paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
-    borderWidth: 1, borderColor: Colors.border,
     alignSelf: 'flex-start',
   },
-  statsText: { fontSize: 12, color: Colors.textSecondary },
+  statsText: {
+    fontSize: 12, lineHeight: 16, color: Colors.textSecondary,
+  },
 }); }

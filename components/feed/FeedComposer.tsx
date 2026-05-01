@@ -443,25 +443,28 @@ function escapeRe(s: string) {
 }
 
 function makeStyles() { return StyleSheet.create({
-  // Collapsed: a single ~48px row at the top of the feed.
+  // Collapsed: a single ~52px row, more polished than the v1 outline.
+  // Surface tone matches the app, with the input pill subtly recessed.
   collapsedRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: Spacing.md, paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
+    paddingHorizontal: Spacing.md, paddingVertical: 10,
     backgroundColor: Colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
   collapsedInput: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: 1, borderColor: Colors.border,
-    borderRadius: 999,
-    paddingHorizontal: 14, paddingVertical: 9,
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
+    backgroundColor: Colors.background,
+    borderRadius: Radius.full,
+    paddingHorizontal: 14, paddingVertical: 10,
   },
-  collapsedPlaceholder: { color: Colors.textMuted, fontSize: 13 },
+  collapsedPlaceholder: {
+    color: Colors.textMuted,
+    fontSize: 14, lineHeight: 18,
+  },
   collapsedIcon: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: 1, borderColor: Colors.border,
+    width: 36, height: 36, borderRadius: Radius.full,
+    backgroundColor: Colors.background,
     alignItems: 'center', justifyContent: 'center',
   },
   collapseBtn: {

@@ -53,10 +53,12 @@ const dark = {
     unclassified: '#555568',
   },
 
-  error: '#FF0040',
-  warning: '#FFB800',
-  success: '#00FF88',
-  info: '#00D4FF',
+  // Alarm states — softened from neon to readable. Pure #FF0040 / #00FF88
+  // worked on dev splash screens but felt amateurish in real UI.
+  error: '#F26C7B',
+  warning: '#E8B964',
+  success: '#67D9A6',
+  info: '#67BBE8',
 };
 
 const light = {
@@ -103,10 +105,11 @@ const light = {
     unclassified: '#888897',
   },
 
-  error: '#E03050',
-  warning: '#D49000',
-  success: '#00B864',
-  info: '#0099C8',
+  // Alarm states — slightly desaturated for readability on light bg.
+  error: '#D14760',
+  warning: '#B7841F',
+  success: '#2C9970',
+  info: '#3D8AB8',
 };
 
 let _mode: ThemeMode = 'dark';
