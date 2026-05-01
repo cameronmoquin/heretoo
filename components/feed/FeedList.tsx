@@ -7,6 +7,7 @@ import { ArtBanner } from './ArtBanner';
 import { FeedComposer } from './FeedComposer';
 import { useArtFeed, type ArtWork } from '../../hooks/useArtFeed';
 import { useArtPrefs } from '../../stores/artPrefsStore';
+import { useBrokenArt } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 import type { Post } from '../../stores/feedStore';
@@ -32,7 +33,14 @@ export function FeedList({
   posts, isLoading, isRefreshing, hasMore, onRefresh, onLoadMore, onHeart,
 }: FeedListProps) {
   const styles = makeStyles();
-  const { data: art } = useArtFeed();
+  const { data: artRaw } = useArtFeed();
+  const broken = useBrokenArt((s) => s.broken);
+  // Strip already-known-broken pieces from the pool the feed sees so
+  // banner / inline / sidebar all converge on working images.
+  const art = useMemo(() =>
+    (artRaw ?? []).filter((w) => !broken.has(w.id)),
+    [artRaw, broken],
+  );
   const feedMix = useArtPrefs((s) => s.feedMix);
   const showBetweenSlots = feedMix !== 'posts_only';
 

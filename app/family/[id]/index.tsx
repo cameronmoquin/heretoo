@@ -132,7 +132,7 @@ export default function FamilyDetail() {
   };
 
   return (
-    <SafeAreaView style={s.root} edges={['bottom']}>
+    <SafeAreaView style={s.root} edges={['top', 'bottom']}>
       <View style={s.header}>
         <TouchableOpacity
           style={s.backBtn}

@@ -18,7 +18,7 @@ export default function FamilyList() {
   const familyCount = families?.length ?? 0;
 
   return (
-    <SafeAreaView style={s.root} edges={['bottom']}>
+    <SafeAreaView style={s.root} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={s.scroll}>
         <TouchableOpacity
           style={s.backBtn}

@@ -9,6 +9,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Pressable, Linking, Platform } from 'react-native';
 import type { ArtWork } from '../../hooks/useArtFeed';
+import { useBrokenArt } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -20,6 +21,12 @@ export function ArtSlot({ art }: ArtSlotProps) {
   const s = makeStyles();
   const isAd = art.source === 'ad';
   const imgUri = art.storage_path;
+  const markBroken = useBrokenArt((st) => st.markBroken);
+  const broken = useBrokenArt((st) => st.broken);
+  // If we already know this piece's image is dead, don't try to render
+  // it at all — the parent feed list will pick a different one on the
+  // next memo pass.
+  if (broken.has(art.id)) return null;
 
   const onOpen = () => {
     if (!art.source_url) return;
@@ -45,6 +52,7 @@ export function ArtSlot({ art }: ArtSlotProps) {
         source={{ uri: imgUri }}
         style={s.image}
         resizeMode="cover"
+        onError={() => markBroken(art.id)}
       />
 
       <View style={s.meta}>

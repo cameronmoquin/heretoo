@@ -10,6 +10,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, Linking, Platform } from 'react-native';
 import { useArtFeed } from '../../hooks/useArtFeed';
+import { useBrokenArt, pickArtAroundAnchor } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -17,15 +18,16 @@ export function SidebarArt() {
   const s = makeStyles();
   const { data: art } = useArtFeed();
 
-  // The sidebar takes the middle of the shuffled pool so it doesn't
-  // collide with the top/bottom feed banners (which take index 0 and
-  // length-1). Reroll when the pool reference changes (filter pref
-  // change re-shuffles upstream).
+  // Sidebar takes the middle of the shuffled pool (banners take 0 and
+  // length-1). Walk outward past any pieces that have 404'd this
+  // session.
+  const broken = useBrokenArt((s) => s.broken);
+  const markBroken = useBrokenArt((s) => s.markBroken);
   const piece = useMemo(() => {
     const pool = art ?? [];
     if (pool.length === 0) return null;
-    return pool[Math.floor(pool.length / 2)];
-  }, [art]);
+    return pickArtAroundAnchor(pool, Math.floor(pool.length / 2), broken);
+  }, [art, broken]);
 
   if (!piece) return null;
 
@@ -46,6 +48,7 @@ export function SidebarArt() {
         source={{ uri: piece.thumb_path ?? piece.storage_path }}
         style={s.img}
         resizeMode="cover"
+        onError={() => markBroken(piece.id)}
       />
       <View style={s.meta}>
         <Text style={s.tag}>{isAd ? 'Sponsored' : 'From the gallery'}</Text>

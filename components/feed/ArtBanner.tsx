@@ -16,6 +16,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, Linking, Platform } from 'react-native';
 import { useArtFeed } from '../../hooks/useArtFeed';
+import { useBrokenArt, pickArtAroundAnchor } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -27,17 +28,16 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
   const s = makeStyles();
   const { data: art } = useArtFeed();
 
-  // Each consumer of useArtFeed picks from a distinct anchor in the
-  // shuffled pool so the same image never appears on screen twice.
-  // Top banner anchors at index 0, bottom anchors at length-1, sidebar
-  // and inline slots get the middle. Pool re-shuffles whenever filter
-  // prefs change, so the picks rotate naturally.
+  // Distinct anchor per slot, plus a walk-outward skip past any
+  // pieces whose image URL has 404'd this session.
+  const broken = useBrokenArt((s) => s.broken);
+  const markBroken = useBrokenArt((s) => s.markBroken);
   const piece = useMemo(() => {
     const pool = art ?? [];
     if (pool.length === 0) return null;
-    const idx = slot === 'top' ? 0 : pool.length - 1;
-    return pool[idx];
-  }, [art, slot]);
+    const anchorIdx = slot === 'top' ? 0 : pool.length - 1;
+    return pickArtAroundAnchor(pool, anchorIdx, broken);
+  }, [art, slot, broken]);
 
   if (!piece) return null;
 
@@ -58,6 +58,7 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
         source={{ uri: piece.storage_path }}
         style={s.bg}
         resizeMode="cover"
+        onError={() => markBroken(piece.id)}
       />
 
       {/* Top-right tag */}
