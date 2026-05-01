@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThreads, type MessageThread } from '../../hooks/useChat';
+import { goBackToFeed } from '../../lib/nav';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { Colors } from '../../constants/colors';
@@ -47,7 +48,7 @@ export default function ChatList() {
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
         <TouchableOpacity
-          onPress={() => router.replace('/(tabs)/feed' as any)}
+          onPress={() => goBackToFeed()}
           style={s.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >

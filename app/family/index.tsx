@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMyFamilies } from '../../hooks/useFamily';
+import { goBackToFeed } from '../../lib/nav';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -22,8 +23,8 @@ export default function FamilyList() {
       <ScrollView contentContainerStyle={s.scroll}>
         <TouchableOpacity
           style={s.backBtn}
-          onPress={() => router.replace('/(tabs)/feed' as any)}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          onPress={() => goBackToFeed()}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           accessibilityLabel="Back to HereToo"
         >
           <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
