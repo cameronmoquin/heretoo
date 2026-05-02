@@ -16,19 +16,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 
-// WCRB live stream candidates — tried in order. The widget logs
-// a console warning if every one of them fails so you can swap in
-// a better URL if WGBH ever moves the endpoint.
+// WCRB live stream candidates — verified working from WGBH's actual
+// "Listen Live" page (classicalwcrb.org). The widget walks this list
+// silently on each error event and logs a warning if everything fails.
+//
+// The 'wgbh-sc' subdomain we used earlier was wrong — the real one is
+// 'wgbh-live'. All five below return audio/mpeg or audio/aacp.
 const STREAM_URLS = [
-  // Primary: StreamTheWorld AAC (most public-radio stations use TritonDigital/StreamTheWorld)
-  'https://13703.live.streamtheworld.com/WGBHFM_FMAAC_SC',
-  // Backup: iHeart's RevMa relay
-  'https://stream.revma.ihrhls.com/zc7261',
-  // StreamGuys MP3 (was the historical WGBH endpoint)
-  'https://wgbh-sc.streamguys1.com/wgbh-classical-mp3',
-  'https://wgbh-sc.streamguys1.com/wgbh-classical',
-  // HLS as a last resort (Safari + modern browsers handle it natively)
-  'https://classicalwcrb.streamguys1.com/listen.m3u8',
+  // Primary classical broadcast — the FM signal of WCRB 99.5
+  'https://wgbh-live.streamguys1.com/WCRB.mp3',
+  // High-fidelity classical alternate
+  'https://wgbh-live.streamguys1.com/classical-hi',
+  // Secondary "Classical Dream" channel (MP3)
+  'https://wgbh-live.streamguys1.com/crb-dream',
+  // AAC variant of the same Dream channel
+  'https://wgbh-live.streamguys1.com/crb-dream-aac',
+  // WGBH news fallback (last resort — different programming)
+  'https://wgbh-live.streamguys1.com/wgbh.mp3',
 ];
 
 interface Props {
@@ -48,7 +52,10 @@ export function WCRBPlayer({ compact = false }: Props) {
 
     const a = new Audio();
     a.preload = 'none';
-    a.crossOrigin = 'anonymous';   // hint for CORS-friendly streams
+    // Note: NOT setting crossOrigin — StreamGuys doesn't send the CORS
+    // headers our 'anonymous' setting wants and the browser silently
+    // dropped the request. Plain origin-relaxed playback works fine
+    // because we don't need to read the audio buffer, just play it.
     a.src = STREAM_URLS[0];
 
     a.addEventListener('playing', () => { setPlaying(true); setError(null); });

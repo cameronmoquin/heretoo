@@ -239,8 +239,48 @@ export function useSendMessage() {
       if (error) throw error;
       return data as ChatMessage;
     },
-    onSuccess: (msg) => {
-      qc.invalidateQueries({ queryKey: ['thread-messages', msg.thread_id] });
+    // Drop a placeholder into the thread cache the instant the user
+    // taps Send — the real message replaces it on round-trip success.
+    // Without this the bubble doesn't appear until either (a) the
+    // mutation completes AND the query re-fetches, or (b) the next
+    // message arrives via realtime. Slow on bad WiFi, surprising for
+    // the sender.
+    onMutate: async (vars) => {
+      if (!userId) return { undo: () => {} };
+      const key = ['thread-messages', vars.threadId];
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<ChatMessage[]>(key) ?? [];
+      const tempId = `optimistic-${Date.now()}`;
+      const optimistic: ChatMessage = {
+        id: tempId,
+        thread_id: vars.threadId,
+        sender_id: userId,
+        body: vars.body,
+        read_at: null,
+        created_at: new Date().toISOString(),
+      };
+      qc.setQueryData<ChatMessage[]>(key, [...prev, optimistic]);
+      return { undo: () => qc.setQueryData(key, prev), tempId };
+    },
+    onError: (_err, vars, context: any) => {
+      if (context?.undo) try { context.undo(); } catch {}
+    },
+    onSuccess: (msg, vars, context: any) => {
+      // Replace the temp row with the real one in-place so the bubble
+      // doesn't visibly re-render and shift around.
+      const key = ['thread-messages', vars.threadId];
+      const tempId = context?.tempId;
+      qc.setQueryData<ChatMessage[]>(key, (cur) => {
+        if (!cur) return [msg];
+        const swapped = cur.map((m) => (m.id === tempId ? msg : m));
+        // De-dup in case realtime already delivered the real one.
+        const seen = new Set<string>();
+        return swapped.filter((m) => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
+      });
       qc.invalidateQueries({ queryKey: ['threads'] });
     },
   });
