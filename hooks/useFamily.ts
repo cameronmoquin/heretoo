@@ -125,8 +125,44 @@ export function useCreateFamily() {
       if (error) throw error;
       return data as Family;
     },
-    onSuccess: () => {
+    // Drop a placeholder family into the list cache immediately so it
+    // appears in /family before the network round-trip + refetch
+    // completes. The real row replaces it on success; on error we
+    // roll the placeholder back.
+    onMutate: async (input) => {
+      if (!userId) return { undo: () => {} };
+      const key = ['families', userId];
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<any[]>(key) ?? [];
+      const tempId = `optimistic-${Date.now()}`;
+      const placeholder = {
+        id: tempId,
+        owner_id: userId,
+        name: input.name,
+        description: input.description ?? null,
+        cover_path: null,
+        is_private: false,
+        invite_code: null,
+        created_at: new Date().toISOString(),
+        my_role: 'owner',
+        _optimistic: true,
+      };
+      qc.setQueryData<any[]>(key, [placeholder, ...prev]);
+      return { undo: () => qc.setQueryData(key, prev), tempId, key };
+    },
+    onError: (_err, _vars, context: any) => {
+      if (context?.undo) try { context.undo(); } catch {}
+    },
+    onSuccess: (real, _vars, context: any) => {
+      // Swap the temp row for the real one in-place so the list
+      // doesn't visibly re-shuffle after a brief delay.
+      const key = context?.key ?? ['families', userId];
+      qc.setQueryData<any[]>(key, (cur) => {
+        if (!cur) return [{ ...real, my_role: 'owner' }];
+        return cur.map((f) => (f.id === context?.tempId ? { ...real, my_role: 'owner' } : f));
+      });
       qc.invalidateQueries({ queryKey: ['families'] });
+      qc.invalidateQueries({ queryKey: ['network-stats'] });
     },
   });
 }
