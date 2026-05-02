@@ -176,6 +176,12 @@ export default function OwnProfileScreen() {
             onPress={() => router.push('/(tabs)/feed' as any)}
           />
           <ActionRow
+            icon="notifications-outline"
+            label="Notifications & email"
+            sub="Choose what we email you about"
+            onPress={() => router.push('/(tabs)/profile/notifications' as any)}
+          />
+          <ActionRow
             icon="key-outline"
             label="Join a family with a code"
             onPress={() => router.push('/family/join' as any)}
