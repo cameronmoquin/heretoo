@@ -2,13 +2,12 @@
  * WCRB classical music player — small persistent widget.
  *
  * 99.5 FM Boston, WGBH's classical stream. We embed an HTML5 <audio>
- * pointing at their public stream URL so a play/pause toggle is the
- * whole interface. No metadata fetching yet; if WGBH exposes a
- * "now playing" endpoint later, we can wire it in.
+ * pointing at WCRB's live stream URLs and try them in order — public-
+ * radio streams move endpoints periodically, so falling through a
+ * known list of candidates is more robust than pinning to one URL.
  *
- * Web-only on this round — native would need react-native-track-player
- * or expo-av, both of which add native bundle weight. The widget
- * just doesn't render on iOS/Android.
+ * Web-only on this round — native would need react-native-track-
+ * player. The widget renders nothing on iOS/Android.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -17,38 +16,67 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 
-// WGBH's WCRB classical live stream. If the URL ever changes the
-// rest of the widget keeps working — just swap the const.
-const STREAM_URL = 'https://wgbh-sc.streamguys1.com/wgbh-classical';
+// WCRB live stream candidates — tried in order. The widget logs
+// a console warning if every one of them fails so you can swap in
+// a better URL if WGBH ever moves the endpoint.
+const STREAM_URLS = [
+  // Primary: StreamTheWorld AAC (most public-radio stations use TritonDigital/StreamTheWorld)
+  'https://13703.live.streamtheworld.com/WGBHFM_FMAAC_SC',
+  // Backup: iHeart's RevMa relay
+  'https://stream.revma.ihrhls.com/zc7261',
+  // StreamGuys MP3 (was the historical WGBH endpoint)
+  'https://wgbh-sc.streamguys1.com/wgbh-classical-mp3',
+  'https://wgbh-sc.streamguys1.com/wgbh-classical',
+  // HLS as a last resort (Safari + modern browsers handle it natively)
+  'https://classicalwcrb.streamguys1.com/listen.m3u8',
+];
 
 interface Props {
-  /** Compact mode: header collapsed, only the toggle visible. */
+  /** Compact mode — single tappable row, used in the mobile profile hub. */
   compact?: boolean;
 }
 
 export function WCRBPlayer({ compact = false }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const urlIdxRef = useRef(0);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    // Lazy-create the audio element so it isn't constructed on screens
-    // that never render this widget (mobile native, etc.)
-    if (!audioRef.current) {
-      const a = new Audio();
-      a.preload = 'none';
-      a.src = STREAM_URL;
-      a.addEventListener('playing', () => setPlaying(true));
-      a.addEventListener('pause', () => setPlaying(false));
-      a.addEventListener('ended', () => setPlaying(false));
-      a.addEventListener('error', () => setError('Stream is offline.'));
-      audioRef.current = a;
-    }
-    return () => {
-      // Don't tear down on unmount — let the user keep listening
-      // across navigation. The audio element is reused next mount.
-    };
+    if (audioRef.current) return;
+
+    const a = new Audio();
+    a.preload = 'none';
+    a.crossOrigin = 'anonymous';   // hint for CORS-friendly streams
+    a.src = STREAM_URLS[0];
+
+    a.addEventListener('playing', () => { setPlaying(true); setError(null); });
+    a.addEventListener('pause', () => setPlaying(false));
+    a.addEventListener('ended', () => setPlaying(false));
+
+    // On error, silently try the next URL in the list before giving up.
+    a.addEventListener('error', () => {
+      urlIdxRef.current += 1;
+      if (urlIdxRef.current < STREAM_URLS.length) {
+        const next = STREAM_URLS[urlIdxRef.current];
+        // eslint-disable-next-line no-console
+        console.warn(`[WCRB] stream ${urlIdxRef.current} failed, trying ${next}`);
+        a.src = next;
+        // If we were trying to play, attempt the next one immediately.
+        if (!a.paused) a.play().catch(() => {});
+      } else {
+        // eslint-disable-next-line no-console
+        console.error('[WCRB] all stream URLs failed');
+        setError("Stream is offline. We'll try again next play.");
+        setPlaying(false);
+        // Reset the index so the user can retry from URL 0 next press.
+        urlIdxRef.current = 0;
+        a.src = STREAM_URLS[0];
+      }
+    });
+
+    audioRef.current = a;
   }, []);
 
   const toggle = async () => {
@@ -57,16 +85,21 @@ export function WCRBPlayer({ compact = false }: Props) {
     setError(null);
     try {
       if (a.paused) {
+        // Reset to the primary URL on each new play attempt — gives
+        // moved-endpoint situations a chance to recover automatically.
+        urlIdxRef.current = 0;
+        a.src = STREAM_URLS[0];
         await a.play();
       } else {
         a.pause();
       }
     } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.error('[WCRB] play() rejected', e);
       setError(e?.message ?? 'Could not start the stream.');
     }
   };
 
-  // Native: render nothing.
   if (Platform.OS !== 'web') return null;
 
   if (compact) {
@@ -82,7 +115,7 @@ export function WCRBPlayer({ compact = false }: Props) {
         <View style={{ flex: 1 }}>
           <Text style={s.compactTitle}>WCRB</Text>
           <Text style={s.compactSub}>
-            {playing ? 'Now playing — 99.5 FM' : 'Classical · Tap to play'}
+            {error ?? (playing ? 'Now playing — 99.5 FM' : 'Classical · Tap to play')}
           </Text>
         </View>
       </TouchableOpacity>
@@ -105,7 +138,9 @@ export function WCRBPlayer({ compact = false }: Props) {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.title}>WCRB</Text>
-          <Text style={s.sub}>{playing ? 'Streaming live' : 'Boston · WGBH'}</Text>
+          <Text style={s.sub}>
+            {error ? 'Stream offline' : (playing ? 'Streaming live' : 'Boston · WGBH')}
+          </Text>
         </View>
       </View>
       {!!error && <Text style={s.errorText}>{error}</Text>}
@@ -142,7 +177,6 @@ const s = StyleSheet.create({
   sub: { fontSize: 11, lineHeight: 14, color: Colors.textSecondary, marginTop: 1 },
   errorText: { fontSize: 11, color: Colors.error },
 
-  // Compact (used in mobile profile hub or anywhere tight)
   compactRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingVertical: 10, paddingHorizontal: 12,

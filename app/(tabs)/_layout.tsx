@@ -31,6 +31,7 @@ import { WCRBPlayer } from '../../components/shared/WCRBPlayer';
  */
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },
+  { name: 'music', label: 'Music', icon: 'musical-notes-outline', iconActive: 'musical-notes', href: '/(tabs)/music' },
   { name: 'profile', label: 'Profile', icon: 'person-outline', iconActive: 'person', href: '/(tabs)/profile' },
 ] as const;
 
@@ -165,6 +166,7 @@ export default function TabLayout() {
         <View style={styles.desktopContent}>
           <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
             <Tabs.Screen name="feed" />
+            <Tabs.Screen name="music" />
             <Tabs.Screen name="profile" />
           </Tabs>
         </View>
