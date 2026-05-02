@@ -29,6 +29,7 @@ import { useThemeStore } from '../../../stores/themeStore';
 import { showConfirm, showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { ArtPreferences } from '../../../components/shared/ArtPreferences';
+import { WCRBPlayer } from '../../../components/shared/WCRBPlayer';
 import { PlantTreeModal } from '../../../components/shared/PlantTreeModal';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
@@ -192,8 +193,9 @@ export default function OwnProfileScreen() {
           />
         </View>
 
-        {/* Gallery filter — collapsed by default; tap to set art prefs */}
+        {/* Gallery filter + classical music stream */}
         <ArtPreferences compact />
+        <WCRBPlayer compact />
 
         {/* ── Sign out ── */}
         <TouchableOpacity style={s.signOutBtn} onPress={handleSignOut} activeOpacity={0.75}>

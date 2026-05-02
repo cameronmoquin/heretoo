@@ -18,6 +18,7 @@ import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 import { HereTooLogo } from '../../components/shared/Logo';
 import { SidebarArt } from '../../components/shared/SidebarArt';
 import { ArtPreferences } from '../../components/shared/ArtPreferences';
+import { WCRBPlayer } from '../../components/shared/WCRBPlayer';
 
 /**
  * Mobile bottom nav.
@@ -106,8 +107,9 @@ function Sidebar() {
         </TouchableOpacity>
       </View>
 
-      {/* Art preferences + rotating piece */}
+      {/* Art preferences + rotating piece + WCRB live classical stream */}
       <ArtPreferences compact />
+      <WCRBPlayer />
       <SidebarArt />
 
       {/* Sign-out at the bottom of the sidebar */}

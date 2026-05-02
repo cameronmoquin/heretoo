@@ -91,7 +91,11 @@ export function StatureAvatar({
   const generation = summary?.generation ?? 0;
   const reach = summary?.network_reach ?? 0;
 
-  const letter = stature ? LETTER[stature] : (name ?? '?').slice(0, 1).toUpperCase();
+  // Letter is always the first character of the user's name/handle —
+  // it's how everyone identifies them at a glance. Stature still
+  // appears as a small corner chip when applicable so the family
+  // role is still surfaced, just without overwriting their identity.
+  const letter = (name ?? '?').slice(0, 1).toUpperCase();
   const showMeta = !hideMeta && (generation > 0 || reach > 0);
 
   return (
