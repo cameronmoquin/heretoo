@@ -70,6 +70,20 @@ export default function PostDetail() {
     enabled: !!postId,
   });
 
+  // ── Auto-focus the composer when arriving with ?focus=comment ──
+  // CRITICAL: this useEffect MUST sit before any early return, or the
+  // rules of hooks break (the call count changes between renders →
+  // React error #310 → the entire detail page crashes → you can't
+  // comment). Previous version had this AFTER the loading guard,
+  // which is why the page died after the comment-bubble navigation.
+  useEffect(() => {
+    if (focus !== 'comment' || !inputRef.current) return;
+    const t = setTimeout(() => {
+      try { inputRef.current?.focus(); } catch {}
+    }, 250);
+    return () => clearTimeout(t);
+  }, [focus]);
+
   if (isLoading) {
     return (
       <SafeAreaView style={s.root}>
@@ -87,18 +101,6 @@ export default function PostDetail() {
 
   const media = post.media ?? [];
   const isOwner = post.author_id === userId;
-
-  // ── Auto-focus the composer when arriving with ?focus=comment ──
-  // Triggered by PostCard's comment-bubble onPress so the user lands
-  // directly in the input. Small delay so the view has time to mount
-  // and the input ref binds before .focus() fires.
-  useEffect(() => {
-    if (focus !== 'comment' || !inputRef.current) return;
-    const t = setTimeout(() => {
-      try { inputRef.current?.focus(); } catch {}
-    }, 250);
-    return () => clearTimeout(t);
-  }, [focus]);
   const commentsDisabled = !!post.comments_disabled;
   const totalCount: number = post.comment_count ?? countTree(comments ?? []);
 

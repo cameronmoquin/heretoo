@@ -39,22 +39,24 @@ export function MicInputButton({ onText, size = 18, disabled }: Props) {
   const chunksRef = useRef<Blob[]>([]);
   const autoStopTimer = useRef<number | null>(null);
 
-  // Native: not yet wired. Render nothing rather than a broken button.
-  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
-
-  // If MediaRecorder isn't available (rare these days, but Safari iOS
-  // had spotty support until 14.5), don't render at all.
-  if (typeof window.MediaRecorder === 'undefined') return null;
-
+  // useEffect MUST come before any early returns so the hook count
+  // stays stable across renders (rules of hooks → React error #310).
+  // The cleanup is a no-op on native because nothing got started.
   useEffect(() => {
     return () => {
-      // On unmount: stop any in-flight recording cleanly.
       if (recorderRef.current && recorderRef.current.state !== 'inactive') {
         try { recorderRef.current.stop(); } catch {}
       }
-      if (autoStopTimer.current) window.clearTimeout(autoStopTimer.current);
+      if (autoStopTimer.current && typeof window !== 'undefined') {
+        window.clearTimeout(autoStopTimer.current);
+      }
     };
   }, []);
+
+  // Native: not yet wired. Render nothing rather than a broken button.
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+  // MediaRecorder unavailable (very old browsers): skip the button.
+  if (typeof window.MediaRecorder === 'undefined') return null;
 
   const startRecording = async () => {
     setErrMsg(null);
