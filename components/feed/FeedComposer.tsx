@@ -617,7 +617,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   collapseBtn: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 28, height: 28, borderRadius: 6,
     alignItems: 'center', justifyContent: 'center',
   },
 
@@ -728,7 +728,7 @@ function makeStyles() { return StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 4,
   },
   connAvatar: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

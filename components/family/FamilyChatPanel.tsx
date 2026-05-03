@@ -179,9 +179,9 @@ function makeStyles() { return StyleSheet.create({
   rowTheirs: { justifyContent: 'flex-start' },
 
   avatarWrap: { width: 28, alignItems: 'center' },
-  avatarImg: { width: 28, height: 28, borderRadius: 14 },
+  avatarImg: { width: 28, height: 28, borderRadius: 6 },
   avatarFallback: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 28, height: 28, borderRadius: 6,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -221,7 +221,7 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 14, color: Colors.textPrimary, maxHeight: 120,
   },
   sendBtn: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38, height: 38, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },

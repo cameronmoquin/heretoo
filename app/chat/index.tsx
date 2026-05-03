@@ -181,7 +181,7 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   avatar: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44, height: 44, borderRadius: 8,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

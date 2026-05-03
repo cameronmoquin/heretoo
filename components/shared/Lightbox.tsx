@@ -110,13 +110,13 @@ const s = StyleSheet.create({
   image: { width: '100%', height: '100%' },
   closeBtn: {
     position: 'absolute', top: 24, right: 16,
-    width: 44, height: 44, borderRadius: 22,
+    width: 44, height: 44, borderRadius: 8,
     backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center',
   },
   arrow: {
     position: 'absolute', top: '50%', marginTop: -22,
-    width: 44, height: 44, borderRadius: 22,
+    width: 44, height: 44, borderRadius: 8,
     backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center',
   },

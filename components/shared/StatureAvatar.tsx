@@ -133,7 +133,11 @@ export function StatureAvatar({
 }
 
 function makeStyles(size: number) {
-  const r = size / 2;
+  // Square-ish avatars (rounded-square / squircle) instead of full circles.
+  // Reads as modern SaaS — Linear, Notion, GitHub all use this shape.
+  // Radius scales with size so a 28px avatar gets a small radius and a
+  // 64px gets a more prominent one without ever going fully round.
+  const r = Math.max(6, Math.round(size * 0.18));
   const meta = Math.max(14, Math.round(size * 0.36));
   const fontMain = Math.round(size * 0.42);
   const fontMeta = Math.max(8, Math.round(size * 0.22));
@@ -149,9 +153,13 @@ function makeStyles(size: number) {
     letter: { color: '#FFFFFF', fontWeight: '800', fontSize: fontMain, letterSpacing: 0.5 },
 
     chip: {
+      // Stature/generation chip stays a small rounded square too,
+      // so the whole avatar reads as a unit rather than a circle
+      // with a circular pendant.
       position: 'absolute',
       right: -2, bottom: -2,
-      width: meta, height: meta, borderRadius: meta / 2,
+      width: meta, height: meta,
+      borderRadius: Math.max(4, Math.round(meta * 0.22)),
       backgroundColor: Colors.primary,
       borderWidth: 2, borderColor: Colors.surface,
       alignItems: 'center', justifyContent: 'center',

@@ -325,7 +325,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 24,
   },
   iconBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40, height: 40, borderRadius: 7,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center', justifyContent: 'center',
   },

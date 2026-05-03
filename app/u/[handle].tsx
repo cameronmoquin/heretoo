@@ -252,7 +252,7 @@ function makeStyles() { return StyleSheet.create({
     paddingVertical: 8,
   },
   familyIcon: {
-    width: 32, height: 32, borderRadius: 16,
+    width: 32, height: 32, borderRadius: 6,
     backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

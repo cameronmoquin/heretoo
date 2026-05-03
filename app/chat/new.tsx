@@ -212,7 +212,7 @@ function makeStyles() { return StyleSheet.create({
     paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8,
   },
   avatar: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40, height: 40, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

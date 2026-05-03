@@ -534,7 +534,7 @@ function makeStyles() { return StyleSheet.create({
   name: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
   metaText: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
   newPostBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary,
+    width: 36, height: 36, borderRadius: 7, backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   backBtn: {
@@ -576,7 +576,7 @@ function makeStyles() { return StyleSheet.create({
   sectionLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   memberAvatar: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.primaryFaint,
+    width: 28, height: 28, borderRadius: 6, backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
   },
   memberText: { fontSize: 14, color: Colors.textPrimary, flex: 1 },
@@ -691,7 +691,7 @@ function makeStyles() { return StyleSheet.create({
   },
   postHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   postAvatar: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },

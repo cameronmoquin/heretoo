@@ -124,7 +124,7 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   iconBox: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40, height: 40, borderRadius: 7,
     backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
   },

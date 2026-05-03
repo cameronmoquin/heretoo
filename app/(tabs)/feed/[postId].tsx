@@ -462,7 +462,7 @@ function makeStyles() { return StyleSheet.create({
   scroll: { padding: Spacing.md, gap: 12, maxWidth: 600, alignSelf: 'center', width: '100%', paddingBottom: 80 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44, height: 44, borderRadius: 8,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -495,7 +495,7 @@ function makeStyles() { return StyleSheet.create({
 
   commentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8 },
   commentAvatar: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 28, height: 28, borderRadius: 6,
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -528,7 +528,7 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 14, color: Colors.textPrimary, maxHeight: 100,
   },
   composerSend: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38, height: 38, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -541,7 +541,7 @@ function makeStyles() { return StyleSheet.create({
   errorText: { fontSize: 12, color: Colors.error },
 
   composerTagBtn: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38, height: 38, borderRadius: 7,
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -562,7 +562,7 @@ function makeStyles() { return StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 4,
   },
   tagAvatar: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

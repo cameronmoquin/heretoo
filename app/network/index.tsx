@@ -135,7 +135,7 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.borderLight,
   },
   avatar: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40, height: 40, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

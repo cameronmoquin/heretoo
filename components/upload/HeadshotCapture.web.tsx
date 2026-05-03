@@ -242,7 +242,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 24,
   },
   iconBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 44, height: 44, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center', justifyContent: 'center',
   },
   shutter: {

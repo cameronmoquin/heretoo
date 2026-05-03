@@ -25,10 +25,15 @@ export function Avatar({ url, name, size = 38, borderColor }: AvatarProps) {
   const initials = display.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const bg = pickColor(display);
 
+  // Squircle (rounded square) instead of full circle — radius scales
+  // with size so small avatars get a subtle rounding and large ones
+  // get more prominent corners. Same pattern as StatureAvatar.
+  const radius = Math.max(6, Math.round(size * 0.18));
+
   return (
-    <View style={[styles.wrap, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg, borderColor: borderColor ?? 'transparent', borderWidth: borderColor ? 2 : 0 }]}>
+    <View style={[styles.wrap, { width: size, height: size, borderRadius: radius, backgroundColor: bg, borderColor: borderColor ?? 'transparent', borderWidth: borderColor ? 2 : 0 }]}>
       {url ? (
-        <Image source={{ uri: url }} style={{ width: size, height: size, borderRadius: size / 2 }} />
+        <Image source={{ uri: url }} style={{ width: size, height: size, borderRadius: radius }} />
       ) : (
         <Text style={[styles.initials, { fontSize: size * 0.38 }]}>{initials}</Text>
       )}

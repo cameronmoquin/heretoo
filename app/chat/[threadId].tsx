@@ -257,7 +257,7 @@ function makeStyles() { return StyleSheet.create({
   },
   backBtn: { padding: 4 },
   avatar: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
@@ -291,7 +291,7 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 14, color: Colors.textPrimary, maxHeight: 100,
   },
   composerSend: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38, height: 38, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
