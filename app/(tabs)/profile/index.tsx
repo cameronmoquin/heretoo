@@ -19,12 +19,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import {
   useMyFamilies, useMyNetworkStats,
   useMyStatures, useUpdateMyStature,
   STATURE_LABELS, type FamilyStature,
 } from '../../../hooks/useFamily';
+import { useToggleHeart } from '../../../hooks/useFeed';
+import { PostCard } from '../../../components/feed/PostCard';
 import { showConfirm, showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { ArtPreferences } from '../../../components/shared/ArtPreferences';
@@ -43,6 +47,31 @@ export default function OwnProfileScreen() {
   const updateStature = useUpdateMyStature();
   const [picker, setPicker] = useState<{ familyId: string; familyName: string } | null>(null);
   const [plantOpen, setPlantOpen] = useState(false);
+  const toggleHeart = useToggleHeart();
+
+  // Your own public posts — shown at the bottom of the profile hub.
+  // Same RLS-respecting query the /u/[handle] page uses; here we
+  // filter to visibility='public' specifically so the page reads as
+  // "your contribution to the common feed" rather than mixing in
+  // family-only material.
+  const { data: myPublicPosts } = useQuery({
+    queryKey: ['profile-posts', profile?.id, 'public'],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          '*, author:profiles!author_id(id, handle, display_name, avatar_path), media:post_media(*)',
+        )
+        .eq('author_id', profile.id)
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!profile?.id,
+  });
 
   const handleSignOut = () => showConfirm('Sign out', 'Are you sure?', signOut, 'Sign out');
 
@@ -74,10 +103,17 @@ export default function OwnProfileScreen() {
         {/* ── Network stats ── */}
         {stats && (
           <View style={s.statsCard}>
-            <View style={s.statBlock}>
+            {/* "People in network" is now tappable — opens the
+                network list page where you can see everyone and
+                jump to their profile or message them. */}
+            <TouchableOpacity
+              style={s.statBlock}
+              onPress={() => router.push('/network' as any)}
+              activeOpacity={0.7}
+            >
               <Text style={s.statValue}>{stats.reachable_profiles}</Text>
               <Text style={s.statLabel}>People in network</Text>
-            </View>
+            </TouchableOpacity>
             <View style={s.statDivider} />
             <View style={s.statBlock}>
               <Text style={s.statValue}>{stats.reachable_families}</Text>
@@ -193,9 +229,30 @@ export default function OwnProfileScreen() {
               dial in the polish pass. */}
         </View>
 
-        {/* Gallery filter + classical music stream */}
+        {/* Gallery filter + wallpaper picker + classical music stream.
+            These three components together render the user's "style"
+            choices — wallpaper, radio, and gallery filter — which
+            are also part of how their profile reads to others when
+            we sync the picks to the DB (future: profile_prefs sync). */}
         <ArtPreferences compact />
         <WCRBPlayer compact />
+
+        {/* ── Your common-area posts ── */}
+        {myPublicPosts && myPublicPosts.length > 0 && (
+          <View style={[s.section, { marginTop: 8 }]}>
+            <Text style={s.sectionTitle}>Your posts</Text>
+            <Text style={[s.statLabel, { paddingHorizontal: Spacing.md, marginTop: -4, marginBottom: 8 }]}>
+              Public posts only — what you've shared with the common feed.
+            </Text>
+            {myPublicPosts.map((p: any) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                onHeart={(id) => toggleHeart.mutate(id)}
+              />
+            ))}
+          </View>
+        )}
 
         {/* ── Sign out ── */}
         <TouchableOpacity style={s.signOutBtn} onPress={handleSignOut} activeOpacity={0.75}>

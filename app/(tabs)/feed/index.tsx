@@ -89,7 +89,7 @@ export default function FeedScreen() {
       {stats && stats.reachable_profiles > 1 && (
         <TouchableOpacity
           style={styles.statsBanner}
-          onPress={() => router.push('/family')}
+          onPress={() => router.push('/network' as any)}
           activeOpacity={0.8}
         >
           <Ionicons name="git-network-outline" size={14} color={Colors.primary} />
