@@ -7,7 +7,7 @@
  * comments" toggle that flips `posts.comments_disabled`.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, Image, Modal, Pressable,
   ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity,
@@ -36,8 +36,13 @@ const MAX_INDENT = 4; // visual cap — beyond 4 levels deep all replies share t
 
 export default function PostDetail() {
   const s = makeStyles();
-  const { postId } = useLocalSearchParams<{ postId: string }>();
+  // `focus=comment` query param auto-scrolls and focuses the composer
+  // input. PostCard's comment bubble passes this when tapped so the
+  // user lands directly in the input rather than having to scroll +
+  // tap themselves.
+  const { postId, focus } = useLocalSearchParams<{ postId: string; focus?: string }>();
   const userId = useAuthStore((st) => st.user?.id);
+  const inputRef = useRef<TextInput | null>(null);
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
@@ -82,6 +87,18 @@ export default function PostDetail() {
 
   const media = post.media ?? [];
   const isOwner = post.author_id === userId;
+
+  // ── Auto-focus the composer when arriving with ?focus=comment ──
+  // Triggered by PostCard's comment-bubble onPress so the user lands
+  // directly in the input. Small delay so the view has time to mount
+  // and the input ref binds before .focus() fires.
+  useEffect(() => {
+    if (focus !== 'comment' || !inputRef.current) return;
+    const t = setTimeout(() => {
+      try { inputRef.current?.focus(); } catch {}
+    }, 250);
+    return () => clearTimeout(t);
+  }, [focus]);
   const commentsDisabled = !!post.comments_disabled;
   const totalCount: number = post.comment_count ?? countTree(comments ?? []);
 
@@ -245,6 +262,7 @@ export default function PostDetail() {
                 <Ionicons name="at-outline" size={18} color={Colors.textSecondary} />
               </TouchableOpacity>
               <TextInput
+                ref={inputRef}
                 style={s.composerInput}
                 value={draft}
                 onChangeText={(t) => { setDraft(t); if (submitErr) setSubmitErr(null); }}

@@ -23,6 +23,11 @@ import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Shadow } from '../../constants/design';
 
+// Recognizable "liked" red — same hue Twitter, Instagram, and Reddit
+// converged on. Sits adjacent to the brand primary indigo without
+// fighting it; the brand color stays meaningful for primary CTAs.
+const HEART_RED = '#E0245E';
+
 interface PostCardProps {
   post: Post;
   onHeart?: (postId: string) => void;
@@ -130,18 +135,38 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       <View style={s.actions}>
         <TouchableOpacity
           style={s.actionBtn}
-          onPress={() => onHeart?.(post.id)}
+          onPress={(e) => { e.stopPropagation(); onHeart?.(post.id); }}
           activeOpacity={0.7}
+          accessibilityLabel={post.viewer_hearted ? 'Unheart post' : 'Heart post'}
         >
+          {/* Filled heart in the recognizable "social red" — Twitter /
+              Instagram convention. The outline version for "not yet
+              hearted" matches the rest of the muted action row. */}
           <Ionicons
             name={post.viewer_hearted ? 'heart' : 'heart-outline'}
             size={18}
-            color={post.viewer_hearted ? Colors.primary : Colors.textSecondary}
+            color={post.viewer_hearted ? HEART_RED : Colors.textSecondary}
           />
-          {heartCount > 0 && <Text style={s.actionCount}>{heartCount}</Text>}
+          {heartCount > 0 && (
+            <Text style={[s.actionCount, post.viewer_hearted && { color: HEART_RED }]}>
+              {heartCount}
+            </Text>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
+        {/* Tapping the comment bubble jumps to the post detail page
+            with ?focus=comment, which auto-focuses the composer input
+            on arrival. Calls e.stopPropagation so the parent Pressable
+            (which navigates without focus) doesn't also fire. */}
+        <TouchableOpacity
+          style={s.actionBtn}
+          activeOpacity={0.7}
+          onPress={(e) => {
+            e.stopPropagation();
+            router.push(`/(tabs)/feed/${post.id}?focus=comment` as any);
+          }}
+          accessibilityLabel="Add a comment"
+        >
           <Ionicons name="chatbubble-outline" size={17} color={Colors.textSecondary} />
           {(post.comment_count ?? 0) > 0 && (
             <Text style={s.actionCount}>{post.comment_count}</Text>
