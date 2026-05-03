@@ -487,11 +487,13 @@ function makeStyles() { return StyleSheet.create({
     color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.4,
   },
   postBtn: {
-    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 999,
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999,
     backgroundColor: Colors.primary,
   },
   postBtnDisabled: { opacity: 0.4 },
-  postBtnText: { color: '#000', fontSize: 13, fontWeight: '700' },
+  // White text on the new indigo primary — was '#000' which was fine on
+  // the old gold-toned primary but reads as low-contrast on indigo.
+  postBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
 
   kindRow: {
     flexDirection: 'row', gap: 6,
@@ -572,16 +574,16 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   connAvatarImg: { width: '100%', height: '100%' },
-  connAvatarText: { color: '#000', fontSize: 14, fontWeight: '700' },
+  connAvatarText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
   connName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   connHandle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
 
   modalDone: {
     marginTop: 12, alignItems: 'center',
-    paddingVertical: 11, borderRadius: 10,
+    paddingVertical: 12, borderRadius: Radius.md,
     backgroundColor: Colors.primary,
   },
-  modalDoneText: { color: '#000', fontSize: 14, fontWeight: '700' },
+  modalDoneText: { color: '#FFF', fontSize: 14, fontWeight: '600', letterSpacing: 0.1 },
 
   // Gate state — shown when the viewer isn't in any family yet.
   gateCard: {
@@ -601,10 +603,10 @@ function makeStyles() { return StyleSheet.create({
   },
   gateRow: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' },
   gateBtn: {
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+    paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999,
     backgroundColor: Colors.primary,
   },
-  gateBtnText: { color: '#000', fontSize: 13, fontWeight: '700' },
+  gateBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
   gateBtnAlt: {
     backgroundColor: 'transparent',
     borderWidth: 1, borderColor: Colors.border,

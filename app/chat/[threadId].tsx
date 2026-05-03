@@ -238,7 +238,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#000', fontSize: 14, fontWeight: '700' },
+  avatarText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
   headerName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   headerHandle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
 
@@ -251,7 +251,7 @@ function makeStyles() { return StyleSheet.create({
   bubble: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
   bubbleMine: { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },
   bubbleTheirs: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, borderBottomLeftRadius: 4 },
-  bubbleTextMine: { color: '#000', fontSize: 14, lineHeight: 19 },
+  bubbleTextMine: { color: '#FFF', fontSize: 14, lineHeight: 19 },
   bubbleTextTheirs: { color: Colors.textPrimary, fontSize: 14, lineHeight: 19 },
   bubbleTime: { fontSize: 10, color: Colors.textMuted, marginTop: 2, marginHorizontal: 4 },
 
@@ -288,7 +288,7 @@ function makeStyles() { return StyleSheet.create({
     flex: 1, paddingVertical: 11, borderRadius: 999,
     backgroundColor: Colors.primary, alignItems: 'center',
   },
-  acceptBtnText: { color: '#000', fontWeight: '700', fontSize: 13 },
+  acceptBtnText: { color: '#FFF', fontWeight: '600', fontSize: 13, letterSpacing: 0.1 },
 
   awaitingBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center',

@@ -337,7 +337,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999,
     backgroundColor: Colors.primary,
   },
-  primaryBtnText: { color: '#000', fontSize: 13, fontWeight: '700' },
+  primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
   altBtn: { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary },
 
   actionRow: {

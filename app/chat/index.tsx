@@ -186,7 +186,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#000', fontSize: 16, fontWeight: '700' },
+  avatarText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   rowTop: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   rowName: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   rowTime: { fontSize: 11, color: Colors.textMuted },
@@ -208,5 +208,5 @@ function makeStyles() { return StyleSheet.create({
     marginTop: 12, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999,
     backgroundColor: Colors.primary,
   },
-  emptyBtnText: { color: '#000', fontWeight: '700', fontSize: 13 },
+  emptyBtnText: { color: '#FFF', fontWeight: '600', fontSize: 13, letterSpacing: 0.1 },
 }); }

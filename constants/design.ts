@@ -28,8 +28,8 @@ export const Spacing = {
 export const Radius = {
   xs: 6,
   sm: 10,
-  md: 14,
-  lg: 18,
+  md: 16,   // was 14 — slightly more generous, reads as polished SaaS
+  lg: 20,   // was 18
   full: 999,
 } as const;
 
@@ -39,15 +39,18 @@ export const Radius = {
  * set. Line-height is paired so vertical rhythm is automatic.
  */
 export const Type = {
-  // Display / hero — used sparingly (auth screens, big empty states)
-  display:  { size: 28, lineHeight: 34, weight: '800' as const, letterSpacing: -0.4 },
+  // Display / hero — used sparingly (auth screens, big empty states).
+  // Heavy display weight + tight tracking reads as confident editorial.
+  display:  { size: 28, lineHeight: 34, weight: '700' as const, letterSpacing: -0.5 },
 
-  // Section / page titles
-  title:    { size: 20, lineHeight: 26, weight: '700' as const, letterSpacing: -0.2 },
+  // Section / page titles. Dropped from 700→600 + tightened tracking
+  // so titles feel elegant rather than chunky-bold.
+  title:    { size: 20, lineHeight: 26, weight: '600' as const, letterSpacing: -0.3 },
 
-  // Card heads, post bodies, primary content
-  body:     { size: 16, lineHeight: 22, weight: '400' as const, letterSpacing: 0 },
-  bodyBold: { size: 16, lineHeight: 22, weight: '600' as const, letterSpacing: 0 },
+  // Card heads, post bodies, primary content. Bumped lineHeight 22→24
+  // for more comfortable long-read.
+  body:     { size: 16, lineHeight: 24, weight: '400' as const, letterSpacing: 0 },
+  bodyBold: { size: 16, lineHeight: 24, weight: '600' as const, letterSpacing: 0 },
 
   // UI text, default for buttons / inputs / metadata
   ui:       { size: 14, lineHeight: 19, weight: '500' as const, letterSpacing: 0 },
@@ -75,6 +78,7 @@ export const Heights = {
 
 export const Shadow = {
   // Subtle resting card lift — flat enough for a dark theme.
+  // Two-layer web shadow gives crisp edge + soft ambient (Linear-style).
   sm: Platform.select({
     ios: {
       shadowColor: '#000',
@@ -83,7 +87,7 @@ export const Shadow = {
       shadowRadius: 3,
     },
     android: { elevation: 1 },
-    web: { boxShadow: '0 1px 2px rgba(0,0,0,0.06)' },
+    web: { boxShadow: '0 1px 2px rgba(15,15,25,0.04), 0 2px 6px rgba(15,15,25,0.05)' },
     default: {},
   }),
   // Hovered / focused card.

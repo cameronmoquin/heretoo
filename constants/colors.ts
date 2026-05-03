@@ -15,22 +15,25 @@ const dark = {
   brandGold: '#E8C97A',
   brandDark: '#0A0A0F',
 
-  // Primary — electric blue with a hint of purple
-  primary: '#4F6EFF',
-  primaryDark: '#3B5AE8',
-  primaryLight: '#7B93FF',
-  primaryFaint: 'rgba(79, 110, 255, 0.10)',
+  // Primary — refined indigo-blue. Slightly less saturated than the
+  // original electric tone for a more grown-up feel.
+  primary: '#5B7CFF',
+  primaryDark: '#4361E5',
+  primaryLight: '#8AA1FF',
+  primaryFaint: 'rgba(91, 124, 255, 0.10)',
 
-  // Surfaces — dialed back from near-black to a warm graphite so the
-  // app feels lived-in instead of OLED-void.
-  background: '#1A1A24',
-  surface: '#23232F',
-  surfaceLight: '#2C2C3A',
-  border: '#3A3A4A',
-  borderLight: '#2E2E3D',
-  textPrimary: '#EDEDF3',
-  textSecondary: '#9999AE',
-  textMuted: '#6A6A80',
+  // Surfaces — bumped up two stops from the previous "warm graphite"
+  // so the app reads as polished SaaS-dark (Linear / Notion territory)
+  // rather than moody-dark. Each layer has clear contrast: cards
+  // stand out on background, raised cards stand out on cards.
+  background: '#22222D',     // was #1A1A24 — main canvas
+  surface: '#2C2C39',        // was #23232F — primary cards
+  surfaceLight: '#363645',   // was #2C2C3A — raised / hovered
+  border: '#3F3F4F',         // was #3A3A4A
+  borderLight: '#34344A',    // was #2E2E3D
+  textPrimary: '#F1F1F6',    // was #EDEDF3 — slightly brighter
+  textSecondary: '#A8A8BD',  // was #9999AE — slightly lighter
+  textMuted: '#787890',      // was #6A6A80 — slightly lighter
 
   // Accents (kept consistent across themes)
   agree: '#00FF88',
@@ -67,22 +70,25 @@ const light = {
   brandGold: '#E8C97A',
   brandDark: '#0A0A0F',
 
-  // Primary — slightly deeper for contrast against light surfaces
-  primary: '#3B5AE8',
-  primaryDark: '#2A45C7',
+  // Primary — matches dark-mode primary family for brand consistency,
+  // but slightly deeper so it carries enough weight on near-white surfaces.
+  primary: '#4A6CF0',
+  primaryDark: '#3552D4',
   primaryLight: '#7B93FF',
-  primaryFaint: 'rgba(59, 90, 232, 0.10)',
+  primaryFaint: 'rgba(74, 108, 240, 0.08)',
 
-  // Light surfaces — warmer paper-tone instead of stark white so reading
-  // long stretches doesn't fatigue, and elevated cards still pop.
-  background: '#EAE9EE',
-  surface: '#F4F3F7',
-  surfaceLight: '#E1E0E6',
-  border: '#C8C7D0',
-  borderLight: '#D8D7DE',
+  // Light surfaces — clean near-white with hairline tonal separation
+  // between layers. The previous palette read as muddy paper; the new
+  // one reads as Linear / Notion-light: bright, calm, professional.
+  // Cards are pure white, raised cards lift with shadow rather than tone.
+  background: '#F6F6F9',     // was #EAE9EE — main canvas, near-white
+  surface: '#FFFFFF',        // was #F4F3F7 — cards pop on bg
+  surfaceLight: '#F1F1F5',   // was #E1E0E6 — recessed wells / hovered
+  border: '#E4E4EB',         // was #C8C7D0 — much softer hairlines
+  borderLight: '#EFEFF4',    // was #D8D7DE
   textPrimary: '#1A1A24',
-  textSecondary: '#54546A',
-  textMuted: '#80808F',
+  textSecondary: '#5A5A6E', // was #54546A — slightly cooler for hierarchy
+  textMuted: '#8A8A9A',     // was #80808F
 
   // Accents — same identity but slightly less neon for light mode
   agree: '#00B864',

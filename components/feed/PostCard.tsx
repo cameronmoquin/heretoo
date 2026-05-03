@@ -292,10 +292,10 @@ function makeStyles() { return StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingTop: Spacing.md,     // was Spacing.sm — more breathing room
+    paddingBottom: Spacing.md,
     gap: Spacing.xs,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
@@ -368,9 +368,10 @@ function makeStyles() { return StyleSheet.create({
   },
   modalCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 14, padding: 18, gap: 4,
+    borderRadius: Radius.lg, padding: Spacing.lg, gap: 4,
     width: '100%', maxWidth: 420,
     borderWidth: 1, borderColor: Colors.border,
+    ...(Shadow.lg as object),
   },
   modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
   modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 12 },

@@ -217,7 +217,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#000', fontSize: 15, fontWeight: '700' },
+  avatarText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
   name: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   handle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
 

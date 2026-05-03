@@ -147,7 +147,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 4,
     borderRadius: 4, overflow: 'hidden',
   },
-  tagAd: { color: '#000', backgroundColor: Colors.primary },
+  tagAd: { color: '#FFF', backgroundColor: Colors.primary },
   tagArt: {
     color: '#FFFFFF',
     backgroundColor: 'rgba(0,0,0,0.45)',

@@ -79,7 +79,7 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4,
     overflow: 'hidden',
   },
-  tagAd: { color: '#000', backgroundColor: Colors.primary },
+  tagAd: { color: '#FFF', backgroundColor: Colors.primary },
   tagArt: { color: Colors.textMuted, backgroundColor: 'transparent', paddingHorizontal: 0 },
   license: { fontSize: 10, color: Colors.textMuted, fontWeight: '600' },
   image: {
