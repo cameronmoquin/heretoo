@@ -27,7 +27,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import {
   useThread, useThreadMessages, useSendMessage,
-  useAcceptThread, useDeclineThread,
+  useAcceptThread, useDeclineThread, useMarkThreadRead,
 } from '../../hooks/useChat';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
@@ -47,6 +47,7 @@ export default function ChatThread() {
   const send = useSendMessage();
   const accept = useAcceptThread();
   const decline = useDeclineThread();
+  const markRead = useMarkThreadRead();
 
   const otherId = thread
     ? (thread.participant_a === userId ? thread.participant_b : thread.participant_a)
@@ -72,6 +73,24 @@ export default function ChatThread() {
     const t = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     return () => clearTimeout(t);
   }, [messages?.length]);
+
+  // Mark inbound messages as read whenever there's at least one unread
+  // message from the other party. Fires on initial load and again
+  // whenever realtime delivers a new inbound — so the unread badge
+  // tracks "messages I haven't actually seen" rather than "messages
+  // that exist." Idempotent: the RPC no-ops when there's nothing to
+  // mark, so re-firing on every realtime tick is cheap.
+  useEffect(() => {
+    if (!threadId || !userId || !messages) return;
+    const hasUnreadInbound = messages.some(
+      (m) => m.sender_id !== userId && m.read_at === null,
+    );
+    if (!hasUnreadInbound) return;
+    markRead.mutate(threadId);
+    // markRead is stable across renders; including it would re-fire
+    // unnecessarily because react-query mutations get fresh refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId, userId, messages]);
 
   const isPending = thread?.status === 'pending';
   const viewerIsInitiator = thread?.initiator_id === userId;

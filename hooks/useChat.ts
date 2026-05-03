@@ -321,6 +321,44 @@ export function useSendMessage() {
   });
 }
 
+/**
+ * Mark every inbound (sender ≠ viewer) message in this thread as read.
+ *
+ * Called by the thread screen as soon as messages render — the user is
+ * physically looking at the thread, so by definition the messages are
+ * read. Calls a SECURITY DEFINER RPC because the messages UPDATE policy
+ * (correctly) only lets the sender modify their own rows.
+ *
+ * On success we invalidate the badge count + the thread list so the
+ * Messages tab badge in the bottom nav drops immediately.
+ */
+export function useMarkThreadRead() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  return useMutation({
+    mutationFn: async (threadId: string) => {
+      const { data, error } = await supabase.rpc('mark_thread_read', {
+        p_thread_id: threadId,
+      });
+      if (error) throw error;
+      return (data as number) ?? 0;
+    },
+    onSuccess: (markedCount, threadId) => {
+      // Optimistically zero the badge count drop locally too — the
+      // refetch below will reconcile, but the badge should respond
+      // before the round-trip finishes.
+      if (markedCount > 0) {
+        qc.setQueryData<number>(['unread-count', userId], (cur) =>
+          Math.max(0, (cur ?? 0) - markedCount),
+        );
+      }
+      qc.invalidateQueries({ queryKey: ['unread-count', userId] });
+      qc.invalidateQueries({ queryKey: ['thread-messages', threadId] });
+      qc.invalidateQueries({ queryKey: ['threads', userId] });
+    },
+  });
+}
+
 /** Recipient accepts a pending request — flips status to 'open'. */
 export function useAcceptThread() {
   const qc = useQueryClient();
