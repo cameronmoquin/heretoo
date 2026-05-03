@@ -374,12 +374,72 @@ async function ingestRijks(target) {
   console.log(`Rijks: ${stats.inserted} inserted, ${stats.skipped} skipped`);
 }
 
+// ── Smithsonian Open Access (Hirshhorn modern art focus) ────────────────
+// Public API at api.si.edu, DEMO_KEY works for moderate volume. The
+// Hirshhorn is the Smithsonian's modern + contemporary museum — the
+// closest substitute for the MoMA dataset we removed (whose image
+// URLs were unreliable). Bauhaus, Mondrian, prints, modernism all live
+// here.
+async function ingestSmithsonian(target) {
+  console.log('── Smithsonian Hirshhorn (modern art) ──');
+  const apiKey = process.env.SMITHSONIAN_API_KEY || 'DEMO_KEY';
+  let start = 0;
+  const PAGE = 100;
+  while (stats.inserted < target && start < 5000) {
+    const u = `https://api.si.edu/openaccess/api/v1.0/search?api_key=${apiKey}&q=${encodeURIComponent('unit_code:HMSG AND online_media_type:Images')}&start=${start}&rows=${PAGE}`;
+    let j;
+    try {
+      const r = await fetchWithRetry(u);
+      if (!r.ok) { await sleep(2000); start += PAGE; continue; }
+      j = await r.json();
+    } catch (e) {
+      console.warn('  smithsonian fetch failed:', e?.code ?? e?.message);
+      await sleep(5000);
+      continue;
+    }
+    const rows = j?.response?.rows ?? [];
+    if (rows.length === 0) break;
+    for (const a of rows) {
+      if (stats.inserted >= target) break;
+      const media = a?.content?.descriptiveNonRepeating?.online_media?.media?.[0];
+      const img = media?.content;
+      if (!img) continue;
+      // Convert IDS service URL into a sized variant; the bare URL
+      // returns the master, which is fine but heavy. Append size hint.
+      const finalImg = img.includes('?') ? img : `${img}?max=1024`;
+      const thumb = img.includes('?') ? img : `${img}?max=400`;
+      const indexed = a?.content?.indexedStructured ?? {};
+      const freetext = a?.content?.freetext ?? {};
+      await upsertWork({
+        source: 'smithsonian',
+        source_id: String(a.id),
+        title: a.title || null,
+        artist: indexed.name?.[0] ?? freetext.name?.[0]?.content ?? null,
+        year_created: indexed.date?.[0] ?? freetext.date?.[0]?.content ?? null,
+        genre: (indexed.object_type ?? []).slice(0, 4),
+        school: indexed.topic?.[0] ?? null,
+        medium: freetext.physicalDescription?.[0]?.content ?? null,
+        storage_path: finalImg,
+        thumb_path: thumb,
+        license: media?.usage?.access ?? 'CC0',
+        source_url: a?.content?.descriptiveNonRepeating?.record_link ?? null,
+        description: freetext.notes?.[0]?.content ?? null,
+      });
+    }
+    tickLog('Smithsonian', start + PAGE, target);
+    start += PAGE;
+    await sleep(150); // rate-limit hygiene
+  }
+  console.log(`Smithsonian: ${stats.inserted} inserted, ${stats.skipped} skipped`);
+}
+
 // ── dispatch ─────────────────────────────────────────────────────────────
 const sources = {
   met: ingestMet,
   aic: ingestAic,
   cma: ingestCma,
   moma: ingestMoma,
+  smithsonian: ingestSmithsonian,
   rijks: ingestRijks,
   all: async (n) => {
     await ingestCma(n);

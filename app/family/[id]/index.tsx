@@ -179,6 +179,35 @@ export default function FamilyDetail() {
       >
         {tab === 'feed' && (
           <>
+            {/* Invite shortcut — same share flow that's also on the About tab,
+                but here on the Feed tab so it's discoverable without hunting. */}
+            {!!(family as any).invite_code && (
+              <TouchableOpacity
+                style={s.feedInviteBtn}
+                activeOpacity={0.85}
+                onPress={async () => {
+                  const code = (family as any).invite_code;
+                  const origin =
+                    typeof window !== 'undefined' && window.location?.origin
+                      ? window.location.origin
+                      : 'https://heretoo.social';
+                  const url = `${origin}/join/${code}`;
+                  const shareText = `Join the ${family.name} family on HereToo: ${url}`;
+                  const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
+                  if (nav?.share) {
+                    try { await nav.share({ title: family.name, text: shareText, url }); return; } catch {}
+                  }
+                  if (nav?.clipboard) {
+                    await nav.clipboard.writeText(url);
+                    showConfirm('Link copied', url, () => {}, 'OK');
+                  }
+                }}
+              >
+                <Ionicons name="person-add-outline" size={16} color={Colors.primary} />
+                <Text style={s.feedInviteText}>Invite others to {family.name}</Text>
+                <Ionicons name="share-outline" size={14} color={Colors.primary} />
+              </TouchableOpacity>
+            )}
             <FeedComposer familyId={id} />
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>
@@ -509,6 +538,15 @@ function makeStyles() { return StyleSheet.create({
   tabTextActive: { color: Colors.primary, fontWeight: '600' },
   scroll: { padding: Spacing.md, gap: 10, maxWidth: 600, alignSelf: 'center', width: '100%' },
   emptyFeed: { alignItems: 'center', paddingTop: 40, gap: 12 },
+  feedInviteBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primaryFaint,
+    alignSelf: 'flex-start',
+    marginTop: 6, marginBottom: 4,
+  },
+  feedInviteText: { fontSize: 13, fontWeight: '600', color: Colors.primary, flexShrink: 1 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
   primaryBtn: { paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999, backgroundColor: Colors.primary },
   primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },

@@ -57,6 +57,41 @@ export interface ChatMessage {
  * last-message preview. `status` is exposed so the UI can split into
  * "Open" vs "Requests" sections.
  */
+/**
+ * Total unread message count across all threads the viewer is in.
+ * Drives the badge on the Messages tab in the bottom nav. Kept light:
+ * a single SQL query, refreshed on a 30s stale interval (and on focus).
+ */
+export function useUnreadCount() {
+  const userId = useAuthStore((s) => s.user?.id);
+  return useQuery({
+    queryKey: ['unread-count', userId],
+    queryFn: async (): Promise<number> => {
+      if (!userId) return 0;
+      // Only count messages where:
+      //   - sender is NOT the viewer (own messages aren't "unread")
+      //   - read_at is null (not yet marked)
+      //   - thread is one the viewer participates in
+      const { data: threads } = await supabase
+        .from('message_threads')
+        .select('id')
+        .or(`participant_a.eq.${userId},participant_b.eq.${userId}`);
+      const ids = (threads ?? []).map((t: any) => t.id);
+      if (ids.length === 0) return 0;
+      const { count } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .in('thread_id', ids)
+        .neq('sender_id', userId)
+        .is('read_at', null);
+      return count ?? 0;
+    },
+    enabled: !!userId,
+    staleTime: 20_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useThreads() {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({

@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, Image,
+  View, Text, TextInput, StyleSheet, ScrollView, Image, Modal, Pressable,
   ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,8 +22,10 @@ import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { Lightbox } from '../../../components/shared/Lightbox';
 import {
   useCommentTree, useAddComment, useDeleteComment, useToggleCommentsDisabled,
+  useToggleCommentHeart,
   type CommentNode,
 } from '../../../hooks/useComments';
+import { useMyConnections } from '../../../hooks/useFamily';
 import { useAuthStore } from '../../../stores/authStore';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
@@ -39,10 +41,13 @@ export default function PostDetail() {
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const { data: connections } = useMyConnections();
   const { data: comments } = useCommentTree(postId);
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
   const toggleMute = useToggleCommentsDisabled();
+  const toggleCommentHeart = useToggleCommentHeart(postId);
 
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', postId],
@@ -206,6 +211,7 @@ export default function PostDetail() {
                   () => deleteComment.mutate(id), 'Delete', 'Cancel',
                 )
               }
+              onHeart={(id) => toggleCommentHeart.mutate(id)}
             />
           ))}
         </ScrollView>
@@ -229,6 +235,14 @@ export default function PostDetail() {
               </View>
             )}
             <View style={s.composerRow}>
+              <TouchableOpacity
+                style={s.composerTagBtn}
+                onPress={() => setTagPickerOpen(true)}
+                accessibilityLabel="Tag a connection"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Ionicons name="at-outline" size={18} color={Colors.textSecondary} />
+              </TouchableOpacity>
               <TextInput
                 style={s.composerInput}
                 value={draft}
@@ -261,6 +275,58 @@ export default function PostDetail() {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      {/* Tag picker — connections list, inserts @handle into the draft. */}
+      <Modal
+        visible={tagPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTagPickerOpen(false)}
+      >
+        <Pressable style={s.tagBackdrop} onPress={() => setTagPickerOpen(false)}>
+          <Pressable style={s.tagCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={s.tagTitle}>Tag a connection</Text>
+            <Text style={s.tagSub}>
+              {(connections?.length ?? 0) > 0
+                ? `${connections!.length} ${connections!.length === 1 ? 'person' : 'people'} in your network`
+                : "You're not connected to anyone yet."}
+            </Text>
+            <ScrollView style={{ maxHeight: 360 }}>
+              {(connections ?? []).map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={s.tagRow}
+                  onPress={() => {
+                    if (c.handle) {
+                      setDraft((b) => (b.length > 0 ? `${b} @${c.handle}` : `@${c.handle}`));
+                    }
+                    setTagPickerOpen(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={s.tagAvatar}>
+                    {c.avatar_path ? (
+                      <Image source={{ uri: mediaPathToUrl(c.avatar_path) }} style={s.tagAvatarImg} />
+                    ) : (
+                      <Text style={s.tagAvatarText}>
+                        {(c.display_name ?? c.handle ?? '?').slice(0, 1).toUpperCase()}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.tagName}>{c.display_name ?? c.handle ?? 'Unknown'}</Text>
+                    {c.handle && <Text style={s.tagHandle}>@{c.handle}</Text>}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={s.tagCancel} onPress={() => setTagPickerOpen(false)}>
+              <Text style={s.tagCancelText}>Close</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <Lightbox
         media={media}
         startIndex={lightboxIdx ?? 0}
@@ -272,17 +338,20 @@ export default function PostDetail() {
 }
 
 function CommentRow({
-  node, depth, userId, onReply, onDelete,
+  node, depth, userId, onReply, onDelete, onHeart,
 }: {
   node: CommentNode;
   depth: number;
   userId: string | null;
   onReply: (n: CommentNode) => void;
   onDelete: (id: string) => void;
+  onHeart: (id: string) => void;
 }) {
   const s = makeStyles();
   const isMine = node.author_id === userId;
   const indent = Math.min(depth, MAX_INDENT) * 16;
+  const hearted = !!node.viewer_hearted;
+  const heartCount = node.heart_count ?? 0;
 
   return (
     <View>
@@ -301,6 +370,23 @@ function CommentRow({
           </View>
           <Text style={s.commentBody}>{node.body}</Text>
           <View style={s.commentActions}>
+            <TouchableOpacity
+              onPress={() => onHeart(node.id)}
+              style={s.commentHeartBtn}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityLabel={hearted ? 'Unheart comment' : 'Heart comment'}
+            >
+              <Ionicons
+                name={hearted ? 'heart' : 'heart-outline'}
+                size={14}
+                color={hearted ? Colors.primary : Colors.textMuted}
+              />
+              {heartCount > 0 && (
+                <Text style={[s.commentHeartCount, hearted && { color: Colors.primary }]}>
+                  {heartCount}
+                </Text>
+              )}
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => onReply(node)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
               <Text style={s.commentActionLink}>Reply</Text>
             </TouchableOpacity>
@@ -320,6 +406,7 @@ function CommentRow({
           userId={userId}
           onReply={onReply}
           onDelete={onDelete}
+          onHeart={onHeart}
         />
       ))}
     </View>
@@ -385,8 +472,10 @@ function makeStyles() { return StyleSheet.create({
   commentAuthor: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
   commentTime: { fontSize: 11, color: Colors.textMuted },
   commentBody: { fontSize: 14, color: Colors.textPrimary, marginTop: 2, lineHeight: 19 },
-  commentActions: { flexDirection: 'row', gap: 14, marginTop: 4 },
+  commentActions: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
   commentActionLink: { fontSize: 12, fontWeight: '600', color: Colors.primary },
+  commentHeartBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  commentHeartCount: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
 
   composer: {
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
@@ -418,4 +507,37 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 8,
   },
   errorText: { fontSize: 12, color: Colors.error },
+
+  composerTagBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  tagBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center', padding: 20,
+  },
+  tagCard: {
+    backgroundColor: Colors.surface, borderRadius: 14,
+    width: '100%', maxWidth: 420, padding: 18, gap: 4,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  tagTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  tagSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  tagRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 8, paddingHorizontal: 4,
+  },
+  tagAvatar: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: Colors.primary,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  tagAvatarImg: { width: '100%', height: '100%' },
+  tagAvatarText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+  tagName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  tagHandle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  tagCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
+  tagCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }
