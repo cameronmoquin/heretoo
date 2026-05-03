@@ -119,13 +119,14 @@ export function useArtFeed() {
         return true;
       });
 
-      // Graceful empty: if the filter combo zeroes out our pool, fall
-      // back to the unfiltered set so banners / slots don't just go
-      // blank with no explanation. The UI can surface "your filter
-      // matched nothing" elsewhere if needed.
-      if (filtersActive && pool.length === 0) {
-        pool = fullPool;
-      }
+      // Honest empty: previously we silently fell back to the unfiltered
+      // pool whenever a filter combo matched zero rows. That made the
+      // filter look broken — the user picks "Contemporary + Sculpture"
+      // and sees the same Renaissance paintings as before, with no
+      // signal that anything happened. Now we return the genuinely
+      // empty pool. ArtSlot / ArtBanner already short-circuit on empty
+      // so the slots simply disappear; the prefs UI surfaces the
+      // "0 matches" hint via the totalCount returned alongside.
 
       // Shuffle so banner / inline / sidebar slots all get variety.
       for (let i = pool.length - 1; i > 0; i--) {
@@ -136,6 +137,30 @@ export function useArtFeed() {
     },
     staleTime: 1000 * 60 * 10,
   });
+}
+
+/**
+ * "Did the user's filter combo match anything?" Used by the prefs UI
+ * to flag combinations that produce 0 rows — distinct from "no filters
+ * active, just a sparse gallery."
+ *
+ * Returns: { active: bool, matched: number, total: number }.
+ *   - active=false: no filters set; matched=total
+ *   - active=true, matched=0: feedback the UI surfaces ("no art matches…")
+ *   - active=true, matched>0: ordinary state, no special UI
+ */
+export function useArtFilterStatus() {
+  const schools = useArtPrefs((s) => s.schools);
+  const eras = useArtPrefs((s) => s.eras);
+  const genres = useArtPrefs((s) => s.genres);
+  const mediums = useArtPrefs((s) => s.mediums);
+  const sources = useArtPrefs((s) => s.sources);
+  const { data, isLoading } = useArtFeed();
+
+  const active =
+    schools.length + eras.length + genres.length + mediums.length + sources.length > 0;
+  const matched = data?.length ?? 0;
+  return { active, matched, isLoading };
 }
 
 /** Distinct facet counts for the prefs UI. */

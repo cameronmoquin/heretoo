@@ -50,9 +50,14 @@ if (existsSync(indexPath)) {
   // updates between extended family). The algorithm penalizes division
   // and won't promote hate. Conflict-resolution help when families spat.
   const TITLE = 'HereToo — Family-first social media';
+  // Honest copy: state principles + invite-only gating (both true today),
+  // skip the algorithm + moderation claims (still under construction).
+  // Phrased as "built so..." rather than "the feed does..." so we're
+  // describing intent, not promising current behavior.
   const DESCRIPTION =
-    'Family-first social. You only get in by being invited into a family. '
-    + 'The feed rewards what unites — not what divides. Hate stays out by design.';
+    'Family-first social. Invite-only via family. Built so what unites '
+    + 'you matters more than what divides — and so the people who '
+    + 'matter most get a feed that earns their attention.';
   const OG_IMAGE = 'https://heretoo.social/og-cover.png';
   const URL = 'https://heretoo.social';
 

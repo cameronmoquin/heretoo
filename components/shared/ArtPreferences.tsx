@@ -25,7 +25,8 @@ import {
   type ArtEra,
   type FeedMix,
 } from '../../stores/artPrefsStore';
-import { useArtFacets } from '../../hooks/useArtFeed';
+import { useArtFacets, useArtFilterStatus } from '../../hooks/useArtFeed';
+import { useWallpaper, WALLPAPER_LIST, wallpaperToDataUri } from '../../stores/wallpaperStore';
 import { Colors } from '../../constants/colors';
 
 interface ArtPreferencesProps {
@@ -50,8 +51,17 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
   const setFeedMix = useArtPrefs((st) => st.setFeedMix);
   const clear = useArtPrefs((st) => st.clear);
   const { data: facets } = useArtFacets();
+  const filterStatus = useArtFilterStatus();
+  const wallpaperId = useWallpaper((st) => st.id);
+  const setWallpaper = useWallpaper((st) => st.setWallpaper);
+  const bold = useWallpaper((st) => st.bold);
+  const toggleBold = useWallpaper((st) => st.toggleBold);
 
   const total = schools.length + eras.length + genres.length + mediums.length + sources.length;
+  // Show a "no matches" hint only when filters are actually active and
+  // the resulting pool is empty (and we're not still loading).
+  const showNoMatch =
+    filterStatus.active && !filterStatus.isLoading && filterStatus.matched === 0;
 
   return (
     <View style={s.wrap}>
@@ -67,6 +77,52 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
 
       {expanded && (
         <ScrollView style={s.body} contentContainerStyle={{ gap: 12 }}>
+          {/* Wallpaper picker — sits above the gallery filter so users
+              find the decoration controls without digging. */}
+          <Section label="Wallpaper">
+            <View style={s.swatchGrid}>
+              {WALLPAPER_LIST.map((w) => {
+                const on = wallpaperId === w.id;
+                const bgImage = w.svg ? wallpaperToDataUri(w) : '';
+                return (
+                  <TouchableOpacity
+                    key={w.id}
+                    onPress={() => setWallpaper(w.id)}
+                    style={[s.swatch, on && s.swatchActive]}
+                    activeOpacity={0.75}
+                    accessibilityLabel={`${w.label} wallpaper`}
+                  >
+                    {/* Visual preview tile. Plain swatch is solid bg.
+                        Pattern swatches use the actual pattern at
+                        scaled-down tile size for an honest preview. */}
+                    <View style={[s.swatchTile, swatchTileStyle(w.swatchBg, bgImage, w.tileSize)]} />
+                    <Text style={[s.swatchLabel, on && s.swatchLabelActive]} numberOfLines={1}>
+                      {w.label}
+                    </Text>
+                    <Text style={s.swatchEra} numberOfLines={1}>{w.era}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {wallpaperId !== 'plain' && (
+              <TouchableOpacity
+                onPress={toggleBold}
+                style={s.boldRow}
+                activeOpacity={0.75}
+              >
+                <View style={[s.checkbox, bold && s.checkboxActive]}>
+                  {bold && <Ionicons name="checkmark" size={11} color="#FFF" />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.boldTitle}>Bold pattern</Text>
+                  <Text style={s.boldSub}>
+                    Render the wallpaper at full saturation. Default tones it down so it reads as decor.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </Section>
+
           {/* Feed Mix — what shows up between posts */}
           <Section label="Between posts">
             <View style={s.mixCol}>
@@ -207,6 +263,15 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
             </Section>
           )}
 
+          {showNoMatch && (
+            <View style={s.noMatchBox}>
+              <Ionicons name="information-circle-outline" size={14} color={Colors.textSecondary} />
+              <Text style={s.noMatchText}>
+                Nothing in the gallery matches all of these filters yet. Try removing one.
+              </Text>
+            </View>
+          )}
+
           {total > 0 && (
             <TouchableOpacity onPress={clear} style={s.clearBtn} activeOpacity={0.7}>
               <Ionicons name="refresh-outline" size={12} color={Colors.textMuted} />
@@ -231,6 +296,22 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 function capitalize(s: string) {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Web-only inline style helper for swatch tiles. RN's ViewStyle type
+ * doesn't include CSS background props, so we build the style as an
+ * `any` and let RN-on-web pick them up at runtime. Native gets the
+ * solid backgroundColor only — no image — which is the correct
+ * fallback until we ship a native wallpaper renderer.
+ */
+function swatchTileStyle(bg: string, bgImage: string, tileSize: number): any {
+  return {
+    backgroundColor: bg,
+    backgroundImage: bgImage,
+    backgroundRepeat: 'repeat',
+    backgroundSize: `${tileSize / 1.4}px ${tileSize / 1.4}px`,
+  };
 }
 
 function makeStyles() { return StyleSheet.create({
@@ -273,6 +354,43 @@ function makeStyles() { return StyleSheet.create({
     alignSelf: 'flex-start', paddingHorizontal: 4, paddingVertical: 4,
   },
   clearBtnText: { fontSize: 11, color: Colors.textMuted, fontWeight: '600' },
+
+  noMatchBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
+    backgroundColor: Colors.primaryFaint,
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8,
+    marginTop: 4,
+  },
+  noMatchText: { flex: 1, fontSize: 11, color: Colors.textSecondary, lineHeight: 15 },
+
+  // Wallpaper picker grid
+  swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  swatch: {
+    width: 88, gap: 4,
+    padding: 4, borderRadius: 8,
+    borderWidth: 1.5, borderColor: 'transparent',
+  },
+  swatchActive: { borderColor: Colors.primary },
+  swatchTile: {
+    width: '100%', height: 56, borderRadius: 6,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  swatchLabel: { fontSize: 11, fontWeight: '600', color: Colors.textPrimary },
+  swatchLabelActive: { color: Colors.primary },
+  swatchEra: { fontSize: 10, color: Colors.textMuted, marginTop: -2 },
+
+  boldRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    paddingHorizontal: 4, paddingVertical: 6, marginTop: 2,
+  },
+  checkbox: {
+    width: 16, height: 16, borderRadius: 4,
+    borderWidth: 1.5, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center', marginTop: 2,
+  },
+  checkboxActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  boldTitle: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+  boldSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1, lineHeight: 14 },
 
   mixCol: { gap: 4 },
   mixRow: {

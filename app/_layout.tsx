@@ -18,6 +18,7 @@ import { PWAInstallPrompt } from '../components/shared/PWAInstallPrompt';
 import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
+import { WallpaperBackground } from '../components/shared/WallpaperBackground';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -62,6 +63,9 @@ function RootLayoutInner() {
     // key={themeMode} forces a clean remount of the entire app when the user
     // toggles theme, so every component picks up new Colors values.
     <View key={themeMode} style={{ flex: 1, backgroundColor: Colors.background }}>
+      {/* Wallpaper sits behind everything — solid background first,
+          then the pattern overlay, then the actual app on top. */}
+      <WallpaperBackground />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
