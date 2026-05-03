@@ -333,7 +333,7 @@ function ActionRow({
 }
 
 function makeStyles() { return StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   scroll: { padding: Spacing.md, gap: 18, paddingBottom: 100, maxWidth: 520, alignSelf: 'center', width: '100%' },
 
   identity: { alignItems: 'center', gap: 6, paddingVertical: 12 },

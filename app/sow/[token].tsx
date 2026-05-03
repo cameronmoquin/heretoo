@@ -311,7 +311,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   card: {
     margin: Spacing.lg, padding: Spacing.lg,
     backgroundColor: Colors.surface,

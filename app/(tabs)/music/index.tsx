@@ -46,7 +46,7 @@ export default function MusicTab() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   scroll: {
     padding: Spacing.md,
     gap: Spacing.sm,

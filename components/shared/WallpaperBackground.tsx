@@ -43,9 +43,14 @@ export function WallpaperBackground({ bold: boldOverride }: Props = {}) {
   if (Platform.OS !== 'web') return null;
 
   const bgImage = wallpaperToDataUri(def);
-  // Default: muted decor. Bold: full strength.
-  const opacity = bold ? 0.95 : 0.35;
-  const filter = bold ? 'none' : 'grayscale(20%) contrast(95%)';
+  // Default visibility tuned so the pattern reads as decor without
+  // fighting the cards. Earlier 0.35 + 20% grayscale was nearly
+  // invisible, especially on mobile where cards cover most of the
+  // viewport — the user pointed out the blank space wasn't being
+  // used. Lifted to 0.55 + 10% grayscale: still subordinate, but
+  // genuinely present in the canvas margins.
+  const opacity = bold ? 0.95 : 0.55;
+  const filter = bold ? 'none' : 'grayscale(10%) contrast(96%)';
 
   // RN-on-web accepts CSS-only properties (backgroundImage, filter)
   // that aren't in ViewStyle's TS type. Cast through `any` rather

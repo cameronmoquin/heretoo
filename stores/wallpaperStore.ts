@@ -18,6 +18,7 @@
 
 import { create } from 'zustand';
 import { Platform } from 'react-native';
+import { supabase } from '../lib/supabase';
 
 export type WallpaperId =
   | 'plain'
@@ -183,6 +184,40 @@ function persist(state: Persisted) {
   } catch {}
 }
 
+/**
+ * Mirror the wallpaper choice to profiles.style_prefs so OTHER viewers
+ * see this user's wallpaper preference on /u/<handle>. Best-effort
+ * write — RLS lets only the owner update their row, so unauthenticated
+ * sessions silently no-op. Errors are swallowed; the localStorage copy
+ * is always the source of truth for the OWN device.
+ */
+async function syncToProfile(state: Persisted) {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const userId = auth?.user?.id;
+    if (!userId) return;
+    // Patch only the wallpaper keys so we don't clobber other style
+    // prefs (radio station, art filter) that other stores write.
+    const { data: cur } = await supabase
+      .from('profiles')
+      .select('style_prefs')
+      .eq('id', userId)
+      .maybeSingle();
+    const next = {
+      ...((cur as any)?.style_prefs ?? {}),
+      wallpaper_id: state.id,
+      wallpaper_bold: state.bold,
+    };
+    await supabase
+      .from('profiles')
+      .update({ style_prefs: next })
+      .eq('id', userId);
+  } catch {
+    // Network blip / RLS rejection — the localStorage value still
+    // works for the user's own session.
+  }
+}
+
 interface WallpaperState extends Persisted {
   setWallpaper: (id: WallpaperId) => void;
   toggleBold: () => void;
@@ -191,13 +226,16 @@ interface WallpaperState extends Persisted {
 export const useWallpaper = create<WallpaperState>((set, get) => ({
   ...loadInitial(),
   setWallpaper: (id) => {
+    const state = { id, bold: get().bold };
     set({ id });
-    persist({ id, bold: get().bold });
+    persist(state);
+    void syncToProfile(state);
   },
   toggleBold: () => {
-    const next = !get().bold;
-    set({ bold: next });
-    persist({ id: get().id, bold: next });
+    const state = { id: get().id, bold: !get().bold };
+    set({ bold: state.bold });
+    persist(state);
+    void syncToProfile(state);
   },
 }));
 

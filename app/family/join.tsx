@@ -62,7 +62,7 @@ export default function JoinFamily() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   scroll: { padding: Spacing.lg, gap: 6, maxWidth: 480, alignSelf: 'center', width: '100%' },
   label: {
     fontSize: 12, fontWeight: '600', color: Colors.textSecondary,

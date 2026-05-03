@@ -26,6 +26,7 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { useOpenThread } from '../../hooks/useChat';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { PostCard } from '../../components/feed/PostCard';
+import { WALLPAPERS, wallpaperToDataUri, type WallpaperId } from '../../stores/wallpaperStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
@@ -43,7 +44,7 @@ export default function UserProfile() {
       if (!cleanHandle) return null;
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, avatar_path, bio, created_at')
+        .select('id, handle, display_name, avatar_path, bio, created_at, style_prefs')
         .eq('handle', cleanHandle)
         .maybeSingle();
       if (error) throw error;
@@ -196,6 +197,43 @@ export default function UserProfile() {
           </View>
         )}
 
+        {/* Their style — wallpaper preference. Reads from
+            profile.style_prefs.wallpaper_id (synced via wallpaperStore
+            on the user's own device). Renders a small preview tile +
+            era label so a visitor gets a sense of "their room" without
+            the visitor's own wallpaper changing. */}
+        {(() => {
+          const wid = (profile as any)?.style_prefs?.wallpaper_id as
+            | WallpaperId
+            | undefined;
+          if (!wid || wid === 'plain') return null;
+          const def = WALLPAPERS[wid];
+          if (!def) return null;
+          const bgImage = wallpaperToDataUri(def);
+          return (
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>Their style</Text>
+              <View style={s.styleRow}>
+                <View
+                  style={[
+                    s.stylePreview,
+                    // RN-on-web inline style for the data-URI bg.
+                    { backgroundColor: def.swatchBg, ...({
+                      backgroundImage: bgImage,
+                      backgroundRepeat: 'repeat',
+                      backgroundSize: `${def.tileSize}px ${def.tileSize}px`,
+                    } as any) },
+                  ]}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.styleLabel}>{def.label}</Text>
+                  <Text style={s.styleEra}>{def.era} wallpaper</Text>
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+
         {/* Posts */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Recent posts</Text>
@@ -211,7 +249,7 @@ export default function UserProfile() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.md, paddingVertical: 10,
@@ -260,6 +298,18 @@ function makeStyles() { return StyleSheet.create({
   familyName: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
 
   emptyPosts: { fontSize: 13, color: Colors.textMuted, paddingVertical: 8 },
+
+  // "Their style" wallpaper preview row
+  styleRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 6,
+  },
+  stylePreview: {
+    width: 64, height: 64, borderRadius: Radius.md,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  styleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  styleEra: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
 
   notFound: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 10, marginTop: 60 },
   notFoundTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: 8 },

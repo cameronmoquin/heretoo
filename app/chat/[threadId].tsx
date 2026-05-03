@@ -247,7 +247,7 @@ function relTime(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   empty: { padding: 40, textAlign: 'center', color: Colors.textMuted },
 
   header: {

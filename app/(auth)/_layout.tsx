@@ -25,7 +25,7 @@ export default function AuthLayout() {
 function makeStyles() { return StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
   rootDesktop: {
     backgroundColor: Colors.surfaceLight,

@@ -188,7 +188,7 @@ export default function ProfileSetupScreen() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   scroll: { padding: Spacing.lg, gap: 6, maxWidth: 480, alignSelf: 'center', width: '100%' },
   title: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary, marginTop: 12 },
   sub: { fontSize: 14, color: Colors.textSecondary, marginTop: 4, marginBottom: 12 },

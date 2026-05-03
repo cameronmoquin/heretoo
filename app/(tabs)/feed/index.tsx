@@ -116,7 +116,11 @@ export default function FeedScreen() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
+  // Transparent so the root-layout wallpaper bleeds through into the
+  // edge / margin space the feed column doesn't fill on wide viewports.
+  // The actual reading-surface contrast comes from each PostCard's
+  // own backgroundColor, not the page wrapper.
+  safe: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 8,
