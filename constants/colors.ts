@@ -22,18 +22,19 @@ const dark = {
   primaryLight: '#8AA1FF',
   primaryFaint: 'rgba(91, 124, 255, 0.10)',
 
-  // Surfaces — bumped up two stops from the previous "warm graphite"
-  // so the app reads as polished SaaS-dark (Linear / Notion territory)
-  // rather than moody-dark. Each layer has clear contrast: cards
-  // stand out on background, raised cards stand out on cards.
-  background: '#22222D',     // was #1A1A24 — main canvas
-  surface: '#2C2C39',        // was #23232F — primary cards
-  surfaceLight: '#363645',   // was #2C2C3A — raised / hovered
-  border: '#3F3F4F',         // was #3A3A4A
-  borderLight: '#34344A',    // was #2E2E3D
-  textPrimary: '#F1F1F6',    // was #EDEDF3 — slightly brighter
-  textSecondary: '#A8A8BD',  // was #9999AE — slightly lighter
-  textMuted: '#787890',      // was #6A6A80 — slightly lighter
+  // Surfaces — significantly lifted into true graphite so dark mode
+  // reads as polished SaaS (think Linear / GitHub Dark / Vercel) rather
+  // than moody-dark. The previous palette stayed close to black; this
+  // one centers on a slate/charcoal where text + media actually sit on
+  // a discernible surface instead of disappearing into the void.
+  background: '#2A2A36',     // main canvas — true graphite, not near-black
+  surface: '#34343F',        // primary cards — clear lift off background
+  surfaceLight: '#3F3F4D',   // raised / hovered surfaces
+  border: '#4A4A5A',         // visible but soft hairline
+  borderLight: '#3D3D4D',
+  textPrimary: '#F4F4F8',    // crisp white-ish, not warm
+  textSecondary: '#B4B4C8',  // hierarchy still clear on the lifted bg
+  textMuted: '#84849A',
 
   // Accents (kept consistent across themes)
   agree: '#00FF88',
@@ -118,7 +119,7 @@ const light = {
   info: '#3D8AB8',
 };
 
-let _mode: ThemeMode = 'dark';
+let _mode: ThemeMode = 'light';
 
 export function setColorMode(mode: ThemeMode) {
   _mode = mode;
@@ -128,4 +129,4 @@ export function getColorMode(): ThemeMode { return _mode; }
 
 // Mutable export — root layout's `key={themeMode}` forces re-render so
 // every component re-reads these values when the theme changes.
-export const Colors = { ...dark } as typeof dark;
+export const Colors = { ...light } as typeof dark;

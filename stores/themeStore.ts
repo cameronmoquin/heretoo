@@ -9,13 +9,11 @@ import type { ThemeMode } from '../constants/colors';
 const STORAGE_KEY = 'heretoo:theme';
 
 function loadInitial(): ThemeMode {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    try {
-      const v = window.localStorage.getItem(STORAGE_KEY);
-      if (v === 'light' || v === 'dark') return v;
-    } catch {}
-  }
-  return 'dark';
+  // Dark mode is disabled for now while we dial in the polish pass —
+  // always start in light. We deliberately ignore any persisted value
+  // (including 'dark' from earlier sessions) so existing users flip
+  // over to light on their next page load.
+  return 'light';
 }
 
 function persist(mode: ThemeMode) {

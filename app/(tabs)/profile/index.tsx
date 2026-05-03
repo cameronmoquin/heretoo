@@ -25,7 +25,6 @@ import {
   useMyStatures, useUpdateMyStature,
   STATURE_LABELS, type FamilyStature,
 } from '../../../hooks/useFamily';
-import { useThemeStore } from '../../../stores/themeStore';
 import { showConfirm, showAlert } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { ArtPreferences } from '../../../components/shared/ArtPreferences';
@@ -40,8 +39,6 @@ export default function OwnProfileScreen() {
   const { profile, signOut } = useAuth();
   const { data: families } = useMyFamilies();
   const { data: stats } = useMyNetworkStats();
-  const themeMode = useThemeStore((st) => st.mode);
-  const toggleTheme = useThemeStore((st) => st.toggle);
   const { data: statures } = useMyStatures();
   const updateStature = useUpdateMyStature();
   const [picker, setPicker] = useState<{ familyId: string; familyName: string } | null>(null);
@@ -192,11 +189,8 @@ export default function OwnProfileScreen() {
             sub="Sow a seed for someone outside your network"
             onPress={() => setPlantOpen(true)}
           />
-          <ActionRow
-            icon={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'}
-            label={themeMode === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            onPress={toggleTheme}
-          />
+          {/* Dark theme toggle removed for now — light-only while we
+              dial in the polish pass. */}
         </View>
 
         {/* Gallery filter + classical music stream */}
