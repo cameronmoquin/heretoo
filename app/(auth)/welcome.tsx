@@ -196,9 +196,12 @@ export default function WelcomeScreen() {
             <View style={s.section}>
               <Text style={s.headline}>Invite only</Text>
               <Text style={s.sub}>Someone you know has a code.</Text>
+              {/* Persistent label — the placeholder alone leaves the box
+                  feeling unlabeled the moment a user starts typing. */}
+              <Text style={s.fieldLabel}>Invite code</Text>
               <TextInput
                 style={s.codeInput}
-                placeholder="ENTER CODE"
+                placeholder="ABC12345"
                 placeholderTextColor={Colors.textMuted}
                 value={inviteCode}
                 onChangeText={(t) => setInviteCode(t.toUpperCase())}
@@ -207,7 +210,11 @@ export default function WelcomeScreen() {
                 autoCorrect={false}
                 onSubmitEditing={validateCode}
                 returnKeyType="go"
+                accessibilityLabel="Invite code"
               />
+              <Text style={s.fieldHint}>
+                Ask the family member who invited you for the 8-character code.
+              </Text>
               <Button title="Enter" onPress={validateCode} variant="primary" size="lg" style={s.btn} />
               <TouchableOpacity onPress={() => setMode('choice')}>
                 <Text style={s.backLink}>Back</Text>
@@ -266,7 +273,16 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: '#15151F', borderWidth: 1, borderColor: '#2A2A3A', borderRadius: Radius.md,
     paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, fontWeight: '700',
     color: '#FFFFFF', textAlign: 'center', letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
+  // Persistent input label — small caps eyebrow above the field. Stays
+  // visible after the user starts typing, unlike a placeholder.
+  fieldLabel: {
+    fontSize: 11, fontWeight: '700', color: '#A8A8BD',
+    textTransform: 'uppercase', letterSpacing: 1.4,
+    marginTop: 4, marginBottom: 2,
+  },
+  fieldHint: { fontSize: 12, color: '#888', lineHeight: 17, marginTop: -2 },
   input: {
     backgroundColor: '#15151F', borderWidth: 1, borderColor: '#2A2A3A', borderRadius: Radius.md,
     paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#FFFFFF',
