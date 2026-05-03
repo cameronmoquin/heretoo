@@ -241,7 +241,18 @@ export default function FamilyDetail() {
                 </Text>
               </View>
             ) : (
-              updates.map((p: any) => <UpdateCard key={p.id} post={p} />)
+              // Use the same PostCard as the main feed so updates get
+              // hearts, comments, boost, and read-aloud — aligning the
+              // design + functions across all feeds. The legacy stripped-
+              // down UpdateCard component is kept below in case we want
+              // a more compact "digest" view later.
+              updates.map((p: any) => (
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  onHeart={(id) => toggleHeart.mutate(id)}
+                />
+              ))
             )}
           </>
         )}
