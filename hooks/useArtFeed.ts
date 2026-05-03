@@ -36,11 +36,15 @@ export interface ArtWork {
   medium?: string | null;
 }
 
-// Reservoir is small enough (~300 rows total) that we just pull the whole
-// thing in one go. That way the prefs filter applies AFTER fetch and we
-// never hit the "0 matches because the SQL limit cut the relevant rows"
-// trap. Bumping limit so we don't accidentally cap as the gallery grows.
-const POOL_SIZE = 1000;
+// Reservoir is now bigger (Smithsonian + Rijks + Met + AIC + CMA = a few
+// thousand rows). We pull a generous pool and filter client-side because
+// year_created / school / medium are all messy free-form text that JS
+// normalizes more reliably than SQL. The pool size matters: if we cap
+// at 1000 and Supabase's default order happens to put all Met antique
+// rows first, picking "Contemporary" can match zero rows out of the
+// fetched 1000 even when the table has thousands of contemporary works.
+// Bumped to 5000 so the user's filter actually sees the whole gallery.
+const POOL_SIZE = 5000;
 
 export function useArtFeed() {
   // Read prefs as primitives so the query key changes when they do.

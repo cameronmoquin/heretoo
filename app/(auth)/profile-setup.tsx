@@ -91,7 +91,7 @@ export default function ProfileSetupScreen() {
             style={s.input}
             value={handle}
             onChangeText={(t) => setHandle(t.toLowerCase())}
-            placeholder="cameron"
+            placeholder="rosalind"
             placeholderTextColor={Colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -104,7 +104,7 @@ export default function ProfileSetupScreen() {
             style={s.input}
             value={displayName}
             onChangeText={setDisplayName}
-            placeholder="Cameron Moquin"
+            placeholder="Beatrice Messina"
             placeholderTextColor={Colors.textMuted}
             maxLength={80}
           />

@@ -88,7 +88,7 @@ export function PlantTreeModal({ visible, onClose }: Props) {
                   style={[s.input, s.textarea]}
                   value={message}
                   onChangeText={setMessage}
-                  placeholder="Hey Tim — start your family circle here so we can stay close."
+                  placeholder="Hey Mercutio — start your family circle here so we can stay close."
                   placeholderTextColor={Colors.textMuted}
                   multiline
                   maxLength={300}

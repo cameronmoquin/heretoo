@@ -46,7 +46,7 @@ export default function NewFamily() {
             style={s.input}
             value={name}
             onChangeText={setName}
-            placeholder="The Moquins"
+            placeholder="The Capulets"
             placeholderTextColor={Colors.textMuted}
             returnKeyType="next"
             autoFocus
