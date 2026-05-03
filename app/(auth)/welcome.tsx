@@ -201,7 +201,7 @@ export default function WelcomeScreen() {
               <Text style={s.fieldLabel}>Invite code</Text>
               <TextInput
                 style={s.codeInput}
-                placeholder="ABC12345"
+                placeholder="Invite code"
                 placeholderTextColor={Colors.textMuted}
                 value={inviteCode}
                 onChangeText={(t) => setInviteCode(t.toUpperCase())}
