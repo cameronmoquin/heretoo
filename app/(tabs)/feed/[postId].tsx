@@ -158,6 +158,9 @@ export default function PostDetail() {
           </View>
 
           {!!post.body && <Text style={s.body}>{post.body}</Text>}
+          {!!post.slugline && (
+            <Text style={s.slugline} numberOfLines={2}>{post.slugline}</Text>
+          )}
 
           {media.map((m: any, i: number) => (
             m.media_type === 'video' ? (
@@ -467,6 +470,12 @@ function makeStyles() { return StyleSheet.create({
   author: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
   time: { fontSize: 12, color: Colors.textMuted },
   body: { fontSize: 16, color: Colors.textPrimary, lineHeight: 22 },
+  // Optional attribution line — small italic right-aligned, used by
+  // Shakespeare bot posts and any post with a slugline.
+  slugline: {
+    fontSize: 12, fontStyle: 'italic', color: Colors.textMuted,
+    textAlign: 'right', marginTop: 2, letterSpacing: 0.1,
+  },
   image: {
     width: '100%', aspectRatio: 4 / 3,
     borderRadius: Radius.md, backgroundColor: Colors.surfaceLight,

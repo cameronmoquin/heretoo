@@ -560,8 +560,9 @@ export function useMyStatures() {
 
 export function useFamilyFeed(familyId: string | null) {
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   const query = useQuery({
-    queryKey: ['family-feed', familyId],
+    queryKey: ['family-feed', familyId, userId],
     queryFn: async () => {
       if (!familyId) return [];
       const { data, error } = await supabase
@@ -574,7 +575,24 @@ export function useFamilyFeed(familyId: string | null) {
         .eq('kind', 'post')               // updates have their own tab
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data ?? [];
+
+      // Enrich with viewer_hearted — same pattern as useFeed. Without
+      // this, a heart click "blinks" because the optimistic flip on
+      // viewer_hearted is wiped by the refetch (which returns posts
+      // with no viewer_hearted field at all).
+      let posts = (data ?? []) as any[];
+      if (userId && posts.length > 0) {
+        const ids = posts.map((p) => p.id);
+        const { data: reactions } = await supabase
+          .from('post_reactions')
+          .select('post_id')
+          .eq('profile_id', userId)
+          .eq('reaction_type', 'heart')
+          .in('post_id', ids);
+        const set = new Set((reactions ?? []).map((r: any) => r.post_id));
+        posts = posts.map((p) => ({ ...p, viewer_hearted: set.has(p.id) }));
+      }
+      return posts;
     },
     enabled: !!familyId,
   });
@@ -605,8 +623,9 @@ export function useFamilyFeed(familyId: string | null) {
  * dedicated, easy-to-find lane instead of buried in daily chatter.
  */
 export function useFamilyUpdates(familyId: string | null) {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: ['family-updates', familyId],
+    queryKey: ['family-updates', familyId, userId],
     queryFn: async () => {
       if (!familyId) return [];
       const { data, error } = await supabase
@@ -619,7 +638,21 @@ export function useFamilyUpdates(familyId: string | null) {
         .eq('kind', 'update')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data ?? [];
+
+      // Same viewer_hearted enrichment as useFamilyFeed.
+      let posts = (data ?? []) as any[];
+      if (userId && posts.length > 0) {
+        const ids = posts.map((p) => p.id);
+        const { data: reactions } = await supabase
+          .from('post_reactions')
+          .select('post_id')
+          .eq('profile_id', userId)
+          .eq('reaction_type', 'heart')
+          .in('post_id', ids);
+        const set = new Set((reactions ?? []).map((r: any) => r.post_id));
+        posts = posts.map((p) => ({ ...p, viewer_hearted: set.has(p.id) }));
+      }
+      return posts;
     },
     enabled: !!familyId,
   });

@@ -92,6 +92,14 @@ export function PostCard({ post, onHeart }: PostCardProps) {
 
       {!!post.body && <Text style={s.body}>{post.body}</Text>}
 
+      {/* Optional attribution slug — used by Shakespeare bot posts
+          ("— Hamlet · Hamlet · III.i") and any future post that
+          wants a citation line. Right-aligned, italic, muted: visually
+          subordinate to the line itself, like a stage direction. */}
+      {!!post.slugline && (
+        <Text style={s.slugline} numberOfLines={2}>{post.slugline}</Text>
+      )}
+
       {media.length > 0 && (
         <View style={s.mediaWrap}>
           {media[0].media_type === 'video' ? (
@@ -155,15 +163,20 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         </TouchableOpacity>
 
         {/* Tapping the comment bubble jumps to the post detail page
-            with ?focus=comment, which auto-focuses the composer input
-            on arrival. Calls e.stopPropagation so the parent Pressable
-            (which navigates without focus) doesn't also fire. */}
+            with focus=comment, which auto-focuses the composer input
+            on arrival. e.stopPropagation so the parent Pressable
+            (which navigates without focus) doesn't also fire.
+            Object form for params is required for Expo Router to
+            handle the (tabs) route group + query string correctly. */}
         <TouchableOpacity
           style={s.actionBtn}
           activeOpacity={0.7}
           onPress={(e) => {
             e.stopPropagation();
-            router.push(`/(tabs)/feed/${post.id}?focus=comment` as any);
+            router.push({
+              pathname: '/(tabs)/feed/[postId]' as any,
+              params: { postId: post.id, focus: 'comment' },
+            });
           }}
           accessibilityLabel="Add a comment"
         >
@@ -387,6 +400,17 @@ function makeStyles() { return StyleSheet.create({
   body: {
     fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
     color: Colors.textPrimary,
+  },
+  // Bottom-right attribution. Italic + small + muted so it reads as
+  // a citation, not a competing voice. The Em-dash prefix is part of
+  // the stored string so editors can stylize the slug as needed.
+  slugline: {
+    fontSize: 11.5,
+    fontStyle: 'italic',
+    color: Colors.textMuted,
+    textAlign: 'right',
+    marginTop: -2,
+    letterSpacing: 0.1,
   },
   mediaWrap: {
     position: 'relative', marginTop: Spacing.xs,

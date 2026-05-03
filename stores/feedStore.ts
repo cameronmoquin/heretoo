@@ -20,6 +20,12 @@ export interface Post {
   id: string;
   author_id: string;
   body: string | null;
+  /**
+   * Optional small attribution line — shown bottom-right on the
+   * PostCard. Used by Shakespeare bot posts ("— Hamlet · Hamlet · III.i")
+   * and could be used for any post that wants a citation/credit.
+   */
+  slugline: string | null;
   visibility: 'public' | 'connections' | 'family' | 'private';
   family_id: string | null;
   heart_count: number;
