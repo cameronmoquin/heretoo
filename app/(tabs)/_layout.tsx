@@ -19,7 +19,7 @@ import { HereTooLogo } from '../../components/shared/Logo';
 import { SidebarArt } from '../../components/shared/SidebarArt';
 import { ArtPreferences } from '../../components/shared/ArtPreferences';
 import { WCRBPlayer } from '../../components/shared/WCRBPlayer';
-import { useWCRB } from '../../stores/wcrbStore';
+import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { useUnreadCount } from '../../hooks/useChat';
 
 /**
@@ -207,9 +207,10 @@ export default function TabLayout() {
 function CustomTabBar() {
   const styles = makeStyles();
   const pathname = usePathname();
-  const wcrbPlaying = useWCRB((s) => s.playing);
-  const wcrbLoading = useWCRB((s) => s.loading);
-  const wcrbToggle = useWCRB((s) => s.toggle);
+  const radioPlaying = useRadio((s) => s.playing);
+  const radioLoading = useRadio((s) => s.loading);
+  const radioToggle = useRadio((s) => s.toggle);
+  const station = useActiveStation();
   const { data: unread } = useUnreadCount();
 
   const onFeed = pathname.startsWith('/feed') || pathname === '/' || pathname === '/(tabs)/feed';
@@ -231,27 +232,37 @@ function CustomTabBar() {
         <Text style={[styles.barLabel, onFeed && { color: Colors.primary, fontWeight: '700' }]}>Feed</Text>
       </TouchableOpacity>
 
+      {/* Radio toggle — plays/pauses the user's chosen station from
+          the radioStore singleton. Station label updates as they pick
+          different stations on /music. Long-press takes them to the
+          station picker for variety. */}
       <TouchableOpacity
         style={styles.barSlot}
-        onPress={() => { wcrbToggle().catch(() => {}); }}
+        onPress={() => { radioToggle().catch(() => {}); }}
+        onLongPress={() => router.push('/(tabs)/music' as any)}
         activeOpacity={0.7}
-        accessibilityLabel={wcrbPlaying ? 'Stop WCRB' : 'Play WCRB'}
+        accessibilityLabel={
+          radioPlaying ? `Pause ${station.name}` : `Play ${station.name}`
+        }
       >
         <View style={[
           styles.wcrbIconWrap,
-          wcrbPlaying && { backgroundColor: Colors.primaryFaint },
+          radioPlaying && { backgroundColor: Colors.primaryFaint },
         ]}>
           <Ionicons
-            name={wcrbPlaying ? 'pause' : 'musical-notes'}
+            name={radioPlaying ? 'pause' : 'musical-notes'}
             size={18}
-            color={wcrbPlaying ? Colors.primary : Colors.textSecondary}
+            color={radioPlaying ? Colors.primary : Colors.textSecondary}
           />
         </View>
-        <Text style={[
-          styles.barLabel,
-          wcrbPlaying && { color: Colors.primary, fontWeight: '700' },
-        ]}>
-          {wcrbLoading ? '…' : 'WCRB'}
+        <Text
+          style={[
+            styles.barLabel,
+            radioPlaying && { color: Colors.primary, fontWeight: '700' },
+          ]}
+          numberOfLines={1}
+        >
+          {radioLoading ? '…' : station.name}
         </Text>
       </TouchableOpacity>
 

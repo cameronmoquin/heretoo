@@ -15,6 +15,7 @@
 
 import { create } from 'zustand';
 import { Platform } from 'react-native';
+import { supabase } from '../lib/supabase';
 
 export type ArtEra =
   | 'antiquity'    // < 500 CE
@@ -107,6 +108,41 @@ function persist(state: Persisted) {
   } catch {}
 }
 
+/**
+ * Mirror art-filter prefs to profiles.style_prefs.art_filter so OTHER
+ * viewers see this user's gallery taste on /u/<handle>. Mirrors the
+ * pattern in wallpaperStore — best-effort write, RLS-gated to the
+ * user's own row, swallows errors so localStorage stays the source
+ * of truth on the user's own device.
+ */
+async function syncToProfile(state: Persisted) {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const userId = auth?.user?.id;
+    if (!userId) return;
+    const { data: cur } = await supabase
+      .from('profiles')
+      .select('style_prefs')
+      .eq('id', userId)
+      .maybeSingle();
+    const next = {
+      ...((cur as any)?.style_prefs ?? {}),
+      art_filter: {
+        schools: state.schools,
+        eras: state.eras,
+        genres: state.genres,
+        mediums: state.mediums,
+        sources: state.sources,
+        feedMix: state.feedMix,
+      },
+    };
+    await supabase
+      .from('profiles')
+      .update({ style_prefs: next })
+      .eq('id', userId);
+  } catch {}
+}
+
 interface ArtPrefsState extends Persisted {
   toggleSchool: (s: string) => void;
   toggleEra: (e: ArtEra) => void;
@@ -122,6 +158,14 @@ function snapshot(get: () => ArtPrefsState): Persisted {
   return { schools: st.schools, eras: st.eras, genres: st.genres, mediums: st.mediums, sources: st.sources, feedMix: st.feedMix };
 }
 
+/** Combined persist (localStorage) + sync (profile.style_prefs).
+ *  Every prefs mutation calls this so cross-user visibility stays
+ *  fresh without each toggle remembering to do both. */
+function persistAndSync(state: Persisted) {
+  persist(state);
+  void syncToProfile(state);
+}
+
 export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
   ...loadInitial(),
   toggleSchool: (s) => {
@@ -129,39 +173,39 @@ export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
       ? get().schools.filter((x) => x !== s)
       : [...get().schools, s];
     set({ schools: next });
-    persist({ ...snapshot(get) });
+    persistAndSync({ ...snapshot(get) });
   },
   toggleEra: (e) => {
     const next = get().eras.includes(e)
       ? get().eras.filter((x) => x !== e)
       : [...get().eras, e];
     set({ eras: next });
-    persist({ ...snapshot(get) });
+    persistAndSync({ ...snapshot(get) });
   },
   toggleGenre: (g) => {
     const next = get().genres.includes(g)
       ? get().genres.filter((x) => x !== g)
       : [...get().genres, g];
     set({ genres: next });
-    persist({ ...snapshot(get) });
+    persistAndSync({ ...snapshot(get) });
   },
   toggleMedium: (m) => {
     const next = get().mediums.includes(m)
       ? get().mediums.filter((x) => x !== m)
       : [...get().mediums, m];
     set({ mediums: next });
-    persist({ ...snapshot(get) });
+    persistAndSync({ ...snapshot(get) });
   },
   toggleSource: (s) => {
     const next = get().sources.includes(s)
       ? get().sources.filter((x) => x !== s)
       : [...get().sources, s];
     set({ sources: next });
-    persist({ ...snapshot(get) });
+    persistAndSync({ ...snapshot(get) });
   },
   setFeedMix: (m) => {
     set({ feedMix: m });
-    persist({ ...snapshot(get) });
+    persistAndSync({ ...snapshot(get) });
   },
   clear: () => {
     const cur = get();
@@ -169,7 +213,7 @@ export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
       schools: [], eras: [], genres: [], mediums: [], sources: [], feedMix: cur.feedMix,
     };
     set(next);
-    persist(next);
+    persistAndSync(next);
   },
 }));
 
