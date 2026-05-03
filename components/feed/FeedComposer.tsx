@@ -38,6 +38,7 @@ import { OneWayCapture } from '../upload/OneWayCapture';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { MicInputButton } from '../shared/MicInputButton';
 
 interface FeedComposerProps {
   /**
@@ -291,6 +292,12 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           icon="at-outline"
           label="Tag"
           onPress={() => setTagPickerOpen(true)}
+        />
+        {/* Voice-to-text — speak instead of type. Appends transcribed
+            text to the existing body so users can dictate then tweak. */}
+        <MicInputButton
+          size={16}
+          onText={(t) => setBody((b) => (b ? `${b} ${t}`.trim() : t))}
         />
         {hasMedia && (
           <TouchableOpacity onPress={() => upload.reset()} style={s.clearBtn}>

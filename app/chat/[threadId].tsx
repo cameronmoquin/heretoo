@@ -34,6 +34,7 @@ import { mediaPathToUrl } from '../../hooks/useUpload';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { MicInputButton } from '../../components/shared/MicInputButton';
 
 export default function ChatThread() {
   const s = makeStyles();
@@ -217,12 +218,16 @@ export default function ChatThread() {
               blurOnSubmit
               onSubmitEditing={submit}
             />
+            <MicInputButton
+              size={20}
+              onText={(t) => setDraft((d) => (d ? `${d} ${t}`.trim() : t))}
+            />
             <TouchableOpacity
               style={[s.composerSend, !draft.trim() && { opacity: 0.4 }]}
               onPress={submit}
               disabled={!draft.trim() || send.isPending}
             >
-              <Ionicons name="send" size={18} color="#000" />
+              <Ionicons name="send" size={18} color="#FFF" />
             </TouchableOpacity>
           </View>
         )}

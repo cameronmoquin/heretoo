@@ -18,6 +18,7 @@ import { useLatestComments } from '../../hooks/useComments';
 import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
 import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
+import { useTTS } from '../../stores/ttsStore';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Shadow } from '../../constants/design';
@@ -157,6 +158,10 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             <Text style={s.actionCount}>{post.boost_count}</Text>
           )}
         </TouchableOpacity>
+
+        {/* Read-aloud — only for genuinely long posts (>200 chars).
+            Below that, reading is faster than the audio loads. */}
+        <ReadAloudButton postId={post.id} body={post.body ?? ''} />
       </View>
 
       {/* Inline comment preview — latest 2 top-level comments. */}
@@ -234,6 +239,45 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         </Pressable>
       </Modal>
     </Pressable>
+  );
+}
+
+/**
+ * Read-aloud control. Shown only for posts whose body is >200 chars
+ * (below that, reading the text yourself is faster than waiting for
+ * the audio to load). When playing, the icon flips to a stop square
+ * so a second tap stops the clip in place.
+ *
+ * Singleton playback: tapping read-aloud on a different post stops
+ * this one. The shared ttsStore handles that cross-post coordination
+ * AND pauses the WCRB radio stream — only one audio source plays at
+ * a time.
+ */
+function ReadAloudButton({ postId, body }: { postId: string; body: string }) {
+  const s = makeStyles();
+  const isMine = useTTS((st) => st.currentId === postId);
+  const playing = useTTS((st) => st.playing);
+  const loading = useTTS((st) => st.loading);
+  const toggle = useTTS((st) => st.toggle);
+
+  if (!body || body.trim().length < 200) return null;
+
+  const myPlaying = isMine && playing;
+  const myLoading = isMine && loading;
+
+  return (
+    <TouchableOpacity
+      style={s.actionBtn}
+      activeOpacity={0.7}
+      onPress={(e) => { e.stopPropagation(); toggle(postId, body); }}
+      accessibilityLabel={myPlaying ? 'Stop reading' : 'Read aloud'}
+    >
+      <Ionicons
+        name={myLoading ? 'hourglass-outline' : myPlaying ? 'stop-circle-outline' : 'volume-high-outline'}
+        size={18}
+        color={isMine ? Colors.primary : Colors.textSecondary}
+      />
+    </TouchableOpacity>
   );
 }
 

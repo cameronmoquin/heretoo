@@ -29,6 +29,7 @@ import { useMyConnections } from '../../../hooks/useFamily';
 import { useAuthStore } from '../../../stores/authStore';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
+import { MicInputButton } from '../../../components/shared/MicInputButton';
 import { Spacing, Radius } from '../../../constants/design';
 
 const MAX_INDENT = 4; // visual cap — beyond 4 levels deep all replies share the same indent
@@ -261,6 +262,10 @@ export default function PostDetail() {
                     submitComment();
                   }
                 }}
+              />
+              <MicInputButton
+                size={18}
+                onText={(t) => setDraft((d) => (d ? `${d} ${t}`.trim() : t))}
               />
               <TouchableOpacity
                 style={[s.composerSend, (!draft.trim() || addComment.isPending) && { opacity: 0.4 }]}

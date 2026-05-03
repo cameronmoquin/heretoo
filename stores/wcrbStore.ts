@@ -67,6 +67,13 @@ export const useWCRB = create<WCRBState>((set, get) => ({
     set({ error: null });
     try {
       if (a.paused) {
+        // Pause TTS playback (read-aloud) before starting the radio.
+        // Lazy-import the TTS store to avoid a hard module cycle —
+        // both stores reference each other for coordination.
+        try {
+          const ttsMod = await import('./ttsStore');
+          ttsMod.useTTS.getState().stop();
+        } catch {}
         urlIdx = 0;
         a.src = STREAM_URLS[0];
         set({ loading: true });
