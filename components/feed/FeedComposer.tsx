@@ -31,7 +31,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useUpload } from '../../hooks/useUpload';
-import { useMyConnections, useMyFamilies } from '../../hooks/useFamily';
+import { useMyConnections, useMyFamilies, useFamilyMembersWithProfiles } from '../../hooks/useFamily';
+import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { TwoWayCapture, type CapturedAsset } from '../upload/TwoWayCapture';
 import { OneWayCapture } from '../upload/OneWayCapture';
@@ -54,6 +55,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const upload = useUpload();
   const { data: connections } = useMyConnections();
   const { data: families } = useMyFamilies();
+  const userId = useAuthStore((st) => st.user?.id);
   const inAFamily = (families?.length ?? 0) > 0;
   const isFamilyScoped = !!familyId;
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
@@ -64,6 +66,14 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [twoWayOpen, setTwoWayOpen] = useState(false);
   const [oneWayOpen, setOneWayOpen] = useState(false);
+
+  // Recipient-restricted updates: which family members get this update.
+  // Empty set = "broadcast to whole family" (default behavior of any
+  // family post). Picker only opens when kind='update' is selected on
+  // a family-scoped composer.
+  const [updateRecipientIds, setUpdateRecipientIds] = useState<Set<string>>(new Set());
+  const [recipientPickerOpen, setRecipientPickerOpen] = useState(false);
+  const { data: familyMembers } = useFamilyMembersWithProfiles(familyId ?? null);
 
   const hasMedia = upload.selectedAssets.length > 0;
   const canPost = body.trim().length > 0 || hasMedia;
@@ -119,6 +129,13 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         visibility: isFamilyScoped ? 'family' : 'public',
         familyId: familyId,
         kind: isFamilyScoped ? postKind : 'post',
+        // Only pass recipient list for genuine family updates with a
+        // non-empty selection. Author is implicit — RLS lets them read
+        // their own posts unconditionally.
+        updateRecipientIds:
+          isFamilyScoped && postKind === 'update' && updateRecipientIds.size > 0
+            ? [...updateRecipientIds]
+            : undefined,
         photoUploads,
         muxPlaybackId,
         videoDurationMs,
@@ -127,6 +144,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       // reset
       setBody('');
       setTaggedIds(new Set());
+      setUpdateRecipientIds(new Set());
       setPostKind('post');
       setExpanded(false);
       upload.reset();
@@ -256,6 +274,26 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         </View>
       )}
 
+      {/* Recipient row — only for family updates. Defaults to "Everyone
+          in this family"; tap to narrow to specific members (the
+          health-emergency use case from the original pitch). */}
+      {isFamilyScoped && postKind === 'update' && (
+        <TouchableOpacity
+          style={s.recipientRow}
+          onPress={() => setRecipientPickerOpen(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="people-outline" size={14} color={Colors.textSecondary} />
+          <Text style={s.recipientLabel}>To:</Text>
+          <Text style={s.recipientValue} numberOfLines={1}>
+            {updateRecipientIds.size === 0
+              ? 'Everyone in this family'
+              : recipientSummary(familyMembers ?? [], updateRecipientIds, userId)}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+        </TouchableOpacity>
+      )}
+
       <TextInput
         style={s.input}
         placeholder="What's happening?"
@@ -369,6 +407,90 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         />
       </Modal>
 
+      {/* Recipient picker — for kind='update' only. Restricts the
+          update to specific family members; empty selection means
+          "broadcast to everyone in the family" (the default). */}
+      <Modal
+        visible={recipientPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRecipientPickerOpen(false)}
+      >
+        <TouchableOpacity
+          style={s.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setRecipientPickerOpen(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={s.modalCard}>
+            <Text style={s.modalTitle}>Send this update to…</Text>
+            <Text style={s.modalSub}>
+              {updateRecipientIds.size === 0
+                ? 'Currently broadcasting to everyone in this family. Select members to narrow it.'
+                : `${updateRecipientIds.size} selected — only these members + you will see this update.`}
+            </Text>
+
+            <ScrollView style={{ maxHeight: 360 }}>
+              {(familyMembers ?? [])
+                .filter((m) => m.profile_id !== userId)
+                .map((m) => {
+                  const checked = updateRecipientIds.has(m.profile_id);
+                  return (
+                    <TouchableOpacity
+                      key={m.profile_id}
+                      style={s.connRow}
+                      onPress={() => {
+                        const next = new Set(updateRecipientIds);
+                        if (checked) next.delete(m.profile_id);
+                        else next.add(m.profile_id);
+                        setUpdateRecipientIds(next);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={s.connAvatar}>
+                        {m.profile.avatar_path ? (
+                          <Image source={{ uri: mediaPathToUrl(m.profile.avatar_path) }} style={s.connAvatarImg} />
+                        ) : (
+                          <Text style={s.connAvatarText}>
+                            {(m.profile.display_name ?? m.profile.handle ?? '?').slice(0, 1).toUpperCase()}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.connName}>
+                          {m.profile.display_name ?? m.profile.handle ?? 'Unknown'}
+                        </Text>
+                        {m.relationship_label && (
+                          <Text style={s.connHandle}>{m.relationship_label}</Text>
+                        )}
+                      </View>
+                      <Ionicons
+                        name={checked ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={22}
+                        color={checked ? Colors.primary : Colors.textMuted}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <TouchableOpacity
+                style={[s.modalDone, { flex: 1, backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.border }]}
+                onPress={() => { setUpdateRecipientIds(new Set()); setRecipientPickerOpen(false); }}
+              >
+                <Text style={[s.modalDoneText, { color: Colors.textSecondary }]}>Everyone</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.modalDone, { flex: 1 }]}
+                onPress={() => setRecipientPickerOpen(false)}
+              >
+                <Text style={s.modalDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Tag connections modal */}
       <Modal
         visible={tagPickerOpen}
@@ -449,6 +571,26 @@ function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Render a short summary of the recipient selection for the inline
+ * "To:" row in the composer. Shows up to two names, then "+N more".
+ * The author is always the implicit (N+1)th recipient via RLS, so we
+ * don't include them in the count.
+ */
+function recipientSummary(
+  members: Array<{ profile_id: string; profile: { display_name: string | null; handle: string | null } }>,
+  selected: Set<string>,
+  selfId: string | null | undefined,
+): string {
+  const picked = members
+    .filter((m) => selected.has(m.profile_id) && m.profile_id !== selfId)
+    .map((m) => m.profile.display_name ?? m.profile.handle ?? 'someone');
+  if (picked.length === 0) return 'No one selected';
+  if (picked.length === 1) return picked[0];
+  if (picked.length === 2) return `${picked[0]}, ${picked[1]}`;
+  return `${picked[0]}, ${picked[1]}, +${picked.length - 2} more`;
+}
+
 function makeStyles() { return StyleSheet.create({
   // Collapsed: a single ~52px row, more polished than the v1 outline.
   // Surface tone matches the app, with the input pill subtly recessed.
@@ -514,6 +656,16 @@ function makeStyles() { return StyleSheet.create({
   kindBtnActive: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
   kindBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
   kindBtnTextActive: { color: Colors.textPrimary },
+
+  // Recipient row — shown only on family-update composers
+  recipientRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.md,
+    paddingHorizontal: 10, paddingVertical: 8,
+  },
+  recipientLabel: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
+  recipientValue: { flex: 1, fontSize: 13, color: Colors.textPrimary, fontWeight: '500' },
 
   input: {
     backgroundColor: Colors.surfaceLight,

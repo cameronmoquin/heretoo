@@ -107,6 +107,53 @@ export function useFamilyMembers(familyId: string | null) {
   });
 }
 
+export interface FamilyMemberWithProfile extends FamilyMember {
+  profile: {
+    id: string;
+    handle: string | null;
+    display_name: string | null;
+    avatar_path: string | null;
+  };
+}
+
+/**
+ * Family members enriched with the joined profile fields (display name,
+ * handle, avatar path). Used by the recipient picker on family
+ * "update" posts and by family-page member lists.
+ */
+export function useFamilyMembersWithProfiles(familyId: string | null) {
+  return useQuery({
+    queryKey: ['family-members-profiles', familyId],
+    queryFn: async (): Promise<FamilyMemberWithProfile[]> => {
+      if (!familyId) return [];
+      const { data: members, error } = await supabase
+        .from('family_members')
+        .select('*')
+        .eq('family_id', familyId)
+        .eq('status', 'active')
+        .order('joined_at', { ascending: true });
+      if (error) throw error;
+
+      const ids = (members ?? []).map((m: any) => m.profile_id);
+      if (ids.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, handle, display_name, avatar_path')
+        .in('id', ids);
+      const byId = new Map<string, any>(
+        (profiles ?? []).map((p: any) => [p.id, p]),
+      );
+      return (members ?? []).map((m: any) => ({
+        ...m,
+        profile: byId.get(m.profile_id) ?? {
+          id: m.profile_id, handle: null, display_name: null, avatar_path: null,
+        },
+      }));
+    },
+    enabled: !!familyId,
+  });
+}
+
 export function useCreateFamily() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);

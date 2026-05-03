@@ -167,6 +167,13 @@ export function useUpload() {
       familyId?: string;
       /** 'post' (default) or 'update' for time-sensitive family news. */
       kind?: 'post' | 'update';
+      /**
+       * For kind='update' only: a non-empty list locks visibility to
+       * just these family members (plus the author). Empty/undefined
+       * means broadcast to the whole family. Backed by the
+       * update_recipient_ids column + posts_read RLS in migration 019.
+       */
+      updateRecipientIds?: string[];
       photoUploads?: { path: string; width?: number; height?: number }[];
       muxPlaybackId?: string;
       muxThumbnailUrl?: string;
@@ -188,6 +195,17 @@ export function useUpload() {
         kind: params.kind ?? 'post',
       };
       if (params.familyId) row.family_id = params.familyId;
+      // Recipient-restricted updates: only set the column when there's
+      // an actual list. NULL means "broadcast to whole family", which
+      // matches the legacy behavior — important to preserve so the UI
+      // can opt-in without breaking existing posts.
+      if (
+        (params.kind ?? 'post') === 'update'
+        && params.updateRecipientIds
+        && params.updateRecipientIds.length > 0
+      ) {
+        row.update_recipient_ids = params.updateRecipientIds;
+      }
 
       const { data: post, error } = await supabase
         .from('posts')
