@@ -137,38 +137,76 @@ export function useToggleHeart() {
     },
     // Optimistic UI: flip the icon + counter on the next paint, before
     // the server confirms. If the call fails, onError rolls it back.
+    //
+    // Cache prefixes: tap-heart on a post that lives in family-feed
+    // wouldn't update visually if we only touched ['feed'] — the family
+    // feed has its own cache key. Same for updates / connections /
+    // profile-posts. Mirror the pattern used by bumpCommentCount.
     onMutate: async (postId: string) => {
-      await queryClient.cancelQueries({ queryKey: ['feed'] });
-      const snapshot = queryClient.getQueriesData({ queryKey: ['feed'] });
+      const PREFIXES = [
+        ['feed'],
+        ['family-feed'],
+        ['family-updates'],
+        ['connections-feed'],
+        ['profile-posts'],
+        ['home-feed'],
+      ];
 
-      queryClient.setQueriesData({ queryKey: ['feed'] }, (old: any) => {
-        if (!old) return old;
-        const flip = (post: any) => {
-          if (post.id !== postId) return post;
-          const wasHearted = !!post.viewer_hearted;
-          return {
-            ...post,
-            viewer_hearted: !wasHearted,
-            heart_count: Math.max(0, (post.heart_count ?? 0) + (wasHearted ? -1 : 1)),
-          };
+      // Cancel + snapshot every relevant cache so we can roll back on error.
+      const snapshot: Array<[unknown, unknown]> = [];
+      for (const prefix of PREFIXES) {
+        await queryClient.cancelQueries({ queryKey: prefix });
+        const entries = queryClient.getQueriesData({ queryKey: prefix });
+        snapshot.push(...entries);
+      }
+
+      const flip = (post: any) => {
+        if (!post || post.id !== postId) return post;
+        const wasHearted = !!post.viewer_hearted;
+        return {
+          ...post,
+          viewer_hearted: !wasHearted,
+          heart_count: Math.max(0, (post.heart_count ?? 0) + (wasHearted ? -1 : 1)),
         };
-        // Infinite-query pages structure
-        if (old.pages) {
-          return { ...old, pages: old.pages.map((p: any[]) => p.map(flip)) };
-        }
+      };
+
+      const updateCache = (old: any) => {
+        if (!old) return old;
         if (Array.isArray(old)) return old.map(flip);
+        // Infinite-query (pages) structure — paginated feeds.
+        if (old.pages && Array.isArray(old.pages)) {
+          return {
+            ...old,
+            pages: old.pages.map((p: any) =>
+              Array.isArray(p) ? p.map(flip) : { ...p, posts: (p.posts ?? []).map(flip) },
+            ),
+          };
+        }
         return old;
-      });
+      };
+
+      for (const prefix of PREFIXES) {
+        queryClient.setQueriesData({ queryKey: prefix }, updateCache);
+      }
+      // Single-post detail page caches the post directly.
+      queryClient.setQueriesData({ queryKey: ['post', postId] }, flip);
+
       return { snapshot };
     },
     onError: (_err, _postId, ctx: any) => {
-      // Rollback
       if (ctx?.snapshot) {
         ctx.snapshot.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
       }
     },
     onSettled: () => {
+      // Refetch all feed flavors so the server's authoritative state
+      // catches up if anything drifted (e.g., other clients heart-ed
+      // the same post in the same window).
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['family-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['family-updates'] });
+      queryClient.invalidateQueries({ queryKey: ['connections-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
     },
   });
 }

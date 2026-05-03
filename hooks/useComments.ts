@@ -5,9 +5,61 @@
  * easy rendering; the flat `useComments()` is kept for callers that
  * need a flat list.
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+
+/**
+ * Bump `comment_count` on every cached post matching `postId`, across
+ * every feed cache that might be visible (home feed, family feed,
+ * connections feed, single-post detail). Used by useAddComment's
+ * optimistic flow so the count badge ticks immediately instead of
+ * waiting for the network round-trip + refetch.
+ *
+ * Iterates every cache entry whose key starts with one of the known
+ * feed prefixes. Posts are stored as arrays of post objects in those
+ * caches; we update in place by matching id.
+ */
+export function bumpCommentCount(qc: QueryClient, postId: string, delta: number) {
+  // Map across the standard feed caches. We try each prefix; queries
+  // that don't have data are no-ops.
+  const PREFIXES = [
+    ['feed'],
+    ['family-feed'],
+    ['family-updates'],
+    ['connections-feed'],
+    ['profile-posts'],
+    ['home-feed'],
+  ];
+
+  const bump = (post: any): any => {
+    if (!post || post.id !== postId) return post;
+    return { ...post, comment_count: Math.max(0, (post.comment_count ?? 0) + delta) };
+  };
+
+  for (const prefix of PREFIXES) {
+    qc.setQueriesData<any>({ queryKey: prefix }, (cur: any) => {
+      if (!cur) return cur;
+      // Some feed queries return { pages: [...] } (paginated), others
+      // a flat array. Handle both.
+      if (Array.isArray(cur)) {
+        return cur.map(bump);
+      }
+      if (cur.pages && Array.isArray(cur.pages)) {
+        return {
+          ...cur,
+          pages: cur.pages.map((p: any) =>
+            Array.isArray(p) ? p.map(bump) : { ...p, posts: (p.posts ?? []).map(bump) },
+          ),
+        };
+      }
+      return cur;
+    });
+  }
+
+  // Also patch the standalone post-detail cache, if present.
+  qc.setQueriesData<any>({ queryKey: ['post', postId] }, (cur: any) => bump(cur));
+}
 
 export interface Comment {
   id: string;
@@ -117,13 +169,25 @@ export function useAddComment() {
           return next.slice(-2);
         });
       }
+
+      // Bump post.comment_count in every feed cache that might be
+      // showing this post. Without this, the inline preview ("View
+      // all N comments") and the comment-count badge on PostCard stay
+      // stale until invalidation refetches — which feels like "the
+      // comment didn't post optimistically" even though the actual
+      // text appeared in the latest-comments cache. This is the
+      // family-feed bug Cameron reported.
+      bumpCommentCount(qc, vars.postId, +1);
+
       return { prev, flatKey, treeKey, latestKey };
     },
-    onError: (_err, _vars, ctx: any) => {
+    onError: (_err, vars, ctx: any) => {
       if (!ctx) return;
       qc.setQueryData(ctx.flatKey, ctx.prev.flat);
       qc.setQueryData(ctx.treeKey, ctx.prev.tree);
       qc.setQueryData(ctx.latestKey, ctx.prev.latest);
+      // Roll back the optimistic count bump too.
+      bumpCommentCount(qc, vars.postId, -1);
     },
     onSettled: (_c, _err, vars) => {
       qc.invalidateQueries({ queryKey: ['comments', vars.postId] });
