@@ -162,21 +162,19 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           )}
         </TouchableOpacity>
 
-        {/* Tapping the comment bubble jumps to the post detail page
-            with focus=comment, which auto-focuses the composer input
-            on arrival. e.stopPropagation so the parent Pressable
-            (which navigates without focus) doesn't also fire.
-            Object form for params is required for Expo Router to
-            handle the (tabs) route group + query string correctly. */}
+        {/* Tapping the comment bubble navigates to the post detail page
+            using the EXACT same path string the parent Pressable uses
+            (which is known to work). The object-form router.push tried
+            previously bounced to login on some environments. Detail
+            page reads ?focus=comment from the search params and
+            auto-focuses the composer.
+            e.stopPropagation prevents double-firing the parent. */}
         <TouchableOpacity
           style={s.actionBtn}
           activeOpacity={0.7}
           onPress={(e) => {
             e.stopPropagation();
-            router.push({
-              pathname: '/(tabs)/feed/[postId]' as any,
-              params: { postId: post.id, focus: 'comment' },
-            });
+            router.push(`/(tabs)/feed/${post.id}?focus=comment` as any);
           }}
           accessibilityLabel="Add a comment"
         >

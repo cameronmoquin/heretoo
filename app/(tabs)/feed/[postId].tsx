@@ -111,12 +111,15 @@ export default function PostDetail() {
       {
         onSuccess: () => { setDraft(''); setReplyTo(null); },
         onError: (e: any) => {
-          // Inline error so the user always sees what failed — popups
-          // get blocked or missed on mobile web.
+          // Both inline AND alert so the user can't miss it. Previous
+          // version only showed an inline error which was easy to miss
+          // when the page was scrolled. Logging the full object makes
+          // debugging via DevTools straightforward.
           // eslint-disable-next-line no-console
-          console.error('COMMENT_INSERT_ERROR', e);
-          const msg = e?.message ?? 'Could not post — try again.';
+          console.error('COMMENT_INSERT_ERROR', e, JSON.stringify(e ?? {}, null, 2));
+          const msg = e?.message ?? e?.hint ?? 'Could not post — try again.';
           setSubmitErr(msg);
+          showAlert('Could not post comment', msg);
         },
       },
     );
