@@ -17,10 +17,11 @@ import { goBackToFeed } from '../../../lib/nav';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { FeedComposer } from '../../../components/feed/FeedComposer';
 import { PostCard } from '../../../components/feed/PostCard';
+import { FamilyChatPanel } from '../../../components/family/FamilyChatPanel';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
-type Tab = 'feed' | 'updates' | 'about';
+type Tab = 'feed' | 'updates' | 'chat' | 'about';
 
 export default function FamilyDetail() {
   const s = makeStyles();
@@ -153,10 +154,11 @@ export default function FamilyDetail() {
       </View>
 
       <View style={s.tabs}>
-        {(['feed', 'updates', 'about'] as Tab[]).map((t) => {
+        {(['feed', 'updates', 'chat', 'about'] as Tab[]).map((t) => {
           const label =
             t === 'feed' ? 'Feed' :
             t === 'updates' ? `Updates${updates && updates.length ? ` · ${updates.length}` : ''}` :
+            t === 'chat' ? 'Chat' :
             'About';
           return (
             <TouchableOpacity
@@ -242,6 +244,10 @@ export default function FamilyDetail() {
               updates.map((p: any) => <UpdateCard key={p.id} post={p} />)
             )}
           </>
+        )}
+
+        {tab === 'chat' && (
+          <FamilyChatPanel familyId={id} />
         )}
 
         {tab === 'about' && (
