@@ -37,18 +37,17 @@ interface ArtPreferencesProps {
 export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
   const s = makeStyles();
   const [expanded, setExpanded] = useState(!compact);
-  const schools = useArtPrefs((st) => st.schools);
-  const eras = useArtPrefs((st) => st.eras);
-  const genres = useArtPrefs((st) => st.genres);
-  const mediums = useArtPrefs((st) => st.mediums);
-  const sources = useArtPrefs((st) => st.sources);
-  const feedMix = useArtPrefs((st) => st.feedMix);
-  const toggleSchool = useArtPrefs((st) => st.toggleSchool);
-  const toggleEra = useArtPrefs((st) => st.toggleEra);
-  const toggleGenre = useArtPrefs((st) => st.toggleGenre);
-  const toggleMedium = useArtPrefs((st) => st.toggleMedium);
-  const toggleSource = useArtPrefs((st) => st.toggleSource);
-  const setFeedMix = useArtPrefs((st) => st.setFeedMix);
+
+  // Live store state — what's currently applied. Picker shows the
+  // DRAFT below; tapping pills mutates the draft only. "Apply" copies
+  // draft → store, which triggers persist + DB sync + feed refetch.
+  const liveSchools = useArtPrefs((st) => st.schools);
+  const liveEras = useArtPrefs((st) => st.eras);
+  const liveGenres = useArtPrefs((st) => st.genres);
+  const liveMediums = useArtPrefs((st) => st.mediums);
+  const liveSources = useArtPrefs((st) => st.sources);
+  const liveFeedMix = useArtPrefs((st) => st.feedMix);
+  const applyAll = useArtPrefs((st) => st.applyAll);
   const clear = useArtPrefs((st) => st.clear);
   const { data: facets } = useArtFacets();
   const filterStatus = useArtFilterStatus();
@@ -56,6 +55,69 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
   const setWallpaper = useWallpaper((st) => st.setWallpaper);
   const bold = useWallpaper((st) => st.bold);
   const toggleBold = useWallpaper((st) => st.toggleBold);
+
+  // Draft state — local mirror of the filter axes. Initialized from
+  // the live store on first render and kept in sync with external
+  // changes (e.g., another tab) via the resync effect below.
+  const [draftSchools, setDraftSchools] = useState<string[]>(liveSchools);
+  const [draftEras, setDraftEras] = useState<ArtEra[]>(liveEras);
+  const [draftGenres, setDraftGenres] = useState<string[]>(liveGenres);
+  const [draftMediums, setDraftMediums] = useState<string[]>(liveMediums);
+  const [draftSources, setDraftSources] = useState<string[]>(liveSources);
+  const [draftFeedMix, setDraftFeedMix] = useState<FeedMix>(liveFeedMix);
+
+  // Re-sync from the store when an external change lands (clear()
+  // triggered elsewhere, or a setStation-style direct mutation).
+  React.useEffect(() => { setDraftSchools(liveSchools); }, [liveSchools]);
+  React.useEffect(() => { setDraftEras(liveEras); }, [liveEras]);
+  React.useEffect(() => { setDraftGenres(liveGenres); }, [liveGenres]);
+  React.useEffect(() => { setDraftMediums(liveMediums); }, [liveMediums]);
+  React.useEffect(() => { setDraftSources(liveSources); }, [liveSources]);
+  React.useEffect(() => { setDraftFeedMix(liveFeedMix); }, [liveFeedMix]);
+
+  // Toggle helpers operate on draft only — no persist, no sync.
+  const toggleIn = <T,>(arr: T[], v: T): T[] =>
+    arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
+
+  const toggleSchoolDraft = (v: string) => setDraftSchools((c) => toggleIn(c, v));
+  const toggleEraDraft = (v: ArtEra) => setDraftEras((c) => toggleIn(c, v));
+  const toggleGenreDraft = (v: string) => setDraftGenres((c) => toggleIn(c, v));
+  const toggleMediumDraft = (v: string) => setDraftMediums((c) => toggleIn(c, v));
+  const toggleSourceDraft = (v: string) => setDraftSources((c) => toggleIn(c, v));
+
+  // Has the draft drifted from what's currently applied?
+  const dirty =
+    !arrEq(draftSchools, liveSchools)
+    || !arrEq(draftEras, liveEras)
+    || !arrEq(draftGenres, liveGenres)
+    || !arrEq(draftMediums, liveMediums)
+    || !arrEq(draftSources, liveSources)
+    || draftFeedMix !== liveFeedMix;
+
+  const onApply = () => {
+    applyAll({
+      schools: draftSchools,
+      eras: draftEras,
+      genres: draftGenres,
+      mediums: draftMediums,
+      sources: draftSources,
+      feedMix: draftFeedMix,
+    });
+  };
+
+  // The pills below render against the DRAFT state, not the live one.
+  const schools = draftSchools;
+  const eras = draftEras;
+  const genres = draftGenres;
+  const mediums = draftMediums;
+  const sources = draftSources;
+  const feedMix = draftFeedMix;
+  const toggleSchool = toggleSchoolDraft;
+  const toggleEra = toggleEraDraft;
+  const toggleGenre = toggleGenreDraft;
+  const toggleMedium = toggleMediumDraft;
+  const toggleSource = toggleSourceDraft;
+  const setFeedMix = setDraftFeedMix;
 
   const total = schools.length + eras.length + genres.length + mediums.length + sources.length;
   // Show a "no matches" hint only when filters are actually active and
@@ -77,6 +139,31 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
 
       {expanded && (
         <ScrollView style={s.body} contentContainerStyle={{ gap: 12 }}>
+          {/* Apply / Clear button row — pinned at the top of the
+              expanded picker. Filter changes ARE deferred to draft
+              state (no feed refetch on each pill); tap "Apply" to
+              commit. The button is only enabled when the draft has
+              drifted from what's applied. */}
+          <View style={s.applyRow}>
+            <TouchableOpacity
+              onPress={onApply}
+              disabled={!dirty}
+              style={[s.applyBtn, !dirty && s.applyBtnDisabled]}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="checkmark" size={14} color={dirty ? '#FFF' : Colors.textMuted} />
+              <Text style={[s.applyBtnText, !dirty && { color: Colors.textMuted }]}>
+                {dirty ? 'Apply changes' : 'Up to date'}
+              </Text>
+            </TouchableOpacity>
+            {total > 0 && (
+              <TouchableOpacity onPress={clear} style={s.clearBtn} activeOpacity={0.7}>
+                <Ionicons name="refresh-outline" size={12} color={Colors.textMuted} />
+                <Text style={s.clearBtnText}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           {/* Wallpaper picker — sits above the gallery filter so users
               find the decoration controls without digging. */}
           <Section label="Wallpaper">
@@ -271,13 +358,6 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
               </Text>
             </View>
           )}
-
-          {total > 0 && (
-            <TouchableOpacity onPress={clear} style={s.clearBtn} activeOpacity={0.7}>
-              <Ionicons name="refresh-outline" size={12} color={Colors.textMuted} />
-              <Text style={s.clearBtnText}>Clear filters</Text>
-            </TouchableOpacity>
-          )}
         </ScrollView>
       )}
     </View>
@@ -296,6 +376,17 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 function capitalize(s: string) {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Order-independent array equality. Sufficient for the filter axes
+ *  whose contents are unique strings; any drift here flips the dirty
+ *  state. Pre-sort copies so we don't mutate the live store arrays. */
+function arrEq<T>(a: T[], b: T[]): boolean {
+  if (a.length !== b.length) return false;
+  const aa = [...a].sort();
+  const bb = [...b].sort();
+  for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+  return true;
 }
 
 /**
@@ -354,6 +445,23 @@ function makeStyles() { return StyleSheet.create({
     alignSelf: 'flex-start', paddingHorizontal: 4, paddingVertical: 4,
   },
   clearBtnText: { fontSize: 11, color: Colors.textMuted, fontWeight: '600' },
+
+  applyRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    gap: 8,
+    paddingTop: 4, paddingBottom: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderLight,
+    marginBottom: 4,
+  },
+  applyBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: 14, paddingVertical: 7,
+  },
+  applyBtnDisabled: { backgroundColor: Colors.surfaceLight },
+  applyBtnText: { color: '#FFF', fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
 
   noMatchBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 6,

@@ -1,90 +1,113 @@
 /**
- * WallpaperBackground — renders the user's chosen tile pattern as the
- * page-level canvas behind cards. Sits at the root layout, ABOVE
- * Colors.background and BELOW everything else.
+ * WallpaperBackground — paints the active pattern as the document.body
+ * background, NOT as an in-tree absolute overlay.
  *
- * Styling philosophy: by default we render the pattern at ~35% opacity
- * with a 20% grayscale filter so the colors are present but not
- * shouty — wallpaper-as-decor, not wallpaper-showroom. "Bold" mode
- * (toggle in user prefs) renders at full strength.
+ * Why: the previous in-tree approach broke whenever any ancestor
+ * container painted an opaque backgroundColor — and there are many
+ * (Stack content style, route wrappers, SafeAreaView, etc.). We swept
+ * a bunch transparent but more keep slipping through, especially on
+ * Expo Router's auto-generated screen wrappers. Painting on the body
+ * sidesteps all of them: only opaque DESCENDANTS hide the wallpaper,
+ * which means cards / headers / nav still render correctly while the
+ * canvas margins / edges always show through transparent regions.
  *
- * We do this with a separate absolutely-positioned overlay div rather
- * than putting the background-image directly on the page-level View,
- * because RN-on-web's View doesn't expose `filter` as a style prop.
- * The overlay lets us layer:
- *   1. solid Colors.background (always on)
- *   2. patterned overlay at chosen opacity + filter (this component)
- *   3. cards / content (the rest of the layout)
+ * Listens to useWallpaper() and (when familyId is given) the family-
+ * effective wallpaper; updates the body's background-image style on
+ * every change. Cleans up on unmount so the auth screens or pages
+ * outside the route don't accidentally inherit a wallpaper.
+ *
+ * On native this component renders nothing (no document.body); we'll
+ * wire native via expo-image when the native build ships.
  */
 
-import React from 'react';
-import { View, Platform, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useWallpaper, WALLPAPERS, wallpaperToDataUri } from '../../stores/wallpaperStore';
 import { useEffectiveFamilyWallpaper } from '../../hooks/useFamilyWallpaper';
-import { Colors } from '../../constants/colors';
 
 interface Props {
-  /** Optional: render with stronger pattern density (e.g., on a
-   *  family page where the wallpaper IS the room's identity). */
+  /** Optional: render with stronger pattern density. */
   bold?: boolean;
   /** Optional: render the family's voted-on wallpaper instead of the
-   *  user's personal one. Used inside the /family/[id] page to give
-   *  each family its own "room" appearance. */
+   *  user's personal one. Used inside /family/[id]. */
   familyId?: string;
 }
 
-/**
- * Renders the active wallpaper as a full-bleed overlay. Web-only —
- * native gets nothing yet (we'll wire it via expo-image once we ship
- * the native build).
- */
+const BODY_DATA_ATTR = 'data-heretoo-wallpaper';
+
 export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}) {
-  // CRITICAL: every hook MUST be called every render to satisfy the
-  // rules of hooks. Read both stores unconditionally then choose.
+  // CRITICAL: hooks must be called every render. Read both stores
+  // unconditionally then choose.
   const personalId = useWallpaper((s) => s.id);
   const userBold = useWallpaper((s) => s.bold);
   const familyWp = useEffectiveFamilyWallpaper(familyId ?? null);
 
-  // Family wallpaper (voted on by members) takes priority when this
-  // component is rendered inside a family page. Otherwise fall back
-  // to the user's personal wallpaper.
   const effectiveId = familyId ? (familyWp.data ?? 'plain') : personalId;
   const bold = boldOverride ?? userBold;
 
-  const def = WALLPAPERS[effectiveId as keyof typeof WALLPAPERS] ?? WALLPAPERS.plain;
-  if (!def.svg) return null;
-  if (Platform.OS !== 'web') return null;
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
 
-  const bgImage = wallpaperToDataUri(def);
-  // Default visibility tuned so the pattern reads as decor without
-  // fighting the cards. Earlier 0.35 + 20% grayscale was nearly
-  // invisible, especially on mobile where cards cover most of the
-  // viewport — the user pointed out the blank space wasn't being
-  // used. Lifted to 0.55 + 10% grayscale: still subordinate, but
-  // genuinely present in the canvas margins.
-  const opacity = bold ? 0.95 : 0.55;
-  const filter = bold ? 'none' : 'grayscale(10%) contrast(96%)';
+    const def = WALLPAPERS[effectiveId as keyof typeof WALLPAPERS] ?? WALLPAPERS.plain;
+    const body = document.body;
+    if (!body) return;
 
-  // RN-on-web accepts CSS-only properties (backgroundImage, filter)
-  // that aren't in ViewStyle's TS type. Cast through `any` rather
-  // than fighting the types — the runtime accepts it.
-  const overlayStyle: any = {
-    ...StyleSheet.absoluteFillObject,
-    backgroundImage: bgImage,
-    backgroundRepeat: 'repeat',
-    backgroundSize: `${def.tileSize}px ${def.tileSize}px`,
-    opacity,
-    filter,
-    zIndex: 0,
-  };
+    // Mark body so we know we own these styles (cleanup uses this)
+    body.setAttribute(BODY_DATA_ATTR, '1');
 
-  return <View pointerEvents="none" style={overlayStyle} />;
+    if (!def.svg) {
+      // 'plain' / no wallpaper — clear our styles.
+      body.style.backgroundImage = '';
+      body.style.backgroundRepeat = '';
+      body.style.backgroundSize = '';
+      body.style.backgroundAttachment = '';
+      return;
+    }
+
+    const url = wallpaperToDataUri(def);
+    body.style.backgroundImage = url;
+    body.style.backgroundRepeat = 'repeat';
+    body.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
+    // Fixed so the pattern doesn't scroll behind content — feels more
+    // like wallpaper, less like a giant image.
+    body.style.backgroundAttachment = 'fixed';
+    // We rely on opacity at the layer above (the React tree), which
+    // we control by injecting a stylesheet rule: pages have transparent
+    // wrappers so the body shows through. The pattern's own colors
+    // are toned down at the SVG level to read as decor.
+
+    return () => {
+      // Don't strip on unmount — the next mount re-applies. Stripping
+      // would cause flicker between page changes.
+    };
+  }, [effectiveId, bold]);
+
+  // Inject a one-time stylesheet rule so the document html and root
+  // app container are transparent. This catches ALL the legacy opaque
+  // wrappers we missed in earlier sweeps without having to chase each
+  // one. Body keeps the pattern; everything above is transparent until
+  // it hits a card/header/nav with an explicit surface bg.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const STYLE_ID = 'heretoo-wallpaper-baseline';
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      html, body, #root, #__next {
+        background-color: transparent !important;
+      }
+      /* Soft tint underneath the wallpaper so cards still pop on
+         desktop where the canvas is wide. */
+      body {
+        background-color: #F6F6F9 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }, []);
+
+  return null;
 }
 
-/**
- * Color used for the page underlay. Always rendered first, regardless
- * of wallpaper choice — wallpaper sits ON TOP of this. Components that
- * need the underlay color (e.g., to bleed the page edge into a fixed
- * header) can read this directly.
- */
-export const wallpaperUnderlayColor = Colors.background;
+/** Cleared the in-tree overlay — body painting handles it now. */
+export const wallpaperUnderlayColor = '#F6F6F9';

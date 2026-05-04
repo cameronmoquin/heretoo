@@ -151,6 +151,10 @@ interface ArtPrefsState extends Persisted {
   toggleSource: (s: string) => void;
   setFeedMix: (m: FeedMix) => void;
   clear: () => void;
+  /** Replace all axes at once — used by the picker's "Apply" button
+   *  so a batch of toggles only triggers ONE persist + sync + feed
+   *  refetch instead of N. */
+  applyAll: (next: Persisted) => void;
 }
 
 function snapshot(get: () => ArtPrefsState): Persisted {
@@ -212,6 +216,10 @@ export const useArtPrefs = create<ArtPrefsState>((set, get) => ({
     const next: Persisted = {
       schools: [], eras: [], genres: [], mediums: [], sources: [], feedMix: cur.feedMix,
     };
+    set(next);
+    persistAndSync(next);
+  },
+  applyAll: (next) => {
     set(next);
     persistAndSync(next);
   },
