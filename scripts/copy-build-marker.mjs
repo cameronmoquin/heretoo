@@ -62,11 +62,17 @@ if (existsSync(indexPath)) {
   const URL = 'https://heretoo.social';
 
   const headTags = [
-    // Icons + manifest
+    // Icons + manifest. Apple specifically wants PNG for the
+    // apple-touch-icon — SVG is technically supported but render
+    // glitchy at iOS Add-to-Home-Screen sizes. The browser tab can
+    // pick either; modern browsers prefer SVG, older fall back to
+    // the 32px PNG.
     '<link rel="icon" type="image/svg+xml" href="/favicon.svg" />',
-    '<link rel="alternate icon" type="image/png" href="/favicon.png" />',
+    '<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />',
+    '<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />',
+    '<link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />',
+    '<link rel="apple-touch-icon" sizes="512x512" href="/favicon-512.png" />',
     '<link rel="mask-icon" href="/mask-icon.svg" color="#0A0A0F" />',
-    '<link rel="apple-touch-icon" href="/favicon.svg" />',
     '<link rel="manifest" href="/manifest.webmanifest" />',
     // Theme + PWA hints
     '<meta name="theme-color" content="#0A0A0F" />',
