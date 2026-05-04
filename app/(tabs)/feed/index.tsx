@@ -32,9 +32,11 @@ export default function FeedScreen() {
   const { data: stats } = useMyNetworkStats();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
-  // Only show right sidebar on truly wide viewports — under 1024px
-  // the feed needs the whole width to read comfortably.
-  const showSidebar = width >= 1024;
+  // Only show right sidebar when there's REAL empty space outside
+  // the centered feed column. The feed posts max out around 600px
+  // centered; the sidebar is 320px wide. So we need at least
+  // 600 + 320 + 32 (gutters) ≈ 1280px to have any breathing room.
+  const showSidebar = width >= 1280;
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
@@ -113,30 +115,29 @@ export default function FeedScreen() {
           option, not just the once-fired beforeinstallprompt event. */}
       <InstallAppBanner />
 
-      {/* Two-column desktop layout: feed on the left, sidebar on the
-          right (calendar, family-event invite). Sidebar shows only on
-          wide viewports (≥1024px) so mobile gets the full feed width.
-          The sidebar's contents will surface on mobile via the
-          three-bars overflow menu in a future batch. */}
-      <View style={[styles.body, !showSidebar && { paddingHorizontal: 0 }]}>
-        <View style={styles.feedCol}>
-          <FeedList
-            posts={posts as any}
-            isLoading={feed.isLoading}
-            isRefreshing={feed.isRefetching}
-            hasMore={feed.hasNextPage ?? false}
-            onRefresh={() => feed.refetch()}
-            onLoadMore={() => feed.fetchNextPage()}
-            onHeart={(postId) => toggleHeart.mutate(postId)}
-          />
+      <FeedList
+        posts={posts as any}
+        isLoading={feed.isLoading}
+        isRefreshing={feed.isRefetching}
+        hasMore={feed.hasNextPage ?? false}
+        onRefresh={() => feed.refetch()}
+        onLoadMore={() => feed.fetchNextPage()}
+        onHeart={(postId) => toggleHeart.mutate(postId)}
+      />
+
+      {/* Sidebar lives in the outer empty space to the RIGHT of the
+          centered feed column. Absolute-positioned to the viewport's
+          right edge so it doesn't compress the feed at all — feed
+          stays centered with its own max-width as before; sidebar
+          floats independently in the unused right third. Only shows
+          on viewports ≥1280px so there's actually empty space to put
+          it in. */}
+      {showSidebar && (
+        <View style={styles.sidebarCol}>
+          <CalendarEmbed />
+          <FamilyEventInvite />
         </View>
-        {showSidebar && (
-          <View style={styles.sidebarCol}>
-            <CalendarEmbed />
-            <FamilyEventInvite />
-          </View>
-        )}
-      </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -147,28 +148,18 @@ function makeStyles() { return StyleSheet.create({
   // The actual reading-surface contrast comes from each PostCard's
   // own backgroundColor, not the page wrapper.
   safe: { flex: 1, backgroundColor: 'transparent' },
-  // Two-column body — feed on the left, sidebar on the right.
-  // Stacks vertically on narrow viewports via maxWidth on sidebar.
-  body: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 16,
-    paddingHorizontal: 8,
-    maxWidth: 1280,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  feedCol: { flex: 1, minWidth: 0 },
+  // Sidebar is absolute-positioned to the viewport's right edge so it
+  // floats in the empty space outside the centered feed column.
+  // Feed stays centered with its own max-width (no row layout = no
+  // squeezing). 16px from the right edge so it doesn't kiss the side.
   sidebarCol: {
+    position: 'absolute',
+    top: 80,                  // sit below the header
+    right: 16,
     width: 320,
     gap: 12,
-    paddingTop: 4,
-    paddingBottom: 80, // clears the bottom nav
-    // Hide on narrow viewports (mobile / small tablet). RN-Web
-    // honors @media via display:none — but RN doesn't expose media
-    // queries, so we use a flex-basis trick: width:0 on small,
-    // 320 on wide. Done via the wrapper's flexWrap pattern in
-    // the body style so on narrow the sidebar wraps below feed.
+    paddingBottom: 80,        // clears the bottom nav
+    zIndex: 5,                // above feed content but below modals
   },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
