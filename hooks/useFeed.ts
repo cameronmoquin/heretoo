@@ -29,22 +29,53 @@ export function useFeed(tab: FeedTab = 'for_you') {
         return MOCK_POSTS.slice(pageParam, pageParam + PAGE_SIZE);
       }
 
-      let q = supabase
-        .from('posts')
-        .select(`
-          *,
-          author:profiles!author_id(id, handle, display_name, avatar_path),
-          media:post_media(*)
-        `)
-        .neq('visibility', 'family')   // family posts live on /family/[id]
-        .order('created_at', { ascending: false })
-        .range(pageParam, pageParam + PAGE_SIZE - 1);
+      // The "For You" tab uses the unifying-score ranker (migration 025):
+      // posts are ordered by cross-family engagement (distinct families
+      // among hearters + commenters) instead of pure chronology. The
+      // RPC returns the same `posts` row shape so the rest of this
+      // function (viewer-hearted enrichment, flagged filter) doesn't
+      // need to change. Connections tab keeps chronological order
+      // since it's about who you know, not what unites.
+      let raw: any[] = [];
+      if (tab === 'for_you') {
+        const { data, error } = await supabase.rpc('get_unifying_feed', {
+          p_limit: PAGE_SIZE,
+          p_offset: pageParam,
+        });
+        if (error) throw error;
+        raw = (data ?? []) as any[];
 
-      if (tab === 'connections') {
-        q = q.eq('visibility', 'connections');
+        // Hydrate joined fields (author, media) — RPC returns just the
+        // posts row. Cheap second roundtrip; we already do this for the
+        // chronological path implicitly via PostgREST's join syntax.
+        if (raw.length > 0) {
+          const ids = raw.map((p) => p.id);
+          const { data: enriched } = await supabase
+            .from('posts')
+            .select('id, author:profiles!author_id(id, handle, display_name, avatar_path), media:post_media(*)')
+            .in('id', ids);
+          const byId = new Map<string, any>((enriched ?? []).map((p: any) => [p.id, p]));
+          raw = raw.map((p) => ({ ...p, ...(byId.get(p.id) ?? {}) }));
+        }
+      } else {
+        let q = supabase
+          .from('posts')
+          .select(`
+            *,
+            author:profiles!author_id(id, handle, display_name, avatar_path),
+            media:post_media(*)
+          `)
+          .neq('visibility', 'family')   // family posts live on /family/[id]
+          .eq('visibility', 'connections')
+          .order('created_at', { ascending: false })
+          .range(pageParam, pageParam + PAGE_SIZE - 1);
+
+        const { data, error } = await q;
+        if (error) throw error;
+        raw = (data ?? []) as any[];
       }
-
-      const { data, error } = await q;
+      const data = raw;
+      const error = null as any;
       if (error) throw error;
 
       // Enrich with viewer's reactions if signed in

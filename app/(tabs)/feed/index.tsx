@@ -10,6 +10,7 @@ import { useMyNetworkStats } from '../../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
+import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -101,6 +102,11 @@ export default function FeedScreen() {
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* Persistent install banner — different from the auto-popup;
+          sits in the feed flow so users always have a visible install
+          option, not just the once-fired beforeinstallprompt event. */}
+      <InstallAppBanner />
 
       <FeedList
         posts={posts as any}
