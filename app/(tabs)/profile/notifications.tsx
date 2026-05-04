@@ -134,12 +134,14 @@ export default function NotificationSettings() {
               disabled={!prefs.email_enabled}
             />
             <ToggleRow
-              label="Family activity"
-              sub="New posts and updates in your family circles"
+              label="Family activity (daily digest)"
+              sub="At noon in your timezone, an email of unread family updates"
               value={prefs.email_family_activity}
               onValueChange={(v) => update.mutate({ email_family_activity: v })}
               disabled={!prefs.email_enabled}
             />
+            <TimezoneRow />
+
             <ToggleRow
               label="Connection requests"
               sub="Someone outside your network wants to message you"
@@ -202,6 +204,78 @@ function ToggleRow({
         trackColor={{ false: Colors.surfaceLight, true: Colors.primary }}
         thumbColor={Platform.OS === 'android' ? '#FFFFFF' : undefined}
       />
+    </View>
+  );
+}
+
+/**
+ * Timezone row — read + edit the user's IANA timezone string. Drives
+ * which UTC hour the daily digest email is sent at (we want noon in
+ * the user's local zone, not noon UTC).
+ *
+ * On first visit, the value is auto-detected from the browser via
+ * Intl.DateTimeFormat().resolvedOptions().timeZone (handled in
+ * hooks/useAuth.ts on profile fetch). This row lets the user edit
+ * it explicitly if their device is reporting the wrong zone (VPN,
+ * traveler, etc.).
+ */
+function TimezoneRow() {
+  const s = makeStyles();
+  const { profile } = useAuth();
+  const detected = (() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
+    catch { return ''; }
+  })();
+  const current = (profile as any)?.timezone || detected || 'UTC';
+  const [value, setValue] = useState(current);
+  const [saving, setSaving] = useState(false);
+  const dirty = value.trim() !== current;
+
+  const save = async () => {
+    if (!profile?.id) return;
+    setSaving(true);
+    try {
+      const supa = (await import('../../../lib/supabase')).supabase;
+      await supa.from('profiles').update({ timezone: value.trim() }).eq('id', profile.id);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <View style={[s.toggleRow, { flexDirection: 'column', alignItems: 'stretch', gap: 6 }]}>
+      <View>
+        <Text style={s.toggleLabel}>Timezone</Text>
+        <Text style={s.toggleSub}>Used to send your daily digest at noon local. Auto-detected from your browser.</Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        <TextInput
+          value={value}
+          onChangeText={setValue}
+          placeholder="America/Los_Angeles"
+          placeholderTextColor="#888"
+          style={{
+            flex: 1,
+            backgroundColor: '#F1F1F5',
+            borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8,
+            fontSize: 13, color: '#1A1A24',
+            borderWidth: 1, borderColor: '#E4E4EB',
+          }}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <TouchableOpacity
+          onPress={save}
+          disabled={!dirty || saving}
+          style={{
+            paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
+            backgroundColor: dirty ? '#4A6CF0' : '#E4E4EB',
+            alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: dirty ? '#FFF' : '#888', fontSize: 12, fontWeight: '600' }}>
+            {saving ? 'Saving…' : 'Save'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

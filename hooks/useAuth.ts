@@ -55,6 +55,23 @@ export function useAuth() {
       .single();
     if (data) setProfile(data as Profile);
     setLoading(false);
+
+    // Silent timezone backfill — runs once per session, on first
+    // profile fetch. The daily-digest scheduled function reads this
+    // to send the email at noon in the user's local zone. We only
+    // write if the value is missing so a user-set choice in
+    // /profile/notifications isn't clobbered.
+    if (data && !(data as any).timezone) {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz) {
+          await supabase
+            .from('profiles')
+            .update({ timezone: tz })
+            .eq('id', userId);
+        }
+      } catch {}
+    }
   }
 
   async function signInWithApple(identityToken: string) {
