@@ -70,7 +70,11 @@ function RootLayoutInner() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
+          // Transparent content so the WallpaperBackground sibling
+          // above renders behind every screen. The base color is
+          // painted by the outer View. Page-level wrappers are also
+          // transparent (see app/* sweep).
+          contentStyle: { backgroundColor: 'transparent' },
           animation: 'slide_from_right',
         }}
       >

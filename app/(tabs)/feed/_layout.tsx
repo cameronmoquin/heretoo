@@ -6,7 +6,8 @@ export default function FeedLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
+        // Transparent so root-layout wallpaper shows through.
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     />
   );

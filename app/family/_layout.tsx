@@ -13,10 +13,12 @@ export default function FamilyLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.background },
+        // Transparent content so root-layout wallpaper shows through.
+        // Header keeps a solid bg so titles don't sit on a busy pattern.
+        headerStyle: { backgroundColor: Colors.surface },
         headerTintColor: Colors.textPrimary,
         headerTitleStyle: { fontWeight: '600' },
-        contentStyle: { backgroundColor: Colors.background },
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Family' }} />

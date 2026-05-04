@@ -178,8 +178,11 @@ export default function TabLayout() {
     );
   }
 
+  // Transparent so the root-layout wallpaper bleeds through into the
+  // tab content area. The base color is painted by the root layout
+  // View; this wrapper just stacks the Tabs + custom tab bar.
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.background }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tabs
         screenOptions={{
           headerShown: false,
