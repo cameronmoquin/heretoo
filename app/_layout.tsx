@@ -62,9 +62,14 @@ function RootLayoutInner() {
   return (
     // key={themeMode} forces a clean remount of the entire app when the user
     // toggles theme, so every component picks up new Colors values.
-    <View key={themeMode} style={{ flex: 1, backgroundColor: Colors.background }}>
-      {/* Wallpaper sits behind everything — solid background first,
-          then the pattern overlay, then the actual app on top. */}
+    //
+    // CRITICAL: this View MUST be transparent. The wallpaper paints on
+    // document.body (see WallpaperBackground); any opaque backgroundColor
+    // here covers it completely. The base canvas color is set on body
+    // via the baseline stylesheet WallpaperBackground injects. The
+    // previous opaque value (Colors.background) is the entire reason
+    // wallpapers haven't been showing.
+    <View key={themeMode} style={{ flex: 1, backgroundColor: 'transparent' }}>
       <WallpaperBackground />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <Stack
