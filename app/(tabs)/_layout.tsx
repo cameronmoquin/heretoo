@@ -45,111 +45,12 @@ function TabIcon({ icon, iconActive, focused }: { icon: string; iconActive: stri
   );
 }
 
-function Sidebar() {
-  const styles = makeStyles();
-  const pathname = usePathname();
-  const user = useAuthStore((st) => st.user);
-  const themeMode = useThemeStore((st) => st.mode);
-  const toggleTheme = useThemeStore((st) => st.toggle);
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarLogoWrap}>
-        <HereTooLogo size={36} color={Colors.textPrimary} />
-      </View>
-      <View style={styles.sidebarNav}>
-        {NAV.map((item) => {
-          const active = pathname.includes(`/${item.name}`);
-          return (
-            <TouchableOpacity
-              key={item.name}
-              style={[styles.navItem, active && styles.navItemActive]}
-              onPress={() => router.push(item.href as any)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.navItemInner}>
-                <Ionicons name={(active ? item.iconActive : item.icon) as any} size={20} color={active ? Colors.primary : Colors.textSecondary} />
-                <Text style={[styles.navText, active && styles.navTextActive]}>
-                  {item.label}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-
-        {/* Divider + Family + Messages entries (out-of-tab routes) */}
-        <View style={styles.sidebarDivider} />
-        <TouchableOpacity
-          style={[styles.navItem, pathname.startsWith('/family') && styles.navItemActive]}
-          onPress={() => router.push('/family' as any)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.navItemInner}>
-            <Ionicons
-              name={pathname.startsWith('/family') ? 'people' : 'people-outline'}
-              size={20}
-              color={pathname.startsWith('/family') ? Colors.primary : Colors.textSecondary}
-            />
-            <Text style={[styles.navText, pathname.startsWith('/family') && styles.navTextActive]}>
-              Family
-            </Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navItem, pathname.startsWith('/chat') && styles.navItemActive]}
-          onPress={() => router.push('/chat' as any)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.navItemInner}>
-            <Ionicons
-              name={pathname.startsWith('/chat') ? 'chatbubbles' : 'chatbubbles-outline'}
-              size={20}
-              color={pathname.startsWith('/chat') ? Colors.primary : Colors.textSecondary}
-            />
-            <Text style={[styles.navText, pathname.startsWith('/chat') && styles.navTextActive]}>
-              Messages
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* Art preferences + rotating piece + WCRB live classical stream */}
-      <ArtPreferences compact />
-      <WCRBPlayer />
-      <SidebarArt />
-
-      {/* Sign-out at the bottom of the sidebar */}
-      {user && (
-        <View style={styles.sidebarFooter}>
-          <Text style={styles.sidebarEmail} numberOfLines={1}>
-            {user.email}
-          </Text>
-          <TouchableOpacity
-            onPress={toggleTheme}
-            style={styles.signOutBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={themeMode === 'dark' ? 'sunny-outline' : 'moon-outline'}
-              size={16}
-              color={Colors.textSecondary}
-            />
-            <Text style={styles.signOutText}>
-              {themeMode === 'dark' ? 'Light theme' : 'Dark theme'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => hardSignOutAndRedirect()}
-            style={styles.signOutBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="log-out-outline" size={16} color={Colors.textSecondary} />
-            <Text style={styles.signOutText}>Sign out</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-}
+// Sidebar component removed — its functions are now handled by:
+//   - LeftSidebar at root layout (nav)
+//   - RightSidebar at root layout (calendar + invites)
+//   - profile page (sign-out + theme toggle)
+// The old in-tree desktop sidebar was rendering as a duplicate when
+// the user had both global LeftSidebar AND this Sidebar showing.
 
 export default function TabLayout() {
   const styles = makeStyles();
@@ -163,30 +64,18 @@ export default function TabLayout() {
     return <Redirect href="/(auth)/welcome" />;
   }
 
-  if (isDesktop) {
-    return (
-      <View style={styles.desktopRoot}>
-        <Sidebar />
-        <View style={styles.desktopContent}>
-          <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
-            <Tabs.Screen name="feed" />
-            <Tabs.Screen name="music" />
-            <Tabs.Screen name="profile" />
-          </Tabs>
-        </View>
-      </View>
-    );
-  }
-
-  // Transparent so the root-layout wallpaper bleeds through into the
-  // tab content area. The base color is painted by the root layout
-  // View; this wrapper just stacks the Tabs + custom tab bar.
+  // Single layout for all viewports — the global LeftSidebar /
+  // MobileTabBar / RightSidebar at root layout (app/_layout.tsx)
+  // handle nav consistently across desktop and mobile. The previous
+  // desktop branch rendered a SECOND in-tree Sidebar component
+  // here which duplicated the LeftSidebar nav (visible as the
+  // "redundant menu in the middle" the user spotted).
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { display: 'none' },        // hide default — using custom below
+          tabBarStyle: { display: 'none' },        // hide default — using custom global nav
         }}
       >
         <Tabs.Screen name="feed" />
@@ -194,9 +83,6 @@ export default function TabLayout() {
         {/* music route still exists for old deep-links, but hidden from nav */}
         <Tabs.Screen name="music" options={{ href: null }} />
       </Tabs>
-      {/* MobileTabBar is now mounted at the root layout (app/_layout.tsx)
-          so it appears on every page including sub-routes outside (tabs).
-          The local CustomTabBar below is dead code, kept for reference. */}
     </View>
   );
 }
