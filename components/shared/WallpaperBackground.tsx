@@ -101,35 +101,60 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
 
     if (def.svg) {
       const url = wallpaperToDataUri(def);
+      // FOUR layers of redundancy. The wallpaper has been near-impossible
+      // to get on screen across attempts so we paint it on every layer
+      // that COULD show through, in case the others are hidden by
+      // ancestor styles we haven't tracked down:
+      //
+      //   1. The body-injected div (position: fixed, z-index: -1,
+      //      sits behind every React-rendered element)
+      //   2. document.body inline style (covered by #root/body
+      //      transparent rule we injected)
+      //   3. document.documentElement (the <html> root — absolute
+      //      bottom of the stacking pile, only React's transparent
+      //      mount can fail to reveal this)
+      //   4. backgroundAttachment: fixed so it doesn't scroll out
+      //      of the viewport mid-page
+
       div.style.backgroundImage = url;
       div.style.backgroundRepeat = 'repeat';
       div.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
       div.style.backgroundAttachment = 'fixed';
       div.style.opacity = bold ? '1' : '0.85';
-      // Belt + suspenders: also paint on document.body. If something
-      // weird happens to our injected div (some other script wipes
-      // it, or we're on a browser where z-index: -1 is glitchy on
-      // fixed elements), the body's bg still gets the pattern.
+
       document.body.style.backgroundImage = url;
       document.body.style.backgroundRepeat = 'repeat';
       document.body.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
       document.body.style.backgroundAttachment = 'fixed';
 
+      // <html> root — same paint, last line of defense.
+      const html = document.documentElement;
+      if (html) {
+        html.style.backgroundImage = url;
+        html.style.backgroundRepeat = 'repeat';
+        html.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
+        html.style.backgroundAttachment = 'fixed';
+      }
+
       // Debug log — paste from DevTools if this still doesn't show.
       // eslint-disable-next-line no-console
-      console.log('[wallpaper] applied', {
+      console.log('[wallpaper] applied (4-layer)', {
         id: effectiveId,
         label: def.label,
         tileSize: def.tileSize,
         bold,
-        opacity: div.style.opacity,
-        bgPainted: !!div.style.backgroundImage,
-        bodyAlsoPainted: !!document.body.style.backgroundImage,
+        urlPrefix: url.slice(0, 60) + '...',
+        divHasBg: !!div.style.backgroundImage,
+        bodyHasBg: !!document.body.style.backgroundImage,
+        htmlHasBg: !!document.documentElement?.style.backgroundImage,
       });
     } else {
       div.style.backgroundImage = '';
       div.style.opacity = '1';
       document.body.style.backgroundImage = '';
+      if (document.documentElement) {
+        document.documentElement.style.backgroundImage = '';
+      }
       // eslint-disable-next-line no-console
       console.log('[wallpaper] cleared (plain)');
     }

@@ -61,29 +61,25 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
         onError={() => markBroken(piece.id)}
       />
 
-      {/* Top-right tag */}
+      {/* Top-right tag — small and unobtrusive, no background band.
+          'From the gallery' / 'Sponsored' is muted so it doesn't
+          fight the artwork. */}
       <View style={s.tagWrap} pointerEvents="none">
         <Text style={[s.tag, isAd ? s.tagAd : s.tagArt]}>
           {isAd ? 'Sponsored' : 'From the gallery'}
         </Text>
       </View>
 
-      {/* Bottom scrim — single translucent slab for legibility. */}
-      <View pointerEvents="none" style={[s.scrim, s.scrim1]} />
-
-      {/* Bottom-left text */}
-      <View style={s.text} pointerEvents="none">
-        {!!piece.title && (
-          <Text style={s.title} numberOfLines={2}>{piece.title}</Text>
-        )}
-        <View style={s.metaRow}>
-          {!!piece.artist && (
-            <Text style={s.artist} numberOfLines={1}>{piece.artist}</Text>
-          )}
-          {!!piece.year_created && (
-            <Text style={s.year} numberOfLines={1}> · {piece.year_created}</Text>
-          )}
-        </View>
+      {/* Inline credit — single small line, bottom-left, strong text-
+          shadow for legibility on any background. No dark band. */}
+      <View style={s.creditWrap} pointerEvents="none">
+        <Text style={s.credit} numberOfLines={1}>
+          {[
+            piece.title || null,
+            piece.artist || null,
+            piece.year_created || null,
+          ].filter(Boolean).join(' · ')}
+        </Text>
       </View>
     </Pressable>
   );
@@ -105,51 +101,45 @@ function makeStyles() { return StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
 
-  // Single bottom scrim — rgba layered on top of the image. Avoids the
-  // percentage-height stack that was wedging RN-Web layout earlier.
-  scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 60 },
-  scrim1: { backgroundColor: 'rgba(0,0,0,0.55)' },
-
-  text: {
+  // Inline credit — small white text with a strong shadow. No dark
+  // band. The shadow alone carries legibility on any background.
+  creditWrap: {
     position: 'absolute',
-    left: 12, right: 12, bottom: 8,
+    left: 10, right: 10, bottom: 6,
   },
-  title: {
+  credit: {
     color: '#FFFFFF',
-    fontSize: 14,                       // was 18 — fits the slimmer bar
-    fontWeight: '800',
-    letterSpacing: -0.1,
-    lineHeight: 18,
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.1,
+    // Strong layered shadow makes it read against light AND dark
+    // crops of the image without a separate background band.
+    textShadowColor: 'rgba(0,0,0,0.85)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  metaRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 2 },
-  artist: {
-    color: 'rgba(255,255,255,0.92)',
-    fontSize: 12, fontWeight: '600',
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  year: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 12, fontWeight: '500',
+    textShadowRadius: 3,
   },
 
   tagWrap: {
     position: 'absolute',
-    top: 10, right: 10,
+    top: 8, right: 10,
   },
   tag: {
-    fontSize: 9, fontWeight: '700', letterSpacing: 1.4,
+    fontSize: 9, fontWeight: '600', letterSpacing: 1.2,
     textTransform: 'uppercase',
-    paddingHorizontal: 8, paddingVertical: 4,
-    borderRadius: 4, overflow: 'hidden',
+    // Same strong-shadow legibility as the credit, no background band.
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  tagAd: { color: '#FFF', backgroundColor: Colors.primary },
+  // Sponsored stays a real pill — distinguishes it visually from
+  // organic gallery items per FTC native-ad clarity.
+  tagAd: {
+    color: '#FFF',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+    overflow: 'hidden',
+  },
   tagArt: {
-    color: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    color: 'rgba(255,255,255,0.9)',
   },
 }); }
