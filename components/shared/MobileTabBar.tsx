@@ -1,0 +1,166 @@
+/**
+ * Global mobile bottom tab bar — Feed · Radio · Messages · Profile.
+ *
+ * Lifted out of the (tabs) layout so it can ALSO appear on sub-pages
+ * outside the tabs group (family/[id], chat/*, network, u/<handle>,
+ * etc.). The user's mental model is "the menu is always there"; the
+ * Expo Router (tabs) group originally only rendered it within (tabs).
+ *
+ * Renders:
+ *   - Web: a 4-slot bar pinned at the bottom of the viewport
+ *   - Native: nothing (native uses its own tab bar from the
+ *     (tabs) layout — gets enabled when we ship the native build)
+ *
+ * Hides on auth pages (/welcome, /profile-setup, /join/*) so they
+ * don't compete with the auth flow's primary CTAs.
+ */
+
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { router, usePathname } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useRadio, useActiveStation } from '../../stores/radioStore';
+import { useUnreadCount } from '../../hooks/useChat';
+import { useAuthStore } from '../../stores/authStore';
+import { Colors } from '../../constants/colors';
+
+export function MobileTabBar() {
+  const pathname = usePathname();
+  const session = useAuthStore((s) => s.session);
+  const radioPlaying = useRadio((s) => s.playing);
+  const radioLoading = useRadio((s) => s.loading);
+  const radioToggle = useRadio((s) => s.toggle);
+  const station = useActiveStation();
+  const { data: unread } = useUnreadCount();
+
+  // Skip on native (the (tabs) layout still owns native nav until we
+  // ship the native build).
+  if (Platform.OS !== 'web') return null;
+
+  // Skip if not signed in — auth flow has its own CTA hierarchy.
+  if (!session) return null;
+
+  // Hide on auth + signup paths so they don't compete with the
+  // primary CTAs on those screens.
+  const path = pathname ?? '';
+  const HIDE_ON = [
+    '/welcome',
+    '/(auth)',
+    '/profile-setup',
+    '/join/',
+    '/sow/',
+  ];
+  if (HIDE_ON.some((p) => path.startsWith(p))) return null;
+
+  const onFeed = path.startsWith('/feed') || path === '/' || path === '/(tabs)/feed';
+  const onProfile = path.startsWith('/profile') || path.startsWith('/(tabs)/profile');
+  const onChat = path.startsWith('/chat');
+
+  return (
+    <View style={styles.bar}>
+      <TouchableOpacity
+        style={styles.slot}
+        onPress={() => router.replace('/(tabs)/feed' as any)}
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={onFeed ? 'home' : 'home-outline'}
+          size={22}
+          color={onFeed ? Colors.primary : Colors.textMuted}
+        />
+        <Text style={[styles.label, onFeed && styles.labelActive]}>Feed</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.slot}
+        onPress={() => { radioToggle().catch(() => {}); }}
+        onLongPress={() => router.push('/(tabs)/music' as any)}
+        activeOpacity={0.7}
+        accessibilityLabel={radioPlaying ? `Pause ${station.name}` : `Play ${station.name}`}
+      >
+        <View style={[
+          styles.iconRing,
+          radioPlaying && { backgroundColor: Colors.primaryFaint },
+        ]}>
+          <Ionicons
+            name={radioPlaying ? 'pause' : 'musical-notes'}
+            size={18}
+            color={radioPlaying ? Colors.primary : Colors.textSecondary}
+          />
+        </View>
+        <Text
+          style={[styles.label, radioPlaying && styles.labelActive]}
+          numberOfLines={1}
+        >
+          {radioLoading ? '…' : station.name}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.slot}
+        onPress={() => router.push('/chat' as any)}
+        activeOpacity={0.7}
+      >
+        <View>
+          <Ionicons
+            name={onChat ? 'chatbubbles' : 'chatbubbles-outline'}
+            size={22}
+            color={onChat ? Colors.primary : Colors.textMuted}
+          />
+          {!!unread && unread > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text>
+            </View>
+          )}
+        </View>
+        <Text style={[styles.label, onChat && styles.labelActive]}>Messages</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.slot}
+        onPress={() => router.replace('/(tabs)/profile' as any)}
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={onProfile ? 'person' : 'person-outline'}
+          size={22}
+          color={onProfile ? Colors.primary : Colors.textMuted}
+        />
+        <Text style={[styles.label, onProfile && styles.labelActive]}>Profile</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    // Position absolute at the bottom so it sits above page content
+    // even on sub-pages without their own bottom-anchored layout.
+    position: 'absolute' as const,
+    bottom: 0, left: 0, right: 0,
+    zIndex: 10,
+  },
+  slot: { flex: 1, alignItems: 'center', paddingVertical: 4, gap: 2 },
+  label: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
+  labelActive: { color: Colors.primary, fontWeight: '700' },
+  iconRing: {
+    width: 28, height: 28, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute' as const,
+    top: -4, right: -8,
+    minWidth: 16, height: 16, borderRadius: 8,
+    backgroundColor: Colors.error,
+    paddingHorizontal: 4,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: Colors.surface,
+  },
+  badgeText: { color: '#FFF', fontSize: 9, fontWeight: '700' },
+});

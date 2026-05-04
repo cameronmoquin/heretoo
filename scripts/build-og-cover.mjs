@@ -41,33 +41,30 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
 
   <rect width="1200" height="630" fill="url(#bg)"/>
 
-  <!-- Subtle linked-tree motif on the right.
-       Five nodes connected by thin lines — abstract enough that it
-       reads as both family tree and social graph without being
-       literal. Sits behind/under the wordmark for atmosphere. -->
-  <g stroke="#E8C97A" stroke-opacity="0.18" stroke-width="1.4" fill="none">
-    <!-- root, two parents above, two children below -->
-    <line x1="980" y1="160" x2="980" y2="280"/>
-    <line x1="900" y1="100" x2="980" y2="160"/>
-    <line x1="1060" y1="100" x2="980" y2="160"/>
-    <line x1="980" y1="280" x2="900" y2="370"/>
-    <line x1="980" y1="280" x2="1060" y2="370"/>
-    <line x1="900" y1="370" x2="830" y2="450"/>
-    <line x1="900" y1="370" x2="970" y2="450"/>
-    <line x1="1060" y1="370" x2="990" y2="450"/>
-    <line x1="1060" y1="370" x2="1130" y2="450"/>
+  <!-- HT tree logo, centered on the right. Mirrors public/favicon.svg
+       and the in-app HereTooLogo component so the brand reads
+       consistently from social-share preview → app icon → in-app
+       header. Drawn at ~360px tall in the OG cover's coordinate
+       system. The logo's own coordinate system is 100×120; here we
+       scale 3x and place at (840, 130). -->
+  <g transform="translate(840, 130) scale(3)" fill="#F0EEE8">
+    <!-- Apex bud -->
+    <circle cx="50" cy="6" r="7"/>
+    <!-- Central stem -->
+    <rect x="44" y="6" width="12" height="62" rx="6"/>
+    <!-- Crossbar -->
+    <rect x="12" y="56" width="76" height="12" rx="2"/>
+    <!-- Left trunk + root flare -->
+    <rect x="14" y="30" width="14" height="84" rx="7"/>
+    <rect x="8" y="110" width="26" height="6" rx="3"/>
+    <!-- Right trunk + root flare -->
+    <rect x="72" y="30" width="14" height="84" rx="7"/>
+    <rect x="66" y="110" width="26" height="6" rx="3"/>
   </g>
-  <g fill="#E8C97A" fill-opacity="0.22">
-    <circle cx="900" cy="100" r="9"/>
-    <circle cx="1060" cy="100" r="9"/>
-    <circle cx="980" cy="220" r="11"/>
-    <circle cx="900" cy="370" r="9"/>
-    <circle cx="1060" cy="370" r="9"/>
-    <circle cx="830" cy="450" r="7"/>
-    <circle cx="970" cy="450" r="7"/>
-    <circle cx="990" cy="450" r="7"/>
-    <circle cx="1130" cy="450" r="7"/>
-  </g>
+
+  <!-- Soft gold halo around the logo to give it presence. -->
+  <circle cx="990" cy="320" r="220" fill="#E8C97A" fill-opacity="0.04"/>
+  <circle cx="990" cy="320" r="170" fill="#E8C97A" fill-opacity="0.05"/>
 
   <!-- Wordmark — split-color HereToo. Syne 800 isn't bundled with
        resvg, so we fall back to a stack that lands on the closest

@@ -194,7 +194,9 @@ export default function TabLayout() {
         {/* music route still exists for old deep-links, but hidden from nav */}
         <Tabs.Screen name="music" options={{ href: null }} />
       </Tabs>
-      <CustomTabBar />
+      {/* MobileTabBar is now mounted at the root layout (app/_layout.tsx)
+          so it appears on every page including sub-routes outside (tabs).
+          The local CustomTabBar below is dead code, kept for reference. */}
     </View>
   );
 }

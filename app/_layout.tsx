@@ -19,6 +19,7 @@ import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { WallpaperBackground } from '../components/shared/WallpaperBackground';
+import { MobileTabBar } from '../components/shared/MobileTabBar';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -93,6 +94,10 @@ function RootLayoutInner() {
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
+      {/* Global mobile bottom nav — appears on EVERY screen (web only,
+          authed only, hidden on auth pages) so the menu is always
+          available regardless of which sub-route the user is on. */}
+      <MobileTabBar />
       <ToastHost />
       <ConfirmHost />
       <UpdateNudge />

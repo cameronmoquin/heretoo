@@ -1,23 +1,29 @@
 /**
- * WallpaperBackground — paints the active pattern as the document.body
- * background, NOT as an in-tree absolute overlay.
+ * WallpaperBackground — appends a wallpaper `<div>` directly to
+ * document.body so it lives OUTSIDE the React tree entirely. No
+ * ancestor wrapper can cover it because it has no React ancestors.
  *
- * Why: the previous in-tree approach broke whenever any ancestor
- * container painted an opaque backgroundColor — and there are many
- * (Stack content style, route wrappers, SafeAreaView, etc.). We swept
- * a bunch transparent but more keep slipping through, especially on
- * Expo Router's auto-generated screen wrappers. Painting on the body
- * sidesteps all of them: only opaque DESCENDANTS hide the wallpaper,
- * which means cards / headers / nav still render correctly while the
- * canvas margins / edges always show through transparent regions.
+ * Why this approach: every previous attempt got hidden by some
+ * combination of:
+ *   - React Native View rendering as opaque-by-default <div>
+ *   - Expo Router screen wrappers with their own backgroundColor
+ *   - SafeAreaView / KeyboardAvoidingView wrappers
+ *   - Stacking contexts created by transforms / position / isolation
  *
- * Listens to useWallpaper() and (when familyId is given) the family-
- * effective wallpaper; updates the body's background-image style on
- * every change. Cleans up on unmount so the auth screens or pages
- * outside the route don't accidentally inherit a wallpaper.
+ * Bypassing the React tree fixes all of those at once.
  *
- * On native this component renders nothing (no document.body); we'll
- * wire native via expo-image when the native build ships.
+ * The injected div:
+ *   - position: fixed, full viewport, behind everything (z-index: 0)
+ *   - pointer-events: none (doesn't block taps)
+ *   - background painted via the active wallpaper's data URI
+ *   - body and html get inline `background-color: transparent` so
+ *     the React root's transparency reaches our wallpaper div
+ *
+ * Updates: re-renders the div's style when the wallpaper id changes
+ * (personal store, or family-effective if familyId provided).
+ *
+ * Native: returns null. The component still mounts so hooks run
+ * (rules of hooks), but no DOM happens.
  */
 
 import { useEffect } from 'react';
@@ -26,88 +32,110 @@ import { useWallpaper, WALLPAPERS, wallpaperToDataUri } from '../../stores/wallp
 import { useEffectiveFamilyWallpaper } from '../../hooks/useFamilyWallpaper';
 
 interface Props {
-  /** Optional: render with stronger pattern density. */
   bold?: boolean;
-  /** Optional: render the family's voted-on wallpaper instead of the
-   *  user's personal one. Used inside /family/[id]. */
   familyId?: string;
 }
 
-const BODY_DATA_ATTR = 'data-heretoo-wallpaper';
+const WALLPAPER_DIV_ID = 'heretoo-wallpaper';
+const BASELINE_STYLE_ID = 'heretoo-wallpaper-baseline';
+const BASE_BG = '#F6F6F9';
 
 export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}) {
-  // CRITICAL: hooks must be called every render. Read both stores
-  // unconditionally then choose.
+  // Hooks unconditional + first.
   const personalId = useWallpaper((s) => s.id);
   const userBold = useWallpaper((s) => s.bold);
   const familyWp = useEffectiveFamilyWallpaper(familyId ?? null);
 
-  const effectiveId = familyId ? (familyWp.data ?? 'plain') : personalId;
-  const bold = boldOverride ?? userBold;
-
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
 
-    const def = WALLPAPERS[effectiveId as keyof typeof WALLPAPERS] ?? WALLPAPERS.plain;
-    const body = document.body;
-    if (!body) return;
-
-    // Mark body so we know we own these styles (cleanup uses this)
-    body.setAttribute(BODY_DATA_ATTR, '1');
-
-    if (!def.svg) {
-      // 'plain' / no wallpaper — clear our styles.
-      body.style.backgroundImage = '';
-      body.style.backgroundRepeat = '';
-      body.style.backgroundSize = '';
-      body.style.backgroundAttachment = '';
-      return;
+    // ── 1. Inject baseline transparent rules so the React tree
+    //       doesn't accidentally cover us. Idempotent.
+    //       Negative z-index puts the wallpaper BEHIND every React-
+    //       rendered element in the body's stacking context.
+    //       Aggressive override of any background on #root or its
+    //       direct children (where most opaque ancestors live in
+    //       Expo Router output). ─────────────────────────────────
+    if (!document.getElementById(BASELINE_STYLE_ID)) {
+      const style = document.createElement('style');
+      style.id = BASELINE_STYLE_ID;
+      style.textContent = `
+        html, body, #root {
+          background-color: transparent !important;
+        }
+        /* The React mount is #root; its first descendant is usually
+           the user's outermost View. Make that transparent too so
+           the wallpaper isn't hidden by a 100vh opaque sibling. */
+        #root > div:first-child {
+          background-color: transparent !important;
+        }
+        body { margin: 0; }
+        #${WALLPAPER_DIV_ID} {
+          position: fixed;
+          inset: 0;
+          z-index: -1;
+          pointer-events: none;
+          background-color: ${BASE_BG};
+        }
+      `;
+      document.head.appendChild(style);
     }
 
-    const url = wallpaperToDataUri(def);
-    body.style.backgroundImage = url;
-    body.style.backgroundRepeat = 'repeat';
-    body.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
-    // Fixed so the pattern doesn't scroll behind content — feels more
-    // like wallpaper, less like a giant image.
-    body.style.backgroundAttachment = 'fixed';
-    // We rely on opacity at the layer above (the React tree), which
-    // we control by injecting a stylesheet rule: pages have transparent
-    // wrappers so the body shows through. The pattern's own colors
-    // are toned down at the SVG level to read as decor.
+    // ── 2. Make sure our wallpaper div exists in document.body
+    //       BEFORE the React tree's siblings so it sits behind. ────
+    let div = document.getElementById(WALLPAPER_DIV_ID) as HTMLDivElement | null;
+    if (!div) {
+      div = document.createElement('div');
+      div.id = WALLPAPER_DIV_ID;
+      div.setAttribute('aria-hidden', 'true');
+      // Insert as the FIRST child of body so it's beneath the
+      // React mount point in source order (and z-index: 0 vs the
+      // React content's positive/auto z-index also keeps it below).
+      document.body.insertBefore(div, document.body.firstChild);
+    }
 
-    return () => {
-      // Don't strip on unmount — the next mount re-applies. Stripping
-      // would cause flicker between page changes.
-    };
-  }, [effectiveId, bold]);
+    // ── 3. Apply the active wallpaper to it ────────────────────────
+    const effectiveId = familyId ? (familyWp.data ?? 'plain') : personalId;
+    const bold = boldOverride ?? userBold;
+    const def = WALLPAPERS[effectiveId as keyof typeof WALLPAPERS] ?? WALLPAPERS.plain;
 
-  // Inject a one-time stylesheet rule so the document html and root
-  // app container are transparent. This catches ALL the legacy opaque
-  // wrappers we missed in earlier sweeps without having to chase each
-  // one. Body keeps the pattern; everything above is transparent until
-  // it hits a card/header/nav with an explicit surface bg.
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    const STYLE_ID = 'heretoo-wallpaper-baseline';
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
-      html, body, #root, #__next {
-        background-color: transparent !important;
-      }
-      /* Soft tint underneath the wallpaper so cards still pop on
-         desktop where the canvas is wide. */
-      body {
-        background-color: #F6F6F9 !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }, []);
+    if (def.svg) {
+      const url = wallpaperToDataUri(def);
+      div.style.backgroundImage = url;
+      div.style.backgroundRepeat = 'repeat';
+      div.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
+      div.style.backgroundAttachment = 'fixed';
+      div.style.opacity = bold ? '1' : '0.85';
+      // Belt + suspenders: also paint on document.body. If something
+      // weird happens to our injected div (some other script wipes
+      // it, or we're on a browser where z-index: -1 is glitchy on
+      // fixed elements), the body's bg still gets the pattern.
+      document.body.style.backgroundImage = url;
+      document.body.style.backgroundRepeat = 'repeat';
+      document.body.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
+      document.body.style.backgroundAttachment = 'fixed';
+
+      // Debug log — paste from DevTools if this still doesn't show.
+      // eslint-disable-next-line no-console
+      console.log('[wallpaper] applied', {
+        id: effectiveId,
+        label: def.label,
+        tileSize: def.tileSize,
+        bold,
+        opacity: div.style.opacity,
+        bgPainted: !!div.style.backgroundImage,
+        bodyAlsoPainted: !!document.body.style.backgroundImage,
+      });
+    } else {
+      div.style.backgroundImage = '';
+      div.style.opacity = '1';
+      document.body.style.backgroundImage = '';
+      // eslint-disable-next-line no-console
+      console.log('[wallpaper] cleared (plain)');
+    }
+  }, [personalId, userBold, boldOverride, familyId, familyWp.data]);
 
   return null;
 }
 
-/** Cleared the in-tree overlay — body painting handles it now. */
-export const wallpaperUnderlayColor = '#F6F6F9';
+export const wallpaperUnderlayColor = BASE_BG;
