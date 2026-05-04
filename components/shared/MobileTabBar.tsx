@@ -41,7 +41,10 @@ export function MobileTabBar() {
   if (!session) return null;
 
   // Hide on auth + signup paths so they don't compete with the
-  // primary CTAs on those screens.
+  // primary CTAs on those screens. Path matching is loose because
+  // Expo Router can return paths with or without the route group
+  // prefix (e.g., '/welcome' OR '/(auth)/welcome' depending on how
+  // the user navigated). Use `includes` not `startsWith`.
   const path = pathname ?? '';
   const HIDE_ON = [
     '/welcome',
@@ -49,8 +52,9 @@ export function MobileTabBar() {
     '/profile-setup',
     '/join/',
     '/sow/',
+    '/version',
   ];
-  if (HIDE_ON.some((p) => path.startsWith(p))) return null;
+  if (HIDE_ON.some((p) => path.includes(p))) return null;
 
   const onFeed = path.startsWith('/feed') || path === '/' || path === '/(tabs)/feed';
   const onProfile = path.startsWith('/profile') || path.startsWith('/(tabs)/profile');
