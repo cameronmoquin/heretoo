@@ -247,7 +247,9 @@ function relTime(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent' },
+  // Constrained narrow column on desktop — chat reads better in a
+  // mobile-width canvas than spread across a 1440px viewport.
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   empty: { padding: 40, textAlign: 'center', color: Colors.textMuted },
 
   header: {

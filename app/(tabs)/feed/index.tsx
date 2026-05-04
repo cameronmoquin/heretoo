@@ -129,7 +129,11 @@ function makeStyles() { return StyleSheet.create({
   // edge / margin space the feed column doesn't fill on wide viewports.
   // The actual reading-surface contrast comes from each PostCard's
   // own backgroundColor, not the page wrapper.
-  safe: { flex: 1, backgroundColor: 'transparent' },
+  // Centered on desktop with max-width so wallpaper bleeds into the
+  // gutters on BOTH sides, not just the left. The padding-left for
+  // the LeftSidebar comes from the global CSS rule injected by
+  // WallpaperBackground on viewports ≥1024px.
+  safe: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 8,

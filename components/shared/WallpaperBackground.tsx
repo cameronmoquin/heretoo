@@ -86,6 +86,15 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
             padding-left: 240px;
           }
         }
+        /* And reserve room on the right for the RightSidebar
+           (320px + 16 margin) when it shows. Without this, the
+           sidebar overlaps the feed's right gutter on viewports
+           between 1280 and ~1700px. */
+        @media (min-width: 1280px) {
+          #root > div:first-child {
+            padding-right: 352px;
+          }
+        }
       `;
       document.head.appendChild(style);
     }

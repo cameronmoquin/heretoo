@@ -463,7 +463,7 @@ function relTime(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent' },
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.md, gap: 12, maxWidth: 600, alignSelf: 'center', width: '100%', paddingBottom: 80 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: {

@@ -125,7 +125,7 @@ export default function MusicTab() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent' },
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.md, gap: 12, maxWidth: 720, alignSelf: 'center', width: '100%' },
 
   hero: {

@@ -156,7 +156,7 @@ function relTime(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent' },
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: Spacing.md, paddingVertical: 10,

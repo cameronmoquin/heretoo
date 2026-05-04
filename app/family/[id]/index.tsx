@@ -23,7 +23,7 @@ import { WallpaperBackground } from '../../../components/shared/WallpaperBackgro
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
-type Tab = 'feed' | 'updates' | 'chat' | 'about';
+type Tab = 'feed' | 'chat' | 'about';
 
 export default function FamilyDetail() {
   const s = makeStyles();
@@ -161,10 +161,9 @@ export default function FamilyDetail() {
       </View>
 
       <View style={s.tabs}>
-        {(['feed', 'updates', 'chat', 'about'] as Tab[]).map((t) => {
+        {(['feed', 'chat', 'about'] as Tab[]).map((t) => {
           const label =
             t === 'feed' ? 'Feed' :
-            t === 'updates' ? `Updates${updates && updates.length ? ` · ${updates.length}` : ''}` :
             t === 'chat' ? 'Chat' :
             'About';
           return (
@@ -235,34 +234,10 @@ export default function FamilyDetail() {
           </>
         )}
 
-        {tab === 'updates' && (
-          <>
-            <FeedComposer familyId={id} />
-            {(!updates || updates.length === 0) ? (
-              <View style={s.emptyFeed}>
-                <Ionicons name="medkit-outline" size={32} color={Colors.textMuted} />
-                <Text style={s.emptyTitle}>No updates yet.</Text>
-                <Text style={s.emptySub}>
-                  Share time-sensitive family news here — milestones, medical updates,
-                  the things everyone is waiting to hear.
-                </Text>
-              </View>
-            ) : (
-              // Use the same PostCard as the main feed so updates get
-              // hearts, comments, boost, and read-aloud — aligning the
-              // design + functions across all feeds. The legacy stripped-
-              // down UpdateCard component is kept below in case we want
-              // a more compact "digest" view later.
-              updates.map((p: any) => (
-                <PostCard
-                  key={p.id}
-                  post={p}
-                  onHeart={(id) => toggleHeart.mutate(id)}
-                />
-              ))
-            )}
-          </>
-        )}
+        {/* Updates tab removed — was redundant with the main feed.
+            Posts will be tagged with a 'subject' (e.g., "Tim's
+            health") in the next iteration so users can focus on a
+            topic without juggling separate tabs. */}
 
         {tab === 'chat' && (
           <FamilyChatPanel familyId={id} />

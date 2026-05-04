@@ -105,7 +105,7 @@ export default function FamilyList() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent' },
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: {
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40,
     gap: 8, maxWidth: 600, alignSelf: 'center', width: '100%',

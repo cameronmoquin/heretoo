@@ -80,7 +80,7 @@ export default function NewFamily() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent' },
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.lg, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
   label: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginTop: 12, marginBottom: 4 },
   input: {
