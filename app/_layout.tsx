@@ -89,7 +89,10 @@ function RootLayoutInner() {
         <Stack.Screen name="family" options={{ headerShown: false }} />
         <Stack.Screen name="join" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
-        <Stack.Screen name="network" options={{ headerShown: false }} />
+        {/* Single-file route — Expo Router exposes it as 'network/index'
+            (the folder name + filename) since there's no _layout.tsx
+            in app/network/ to make it a route group. */}
+        <Stack.Screen name="network/index" options={{ headerShown: false }} />
         <Stack.Screen name="u" options={{ headerShown: false }} />
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
