@@ -58,6 +58,19 @@ export function useFeed(tab: FeedTab = 'for_you') {
           .in('post_id', postIds);
         const set = new Set((reactions ?? []).map((r: any) => r.post_id));
         posts = posts.map((p) => ({ ...p, viewer_hearted: set.has(p.id) }));
+
+        // Filter out content the community has flagged. The view returns
+        // post_ids that have ≥3 distinct flaggers and aren't review-rejected.
+        // Authors still see their own posts (so they're not gaslit out of
+        // their own thread) — they'll just notice nobody else is engaging.
+        const { data: flagged } = await supabase
+          .from('active_flagged_posts')
+          .select('post_id')
+          .in('post_id', postIds);
+        const hidden = new Set((flagged ?? []).map((r: any) => r.post_id));
+        if (hidden.size > 0) {
+          posts = posts.filter((p) => !hidden.has(p.id) || p.author_id === userId);
+        }
       }
       return posts;
     },

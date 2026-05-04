@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { Post } from '../../stores/feedStore';
@@ -19,6 +19,7 @@ import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
 import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
 import { useTTS } from '../../stores/ttsStore';
+import { useFlagContent, FLAG_REASONS, type FlagReason } from '../../hooks/useFlagContent';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Shadow } from '../../constants/design';
@@ -42,6 +43,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const isMine = userId === post.author_id;
   const deletePost = useDeletePost();
   const [boostOpen, setBoostOpen] = useState(false);
+  const [flagOpen, setFlagOpen] = useState(false);
   const boost = useBoostPost();
   const { data: families } = useMyFamilies();
 
@@ -79,13 +81,24 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             <Text style={s.time}>{timeAgo(post.created_at)}</Text>
           </View>
         </Pressable>
-        {isMine && (
+        {isMine ? (
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); onDelete(); }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Delete post"
           >
             <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+        ) : (
+          // Not-mine posts get a flag/report icon. The actual modal
+          // and reason picker is handled by FlagModal below — this
+          // just opens it.
+          <TouchableOpacity
+            onPress={(e) => { e.stopPropagation(); setFlagOpen(true); }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Report post"
+          >
+            <Ionicons name="flag-outline" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -274,7 +287,154 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Flag / report modal — opened from the flag icon in the
+          header for not-mine posts. Picks a reason and optionally a
+          short note. Once N distinct users flag the same item, the
+          server-side active_flagged_posts view auto-filters it from
+          the feed pending review. */}
+      <FlagModal
+        open={flagOpen}
+        onClose={() => setFlagOpen(false)}
+        postId={post.id}
+      />
     </Pressable>
+  );
+}
+
+/**
+ * Flag/report modal — pick a reason + optional note, send to the
+ * moderation queue via flag_content RPC. Shown when the user taps
+ * the flag icon on a post they didn't write.
+ */
+function FlagModal({ open, onClose, postId, commentId }: {
+  open: boolean;
+  onClose: () => void;
+  postId?: string;
+  commentId?: string;
+}) {
+  const s = makeStyles();
+  const flag = useFlagContent();
+  const [reason, setReason] = useState<FlagReason | null>(null);
+  const [note, setNote] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const reset = () => { setReason(null); setNote(''); setSent(false); };
+
+  const submit = () => {
+    if (!reason) return;
+    if (reason === 'other' && note.trim().length < 5) return;
+    flag.mutate({ postId, commentId, reason, note: note.trim() || undefined }, {
+      onSuccess: () => { setSent(true); },
+    });
+  };
+
+  return (
+    <Modal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={() => { reset(); onClose(); }}
+    >
+      <Pressable
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 }]}
+        onPress={() => { reset(); onClose(); }}
+      >
+        <Pressable
+          style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: 18, gap: 4, width: '100%', maxWidth: 420, borderWidth: 1, borderColor: Colors.border }}
+          onPress={(e) => e.stopPropagation()}
+        >
+          {sent ? (
+            <>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary }}>
+                Thanks — we got it.
+              </Text>
+              <Text style={{ fontSize: 13, color: Colors.textSecondary, marginTop: 8, lineHeight: 19 }}>
+                A moderator will review. If a few others flag the same thing, it'll auto-hide while we look.
+              </Text>
+              <TouchableOpacity
+                onPress={() => { reset(); onClose(); }}
+                style={{ marginTop: 14, alignItems: 'center', paddingVertical: 12, borderRadius: 12, backgroundColor: Colors.primary }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 14 }}>Done</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary }}>
+                Report this {commentId ? 'comment' : 'post'}
+              </Text>
+              <Text style={{ fontSize: 12, color: Colors.textMuted, marginBottom: 8 }}>
+                Pick the reason that fits best.
+              </Text>
+              {FLAG_REASONS.map((r) => {
+                const isPicked = reason === r.id;
+                return (
+                  <TouchableOpacity
+                    key={r.id}
+                    onPress={() => setReason(r.id)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+                      paddingVertical: 8, paddingHorizontal: 8, borderRadius: 10,
+                      backgroundColor: isPicked ? Colors.primaryFaint : 'transparent',
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={isPicked ? 'radio-button-on' : 'radio-button-off'}
+                      size={18}
+                      color={isPicked ? Colors.primary : Colors.textMuted}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.textPrimary }}>{r.label}</Text>
+                      <Text style={{ fontSize: 12, color: Colors.textMuted, marginTop: 1 }}>{r.sub}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+              {reason === 'other' && (
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder="Tell us what we should know…"
+                  placeholderTextColor={Colors.textMuted}
+                  multiline
+                  maxLength={500}
+                  style={{
+                    backgroundColor: Colors.surfaceLight,
+                    borderWidth: 1, borderColor: Colors.border,
+                    borderRadius: 10, padding: 10,
+                    fontSize: 13, color: Colors.textPrimary,
+                    minHeight: 60, marginTop: 4,
+                  }}
+                />
+              )}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                <TouchableOpacity
+                  onPress={() => { reset(); onClose(); }}
+                  style={{ flex: 1, alignItems: 'center', paddingVertical: 11, borderRadius: 10, borderWidth: 1, borderColor: Colors.border }}
+                >
+                  <Text style={{ color: Colors.textSecondary, fontWeight: '600', fontSize: 13 }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={submit}
+                  disabled={!reason || flag.isPending || (reason === 'other' && note.trim().length < 5)}
+                  style={{
+                    flex: 1, alignItems: 'center', paddingVertical: 11, borderRadius: 10,
+                    backgroundColor: Colors.primary,
+                    opacity: !reason || flag.isPending || (reason === 'other' && note.trim().length < 5) ? 0.4 : 1,
+                  }}
+                >
+                  <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>
+                    {flag.isPending ? 'Sending…' : 'Submit'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
