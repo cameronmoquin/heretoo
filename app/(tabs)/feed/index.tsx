@@ -11,8 +11,6 @@ import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
 import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
-import { CalendarEmbed } from '../../../components/shared/CalendarEmbed';
-import { FamilyEventInvite } from '../../../components/shared/FamilyEventInvite';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -32,11 +30,6 @@ export default function FeedScreen() {
   const { data: stats } = useMyNetworkStats();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
-  // Only show right sidebar when there's REAL empty space outside
-  // the centered feed column. The feed posts max out around 600px
-  // centered; the sidebar is 320px wide. So we need at least
-  // 600 + 320 + 32 (gutters) ≈ 1280px to have any breathing room.
-  const showSidebar = width >= 1280;
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
@@ -115,6 +108,9 @@ export default function FeedScreen() {
           option, not just the once-fired beforeinstallprompt event. */}
       <InstallAppBanner />
 
+      {/* Right sidebar (calendar + family invite) is now mounted
+          globally in app/_layout.tsx so it appears on every page,
+          not just here. */}
       <FeedList
         posts={posts as any}
         isLoading={feed.isLoading}
@@ -124,20 +120,6 @@ export default function FeedScreen() {
         onLoadMore={() => feed.fetchNextPage()}
         onHeart={(postId) => toggleHeart.mutate(postId)}
       />
-
-      {/* Sidebar lives in the outer empty space to the RIGHT of the
-          centered feed column. Absolute-positioned to the viewport's
-          right edge so it doesn't compress the feed at all — feed
-          stays centered with its own max-width as before; sidebar
-          floats independently in the unused right third. Only shows
-          on viewports ≥1280px so there's actually empty space to put
-          it in. */}
-      {showSidebar && (
-        <View style={styles.sidebarCol}>
-          <CalendarEmbed />
-          <FamilyEventInvite />
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -148,19 +130,6 @@ function makeStyles() { return StyleSheet.create({
   // The actual reading-surface contrast comes from each PostCard's
   // own backgroundColor, not the page wrapper.
   safe: { flex: 1, backgroundColor: 'transparent' },
-  // Sidebar is absolute-positioned to the viewport's right edge so it
-  // floats in the empty space outside the centered feed column.
-  // Feed stays centered with its own max-width (no row layout = no
-  // squeezing). 16px from the right edge so it doesn't kiss the side.
-  sidebarCol: {
-    position: 'absolute',
-    top: 80,                  // sit below the header
-    right: 16,
-    width: 320,
-    gap: 12,
-    paddingBottom: 80,        // clears the bottom nav
-    zIndex: 5,                // above feed content but below modals
-  },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 8,

@@ -20,6 +20,7 @@ import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { WallpaperBackground } from '../components/shared/WallpaperBackground';
 import { MobileTabBar } from '../components/shared/MobileTabBar';
+import { RightSidebar } from '../components/shared/RightSidebar';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -101,6 +102,11 @@ function RootLayoutInner() {
           authed only, hidden on auth pages) so the menu is always
           available regardless of which sub-route the user is on. */}
       <MobileTabBar />
+      {/* Global right sidebar — calendar embed + family event invite.
+          Same hide rules as MobileTabBar plus a width threshold
+          (≥1280px) so it only appears when there's real empty space
+          outside the centered feed column. */}
+      <RightSidebar />
       <ToastHost />
       <ConfirmHost />
       <UpdateNudge />
