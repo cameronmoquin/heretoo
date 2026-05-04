@@ -77,6 +77,15 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
           pointer-events: none;
           background-color: ${BASE_BG};
         }
+        /* Reserve room on the left for the LeftSidebar (240px wide)
+           on desktop viewports. Without this, the sidebar overlaps
+           the page's centered content. The CSS media query handles
+           the threshold (1024px) without React re-renders. */
+        @media (min-width: 1024px) {
+          #root > div:first-child {
+            padding-left: 240px;
+          }
+        }
       `;
       document.head.appendChild(style);
     }

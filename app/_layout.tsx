@@ -20,6 +20,7 @@ import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { WallpaperBackground } from '../components/shared/WallpaperBackground';
 import { MobileTabBar } from '../components/shared/MobileTabBar';
+import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
@@ -98,14 +99,14 @@ function RootLayoutInner() {
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
-      {/* Global mobile bottom nav — appears on EVERY screen (web only,
-          authed only, hidden on auth pages) so the menu is always
-          available regardless of which sub-route the user is on. */}
+      {/* Global navigation — same hide rules across all three:
+          web-only, authed, off auth-flow pages. Width thresholds
+          differ so the right configuration shows per viewport:
+            - <1024px:  MobileTabBar at the bottom only
+            - ≥1024px:  LeftSidebar visible; MobileTabBar hides
+            - ≥1280px:  RightSidebar (calendar + invites) also shows */}
       <MobileTabBar />
-      {/* Global right sidebar — calendar embed + family event invite.
-          Same hide rules as MobileTabBar plus a width threshold
-          (≥1280px) so it only appears when there's real empty space
-          outside the centered feed column. */}
+      <LeftSidebar />
       <RightSidebar />
       <ToastHost />
       <ConfirmHost />

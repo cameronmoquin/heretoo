@@ -16,13 +16,14 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { useUnreadCount } from '../../hooks/useChat';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
+import { shouldShowLeftSidebar } from './LeftSidebar';
 
 export function MobileTabBar() {
   const pathname = usePathname();
@@ -32,6 +33,7 @@ export function MobileTabBar() {
   const radioToggle = useRadio((s) => s.toggle);
   const station = useActiveStation();
   const { data: unread } = useUnreadCount();
+  const { width } = useWindowDimensions();
 
   // Skip on native (the (tabs) layout still owns native nav until we
   // ship the native build).
@@ -39,6 +41,10 @@ export function MobileTabBar() {
 
   // Skip if not signed in — auth flow has its own CTA hierarchy.
   if (!session) return null;
+
+  // Skip when LeftSidebar is showing — desktop gets the vertical nav,
+  // mobile gets this bottom bar. They're never both visible.
+  if (shouldShowLeftSidebar(width)) return null;
 
   // Hide on auth + signup paths so they don't compete with the
   // primary CTAs on those screens. Path matching is loose because
