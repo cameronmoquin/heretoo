@@ -68,10 +68,13 @@ export function LeftSidebar() {
 
   return (
     <View style={s.sidebar}>
-      {/* Brand mark — tap to go home */}
+      {/* Brand mark — tap to go home. Using '/feed' (not the
+          route-group form '/(tabs)/feed') because Expo Router's
+          route-group resolution can choke on the paren form when
+          chained through router.replace mid-session. */}
       <TouchableOpacity
         style={s.brand}
-        onPress={() => router.replace('/(tabs)/feed' as any)}
+        onPress={() => router.push('/feed' as any)}
         activeOpacity={0.7}
       >
         <HereTooLogo size={32} color={Colors.textPrimary} />
