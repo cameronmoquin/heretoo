@@ -143,19 +143,19 @@ export function MobileTabBar() {
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  bar: ({
     flexDirection: 'row',
     backgroundColor: Colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
     paddingVertical: 6,
     paddingHorizontal: 4,
-    // Position absolute at the bottom so it sits above page content
-    // even on sub-pages without their own bottom-anchored layout.
-    position: 'absolute' as const,
+    // fixed not absolute so it's pinned to the viewport regardless
+    // of parent stacking. Sits above page content on every page.
+    position: 'fixed',
     bottom: 0, left: 0, right: 0,
     zIndex: 10,
-  },
+  } as any),
   slot: { flex: 1, alignItems: 'center', paddingVertical: 4, gap: 2 },
   label: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
   labelActive: { color: Colors.primary, fontWeight: '700' },

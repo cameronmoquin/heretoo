@@ -95,6 +95,21 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
             padding-right: 352px;
           }
         }
+        /* Force page content to a centered narrow column on desktop
+           so the wallpaper bleeds into the gutters on BOTH sides.
+           Targets the Stack's screen wrappers (every direct child
+           of the Stack output ends up wrapped in a div with these
+           role/data attrs), and also any plain div sibling that
+           isn't one of our fixed-position chrome elements
+           (LeftSidebar/RightSidebar/MobileTabBar). */
+        @media (min-width: 1024px) {
+          #root > div:first-child > div:not([style*="position: fixed"]) {
+            max-width: 720px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            width: 100% !important;
+          }
+        }
       `;
       document.head.appendChild(style);
     }

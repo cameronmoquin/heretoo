@@ -59,12 +59,15 @@ export function RightSidebar() {
 }
 
 const s = StyleSheet.create({
-  sidebar: {
-    position: 'absolute',
+  sidebar: ({
+    // fixed not absolute so it's pinned to the viewport regardless
+    // of parent stacking / padding. Avoids the LeftSidebar's
+    // overlap bug pattern.
+    position: 'fixed',
     top: 80,                   // below the page header
     right: 16,
     width: 320,
     paddingBottom: 80,         // clears the bottom tab bar
     zIndex: 5,                 // above page content, below modals
-  },
+  } as any),
 });

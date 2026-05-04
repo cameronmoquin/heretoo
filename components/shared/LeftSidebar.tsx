@@ -193,8 +193,12 @@ function NavRow({ icon, label, sub, active, badge, accent, onPress, onLongPress 
 }
 
 const s = StyleSheet.create({
-  sidebar: {
-    position: 'absolute' as const,
+  sidebar: ({
+    // position: fixed pins to the viewport, completely independent of
+    // any parent's padding / transform / stacking context. Avoids the
+    // "sidebar overlaps content" bug that absolute had when parents
+    // used flex layouts that ignored absolute children's left edge.
+    position: 'fixed',
     top: 0,
     left: 0,
     bottom: 0,
@@ -206,11 +210,9 @@ const s = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: Colors.borderLight,
     zIndex: 5,
-    // backdrop-filter is web-only and gives the sidebar a soft frosted
-    // look so the wallpaper underneath shows through subtly. Cast as
-    // any so RN-Web doesn't complain about the unknown style key.
-    ...({ backdropFilter: 'blur(8px)' } as any),
-  },
+    // backdrop-filter for a soft frosted look over the wallpaper.
+    backdropFilter: 'blur(8px)',
+  } as any),
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, paddingHorizontal: 6 },
   brandText: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.3 },
 
