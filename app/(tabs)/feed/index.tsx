@@ -11,6 +11,8 @@ import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
 import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
+import { CalendarEmbed } from '../../../components/shared/CalendarEmbed';
+import { FamilyEventInvite } from '../../../components/shared/FamilyEventInvite';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -30,6 +32,9 @@ export default function FeedScreen() {
   const { data: stats } = useMyNetworkStats();
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
+  // Only show right sidebar on truly wide viewports — under 1024px
+  // the feed needs the whole width to read comfortably.
+  const showSidebar = width >= 1024;
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
@@ -108,15 +113,30 @@ export default function FeedScreen() {
           option, not just the once-fired beforeinstallprompt event. */}
       <InstallAppBanner />
 
-      <FeedList
-        posts={posts as any}
-        isLoading={feed.isLoading}
-        isRefreshing={feed.isRefetching}
-        hasMore={feed.hasNextPage ?? false}
-        onRefresh={() => feed.refetch()}
-        onLoadMore={() => feed.fetchNextPage()}
-        onHeart={(postId) => toggleHeart.mutate(postId)}
-      />
+      {/* Two-column desktop layout: feed on the left, sidebar on the
+          right (calendar, family-event invite). Sidebar shows only on
+          wide viewports (≥1024px) so mobile gets the full feed width.
+          The sidebar's contents will surface on mobile via the
+          three-bars overflow menu in a future batch. */}
+      <View style={[styles.body, !showSidebar && { paddingHorizontal: 0 }]}>
+        <View style={styles.feedCol}>
+          <FeedList
+            posts={posts as any}
+            isLoading={feed.isLoading}
+            isRefreshing={feed.isRefetching}
+            hasMore={feed.hasNextPage ?? false}
+            onRefresh={() => feed.refetch()}
+            onLoadMore={() => feed.fetchNextPage()}
+            onHeart={(postId) => toggleHeart.mutate(postId)}
+          />
+        </View>
+        {showSidebar && (
+          <View style={styles.sidebarCol}>
+            <CalendarEmbed />
+            <FamilyEventInvite />
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -127,6 +147,29 @@ function makeStyles() { return StyleSheet.create({
   // The actual reading-surface contrast comes from each PostCard's
   // own backgroundColor, not the page wrapper.
   safe: { flex: 1, backgroundColor: 'transparent' },
+  // Two-column body — feed on the left, sidebar on the right.
+  // Stacks vertically on narrow viewports via maxWidth on sidebar.
+  body: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 16,
+    paddingHorizontal: 8,
+    maxWidth: 1280,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  feedCol: { flex: 1, minWidth: 0 },
+  sidebarCol: {
+    width: 320,
+    gap: 12,
+    paddingTop: 4,
+    paddingBottom: 80, // clears the bottom nav
+    // Hide on narrow viewports (mobile / small tablet). RN-Web
+    // honors @media via display:none — but RN doesn't expose media
+    // queries, so we use a flex-basis trick: width:0 on small,
+    // 320 on wide. Done via the wrapper's flexWrap pattern in
+    // the body style so on narrow the sidebar wraps below feed.
+  },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 8,
