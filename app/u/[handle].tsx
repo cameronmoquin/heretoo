@@ -27,6 +27,7 @@ import { useOpenThread } from '../../hooks/useChat';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { PostCard } from '../../components/feed/PostCard';
 import { WALLPAPERS, wallpaperToDataUri, type WallpaperId } from '../../stores/wallpaperStore';
+import { STATIONS } from '../../stores/radioStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
@@ -197,42 +198,13 @@ export default function UserProfile() {
           </View>
         )}
 
-        {/* Their style — wallpaper preference. Reads from
-            profile.style_prefs.wallpaper_id (synced via wallpaperStore
-            on the user's own device). Renders a small preview tile +
-            era label so a visitor gets a sense of "their room" without
-            the visitor's own wallpaper changing. */}
-        {(() => {
-          const wid = (profile as any)?.style_prefs?.wallpaper_id as
-            | WallpaperId
-            | undefined;
-          if (!wid || wid === 'plain') return null;
-          const def = WALLPAPERS[wid];
-          if (!def) return null;
-          const bgImage = wallpaperToDataUri(def);
-          return (
-            <View style={s.section}>
-              <Text style={s.sectionTitle}>Their style</Text>
-              <View style={s.styleRow}>
-                <View
-                  style={[
-                    s.stylePreview,
-                    // RN-on-web inline style for the data-URI bg.
-                    { backgroundColor: def.swatchBg, ...({
-                      backgroundImage: bgImage,
-                      backgroundRepeat: 'repeat',
-                      backgroundSize: `${def.tileSize}px ${def.tileSize}px`,
-                    } as any) },
-                  ]}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={s.styleLabel}>{def.label}</Text>
-                  <Text style={s.styleEra}>{def.era} wallpaper</Text>
-                </View>
-              </View>
-            </View>
-          );
-        })()}
+        {/* Their style — wallpaper + radio + gallery picks. Reads from
+            profile.style_prefs which is synced from the user's own
+            stores (wallpaperStore, radioStore, artPrefsStore). The
+            visited person's choices appear here without changing the
+            visitor's own — a glimpse of their "room" / "soundtrack"
+            / "taste in art." */}
+        <TheirStyleCard profile={profile} />
 
         {/* Posts */}
         <View style={s.section}>
@@ -246,6 +218,106 @@ export default function UserProfile() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+/**
+ * "Their style" — three-row card on the visited user's profile that
+ * surfaces their wallpaper / radio station / art-filter picks.
+ *
+ * Renders nothing if profile.style_prefs has none of the three set —
+ * we don't want a sad empty card on profiles that haven't picked
+ * anything yet (default state).
+ */
+function TheirStyleCard({ profile }: { profile: any }) {
+  const s = makeStyles();
+  const prefs = profile?.style_prefs ?? {};
+
+  // ── Wallpaper ─────────────────────────────────────────────────────
+  const wid = prefs.wallpaper_id as WallpaperId | undefined;
+  const wallpaperDef = wid && wid !== 'plain' ? WALLPAPERS[wid] : null;
+  const wallpaperBg = wallpaperDef ? wallpaperToDataUri(wallpaperDef) : '';
+
+  // ── Radio station ─────────────────────────────────────────────────
+  const radioId = prefs.radio_station_id as string | undefined;
+  const station = radioId ? STATIONS.find((st) => st.id === radioId) : null;
+
+  // ── Art filter ────────────────────────────────────────────────────
+  const af = prefs.art_filter ?? {};
+  const filterChips: string[] = [];
+  for (const e of (af.eras ?? []) as string[]) filterChips.push(capitalize(e));
+  for (const sch of (af.schools ?? []) as string[]) filterChips.push(capitalize(sch));
+  for (const g of (af.genres ?? []) as string[]) filterChips.push(capitalize(g));
+  for (const m of (af.mediums ?? []) as string[]) filterChips.push(capitalize(m));
+  // De-dup + cap so the list stays compact
+  const uniqueChips = [...new Set(filterChips)].slice(0, 6);
+
+  // Don't render the section at all if there's nothing to show.
+  if (!wallpaperDef && !station && uniqueChips.length === 0) return null;
+
+  return (
+    <View style={s.section}>
+      <Text style={s.sectionTitle}>Their style</Text>
+
+      {wallpaperDef && (
+        <View style={s.styleRow}>
+          <View
+            style={[
+              s.stylePreview,
+              { backgroundColor: wallpaperDef.swatchBg, ...({
+                backgroundImage: wallpaperBg,
+                backgroundRepeat: 'repeat',
+                backgroundSize: `${wallpaperDef.tileSize}px ${wallpaperDef.tileSize}px`,
+              } as any) },
+            ]}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={s.styleLabel}>{wallpaperDef.label}</Text>
+            <Text style={s.styleEra}>{wallpaperDef.era} wallpaper</Text>
+          </View>
+        </View>
+      )}
+
+      {station && (
+        <View style={s.styleRow}>
+          <View style={s.stationIcon}>
+            <Ionicons name="musical-notes" size={20} color={Colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.styleLabel}>{station.name}</Text>
+            <Text style={s.styleEra}>
+              {station.genre.replace(/^./, (c) => c.toUpperCase())} · {station.city}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {uniqueChips.length > 0 && (
+        <View style={[s.styleRow, { alignItems: 'flex-start' }]}>
+          <View style={s.stationIcon}>
+            <Ionicons name="color-palette" size={20} color={Colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.styleLabel}>Gallery taste</Text>
+            <View style={s.chipsWrap}>
+              {uniqueChips.map((c) => (
+                <View key={c} style={s.chip}>
+                  <Text style={s.chipText}>{c}</Text>
+                </View>
+              ))}
+              {filterChips.length > uniqueChips.length && (
+                <Text style={s.chipMore}>+{filterChips.length - uniqueChips.length} more</Text>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function capitalize(str: string): string {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function makeStyles() { return StyleSheet.create({
@@ -310,6 +382,24 @@ function makeStyles() { return StyleSheet.create({
   },
   styleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   styleEra: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+
+  stationIcon: {
+    width: 64, height: 64, borderRadius: Radius.md,
+    backgroundColor: Colors.primaryFaint,
+    borderWidth: 1, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  chip: {
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+    backgroundColor: Colors.primaryFaint,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  chipText: { fontSize: 11, fontWeight: '600', color: Colors.primary },
+  chipMore: {
+    alignSelf: 'center',
+    fontSize: 11, color: Colors.textMuted, paddingHorizontal: 4,
+  },
 
   notFound: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 10, marginTop: 60 },
   notFoundTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: 8 },

@@ -18,6 +18,8 @@ import { showAlert, showConfirm } from '../../../lib/alert';
 import { FeedComposer } from '../../../components/feed/FeedComposer';
 import { PostCard } from '../../../components/feed/PostCard';
 import { FamilyChatPanel } from '../../../components/family/FamilyChatPanel';
+import { FamilyWallpaperVoting } from '../../../components/family/FamilyWallpaperVoting';
+import { WallpaperBackground } from '../../../components/shared/WallpaperBackground';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -135,6 +137,11 @@ export default function FamilyDetail() {
 
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
+      {/* Family-scoped wallpaper — overrides the visitor's personal
+          one with whatever the family has voted on. Falls back to the
+          owner's personal wallpaper when no votes exist. Renders
+          absolute below the page chrome. */}
+      <WallpaperBackground familyId={id} />
       <View style={s.header}>
         <TouchableOpacity
           style={s.backBtn}
@@ -263,6 +270,11 @@ export default function FamilyDetail() {
 
         {tab === 'about' && (
           <>
+            {/* Wallpaper voting — every active family member can pick.
+                Plurality wins; ties break toward most recent vote.
+                Default = the family owner's personal wallpaper. */}
+            <FamilyWallpaperVoting familyId={id} />
+
             {/* Active rename proposal — shown to everyone in the family */}
             {pendingRename?.proposal && (
               <View style={s.proposalCard}>

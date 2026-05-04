@@ -20,12 +20,17 @@
 import React from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
 import { useWallpaper, WALLPAPERS, wallpaperToDataUri } from '../../stores/wallpaperStore';
+import { useEffectiveFamilyWallpaper } from '../../hooks/useFamilyWallpaper';
 import { Colors } from '../../constants/colors';
 
 interface Props {
   /** Optional: render with stronger pattern density (e.g., on a
    *  family page where the wallpaper IS the room's identity). */
   bold?: boolean;
+  /** Optional: render the family's voted-on wallpaper instead of the
+   *  user's personal one. Used inside the /family/[id] page to give
+   *  each family its own "room" appearance. */
+  familyId?: string;
 }
 
 /**
@@ -33,12 +38,20 @@ interface Props {
  * native gets nothing yet (we'll wire it via expo-image once we ship
  * the native build).
  */
-export function WallpaperBackground({ bold: boldOverride }: Props = {}) {
-  const id = useWallpaper((s) => s.id);
+export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}) {
+  // CRITICAL: every hook MUST be called every render to satisfy the
+  // rules of hooks. Read both stores unconditionally then choose.
+  const personalId = useWallpaper((s) => s.id);
   const userBold = useWallpaper((s) => s.bold);
+  const familyWp = useEffectiveFamilyWallpaper(familyId ?? null);
+
+  // Family wallpaper (voted on by members) takes priority when this
+  // component is rendered inside a family page. Otherwise fall back
+  // to the user's personal wallpaper.
+  const effectiveId = familyId ? (familyWp.data ?? 'plain') : personalId;
   const bold = boldOverride ?? userBold;
 
-  const def = WALLPAPERS[id] ?? WALLPAPERS.plain;
+  const def = WALLPAPERS[effectiveId as keyof typeof WALLPAPERS] ?? WALLPAPERS.plain;
   if (!def.svg) return null;
   if (Platform.OS !== 'web') return null;
 
