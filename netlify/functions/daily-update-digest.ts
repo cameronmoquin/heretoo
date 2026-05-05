@@ -34,14 +34,12 @@ const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// Sender is billing-therapy.com TEMPORARILY — that domain is already
-// verified in Resend. heretoo.social is registered but DNS records
-// haven't propagated yet (DKIM TXT, SPF MX + TXT). Once those land
-// and Resend flips the domain to "verified", swap to:
-//   const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
-// reply_to is set on the send so replies still go to a HereToo
-// address, even though the envelope sender is billing-therapy.com.
-const FROM_EMAIL = 'HereToo <notifications@billing-therapy.com>';
+// heretoo.social is verified in Resend (DKIM + SPF DNS records live
+// in Cloudflare). Mail goes out as HereToo <notifications@heretoo.social>.
+// Replies go to cameron@billing-therapy.com — heretoo.social has no
+// inbound mail host yet, but billing-therapy.com is already a working
+// inbox for the project owner.
+const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
 const REPLY_TO = 'cameron@billing-therapy.com';
 
 const HEADERS = {
