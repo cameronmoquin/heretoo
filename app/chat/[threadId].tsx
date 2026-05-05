@@ -199,18 +199,23 @@ export default function ChatThread() {
               </TouchableOpacity>
             </View>
           </View>
-        ) : initiatorIntroSent ? (
-          <View style={s.awaitingBar}>
-            <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-            <Text style={s.awaitingText}>Awaiting response — one intro message at a time for new contacts.</Text>
-          </View>
         ) : (
           <View style={s.composer}>
+            {initiatorIntroSent && (
+              <View style={s.awaitingHintInline} pointerEvents="none">
+                <Ionicons name="time-outline" size={12} color={Colors.textMuted} />
+                <Text style={s.awaitingHintText}>Awaiting their response…</Text>
+              </View>
+            )}
             <TextInput
               style={s.composerInput}
               value={draft}
               onChangeText={setDraft}
-              placeholder={isPending ? 'Send an intro message…' : 'Message…'}
+              placeholder={
+                initiatorIntroSent
+                  ? 'They need to accept before more replies send…'
+                  : isPending ? 'Send an intro message…' : 'Message…'
+              }
               placeholderTextColor={Colors.textMuted}
               multiline
               maxLength={2000}
@@ -323,4 +328,9 @@ function makeStyles() { return StyleSheet.create({
     paddingVertical: 12,
   },
   awaitingText: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', flexShrink: 1 },
+  awaitingHintInline: {
+    position: 'absolute', top: -22, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4,
+  },
+  awaitingHintText: { fontSize: 11, color: Colors.textMuted, fontStyle: 'italic' },
 }); }
