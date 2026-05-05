@@ -91,14 +91,22 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
         }
         /* Force page content to a centered narrow column on desktop
            so the wallpaper bleeds into the gutters on BOTH sides.
-           Always centered — works the same with or without sidebars. */
+           Skipped on auth pages — the (auth) layout flex-centers
+           its own 480px card and our 720px box would fight that. */
         @media (min-width: 1024px) {
-          #root > div:first-child > div:not([style*="position: fixed"]) {
+          body:not([data-auth-layout='on']) #root > div:first-child > div:not([style*="position: fixed"]) {
             max-width: 720px !important;
             margin-left: auto !important;
             margin-right: auto !important;
             width: 100% !important;
           }
+        }
+        /* Auth pages: also drop the sidebar padding (sidebars are
+           hidden anyway, but be explicit so nothing shifts the
+           centered card off-axis). */
+        body[data-auth-layout='on'] #root > div:first-child {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
         }
       `;
       document.head.appendChild(style);
