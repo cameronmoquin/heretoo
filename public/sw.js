@@ -12,7 +12,7 @@
  * the network — otherwise we'd lose writes.
  */
 
-const VERSION = 'heretoo-v82';
+const VERSION = 'heretoo-v83';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSETS_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;

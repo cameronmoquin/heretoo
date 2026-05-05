@@ -15,7 +15,7 @@
  * the same width threshold) so the user doesn't get duplicate nav.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,9 +55,25 @@ export function LeftSidebar() {
   const radioToggle = useRadio((s) => s.toggle);
   const station = useActiveStation();
 
-  if (!shouldShowLeftSidebar(width)) return null;
-  if (!session) return null;
-  if (HIDE_ON_PATHS.some((p) => pathname.includes(p))) return null;
+  const visible =
+    shouldShowLeftSidebar(width)
+    && !!session
+    && !HIDE_ON_PATHS.some((p) => pathname.includes(p));
+
+  // Toggle a body data-attr so the wallpaper CSS knows whether to
+  // reserve 240px on the left. Without this the auth/welcome pages
+  // (no sidebar) inherited the padding and pushed the centered
+  // login box rightward.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    if (visible) document.body.setAttribute('data-left-sidebar', 'on');
+    else document.body.removeAttribute('data-left-sidebar');
+    return () => {
+      if (typeof document !== 'undefined') document.body.removeAttribute('data-left-sidebar');
+    };
+  }, [visible]);
+
+  if (!visible) return null;
 
   const onFeed = pathname === '/' || pathname.startsWith('/feed') || pathname.startsWith('/(tabs)/feed');
   const onChat = pathname.startsWith('/chat');

@@ -78,30 +78,20 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
           background-color: ${BASE_BG};
         }
         /* Reserve room on the left for the LeftSidebar (240px wide)
-           on desktop viewports. Without this, the sidebar overlaps
-           the page's centered content. The CSS media query handles
-           the threshold (1024px) without React re-renders. */
-        @media (min-width: 1024px) {
-          #root > div:first-child {
-            padding-left: 240px;
-          }
+           ONLY when it's actually visible. The sidebar component
+           toggles body[data-left-sidebar='on'] on mount/unmount —
+           auth pages (welcome / profile-setup) hide the sidebar so
+           the padding goes away too and the centered login form
+           stays in the true viewport center, not shifted right. */
+        body[data-left-sidebar='on'] #root > div:first-child {
+          padding-left: 240px;
         }
-        /* And reserve room on the right for the RightSidebar
-           (320px + 16 margin) when it shows. Without this, the
-           sidebar overlaps the feed's right gutter on viewports
-           between 1280 and ~1700px. */
-        @media (min-width: 1280px) {
-          #root > div:first-child {
-            padding-right: 352px;
-          }
+        body[data-right-sidebar='on'] #root > div:first-child {
+          padding-right: 352px;
         }
         /* Force page content to a centered narrow column on desktop
            so the wallpaper bleeds into the gutters on BOTH sides.
-           Targets the Stack's screen wrappers (every direct child
-           of the Stack output ends up wrapped in a div with these
-           role/data attrs), and also any plain div sibling that
-           isn't one of our fixed-position chrome elements
-           (LeftSidebar/RightSidebar/MobileTabBar). */
+           Always centered — works the same with or without sidebars. */
         @media (min-width: 1024px) {
           #root > div:first-child > div:not([style*="position: fixed"]) {
             max-width: 720px !important;

@@ -15,7 +15,7 @@
  * Native: returns null (no sidebar in mobile native builds).
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { usePathname } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
@@ -27,16 +27,6 @@ export function RightSidebar() {
   const session = useAuthStore((s) => s.session);
   const { width } = useWindowDimensions();
 
-  if (Platform.OS !== 'web') return null;
-  if (!session) return null;
-
-  // Need real empty space outside the centered feed column to put the
-  // sidebar in. Below 1280px the sidebar would just hover ON the feed
-  // which is worse than not showing.
-  if (width < 1280) return null;
-
-  // Hide on auth pages so the sidebar doesn't compete with primary
-  // CTAs there. Same hide list as MobileTabBar.
   const path = pathname ?? '';
   const HIDE_ON = [
     '/welcome',
@@ -46,7 +36,25 @@ export function RightSidebar() {
     '/sow/',
     '/version',
   ];
-  if (HIDE_ON.some((p) => path.includes(p))) return null;
+  const visible =
+    Platform.OS === 'web'
+    && !!session
+    && width >= 1280
+    && !HIDE_ON.some((p) => path.includes(p));
+
+  // Mirror visibility into a body data-attr so the wallpaper CSS knows
+  // whether to reserve 352px on the right. Auth pages and narrow
+  // viewports don't reserve, so the centered content stays centered.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    if (visible) document.body.setAttribute('data-right-sidebar', 'on');
+    else document.body.removeAttribute('data-right-sidebar');
+    return () => {
+      if (typeof document !== 'undefined') document.body.removeAttribute('data-right-sidebar');
+    };
+  }, [visible]);
+
+  if (!visible) return null;
 
   return (
     <View style={s.sidebar} pointerEvents="box-none">
