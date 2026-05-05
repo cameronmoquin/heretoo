@@ -29,13 +29,18 @@ export type WallpaperId =
   | 'morris-trellis'
   | 'morris-willow'
   | 'moorish-star'
-  | 'dude-rug';
+  | 'dude-rug'
+  | 'morris-trellis-original'
+  | 'morris-arcadia'
+  | 'morris-daisy'
+  | 'morris-fruit'
+  | 'morris-jasmine';
 
 export interface WallpaperDef {
   id: WallpaperId;
   label: string;
   era: string;
-  /** Inline SVG used as a data-URI background-image on web. */
+  /** Inline SVG used as a data-URI background-image on web. Tiles. */
   svg: string;
   /** Tile size in CSS px when applied. Smaller = denser pattern. */
   tileSize: number;
@@ -43,6 +48,13 @@ export interface WallpaperDef {
   swatchInk: string;
   /** Hex of the pattern's background color (used for the picker swatch). */
   swatchBg: string;
+  /** Optional URL to a full-bleed image (rendered with `background-size:
+   *  cover`, no tiling). Takes precedence over `svg` when set. Used for
+   *  high-res photographic public-domain wallpaper scans served from
+   *  /public/wallpapers/. */
+  imageUrl?: string;
+  /** Credit line shown in the picker for image-mode wallpapers. */
+  credit?: string;
 }
 
 /**
@@ -291,6 +303,74 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
         <path d='M82 82 L74 82 L74 78 L78 78 L78 74 L82 74 Z'/>
       </g>
     </svg>`,
+  },
+
+  // ─── Real Morris scans — high-res, served full-bleed (no tile) ──────
+  // These are public-domain photographic scans of actual Morris designs
+  // sourced from Wikimedia Commons. Rendered with `background-size:
+  // cover` so the user sees one large image, not a repeating motif.
+  // All ≥1000px on the long edge, so they look crisp on most viewports.
+  // Source pages all on commons.wikimedia.org under "Public domain"
+  // (Morris died 1896 → expired worldwide).
+
+  'morris-trellis-original': {
+    id: 'morris-trellis-original',
+    label: 'Trellis (original)',
+    era: 'Morris, 1862',
+    swatchInk: '#7A9166',
+    swatchBg: '#EFEAD8',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/morris-trellis-original.jpg',
+    credit: 'William Morris, 1862. PD (Wikimedia Commons).',
+  },
+
+  'morris-arcadia': {
+    id: 'morris-arcadia',
+    label: 'Arcadia',
+    era: 'May Morris',
+    swatchInk: '#7B8E5A',
+    swatchBg: '#E8E4CC',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/morris-arcadia.jpg',
+    credit: 'May Morris (1862–1938). PD.',
+  },
+
+  'morris-daisy': {
+    id: 'morris-daisy',
+    label: 'Daisy',
+    era: 'Morris, 1864',
+    swatchInk: '#9FB36B',
+    swatchBg: '#F0EAD0',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/morris-daisy.jpg',
+    credit: 'William Morris, 1864. PD.',
+  },
+
+  'morris-fruit': {
+    id: 'morris-fruit',
+    label: 'Fruit',
+    era: 'Morris, 1866',
+    swatchInk: '#8A6B43',
+    swatchBg: '#E5DDC2',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/morris-fruit.jpg',
+    credit: 'William Morris, c. 1866. PD.',
+  },
+
+  'morris-jasmine': {
+    id: 'morris-jasmine',
+    label: 'Jasmine',
+    era: 'Morris, 1872',
+    swatchInk: '#5E7A4B',
+    swatchBg: '#E8E5D0',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/morris-jasmine.png',
+    credit: 'William Morris, 1872. PD.',
   },
 };
 

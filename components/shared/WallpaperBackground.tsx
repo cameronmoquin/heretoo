@@ -132,6 +132,36 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
     const bold = boldOverride ?? userBold;
     const def = WALLPAPERS[effectiveId as keyof typeof WALLPAPERS] ?? WALLPAPERS.plain;
 
+    // Image-mode wallpaper (full-bleed PD scan). Single non-tiling
+    // background-size: cover image — no seams, just one big picture.
+    if (def.imageUrl) {
+      const url = `url("${def.imageUrl}")`;
+      div.style.backgroundImage = url;
+      div.style.backgroundRepeat = 'no-repeat';
+      div.style.backgroundSize = 'cover';
+      div.style.backgroundPosition = 'center center';
+      div.style.backgroundAttachment = 'fixed';
+      div.style.opacity = bold ? '1' : '0.85';
+
+      document.body.style.backgroundImage = url;
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center center';
+      document.body.style.backgroundAttachment = 'fixed';
+
+      const html = document.documentElement;
+      if (html) {
+        html.style.backgroundImage = url;
+        html.style.backgroundRepeat = 'no-repeat';
+        html.style.backgroundSize = 'cover';
+        html.style.backgroundPosition = 'center center';
+        html.style.backgroundAttachment = 'fixed';
+      }
+      // eslint-disable-next-line no-console
+      console.log('[wallpaper] applied (image, cover)', { id: effectiveId, url: def.imageUrl });
+      return;
+    }
+
     if (def.svg) {
       const url = wallpaperToDataUri(def);
       // FOUR layers of redundancy. The wallpaper has been near-impossible
