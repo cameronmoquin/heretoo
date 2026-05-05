@@ -34,10 +34,20 @@ export default function AuthLayout() {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: {
+  // Web: fixed-position full-viewport overlay. By escaping the React
+  // tree's DOM stacking entirely, the auth screen ignores any
+  // sidebar padding, max-width clamps, or margin-auto rules the
+  // global wallpaper CSS injects. The child centers in the real
+  // viewport, period.
+  root: ({
     flex: 1,
     backgroundColor: 'transparent',
-  },
+    ...(Platform.OS === 'web' ? {
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 1,
+    } : {}),
+  } as any),
   rootDesktop: {
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
@@ -49,6 +59,7 @@ function makeStyles() { return StyleSheet.create({
   },
   contentDesktop: {
     maxWidth: 480,
+    width: '100%',
     backgroundColor: Colors.background,
     borderRadius: 16,
     borderWidth: 0.5,
