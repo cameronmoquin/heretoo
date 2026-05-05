@@ -25,7 +25,11 @@ export type WallpaperId =
   | 'damask'
   | 'mod-dots'
   | 'toile'
-  | 'art-deco';
+  | 'art-deco'
+  | 'morris-trellis'
+  | 'morris-willow'
+  | 'moorish-star'
+  | 'dude-rug';
 
 export interface WallpaperDef {
   id: WallpaperId;
@@ -144,6 +148,147 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
         <path d='M50 0 L0 50'/>
         <circle cx='25' cy='25' r='10'/>
         <circle cx='25' cy='25' r='4' fill='#D9B85F'/>
+      </g>
+    </svg>`,
+  },
+
+  // ─── Morris Trellis — Arts & Crafts ─────────────────────────────────
+  // Inspired by William Morris's 1862 "Trellis" — his FIRST wallpaper
+  // design (PD, his death + 70yrs lapsed long ago). Diamond trellis of
+  // rose canes with a five-petal rose at each crossing. Re-drawn from
+  // scratch as a clean tiling SVG; not traced from any single scan.
+  'morris-trellis': {
+    id: 'morris-trellis',
+    label: 'Morris Trellis',
+    era: 'Morris, 1862',
+    swatchInk: '#7A9166',
+    swatchBg: '#EFEAD8',
+    tileSize: 80,
+    svg: `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'>
+      <rect width='80' height='80' fill='#EFEAD8'/>
+      <g stroke='#7A9166' stroke-width='1.3' fill='none' opacity='0.9'>
+        <path d='M0 0 L80 80'/><path d='M80 0 L0 80'/>
+        <path d='M40 0 Q50 20 40 40 Q30 60 40 80'/>
+        <path d='M0 40 Q20 50 40 40 Q60 30 80 40'/>
+      </g>
+      <g fill='#B6536A' opacity='0.85'>
+        <circle cx='40' cy='40' r='3.6'/>
+        <circle cx='0' cy='0' r='3.2'/><circle cx='80' cy='0' r='3.2'/>
+        <circle cx='0' cy='80' r='3.2'/><circle cx='80' cy='80' r='3.2'/>
+      </g>
+      <g fill='#7A9166' opacity='0.7'>
+        <ellipse cx='20' cy='20' rx='4' ry='2' transform='rotate(45 20 20)'/>
+        <ellipse cx='60' cy='60' rx='4' ry='2' transform='rotate(45 60 60)'/>
+        <ellipse cx='60' cy='20' rx='4' ry='2' transform='rotate(-45 60 20)'/>
+        <ellipse cx='20' cy='60' rx='4' ry='2' transform='rotate(-45 20 60)'/>
+      </g>
+    </svg>`,
+  },
+
+  // ─── Morris Willow Bough — Arts & Crafts ────────────────────────────
+  // Inspired by Morris's 1887 "Willow Bough" — flowing pointed willow
+  // leaves on a soft sage ground. PD source.
+  'morris-willow': {
+    id: 'morris-willow',
+    label: 'Willow Bough',
+    era: 'Morris, 1887',
+    swatchInk: '#5E7A4B',
+    swatchBg: '#E5E8D6',
+    tileSize: 72,
+    svg: `<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'>
+      <rect width='72' height='72' fill='#E5E8D6'/>
+      <g fill='#5E7A4B' opacity='0.78'>
+        <path d='M10 8 Q20 20 14 36 Q8 24 10 8 Z'/>
+        <path d='M40 4 Q52 16 46 32 Q38 20 40 4 Z'/>
+        <path d='M22 30 Q34 42 28 56 Q20 44 22 30 Z'/>
+        <path d='M52 36 Q66 48 58 64 Q48 52 52 36 Z'/>
+        <path d='M4 50 Q16 62 8 72 Q-2 60 4 50 Z'/>
+      </g>
+      <g stroke='#5E7A4B' stroke-width='0.7' fill='none' opacity='0.55'>
+        <path d='M14 36 Q22 44 28 56'/>
+        <path d='M46 32 Q50 36 52 36'/>
+        <path d='M58 64 Q60 68 64 72'/>
+      </g>
+    </svg>`,
+  },
+
+  // ─── Moorish Star — Owen Jones, Grammar of Ornament 1856 ────────────
+  // 8-point interlaced star from Plate XLI ("Moresque No. 4"). PD
+  // source. Geometric, Andalusian; the visual ancestor of Escher.
+  'moorish-star': {
+    id: 'moorish-star',
+    label: 'Moorish Star',
+    era: 'Jones, 1856',
+    swatchInk: '#1F4E5C',
+    swatchBg: '#F2E6C9',
+    tileSize: 64,
+    svg: `<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'>
+      <rect width='64' height='64' fill='#F2E6C9'/>
+      <g stroke='#1F4E5C' stroke-width='1.4' fill='none' stroke-linejoin='miter'>
+        <path d='M32 4 L40 24 L60 32 L40 40 L32 60 L24 40 L4 32 L24 24 Z'/>
+        <path d='M32 12 L37 27 L52 32 L37 37 L32 52 L27 37 L12 32 L27 27 Z'/>
+      </g>
+      <g fill='#B05B2C' opacity='0.85'>
+        <circle cx='32' cy='32' r='2.4'/>
+        <circle cx='0' cy='0' r='2'/><circle cx='64' cy='0' r='2'/>
+        <circle cx='0' cy='64' r='2'/><circle cx='64' cy='64' r='2'/>
+      </g>
+      <g stroke='#B05B2C' stroke-width='0.6' fill='none' opacity='0.6'>
+        <path d='M0 32 L8 32'/><path d='M56 32 L64 32'/>
+        <path d='M32 0 L32 8'/><path d='M32 56 L32 64'/>
+      </g>
+    </svg>`,
+  },
+
+  // ─── The Dude's Rug — Heriz Persian medallion ───────────────────────
+  // Cream / rust / midnight diamond medallion, stepped tribal edges,
+  // a hooked vine border. Inspired by the rug from The Big Lebowski
+  // (1998) — the rug really tied the room together. The rug pattern
+  // itself is a centuries-old Heriz/Bidjar style; the film didn't
+  // invent it, so this is fine to reproduce.
+  'dude-rug': {
+    id: 'dude-rug',
+    label: "The Dude's Rug",
+    era: 'Heriz, 19th c.',
+    swatchInk: '#9C3B1F',
+    swatchBg: '#E8D9B3',
+    tileSize: 96,
+    svg: `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'>
+      <rect width='96' height='96' fill='#E8D9B3'/>
+      <!-- outer hooked border -->
+      <g stroke='#1C2238' stroke-width='1.4' fill='none'>
+        <rect x='2' y='2' width='92' height='92'/>
+        <rect x='8' y='8' width='80' height='80'/>
+      </g>
+      <g fill='#1C2238'>
+        <path d='M2 24 L8 24 L8 28 L2 28 Z'/>
+        <path d='M2 68 L8 68 L8 72 L2 72 Z'/>
+        <path d='M88 24 L94 24 L94 28 L88 28 Z'/>
+        <path d='M88 68 L94 68 L94 72 L88 72 Z'/>
+        <path d='M24 2 L28 2 L28 8 L24 8 Z'/>
+        <path d='M68 2 L72 2 L72 8 L68 8 Z'/>
+        <path d='M24 88 L28 88 L28 94 L24 94 Z'/>
+        <path d='M68 88 L72 88 L72 94 L68 94 Z'/>
+      </g>
+      <!-- central stepped diamond medallion -->
+      <g fill='#9C3B1F'>
+        <path d='M48 18 L62 32 L78 48 L62 64 L48 78 L34 64 L18 48 L34 32 Z'/>
+      </g>
+      <g fill='#E8D9B3'>
+        <path d='M48 26 L56 34 L68 48 L56 62 L48 70 L40 62 L28 48 L40 34 Z'/>
+      </g>
+      <g fill='#1C2238'>
+        <path d='M48 32 L52 36 L60 48 L52 60 L48 64 L44 60 L36 48 L44 36 Z'/>
+      </g>
+      <g fill='#D9A53A'>
+        <circle cx='48' cy='48' r='3'/>
+      </g>
+      <!-- corner hooks -->
+      <g fill='#9C3B1F' opacity='0.92'>
+        <path d='M14 14 L22 14 L22 18 L18 18 L18 22 L14 22 Z'/>
+        <path d='M82 14 L74 14 L74 18 L78 18 L78 22 L82 22 Z'/>
+        <path d='M14 82 L22 82 L22 78 L18 78 L18 74 L14 74 Z'/>
+        <path d='M82 82 L74 82 L74 78 L78 78 L78 74 L82 74 Z'/>
       </g>
     </svg>`,
   },
