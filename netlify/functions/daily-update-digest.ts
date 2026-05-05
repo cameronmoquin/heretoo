@@ -34,11 +34,15 @@ const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// Sandbox sender for testing — Resend's onboarding domain. Only
-// delivers to the Resend account owner. To go live: verify
-// heretoo.social in Resend, then swap to:
+// Sender is billing-therapy.com TEMPORARILY — that domain is already
+// verified in Resend. heretoo.social is registered but DNS records
+// haven't propagated yet (DKIM TXT, SPF MX + TXT). Once those land
+// and Resend flips the domain to "verified", swap to:
 //   const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
-const FROM_EMAIL = 'HereToo <onboarding@resend.dev>';
+// reply_to is set on the send so replies still go to a HereToo
+// address, even though the envelope sender is billing-therapy.com.
+const FROM_EMAIL = 'HereToo <notifications@billing-therapy.com>';
+const REPLY_TO = 'cameron@billing-therapy.com';
 
 const HEADERS = {
   apikey: SERVICE_ROLE,
@@ -146,7 +150,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
       Authorization: `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: FROM_EMAIL, to, subject, html, text }),
+    body: JSON.stringify({ from: FROM_EMAIL, to, subject, html, text, reply_to: REPLY_TO }),
   });
   if (!res.ok) {
     // eslint-disable-next-line no-console
