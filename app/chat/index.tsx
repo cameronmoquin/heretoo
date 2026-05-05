@@ -12,7 +12,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,6 +46,7 @@ export default function ChatList() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <View style={s.frame}>
       <View style={s.header}>
         <TouchableOpacity
           onPress={() => goBackToFeed()}
@@ -96,6 +97,7 @@ export default function ChatList() {
           )
         )}
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -157,6 +159,19 @@ function relTime(iso: string): string {
 
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
+  // Card frame so the threads list lives in its own visual container
+  // on top of the wallpaper rather than floating thread-rows in space.
+  frame: ({
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginVertical: 12,
+    marginHorizontal: 8,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 6px 24px rgba(0,0,0,0.06)' } : {}),
+  } as any),
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: Spacing.md, paddingVertical: 10,

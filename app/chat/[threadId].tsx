@@ -129,6 +129,7 @@ export default function ChatThread() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <View style={s.frame}>
         <View style={s.header}>
           <TouchableOpacity
             onPress={() => router.replace('/chat' as any)}
@@ -236,6 +237,7 @@ export default function ChatThread() {
             </TouchableOpacity>
           </View>
         )}
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -255,6 +257,20 @@ function makeStyles() { return StyleSheet.create({
   // Constrained narrow column on desktop — chat reads better in a
   // mobile-width canvas than spread across a 1440px viewport.
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
+  // Card frame around the entire chat surface so messages live in
+  // their own visual container rather than floating directly on the
+  // wallpaper. Header / scroll / composer all sit inside this card.
+  frame: ({
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginVertical: 12,
+    marginHorizontal: 8,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 6px 24px rgba(0,0,0,0.06)' } : {}),
+  } as any),
   empty: { padding: 40, textAlign: 'center', color: Colors.textMuted },
 
   header: {
