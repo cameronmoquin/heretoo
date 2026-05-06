@@ -12,8 +12,10 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MOBILE_TAB_BAR_HEIGHT } from '../../components/shared/MobileTabBar';
+import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThreads, type MessageThread } from '../../hooks/useChat';
@@ -27,6 +29,8 @@ export default function ChatList() {
   const s = makeStyles();
   const userId = useAuthStore((st) => st.user?.id);
   const { data: threads } = useThreads();
+  const { width: vw } = useWindowDimensions();
+  const tabBarOffset = shouldShowLeftSidebar(vw) ? 0 : MOBILE_TAB_BAR_HEIGHT;
 
   const { open, requests } = useMemo(() => {
     const all = threads ?? [];
@@ -46,7 +50,7 @@ export default function ChatList() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
-      <View style={s.frame}>
+      <View style={[s.frame, { marginBottom: 12 + tabBarOffset }]}>
       <View style={s.header}>
         <TouchableOpacity
           onPress={() => goBackToFeed()}

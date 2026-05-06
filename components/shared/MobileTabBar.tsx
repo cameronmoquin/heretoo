@@ -142,6 +142,12 @@ export function MobileTabBar() {
   );
 }
 
+/** Approximate height of the bar (paddingVertical 6 + slot paddingVertical
+ *  4 + icon 28 + label 11 + small gap). Pages whose content goes all the
+ *  way to the bottom (chat composer, full-screen forms) reserve this much
+ *  space at their bottom so the bar doesn't cover the tail content. */
+export const MOBILE_TAB_BAR_HEIGHT = 64;
+
 const styles = StyleSheet.create({
   bar: ({
     flexDirection: 'row',

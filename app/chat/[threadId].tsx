@@ -35,6 +35,9 @@ import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 import { MicInputButton } from '../../components/shared/MicInputButton';
+import { MOBILE_TAB_BAR_HEIGHT } from '../../components/shared/MobileTabBar';
+import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
+import { useWindowDimensions } from 'react-native';
 
 export default function ChatThread() {
   const s = makeStyles();
@@ -42,6 +45,12 @@ export default function ChatThread() {
   const userId = useAuthStore((st) => st.user?.id);
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<ScrollView | null>(null);
+  const { width: vw } = useWindowDimensions();
+  // When the LeftSidebar is up (≥1024px web), the MobileTabBar hides
+  // and the composer sits flush with the viewport bottom. Otherwise
+  // (mobile / narrow web) we reserve the tab bar's height so it
+  // doesn't overlap the input.
+  const tabBarOffset = shouldShowLeftSidebar(vw) ? 0 : MOBILE_TAB_BAR_HEIGHT;
 
   const { data: thread, isLoading: threadLoading } = useThread(threadId);
   const { data: messages, isLoading: messagesLoading } = useThreadMessages(threadId);
@@ -129,7 +138,7 @@ export default function ChatThread() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={s.frame}>
+        <View style={[s.frame, { marginBottom: 12 + tabBarOffset }]}>
         <View style={s.header}>
           <TouchableOpacity
             onPress={() => router.replace('/chat' as any)}
