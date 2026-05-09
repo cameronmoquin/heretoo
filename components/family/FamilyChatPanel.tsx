@@ -25,6 +25,8 @@ import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 import { MicInputButton } from '../shared/MicInputButton';
+import { ReframerDrawer, ReframerEye } from '../chat/ReframerDrawer';
+import { useReframer, type ReframerContextMessage } from '../../hooks/useReframer';
 
 interface Props {
   familyId: string;
@@ -39,6 +41,17 @@ export function FamilyChatPanel({ familyId }: Props) {
   const { data: chat, isLoading: chatLoading } = useFamilyChat(familyId);
   const { data: messages, isLoading: messagesLoading } = useFamilyChatMessages(chat?.id ?? null);
   const send = useSendFamilyChatMessage();
+
+  // Reframer (M8) — opt-in escalation drawer for family chat.
+  const reframerContext = React.useMemo<ReframerContextMessage[]>(
+    () =>
+      (messages ?? []).slice(-3).map((m: any) => ({
+        from: m.sender_id === userId ? ('me' as const) : ('them' as const),
+        body: m.body ?? '',
+      })),
+    [messages, userId],
+  );
+  const reframer = useReframer({ surface: 'family_chat', draft, context: reframerContext });
 
   // Member lookup so each bubble can show the sender's name + avatar
   // without re-fetching per message.
@@ -146,6 +159,7 @@ export function FamilyChatPanel({ familyId }: Props) {
           size={20}
           onText={(t) => setDraft((d) => (d ? `${d} ${t}`.trim() : t))}
         />
+        <ReframerEye visible={reframer.eyeVisible} onPress={reframer.open} />
         <TouchableOpacity
           style={[s.sendBtn, (!draft.trim() || send.isPending) && { opacity: 0.4 }]}
           onPress={submit}
@@ -154,6 +168,19 @@ export function FamilyChatPanel({ familyId }: Props) {
           <Ionicons name="send" size={18} color="#FFF" />
         </TouchableOpacity>
       </View>
+
+      <ReframerDrawer
+        visible={reframer.drawerOpen}
+        loading={reframer.loading}
+        result={reframer.result}
+        error={reframer.error}
+        onClose={reframer.close}
+        onUseAlternative={(text) => {
+          setDraft(text);
+          reframer.markAccepted();
+          reframer.close();
+        }}
+      />
     </View>
   );
 }

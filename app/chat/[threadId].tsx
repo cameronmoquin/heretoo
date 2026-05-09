@@ -35,6 +35,8 @@ import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 import { MicInputButton } from '../../components/shared/MicInputButton';
+import { ReframerDrawer, ReframerEye } from '../../components/chat/ReframerDrawer';
+import { useReframer, type ReframerContextMessage } from '../../hooks/useReframer';
 import { MOBILE_TAB_BAR_HEIGHT } from '../../components/shared/MobileTabBar';
 import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
 import { useWindowDimensions } from 'react-native';
@@ -58,6 +60,17 @@ export default function ChatThread() {
   const accept = useAcceptThread();
   const decline = useDeclineThread();
   const markRead = useMarkThreadRead();
+
+  // Reframer (M8) — opt-in, never visible to the recipient. Builds
+  // a small "context" of up to the last 3 messages from the thread
+  // so the LLM can "read their note" alongside "your draft."
+  const reframerContext = React.useMemo<ReframerContextMessage[]>(() => {
+    return (messages ?? []).slice(-3).map((m: any) => ({
+      from: m.sender_id === userId ? ('me' as const) : ('them' as const),
+      body: m.body ?? '',
+    }));
+  }, [messages, userId]);
+  const reframer = useReframer({ surface: 'dm', draft, context: reframerContext });
 
   const otherId = thread
     ? (thread.participant_a === userId ? thread.participant_b : thread.participant_a)
@@ -237,6 +250,8 @@ export default function ChatThread() {
               size={20}
               onText={(t) => setDraft((d) => (d ? `${d} ${t}`.trim() : t))}
             />
+            {/* M8: opt-in eye when the heuristic flags escalation. */}
+            <ReframerEye visible={reframer.eyeVisible} onPress={reframer.open} />
             <TouchableOpacity
               style={[s.composerSend, !draft.trim() && { opacity: 0.4 }]}
               onPress={submit}
@@ -248,6 +263,19 @@ export default function ChatThread() {
         )}
         </View>
       </KeyboardAvoidingView>
+
+      <ReframerDrawer
+        visible={reframer.drawerOpen}
+        loading={reframer.loading}
+        result={reframer.result}
+        error={reframer.error}
+        onClose={reframer.close}
+        onUseAlternative={(text) => {
+          setDraft(text);
+          reframer.markAccepted();
+          reframer.close();
+        }}
+      />
     </SafeAreaView>
   );
 }
