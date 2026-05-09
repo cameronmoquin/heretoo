@@ -101,9 +101,15 @@ export function LeftSidebar() {
 
       <NavRow
         icon={onFeed ? 'home' : 'home-outline'}
-        label="Feed"
+        label="The Room"
         active={onFeed}
         onPress={() => router.replace('/(tabs)/feed' as any)}
+      />
+      <NavRow
+        icon={pathname.startsWith('/common') ? 'reader' : 'reader-outline'}
+        label="Common"
+        active={pathname.startsWith('/common')}
+        onPress={() => router.push('/common' as any)}
       />
       <NavRow
         icon={onChat ? 'chatbubbles' : 'chatbubbles-outline'}
