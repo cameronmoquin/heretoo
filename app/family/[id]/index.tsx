@@ -218,6 +218,19 @@ export default function FamilyDetail() {
                 <Ionicons name="share-outline" size={14} color={Colors.primary} />
               </TouchableOpacity>
             )}
+            {/* M9: welcome ceremony for someone NOT yet on HereToo. Different
+                from "Invite others" — that copies a join URL; this generates
+                a personalized voice greeting that addresses the recipient
+                by name. The Lob print pipeline is a follow-up. */}
+            <TouchableOpacity
+              style={s.welcomeCardBtn}
+              activeOpacity={0.85}
+              onPress={() => router.push(`/family/${id}/invite-card` as any)}
+            >
+              <Ionicons name="mail-outline" size={16} color={Colors.textSecondary} />
+              <Text style={s.welcomeCardText}>Send a welcome card</Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+            </TouchableOpacity>
             <FeedComposer familyId={id} />
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>
@@ -554,6 +567,16 @@ function makeStyles() { return StyleSheet.create({
     marginTop: 6, marginBottom: 4,
   },
   feedInviteText: { fontSize: 13, fontWeight: '600', color: Colors.primary, flexShrink: 1 },
+  welcomeCardBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
+    alignSelf: 'flex-start',
+    marginTop: 4, marginBottom: 4,
+  },
+  welcomeCardText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, flexShrink: 1 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
   primaryBtn: { paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999, backgroundColor: Colors.primary },
   primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
