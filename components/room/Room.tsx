@@ -32,6 +32,7 @@ import { useFeed } from '../../hooks/useFeed';
 import { useFamilyFeed, useMyFamilies } from '../../hooks/useFamily';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { useTTS } from '../../stores/ttsStore';
+import { useTodayDispatch } from '../../hooks/useDispatch';
 import { useWallpaper, WALLPAPERS } from '../../stores/wallpaperStore';
 import { Postcard } from './Postcard';
 import { Colors } from '../../constants/colors';
@@ -76,6 +77,12 @@ export function Room({ familyId, familyName }: Props) {
 
   const { data: families } = useMyFamilies();
   const familySwatches = (families ?? []) as Array<{ id: string; name: string }>;
+
+  // Today's "candle on the mantel" — Anniversary Engine output.
+  // Filtered server-side to the viewer's timezone. The hearth shows
+  // the first; the digest will list all of them once wired.
+  const { data: dispatches } = useTodayDispatch();
+  const candle = (dispatches ?? [])[0];
 
   const today = useMemo(() => {
     const now = new Date();
@@ -123,6 +130,22 @@ export function Room({ familyId, familyName }: Props) {
             <Text style={s.hearthSub}>
               {today.day} · {today.date}
             </Text>
+            {/* The candle on the mantel — Anniversary Engine dispatch.
+                One sentence. Stays quiet when nothing is to be noticed. */}
+            {!!candle && (
+              <TouchableOpacity
+                style={s.candle}
+                activeOpacity={0.75}
+                onPress={() => {
+                  if (candle.source_post_id) {
+                    router.push(`/feed/${candle.source_post_id}` as any);
+                  }
+                }}
+              >
+                <View style={s.candleDot} />
+                <Text style={s.candleText} numberOfLines={3}>{candle.copy}</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Room switcher: Common + each family swatch.
@@ -281,6 +304,28 @@ function makeStyles() { return StyleSheet.create({
     color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.6,
+  },
+
+  // Candle dispatch — single-sentence "rhythm" line, set apart from
+  // the masthead with a subtle gold dot, never an exclamation.
+  candle: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    marginTop: 12,
+    paddingVertical: 8, paddingHorizontal: 10,
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    borderLeftWidth: 2, borderLeftColor: Colors.primary,
+  },
+  candleDot: {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: Colors.primary,
+    marginTop: 6,
+  },
+  candleText: {
+    flex: 1,
+    fontSize: 13, lineHeight: 19,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
   },
 
   // Room switcher swatches
