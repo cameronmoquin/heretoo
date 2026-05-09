@@ -187,9 +187,20 @@ export function Room({ familyId, familyName }: Props) {
                   ? `Last post was ${lastPostAge} ${lastPostAge === 1 ? 'day' : 'days'} ago.`
                   : 'Nothing posted yet.'}
               </Text>
-              <TouchableOpacity onPress={onCompose} style={s.emptyAction} activeOpacity={0.7}>
-                <Text style={s.emptyActionText}>Write something</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: Spacing.md }}>
+                <TouchableOpacity onPress={onCompose} style={s.emptyAction} activeOpacity={0.7}>
+                  <Text style={s.emptyActionText}>Write something</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push('/letter/new' as any)}
+                  style={[s.emptyAction, { borderColor: Colors.textMuted }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[s.emptyActionText, { color: Colors.textSecondary }]}>
+                    Write a letter
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             mantelPosts.map((p) => <Postcard key={p.id} post={p as any} />)

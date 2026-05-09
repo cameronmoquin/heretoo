@@ -96,6 +96,7 @@ function RootLayoutInner() {
             in app/network/ to make it a route group. */}
         <Stack.Screen name="network/index" options={{ headerShown: false }} />
         <Stack.Screen name="common/index" options={{ headerShown: false }} />
+        <Stack.Screen name="letter" options={{ headerShown: false }} />
         <Stack.Screen name="u" options={{ headerShown: false }} />
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />

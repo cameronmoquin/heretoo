@@ -112,6 +112,12 @@ export function LeftSidebar() {
         onPress={() => router.push('/common' as any)}
       />
       <NavRow
+        icon={pathname.startsWith('/letter') ? 'mail' : 'mail-outline'}
+        label="Letters"
+        active={pathname.startsWith('/letter')}
+        onPress={() => router.push('/letter' as any)}
+      />
+      <NavRow
         icon={onChat ? 'chatbubbles' : 'chatbubbles-outline'}
         label="Messages"
         active={onChat}
