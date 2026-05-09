@@ -143,25 +143,9 @@ export function LeftSidebar() {
         onPress={() => router.replace('/(tabs)/profile' as any)}
       />
 
-      {/* Family quick-list — small swatches under "Families" so users
-          can jump straight to a family page without going through the
-          list. Caps at 5 to keep the sidebar compact. */}
-      {(families ?? []).slice(0, 5).length > 0 && (
-        <>
-          <Text style={s.sectionLabel}>YOUR FAMILIES</Text>
-          {(families ?? []).slice(0, 5).map((f: any) => (
-            <TouchableOpacity
-              key={f.id}
-              style={s.familyRow}
-              onPress={() => router.push(`/family/${f.id}` as any)}
-              activeOpacity={0.7}
-            >
-              <View style={s.familyDot} />
-              <Text style={s.familyName} numberOfLines={1}>{f.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </>
-      )}
+      {/* Family quick-list removed — was redundant with the Room hearth
+          swatches and the /family list page. The Families nav row above
+          opens that list when needed. */}
 
       <View style={s.divider} />
 

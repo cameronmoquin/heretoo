@@ -73,7 +73,10 @@ export function Postcard({ post, variant = 'auto' }: Props) {
   const resolvedVariant: 'image-dominant' | 'type-dominant' =
     variant === 'auto' ? (hasMedia ? 'image-dominant' : 'type-dominant') : variant;
 
-  const open = () => router.push(`/feed/${post.id}` as any);
+  // Use the explicit (tabs)/feed form so Expo Router resolves
+  // unambiguously across the codebase. The URL bar still shows
+  // /feed/{id} because (tabs) is a route group.
+  const open = () => router.push(`/(tabs)/feed/${post.id}` as any);
 
   const onReadAloud = (e: any) => {
     e.stopPropagation?.();

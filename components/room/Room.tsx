@@ -109,13 +109,20 @@ export function Room({ familyId, familyName }: Props) {
     }
   };
 
-  // Compose flow — for v1 this opens the existing post composer.
-  // M5 (The Letter) will add a sibling "Write a letter" affordance.
+  // Compose flow. Posting requires a family — if you're in the
+  // Common Room and have at least one family, route to the most-
+  // recent family's new-post page; if you have none, route to
+  // the families list so you can start one.
   const onCompose = () => {
     if (familyId) {
-      router.push(`/family/${familyId}` as any);
+      router.push(`/family/${familyId}/new-post` as any);
+      return;
+    }
+    const first = familySwatches[0];
+    if (first?.id) {
+      router.push(`/family/${first.id}/new-post` as any);
     } else {
-      router.push('/feed' as any);
+      router.push('/family' as any);
     }
   };
 
@@ -151,7 +158,7 @@ export function Room({ familyId, familyName }: Props) {
                 activeOpacity={0.75}
                 onPress={() => {
                   if (candle.source_post_id) {
-                    router.push(`/feed/${candle.source_post_id}` as any);
+                    router.push(`/(tabs)/feed/${candle.source_post_id}` as any);
                   }
                 }}
               >

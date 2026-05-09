@@ -11,7 +11,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, Image, Modal, Pressable,
   ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
+import { MOBILE_TAB_BAR_HEIGHT } from '../../../components/shared/MobileTabBar';
+import { shouldShowLeftSidebar } from '../../../components/shared/LeftSidebar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -42,6 +45,10 @@ export default function PostDetail() {
   // tap themselves.
   const { postId, focus } = useLocalSearchParams<{ postId: string; focus?: string }>();
   const userId = useAuthStore((st) => st.user?.id);
+  // Reserve the mobile tab bar height so the comment composer isn't
+  // hidden under the fixed bottom nav.
+  const { width: vw } = useWindowDimensions();
+  const tabBarOffset = shouldShowLeftSidebar(vw) ? 0 : MOBILE_TAB_BAR_HEIGHT;
   const inputRef = useRef<TextInput | null>(null);
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
@@ -244,7 +251,7 @@ export default function PostDetail() {
 
         {/* Comment composer pinned to the bottom */}
         {!commentsDisabled && (
-          <View style={s.composer}>
+          <View style={[s.composer, { paddingBottom: 10 + tabBarOffset }]}>
             {replyTo && (
               <View style={s.replyPill}>
                 <Text style={s.replyPillText} numberOfLines={1}>
