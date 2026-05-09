@@ -34,7 +34,27 @@ export type WallpaperId =
   | 'morris-arcadia'
   | 'morris-daisy'
   | 'morris-fruit'
-  | 'morris-jasmine';
+  | 'morris-jasmine'
+  | 'voysey-tulip'
+  | 'demorgan-blue-dragon'
+  | 'demorgan-tile'
+  | 'owen-jones-035'
+  | 'owen-jones-043'
+  | 'owen-jones-059'
+  | 'owen-jones-062'
+  | 'katagami-floral';
+
+/** Curatorial school used to group patterns in the picker.
+ *  Source of Truth, Milestone 2: "the picker becomes a small museum,
+ *  patterns grouped by school." */
+export type WallpaperSchool =
+  | 'arts-and-crafts'
+  | 'persian'
+  | 'moresque'
+  | 'celtic'
+  | 'japanese'
+  | 'modernist'
+  | 'misc';
 
 export interface WallpaperDef {
   id: WallpaperId;
@@ -55,6 +75,15 @@ export interface WallpaperDef {
   imageUrl?: string;
   /** Credit line shown in the picker for image-mode wallpapers. */
   credit?: string;
+  /** Curatorial school for the picker grouping. */
+  school?: WallpaperSchool;
+  /** One-paragraph context shown in the picker's "About this pattern"
+   *  affordance. Source of Truth, M2: "patterns grouped by school,
+   *  each with a one-paragraph card that names the artist, the year,
+   *  and one sentence of context." */
+  about?: string;
+  /** Year the pattern was first produced (display-only). */
+  year?: number;
 }
 
 /**
@@ -323,6 +352,9 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
     svg: '',
     imageUrl: '/wallpapers/morris-trellis-original.jpg',
     credit: 'William Morris, 1862. PD (Wikimedia Commons).',
+    school: 'arts-and-crafts',
+    year: 1862,
+    about: 'Morris’ first wallpaper. He designed Trellis after watching the roses grow on the trellis at Red House, his Bexleyheath home. Birds were drawn by his friend Philip Webb.',
   },
 
   'morris-arcadia': {
@@ -335,6 +367,9 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
     svg: '',
     imageUrl: '/wallpapers/morris-arcadia.jpg',
     credit: 'May Morris (1862–1938). PD.',
+    school: 'arts-and-crafts',
+    year: 1900,
+    about: 'May Morris ran the embroidery department at Morris & Co. and designed major wallpapers in her own right. Arcadia carries the family hand into the Edwardian era.',
   },
 
   'morris-daisy': {
@@ -347,6 +382,9 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
     svg: '',
     imageUrl: '/wallpapers/morris-daisy.jpg',
     credit: 'William Morris, 1864. PD.',
+    school: 'arts-and-crafts',
+    year: 1864,
+    about: 'Daisy was the first Morris pattern actually produced commercially. Morris drew it from a fifteenth-century Flemish illuminated manuscript he found at the British Museum.',
   },
 
   'morris-fruit': {
@@ -359,6 +397,9 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
     svg: '',
     imageUrl: '/wallpapers/morris-fruit.jpg',
     credit: 'William Morris, c. 1866. PD.',
+    school: 'arts-and-crafts',
+    year: 1866,
+    about: 'Also called Pomegranate. Morris paired ripening fruit with leaf branches that interlock at the corners — one of the first repeats designed to read as a single field across a whole wall.',
   },
 
   'morris-jasmine': {
@@ -371,10 +412,208 @@ export const WALLPAPERS: Record<WallpaperId, WallpaperDef> = {
     svg: '',
     imageUrl: '/wallpapers/morris-jasmine.png',
     credit: 'William Morris, 1872. PD.',
+    school: 'arts-and-crafts',
+    year: 1872,
+    about: 'A trailing jasmine repeat by William Morris, drawn the year his firm reorganized as Morris & Co. Co-designed with his daughter May, who would carry the firm.',
+  },
+
+  // ─── C.F.A. Voysey — Arts and Crafts ────────────────────────────────
+  'voysey-tulip': {
+    id: 'voysey-tulip',
+    label: 'Tulip',
+    era: 'Voysey, c. 1896',
+    swatchInk: '#7C9456',
+    swatchBg: '#F0EBD8',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/voysey-tulip.jpg',
+    credit: 'Charles Francis Annesley Voysey. Google Art Project / Wikimedia Commons. PD.',
+    school: 'arts-and-crafts',
+    year: 1896,
+    about: 'Voysey designed for Sanderson & Sons in the years after Morris’ death. His repeats are flatter and lighter than Morris’, and his birds and tulips became the visual signature of the late Arts and Crafts moment.',
+  },
+
+  // ─── William De Morgan — Arts and Crafts (tilework) ─────────────────
+  'demorgan-blue-dragon': {
+    id: 'demorgan-blue-dragon',
+    label: 'Blue Dragon',
+    era: 'De Morgan, 1872–1904',
+    swatchInk: '#2C5C7A',
+    swatchBg: '#EAEDD8',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/demorgan-blue-dragon.jpg',
+    credit: 'William De Morgan, c. 1872–1904. PD.',
+    school: 'arts-and-crafts',
+    year: 1880,
+    about: 'De Morgan rediscovered the lost glazes of medieval Persian tilework and used them on Arts and Crafts ceramics. His Blue Dragon piece runs across multiple tiles to make one continuous beast.',
+  },
+  'demorgan-tile': {
+    id: 'demorgan-tile',
+    label: 'De Morgan Tile',
+    era: 'De Morgan, c. 1880s',
+    swatchInk: '#5C6E8A',
+    swatchBg: '#E5E1CA',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/demorgan-tile.jpg',
+    credit: 'William De Morgan. Google Art Project / Wikimedia Commons. PD.',
+    school: 'arts-and-crafts',
+    year: 1885,
+    about: 'A single tile from De Morgan’s Persian-revival series. His designs lifted Iznik motifs into Victorian English homes, often paired with Morris textiles.',
+  },
+
+  // ─── Owen Jones — Grammar of Ornament (1856 / 1868) ─────────────────
+  'owen-jones-035': {
+    id: 'owen-jones-035',
+    label: 'Moresque',
+    era: 'Owen Jones, 1856',
+    swatchInk: '#C24A3B',
+    swatchBg: '#F4E5D2',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/owen-jones-plate-035.jpg',
+    credit: 'Owen Jones, The Grammar of Ornament, 1856 (1868 edition plate 35). PD.',
+    school: 'moresque',
+    year: 1856,
+    about: 'A plate from the Moresque chapter of Owen Jones’ Grammar. Jones documented Alhambra ornament after his 1830s travels in Granada and changed how Victorian England looked at pattern.',
+  },
+  'owen-jones-043': {
+    id: 'owen-jones-043',
+    label: 'Persian (Plate 43)',
+    era: 'Owen Jones, 1856',
+    swatchInk: '#1B4F7A',
+    swatchBg: '#F0EBD3',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/owen-jones-plate-043.jpg',
+    credit: 'Owen Jones, The Grammar of Ornament, 1856 (1868 edition plate 43). PD.',
+    school: 'persian',
+    year: 1856,
+    about: 'From the Persian chapter. Jones’ plates were the reference text for a generation of decorators — De Morgan, Morris, and the early modernists all owned a copy.',
+  },
+  'owen-jones-059': {
+    id: 'owen-jones-059',
+    label: 'Plate 59',
+    era: 'Owen Jones, 1856',
+    swatchInk: '#7A4A2C',
+    swatchBg: '#F0E5CC',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/owen-jones-plate-059.jpg',
+    credit: 'Owen Jones, The Grammar of Ornament, 1856 (1868 edition plate 59). PD.',
+    school: 'persian',
+    year: 1856,
+    about: 'A floral repeat from Jones’ later chapters. The Grammar of Ornament organized 100 plates around 37 “general principles” — the first systematic theory of ornament.',
+  },
+  'owen-jones-062': {
+    id: 'owen-jones-062',
+    label: 'Plate 62',
+    era: 'Owen Jones, 1856',
+    swatchInk: '#2E5A3B',
+    swatchBg: '#EFE8CD',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/owen-jones-plate-062.jpg',
+    credit: 'Owen Jones, The Grammar of Ornament, 1856 (1868 edition plate 62). PD.',
+    school: 'persian',
+    year: 1856,
+    about: 'A leafwork repeat from Jones’ final chapters. The Grammar was reprinted continually from 1856 to 1910 and remains in print.',
+  },
+
+  // ─── Japanese katagami stencil ──────────────────────────────────────
+  'katagami-floral': {
+    id: 'katagami-floral',
+    label: 'Katagami Floral',
+    era: 'Edo / Meiji',
+    swatchInk: '#5C5046',
+    swatchBg: '#EFE8D8',
+    tileSize: 0,
+    svg: '',
+    imageUrl: '/wallpapers/katagami-floral.jpg',
+    credit: 'Japanese katagami stencil, late Edo / Meiji period. Wikimedia Commons. PD.',
+    school: 'japanese',
+    year: 1860,
+    about: 'Katagami are Japanese paper stencils used to dye kimono fabric. Each was cut by hand from layers of mulberry paper laminated with persimmon juice; the lattice work that holds the design together is part of the beauty.',
   },
 };
 
 export const WALLPAPER_LIST: WallpaperDef[] = Object.values(WALLPAPERS);
+
+/** Display order for the picker's school groupings. Schools not listed
+ *  here (or wallpapers with no `school` set) fall under 'misc' last. */
+export const WALLPAPER_SCHOOL_ORDER: WallpaperSchool[] = [
+  'arts-and-crafts',
+  'persian',
+  'moresque',
+  'celtic',
+  'japanese',
+  'modernist',
+  'misc',
+];
+
+export const WALLPAPER_SCHOOL_LABELS: Record<WallpaperSchool, { title: string; blurb: string }> = {
+  'arts-and-crafts': {
+    title: 'Arts and Crafts',
+    blurb: 'Morris and his circle. England, late 19th century. The school that argued every wall deserved a hand-drawn line.',
+  },
+  persian: {
+    title: 'Persian',
+    blurb: 'Sixteenth and seventeenth century Iranian repeats, surveyed and re-drawn by Owen Jones in 1856.',
+  },
+  moresque: {
+    title: 'Moresque',
+    blurb: 'Patterns from the Alhambra and Moorish Spain — geometric, interlaced, mathematical.',
+  },
+  celtic: {
+    title: 'Celtic',
+    blurb: 'Insular knotwork and animal interlace from medieval Ireland and Britain.',
+  },
+  japanese: {
+    title: 'Japanese',
+    blurb: 'Katagami stencils, indigo dye repeats, and Edo / Meiji-period decorative paper.',
+  },
+  modernist: {
+    title: 'Modernist',
+    blurb: 'Twentieth-century geometric patterns. Mid-century dots, Deco fans, the language of after-the-war.',
+  },
+  misc: {
+    title: 'Other',
+    blurb: 'Plain canvas, free-form, and patterns outside the major schools.',
+  },
+};
+
+/** Group wallpapers by school for the picker UI. Returns groups in the
+ *  order defined by WALLPAPER_SCHOOL_ORDER, each group containing the
+ *  wallpapers in their original WALLPAPER_LIST order. */
+export function wallpapersBySchool(): Array<{
+  school: WallpaperSchool;
+  label: string;
+  blurb: string;
+  items: WallpaperDef[];
+}> {
+  const groups: Record<WallpaperSchool, WallpaperDef[]> = {
+    'arts-and-crafts': [],
+    persian: [],
+    moresque: [],
+    celtic: [],
+    japanese: [],
+    modernist: [],
+    misc: [],
+  };
+  for (const w of WALLPAPER_LIST) {
+    const s = w.school ?? 'misc';
+    groups[s].push(w);
+  }
+  return WALLPAPER_SCHOOL_ORDER
+    .filter((s) => groups[s].length > 0)
+    .map((s) => ({
+      school: s,
+      label: WALLPAPER_SCHOOL_LABELS[s].title,
+      blurb: WALLPAPER_SCHOOL_LABELS[s].blurb,
+      items: groups[s],
+    }));
+}
 
 // ─── Persistence ────────────────────────────────────────────────────────
 

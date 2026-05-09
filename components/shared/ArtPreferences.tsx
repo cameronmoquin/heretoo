@@ -26,7 +26,10 @@ import {
   type FeedMix,
 } from '../../stores/artPrefsStore';
 import { useArtFacets, useArtFilterStatus } from '../../hooks/useArtFeed';
-import { useWallpaper, WALLPAPER_LIST, wallpaperToDataUri } from '../../stores/wallpaperStore';
+import {
+  useWallpaper, WALLPAPER_LIST, wallpaperToDataUri,
+  wallpapersBySchool, WALLPAPERS,
+} from '../../stores/wallpaperStore';
 import { Colors } from '../../constants/colors';
 
 interface ArtPreferencesProps {
@@ -164,33 +167,69 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
             )}
           </View>
 
-          {/* Wallpaper picker — sits above the gallery filter so users
-              find the decoration controls without digging. */}
+          {/* Wallpaper picker — a small museum. Patterns grouped by
+              school. The active pattern's "About this pattern" card
+              sits at the top so the user reads the context the way
+              they'd read a wall plaque before looking at the work. */}
           <Section label="Wallpaper">
-            <View style={s.swatchGrid}>
-              {WALLPAPER_LIST.map((w) => {
-                const on = wallpaperId === w.id;
-                const bgImage = w.svg ? wallpaperToDataUri(w) : '';
-                return (
-                  <TouchableOpacity
-                    key={w.id}
-                    onPress={() => setWallpaper(w.id)}
-                    style={[s.swatch, on && s.swatchActive]}
-                    activeOpacity={0.75}
-                    accessibilityLabel={`${w.label} wallpaper`}
-                  >
-                    {/* Visual preview tile. Plain swatch is solid bg.
-                        Pattern swatches use the actual pattern at
-                        scaled-down tile size for an honest preview. */}
-                    <View style={[s.swatchTile, swatchTileStyle(w.swatchBg, bgImage, w.tileSize)]} />
-                    <Text style={[s.swatchLabel, on && s.swatchLabelActive]} numberOfLines={1}>
-                      {w.label}
-                    </Text>
-                    <Text style={s.swatchEra} numberOfLines={1}>{w.era}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {(() => {
+              const active = WALLPAPERS[wallpaperId as keyof typeof WALLPAPERS];
+              if (!active || !active.about) return null;
+              return (
+                <View style={s.museumPlaque}>
+                  <Text style={s.plaqueTitle}>{active.label}</Text>
+                  <Text style={s.plaqueEra}>{active.era}</Text>
+                  <Text style={s.plaqueAbout}>{active.about}</Text>
+                  {!!active.credit && (
+                    <Text style={s.plaqueCredit}>{active.credit}</Text>
+                  )}
+                </View>
+              );
+            })()}
+
+            {wallpapersBySchool().map((group) => (
+              <View key={group.school} style={s.schoolGroup}>
+                <Text style={s.schoolTitle}>{group.label}</Text>
+                <Text style={s.schoolBlurb}>{group.blurb}</Text>
+                <View style={s.swatchGrid}>
+                  {group.items.map((w) => {
+                    const on = wallpaperId === w.id;
+                    const bgImage = w.svg ? wallpaperToDataUri(w) : '';
+                    return (
+                      <TouchableOpacity
+                        key={w.id}
+                        onPress={() => setWallpaper(w.id)}
+                        style={[s.swatch, on && s.swatchActive]}
+                        activeOpacity={0.75}
+                        accessibilityLabel={`${w.label} wallpaper`}
+                      >
+                        <View
+                          style={[
+                            s.swatchTile,
+                            // Image-mode: render a small thumbnail of the
+                            // actual scan. SVG-mode: render the SVG tile.
+                            // Plain: solid bg.
+                            w.imageUrl
+                              ? ({
+                                  backgroundImage: `url("${w.imageUrl}")`,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                  backgroundColor: w.swatchBg,
+                                } as any)
+                              : swatchTileStyle(w.swatchBg, bgImage, w.tileSize),
+                          ]}
+                        />
+                        <Text style={[s.swatchLabel, on && s.swatchLabelActive]} numberOfLines={1}>
+                          {w.label}
+                        </Text>
+                        <Text style={s.swatchEra} numberOfLines={1}>{w.era}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+
             {wallpaperId !== 'plain' && (
               <TouchableOpacity
                 onPress={toggleBold}
@@ -471,7 +510,37 @@ function makeStyles() { return StyleSheet.create({
   },
   noMatchText: { flex: 1, fontSize: 11, color: Colors.textSecondary, lineHeight: 15 },
 
-  // Wallpaper picker grid
+  // Wallpaper picker — small-museum layout
+  museumPlaque: {
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.border,
+    gap: 4,
+  },
+  plaqueTitle: {
+    fontSize: 16, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.2,
+  },
+  plaqueEra: {
+    fontSize: 10, fontWeight: '700', color: Colors.textMuted,
+    textTransform: 'uppercase', letterSpacing: 1.4,
+  },
+  plaqueAbout: {
+    fontSize: 12, lineHeight: 18, color: Colors.textSecondary, marginTop: 4,
+  },
+  plaqueCredit: {
+    fontSize: 10, fontStyle: 'italic', color: Colors.textMuted, marginTop: 4,
+  },
+  schoolGroup: { marginTop: 14, gap: 6 },
+  schoolTitle: {
+    fontSize: 11, fontWeight: '700', color: Colors.textPrimary,
+    textTransform: 'uppercase', letterSpacing: 1.6,
+  },
+  schoolBlurb: {
+    fontSize: 11, lineHeight: 15, color: Colors.textMuted, marginBottom: 4,
+  },
   swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   swatch: {
     width: 88, gap: 4,
