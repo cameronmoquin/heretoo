@@ -10,6 +10,12 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import { Syne_600SemiBold, Syne_700Bold, Syne_800ExtraBold } from '@expo-google-fonts/syne';
+import {
+  SourceSerif4_400Regular,
+  SourceSerif4_400Regular_Italic,
+  SourceSerif4_600SemiBold,
+} from '@expo-google-fonts/source-serif-4';
 import { useAuth } from '../hooks/useAuth';
 import { LoadingPulse } from '../components/shared/LoadingPulse';
 import { ErrorBoundary } from '../components/shared/ErrorBoundary';
@@ -58,6 +64,12 @@ function RootLayoutInner() {
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
+    // Display face — Syne. Used for masthead, postcard pulled phrases,
+    // brand mark, section titles. Per the codex (Source of Truth, M10).
+    Syne_600SemiBold, Syne_700Bold, Syne_800ExtraBold,
+    // Long-form body — Source Serif 4. Used for the Letter composer,
+    // letter reader, parlor essays, Reframer drawer.
+    SourceSerif4_400Regular, SourceSerif4_400Regular_Italic, SourceSerif4_600SemiBold,
   });
 
   if (isLoading || !fontsLoaded) return <LoadingPulse />;

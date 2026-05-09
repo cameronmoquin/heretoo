@@ -130,12 +130,14 @@ export function Room({ familyId, familyName }: Props) {
         {/* ─── Hearth ───────────────────────────────────────────────── */}
         <View style={[s.hearth, isCompact && s.hearthCompact]}>
           <View style={s.hearthMast}>
+            <Text style={s.hearthKicker}>
+              {today.day.toUpperCase()}
+            </Text>
             <Text style={s.hearthTitle} numberOfLines={1}>
               {familyId ? (familyName ?? 'Family') : 'Today'}
             </Text>
-            <Text style={s.hearthSub}>
-              {today.day} · {today.date}
-            </Text>
+            <View style={s.hearthRule} />
+            <Text style={s.hearthSub}>{today.date}</Text>
             {/* The candle on the mantel — Anniversary Engine dispatch.
                 One sentence. Stays quiet when nothing is to be noticed. */}
             {!!candle && (
@@ -310,24 +312,44 @@ function makeStyles() { return StyleSheet.create({
 
   // Hearth
   hearth: {
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     gap: Spacing.md,
   },
-  hearthCompact: { paddingVertical: Spacing.sm },
-  hearthMast: { gap: 2 },
+  hearthCompact: { paddingVertical: Spacing.md },
+  hearthMast: { gap: 4 },
+  hearthKicker: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.primary,
+    letterSpacing: 2.4,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
   hearthTitle: {
-    fontSize: 32,
+    fontSize: 56,
+    lineHeight: 60,
     fontWeight: '800',
-    letterSpacing: -0.6,
+    letterSpacing: -1.2,
     color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
+  // A soft gold rule under the masthead — the visual signal that the
+  // room is set, like brass under the mantelpiece.
+  hearthRule: {
+    width: 64,
+    height: 2,
+    backgroundColor: Colors.primary,
+    marginTop: 6,
+    marginBottom: 6,
+    opacity: 0.65,
+    borderRadius: 1,
+  },
   hearthSub: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
     color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.6,
+    letterSpacing: 1.4,
+    fontStyle: 'italic',
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
 
   // Candle dispatch — single-sentence "rhythm" line, set apart from
@@ -347,9 +369,10 @@ function makeStyles() { return StyleSheet.create({
   },
   candleText: {
     flex: 1,
-    fontSize: 13, lineHeight: 19,
+    fontSize: 14, lineHeight: 22,
     color: Colors.textSecondary,
     fontStyle: 'italic',
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
 
   // Room switcher swatches

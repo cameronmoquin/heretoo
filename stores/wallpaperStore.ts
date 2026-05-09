@@ -626,6 +626,11 @@ interface Persisted {
 
 const STORAGE_KEY = 'heretoo:wallpaper';
 
+/** First-run default. Source of Truth, M2: a new user opens the app
+ *  and sees the actual room — Morris Trellis from 1862, the first
+ *  wallpaper Morris ever designed. Not a flat "plain" canvas. */
+const DEFAULT_WALLPAPER_ID: WallpaperId = 'morris-trellis-original';
+
 function loadInitial(): Persisted {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     try {
@@ -633,12 +638,12 @@ function loadInitial(): Persisted {
       if (raw) {
         const parsed = JSON.parse(raw);
         const id: WallpaperId =
-          parsed.id && parsed.id in WALLPAPERS ? parsed.id : 'plain';
+          parsed.id && parsed.id in WALLPAPERS ? parsed.id : DEFAULT_WALLPAPER_ID;
         return { id, bold: !!parsed.bold };
       }
     } catch {}
   }
-  return { id: 'plain', bold: false };
+  return { id: DEFAULT_WALLPAPER_ID, bold: false };
 }
 
 function persist(state: Persisted) {
