@@ -11,7 +11,10 @@ export default function Index() {
   }
 
   if (!session) {
-    return <Redirect href="/(auth)/welcome" />;
+    // Source of Truth, M11: unauth visitors land on the marketing
+    // /about page, not the auth wall. The marketing surface has its
+    // own "Step inside" button that routes to the auth flow.
+    return <Redirect href="/about" />;
   }
 
   if (!hasCompletedSetup) {
