@@ -20,10 +20,11 @@ import { PostCard } from '../../../components/feed/PostCard';
 import { FamilyChatPanel } from '../../../components/family/FamilyChatPanel';
 import { FamilyWallpaperVoting } from '../../../components/family/FamilyWallpaperVoting';
 import { WallpaperBackground } from '../../../components/shared/WallpaperBackground';
+import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
-type Tab = 'feed' | 'chat' | 'about';
+type Tab = 'feed' | 'subjects' | 'chat' | 'about';
 
 export default function FamilyDetail() {
   const s = makeStyles();
@@ -161,9 +162,10 @@ export default function FamilyDetail() {
       </View>
 
       <View style={s.tabs}>
-        {(['feed', 'chat', 'about'] as Tab[]).map((t) => {
+        {(['feed', 'subjects', 'chat', 'about'] as Tab[]).map((t) => {
           const label =
             t === 'feed' ? 'Feed' :
+            t === 'subjects' ? 'Subjects' :
             t === 'chat' ? 'Chat' :
             'About';
           return (
@@ -234,10 +236,11 @@ export default function FamilyDetail() {
           </>
         )}
 
-        {/* Updates tab removed — was redundant with the main feed.
-            Posts will be tagged with a 'subject' (e.g., "Tim's
-            health") in the next iteration so users can focus on a
-            topic without juggling separate tabs. */}
+        {/* Subjects — the long-running family-story threads. Replaces
+            the old Updates tab. Source of Truth, Milestone 3. */}
+        {tab === 'subjects' && (
+          <SubjectsPanel familyId={id} />
+        )}
 
         {tab === 'chat' && (
           <FamilyChatPanel familyId={id} />
