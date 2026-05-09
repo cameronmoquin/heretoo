@@ -75,10 +75,14 @@ export default async (req: Request) => {
       body: JSON.stringify({
         text,
         model_id: MODEL,
+        // Calibration per the aesthetic codex (Source of Truth, M10):
+        // "a calm friend reading you a letter" — not a podcast voice,
+        // not a customer-service voice. Style stays low so the read
+        // feels natural rather than theatrical.
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.4,
+          stability: 0.62,
+          similarity_boost: 0.78,
+          style: 0.18,
           use_speaker_boost: true,
         },
       }),

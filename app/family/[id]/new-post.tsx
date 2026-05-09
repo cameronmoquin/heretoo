@@ -62,7 +62,8 @@ export default function NewFamilyPost() {
       // eslint-disable-next-line no-console
       console.error('FAMILY_POST_ERROR', raw);
       setLastError(raw);
-      showAlert('Could not post', err?.message ?? 'Something went wrong.');
+      // Codex tone (M10): name the next move; never "Something went wrong" alone.
+      showAlert('Could not post', err?.message ?? 'Try again in a moment.');
     }
   };
 
