@@ -21,6 +21,7 @@ import { FamilyChatPanel } from '../../../components/family/FamilyChatPanel';
 import { FamilyWallpaperVoting } from '../../../components/family/FamilyWallpaperVoting';
 import { WallpaperBackground } from '../../../components/shared/WallpaperBackground';
 import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
+import { FamilyBillingBanner } from '../../../components/family/FamilyBillingBanner';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -189,6 +190,9 @@ export default function FamilyDetail() {
       >
         {tab === 'feed' && (
           <>
+            {/* M12: subscription banner. Renders only for the owner;
+                grandmother + grandchildren never see a price. */}
+            <FamilyBillingBanner familyId={id} isOwner={isOwner} />
             {/* Invite shortcut — same share flow that's also on the About tab,
                 but here on the Feed tab so it's discoverable without hunting. */}
             {!!(family as any).invite_code && (
