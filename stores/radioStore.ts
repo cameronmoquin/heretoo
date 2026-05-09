@@ -207,6 +207,11 @@ interface RadioState {
   setStation: (id: string) => Promise<void>;
   /** Toggle play/pause for the current station. */
   toggle: () => Promise<void>;
+  /** Duck the volume to ~30% — used while TTS is reading. Idempotent;
+   *  multiple ducks at once stack to the same level. */
+  duck: () => void;
+  /** Restore from duck. Safe to call even when not ducked. */
+  unduck: () => void;
 }
 
 const STORAGE_KEY = 'heretoo:radio-station';
@@ -351,6 +356,16 @@ export const useRadio = create<RadioState>((set, get) => ({
       console.error('[radio] play() rejected', e);
       set({ playing: false, loading: false, error: e?.message ?? 'Could not start the stream.' });
     }
+  },
+
+  // M6: when read-aloud starts, duck the radio rather than pause it.
+  // Music ducking is gentler — the user keeps the ambient feel and
+  // hears the read-aloud over it. Volume restores when read-aloud ends.
+  duck: () => {
+    if (audio) audio.volume = 0.3;
+  },
+  unduck: () => {
+    if (audio) audio.volume = 1.0;
   },
 }));
 

@@ -30,6 +30,7 @@ import {
   useWallpaper, WALLPAPER_LIST, wallpaperToDataUri,
   wallpapersBySchool, WALLPAPERS,
 } from '../../stores/wallpaperStore';
+import { useTTS } from '../../stores/ttsStore';
 import { Colors } from '../../constants/colors';
 
 interface ArtPreferencesProps {
@@ -249,6 +250,13 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
             )}
           </Section>
 
+          {/* Read-aloud pace — Source of Truth M6. Three calibrated
+              speeds: slower for grandparents, default, faster for
+              teenagers. Same Bike Messenger voice; different cadence. */}
+          <Section label="Read-aloud pace">
+            <ReadAloudPace />
+          </Section>
+
           {/* Feed Mix — what shows up between posts */}
           <Section label="Between posts">
             <View style={s.mixCol}>
@@ -409,6 +417,58 @@ function Section({ label, children }: { label: string; children: React.ReactNode
     <View style={s.section}>
       <Text style={s.sectionLabel}>{label}</Text>
       {children}
+    </View>
+  );
+}
+
+/** Pace picker for read-aloud — 0.85× / 1.0× / 1.15×. The labels are
+ *  written in human language so the choice reads as posture, not math.
+ *  Source of Truth, M6. */
+function ReadAloudPace() {
+  const s = makeStyles();
+  const pace = useTTS((st) => st.pace);
+  const setPace = useTTS((st) => st.setPace);
+  const opts: Array<{ value: 0.85 | 1.0 | 1.15; label: string; sub: string }> = [
+    { value: 0.85, label: 'Slower', sub: 'Grandparents, evenings, when you want time.' },
+    { value: 1.0, label: 'Default', sub: 'A calm friend reading a letter aloud.' },
+    { value: 1.15, label: 'Quicker', sub: 'Folding laundry, walking, in a hurry.' },
+  ];
+  return (
+    <View style={{ gap: 6 }}>
+      {opts.map((o) => {
+        const on = pace === o.value;
+        return (
+          <TouchableOpacity
+            key={o.value}
+            onPress={() => setPace(o.value)}
+            activeOpacity={0.75}
+            style={[
+              {
+                flexDirection: 'row', alignItems: 'center', gap: 10,
+                paddingHorizontal: 12, paddingVertical: 10,
+                borderRadius: 10,
+                borderWidth: 1, borderColor: Colors.border,
+              },
+              on && { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
+            ]}
+          >
+            <View
+              style={{
+                width: 12, height: 12, borderRadius: 6,
+                borderWidth: 2,
+                borderColor: on ? Colors.primary : Colors.border,
+                backgroundColor: on ? Colors.primary : 'transparent',
+              }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: on ? Colors.primary : Colors.textPrimary }}>
+                {o.label} <Text style={{ fontWeight: '400', color: Colors.textMuted }}>· {o.value.toFixed(2)}×</Text>
+              </Text>
+              <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 1 }}>{o.sub}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }

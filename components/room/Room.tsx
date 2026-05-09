@@ -92,13 +92,19 @@ export function Room({ familyId, familyName }: Props) {
     };
   }, []);
 
-  // "Read me today" — reads each mantel post sequentially. Falls back
-  // to a quiet no-op if there's nothing on the mantel. M6 will turn
-  // this into a chained, music-ducking ambient experience; for now it
-  // reads the first post and lets the user tap each subsequent one.
+  // "Read me today" — chains all mantel postcards into a single
+  // sequence. Music ducks to 30% during reading and restores when
+  // the last clip ends. Source of Truth, Milestone 6.
   const onReadToday = () => {
-    const first = mantelPosts[0];
-    if (first?.body) tts.toggle(first.id, first.body);
+    const items = mantelPosts
+      .filter((p: any) => !!p.body)
+      .map((p: any) => ({ id: p.id, text: p.body as string }));
+    if (items.length === 0) return;
+    if (tts.playing) {
+      tts.stop();
+    } else {
+      tts.playSequence(items).catch(() => {});
+    }
   };
 
   // Compose flow — for v1 this opens the existing post composer.
@@ -231,15 +237,22 @@ export function Room({ familyId, familyName }: Props) {
             </View>
           </TouchableOpacity>
 
-          {/* Read-aloud */}
+          {/* Read-aloud — chains all mantel postcards into one
+              sequence with the radio ducked underneath. */}
           <TouchableOpacity
             style={[s.dockBtn, mantelPosts.length === 0 && { opacity: 0.4 }]}
             onPress={onReadToday}
             disabled={mantelPosts.length === 0}
             activeOpacity={0.7}
           >
-            <Ionicons name="volume-medium-outline" size={18} color={Colors.textSecondary} />
-            <Text style={s.dockBtnText}>Read me today</Text>
+            <Ionicons
+              name={tts.playing ? 'pause' : 'volume-medium-outline'}
+              size={18}
+              color={Colors.textSecondary}
+            />
+            <Text style={s.dockBtnText}>
+              {tts.playing ? 'Pause reading' : 'Read me today'}
+            </Text>
           </TouchableOpacity>
 
           {/* Compose */}
