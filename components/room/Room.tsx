@@ -35,6 +35,8 @@ import { useTTS } from '../../stores/ttsStore';
 import { useTodayDispatch } from '../../hooks/useDispatch';
 import { useWallpaper, WALLPAPERS } from '../../stores/wallpaperStore';
 import { Postcard } from './Postcard';
+import { RoomMasthead } from './RoomMasthead';
+import { RoomHero } from './RoomHero';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -127,6 +129,9 @@ export function Room({ familyId, familyName }: Props) {
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
+        {/* Brand presence — every Room has a plaque */}
+        <RoomMasthead subtitle={familyId ? (familyName ?? 'Family') : 'The Common Room'} />
+
         {/* ─── Hearth ───────────────────────────────────────────────── */}
         <View style={[s.hearth, isCompact && s.hearthCompact]}>
           <View style={s.hearthMast}>
@@ -188,28 +193,11 @@ export function Room({ familyId, familyName }: Props) {
           {isLoading && mantelPosts.length === 0 ? (
             <Text style={s.empty}>…</Text>
           ) : mantelPosts.length === 0 ? (
-            <View style={s.emptyWrap}>
-              <Text style={s.empty}>Quiet day.</Text>
-              <Text style={s.emptySub}>
-                {lastPostAge !== null
-                  ? `Last post was ${lastPostAge} ${lastPostAge === 1 ? 'day' : 'days'} ago.`
-                  : 'Nothing posted yet.'}
-              </Text>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: Spacing.md }}>
-                <TouchableOpacity onPress={onCompose} style={s.emptyAction} activeOpacity={0.7}>
-                  <Text style={s.emptyActionText}>Write something</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => router.push('/letter/new' as any)}
-                  style={[s.emptyAction, { borderColor: Colors.textMuted }]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[s.emptyActionText, { color: Colors.textSecondary }]}>
-                    Write a letter
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <RoomHero
+              daysSinceLastPost={lastPostAge}
+              onCompose={onCompose}
+              onWriteLetter={() => router.push('/letter/new' as any)}
+            />
           ) : (
             mantelPosts.map((p) => <Postcard key={p.id} post={p as any} />)
           )}

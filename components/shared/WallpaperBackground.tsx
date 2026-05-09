@@ -38,7 +38,7 @@ interface Props {
 
 const WALLPAPER_DIV_ID = 'heretoo-wallpaper';
 const BASELINE_STYLE_ID = 'heretoo-wallpaper-baseline';
-const BASE_BG = '#F6F6F9';
+const BASE_BG = '#0A0A0F';
 
 export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}) {
   // Hooks unconditional + first.
@@ -60,6 +60,18 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
       const style = document.createElement('style');
       style.id = BASELINE_STYLE_ID;
       style.textContent = `
+        /* ─── Global font stack (Source of Truth, M10) ─────────────
+           Forced application of the codex fonts. Inline RN-web
+           fontFamily strings can be lossy on some surfaces; setting
+           the body default here guarantees Inter ships everywhere
+           and the .ht-display / .ht-letter classes deliver Syne /
+           Source Serif 4 wherever explicitly tagged. */
+        html, body {
+          font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
         html, body, #root {
           background-color: transparent !important;
         }
@@ -70,12 +82,28 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
           background-color: transparent !important;
         }
         body { margin: 0; }
+        /* Two-layer wallpaper: the pattern itself, then a soft warm
+           vignette over the top so the centered content has a quiet
+           reading well around it. The vignette is the "candlelight"
+           effect — the room dims at the edges so the room reads
+           more inviting. */
         #${WALLPAPER_DIV_ID} {
           position: fixed;
           inset: 0;
-          z-index: -1;
+          z-index: -2;
           pointer-events: none;
           background-color: ${BASE_BG};
+        }
+        #${WALLPAPER_DIV_ID}::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(ellipse at center,
+              rgba(10, 10, 15, 0.0) 0%,
+              rgba(10, 10, 15, 0.15) 45%,
+              rgba(10, 10, 15, 0.55) 100%);
+          pointer-events: none;
         }
         /* Reserve room on the left for the LeftSidebar (240px wide)
            ONLY when it's actually visible. The sidebar component
@@ -139,7 +167,7 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
       div.style.backgroundSize = 'cover';
       div.style.backgroundPosition = 'center center';
       div.style.backgroundAttachment = 'fixed';
-      div.style.opacity = bold ? '1' : '0.85';
+      div.style.opacity = '1';
 
       document.body.style.backgroundImage = url;
       document.body.style.backgroundRepeat = 'no-repeat';
@@ -181,7 +209,7 @@ export function WallpaperBackground({ bold: boldOverride, familyId }: Props = {}
       div.style.backgroundRepeat = 'repeat';
       div.style.backgroundSize = `${def.tileSize}px ${def.tileSize}px`;
       div.style.backgroundAttachment = 'fixed';
-      div.style.opacity = bold ? '1' : '0.85';
+      div.style.opacity = '1';
 
       document.body.style.backgroundImage = url;
       document.body.style.backgroundRepeat = 'repeat';

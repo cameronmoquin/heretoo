@@ -109,16 +109,21 @@ export function Postcard({ post, variant = 'auto' }: Props) {
     );
   }
 
-  // Type-dominant — a pulled phrase as hero, byline below.
+  // Type-dominant — a pulled phrase as hero, byline below. Rendered
+  // like a small framed broadside: a thin gold inner border, a big
+  // pulled quote in Source Serif italic with an opening curly quote
+  // standing tall in the upper-left corner.
   return (
     <TouchableOpacity activeOpacity={0.85} onPress={open} style={s.cardWrap}>
       <View style={s.cardType}>
+        <View style={s.typeFrame} pointerEvents="none" />
+        <Text style={s.openQuote} accessibilityLabel="">"</Text>
         <Text style={s.typeHero} numberOfLines={5}>
           {post.body ? pullPhrase(post.body) : '(empty post)'}
         </Text>
       </View>
       <View style={s.byline}>
-        <Text style={s.bylineAuthor}>{authorLabel(post)}</Text>
+        <Text style={s.bylineAuthor}>— {authorLabel(post)}</Text>
         {!!post.body && (
           <TouchableOpacity onPress={onReadAloud} style={s.ttsBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons
@@ -137,11 +142,12 @@ function makeStyles() { return StyleSheet.create({
   cardWrap: {
     width: '100%',
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
+    backgroundColor: 'rgba(22, 22, 29, 0.78)',
+    borderWidth: 1,
+    borderColor: Colors.primary,
     overflow: 'hidden',
     marginBottom: Spacing.md,
+    ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(4px)' } as any) : {}),
   },
   cardImg: {
     width: '100%',
@@ -167,33 +173,58 @@ function makeStyles() { return StyleSheet.create({
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   cardType: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.lg + 4,
-    minHeight: 160,
+    position: 'relative',
+    paddingHorizontal: Spacing.lg + 4,
+    paddingVertical: Spacing.xl,
+    minHeight: 180,
     justifyContent: 'center',
   },
+  // Inner gold hairline 12px in from the outer border — a paper-mounted
+  // print look, not a flat web card.
+  typeFrame: {
+    position: 'absolute',
+    top: 12, left: 12, right: 12, bottom: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.primary,
+    opacity: 0.35,
+    borderRadius: 6,
+  },
+  // Oversized opening quote — the hand-set look of a broadside.
+  openQuote: {
+    position: 'absolute',
+    top: 4, left: 14,
+    fontSize: 70,
+    lineHeight: 70,
+    color: Colors.primary,
+    opacity: 0.55,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+  },
   typeHero: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    letterSpacing: -0.4,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    fontSize: 26,
+    lineHeight: 38,
+    fontWeight: '400',
+    fontStyle: 'italic',
+    color: Colors.brandIvory,
+    letterSpacing: 0,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   byline: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm + 2,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.primary,
   },
   bylineAuthor: {
     fontSize: 12,
-    color: Colors.textSecondary,
-    fontWeight: '500',
+    color: Colors.primary,
+    fontWeight: '600',
     flexShrink: 1,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   ttsBtn: {
     width: 28, height: 28, borderRadius: Radius.full,
