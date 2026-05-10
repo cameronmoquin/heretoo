@@ -125,20 +125,41 @@ export function useFeedRealtime(tab: FeedTab) {
   const userId = useAuthStore((s) => s.user?.id);
   useEffect(() => {
     if (DEV_MODE) return;
-    const channel = supabase
-      .channel(`feed-${tab}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'posts' },
-        (payload: any) => {
-          const v = payload?.new?.visibility;
-          if (v === 'family' || v === 'private') return;
-          if (tab === 'connections' && v !== 'connections') return;
-          qc.invalidateQueries({ queryKey: ['feed', tab, userId] });
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    // Unique channel name per mount avoids the Supabase Realtime
+    // crash that surfaced as "Something broke. cannot add
+    // postgres_changes callbacks for realtime:feed-for_you after
+    // subscribe()." When a user navigates away and back, the cached
+    // channel-by-name still has subscribe() called on it, so adding
+    // a new listener throws. A random suffix sidesteps the cache.
+    const suffix = Math.random().toString(36).slice(2, 10);
+    const channelName = `feed-${tab}-${suffix}`;
+    let channel: any;
+
+    try {
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'posts' },
+          (payload: any) => {
+            const v = payload?.new?.visibility;
+            if (v === 'family' || v === 'private') return;
+            if (tab === 'connections' && v !== 'connections') return;
+            qc.invalidateQueries({ queryKey: ['feed', tab, userId] });
+          },
+        )
+        .subscribe();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[feed-realtime] subscribe failed; live updates off', e);
+    }
+
+    return () => {
+      try {
+        if (channel) supabase.removeChannel(channel);
+      } catch {}
+    };
   }, [qc, tab, userId]);
 }
 
