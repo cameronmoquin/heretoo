@@ -30,7 +30,17 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
-async function sendArrivalEmail(to: string, authorName: string, letterId: string): Promise<boolean> {
+/** Render the letter body itself in the email. The recipient may
+ *  never visit the platform — especially for posthumous letters
+ *  where the author has passed and the family is no longer engaged.
+ *  The email IS the delivery; the platform link is the keepsake. */
+async function sendArrivalEmail(
+  to: string,
+  authorName: string,
+  letterId: string,
+  body: string,
+  writtenAt: string,
+): Promise<boolean> {
   if (!RESEND_API_KEY) {
     // eslint-disable-next-line no-console
     console.warn('[letter] RESEND_API_KEY not set — would have emailed', to);
@@ -38,28 +48,54 @@ async function sendArrivalEmail(to: string, authorName: string, letterId: string
   }
   const link = `https://heretoo.social/letter/${letterId}`;
   const subject = `A letter from ${authorName}`;
+
+  // Format the body for HTML — preserve paragraph breaks, escape
+  // the rest. The body_md may contain markdown asterisks for italics
+  // but we render plain prose; people who use the Letter feature
+  // are writing letters, not formatting documents.
+  const escapedBody = (body ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  const paragraphHtml = escapedBody
+    .split(/\n{2,}/)
+    .map((p) => `<p style="margin:0 0 18px 0;">${p.replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+  const writtenLine = (() => {
+    try {
+      return new Date(writtenAt).toLocaleDateString(undefined, {
+        day: 'numeric', month: 'long', year: 'numeric',
+      });
+    } catch { return writtenAt; }
+  })();
+
   const html = `
     <!doctype html>
-    <html><body style="background:#FFFFFF;margin:0;padding:24px;font-family:Georgia,'Source Serif 4',serif;color:#1A1A24;">
-      <div style="max-width:560px;margin:0 auto;">
-        <div style="font-size:11px;font-weight:700;color:#8A8A9A;text-transform:uppercase;letter-spacing:1.6px;">
+    <html><body style="background:#0A0A0F;margin:0;padding:32px 16px;font-family:'Source Serif 4',Georgia,serif;color:#F4F1E8;">
+      <div style="max-width:580px;margin:0 auto;background:#16161D;border:1px solid rgba(201,161,75,0.55);border-radius:12px;padding:32px 28px;">
+        <div style="font-size:11px;font-weight:700;color:#C9A14B;text-transform:uppercase;letter-spacing:2px;font-family:'Syne','Inter',sans-serif;">
           A letter has arrived
         </div>
-        <div style="font-size:22px;font-weight:700;color:#1A1A24;letter-spacing:-0.3px;margin-top:8px;">
+        <div style="font-size:28px;font-weight:800;color:#F4F1E8;letter-spacing:-0.6px;margin-top:8px;font-family:'Syne','Inter',sans-serif;line-height:1.15;">
           From ${authorName}
         </div>
-        <div style="font-size:14px;line-height:1.6;color:#5A5A6E;margin-top:16px;">
-          They wrote it for you and chose today as the day to send it.
+        <div style="display:flex;align-items:center;gap:10px;margin:14px 0 22px;">
+          <span style="display:inline-block;width:48px;height:1px;background:#C9A14B;opacity:0.55;"></span>
+          <span style="color:#C9A14B;font-size:11px;">✦</span>
+          <span style="display:inline-block;width:48px;height:1px;background:#C9A14B;opacity:0.55;"></span>
         </div>
-        <a href="${link}" style="display:inline-block;margin-top:18px;padding:11px 18px;background:#C9A14B;color:#FFFFFF;text-decoration:none;border-radius:999px;font-size:14px;font-weight:600;">
-          Read the letter
-        </a>
-        <div style="font-size:11px;color:#8A8A9A;margin-top:24px;line-height:1.5;">
-          You can also <a href="${link}" style="color:#C9A14B;text-decoration:none;">open it on heretoo.social</a>.
+        <div style="font-size:11px;color:#8A8377;text-transform:uppercase;letter-spacing:1.6px;font-family:'Syne','Inter',sans-serif;">
+          Written ${writtenLine}
+        </div>
+        <div style="margin-top:22px;font-size:17px;line-height:1.7;color:#F4F1E8;">
+          ${paragraphHtml}
+        </div>
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(201,161,75,0.25);font-size:12px;line-height:1.6;color:#8A8377;">
+          You can also <a href="${link}" style="color:#C9A14B;text-decoration:none;">read this letter on heretoo.social</a>, where it stays as a keepsake.
         </div>
       </div>
     </body></html>`;
-  const text = `A letter has arrived — from ${authorName}.\n\nThey wrote it for you and chose today as the day to send it.\n\nRead it: ${link}`;
+  const text = `A letter has arrived — from ${authorName}.\n\nWritten ${writtenLine}\n\n${body}\n\n---\nRead it on heretoo.social: ${link}`;
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -84,7 +120,7 @@ export default async () => {
 
   // 1. Find letters due for delivery.
   const dueRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/letters?select=id,author_id,body_md,deliver_at,author:profiles!author_id(handle,display_name)&deliver_at=lte.${new Date().toISOString()}&delivered_at=is.null&limit=200`,
+    `${SUPABASE_URL}/rest/v1/letters?select=id,author_id,body_md,body_plain,created_at,deliver_at,author:profiles!author_id(handle,display_name)&deliver_at=lte.${new Date().toISOString()}&delivered_at=is.null&limit=200`,
     { headers: HEADERS },
   );
   const due = (await dueRes.json()) as any[];
@@ -139,7 +175,10 @@ export default async () => {
       const u: any = await userRes.json();
       const to = u?.email;
       if (!to) continue;
-      const ok = await sendArrivalEmail(to, authorName, letter.id);
+      const body = (letter.body_plain || letter.body_md || '').toString();
+      const ok = await sendArrivalEmail(
+        to, authorName, letter.id, body, letter.created_at,
+      );
       if (ok) emailed += 1;
     }
   }

@@ -112,6 +112,7 @@ function RootLayoutInner() {
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ headerShown: false, title: 'About HereToo' }} />
         <Stack.Screen name="the-parlor" options={{ headerShown: false }} />
+        <Stack.Screen name="loft" options={{ headerShown: false }} />
         <Stack.Screen name="u" options={{ headerShown: false }} />
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
