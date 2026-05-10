@@ -33,6 +33,9 @@ interface ResolvedRecipient {
 interface FutureRecipient {
   kind: 'future';
   label: string;
+  /** Optional c/o email — for unborn / underage recipients, the
+   *  letter is delivered to a trusted adult's inbox. */
+  careOfEmail?: string;
 }
 type Recipient = ResolvedRecipient | FutureRecipient;
 
@@ -84,6 +87,15 @@ export default function NewLetterScreen() {
     setSearchResults([]);
   };
 
+  /** Update the care-of email on a future recipient row. */
+  const setCareOfEmail = (idx: number, email: string) => {
+    setRecipients(recipients.map((r, i) =>
+      i === idx && r.kind === 'future'
+        ? { ...r, careOfEmail: email.trim() || undefined }
+        : r,
+    ));
+  };
+
   const removeRecipient = (idx: number) =>
     setRecipients(recipients.filter((_, i) => i !== idx));
 
@@ -116,7 +128,7 @@ export default function NewLetterScreen() {
         recipients: recipients.map((r) =>
           r.kind === 'user'
             ? { kind: 'user' as const, user_id: r.user_id }
-            : { kind: 'future' as const, label: r.label },
+            : { kind: 'future' as const, label: r.label, careOfEmail: r.careOfEmail },
         ),
       });
       // Successful queue → take the user back to drafts list, stamping
@@ -158,6 +170,29 @@ export default function NewLetterScreen() {
               </View>
             ))}
           </View>
+
+          {/* Care-of email per future recipient — for unborn or
+              underage recipients, the letter is mailed to a trusted
+              adult's inbox on the chosen delivery date. */}
+          {recipients.map((r, idx) => (
+            r.kind === 'future' ? (
+              <View key={`co-${idx}`} style={s.careOfRow}>
+                <Text style={s.careOfLabel}>
+                  c/o email for &quot;{r.label}&quot; <Text style={s.careOfHint}>(optional)</Text>
+                </Text>
+                <TextInput
+                  style={s.recipientInput}
+                  value={r.careOfEmail ?? ''}
+                  onChangeText={(t) => setCareOfEmail(idx, t)}
+                  placeholder="parent@example.com"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                />
+              </View>
+            ) : null
+          ))}
           <TextInput
             style={s.recipientInput}
             value={draftRecipient}
@@ -281,6 +316,9 @@ function makeStyles() { return StyleSheet.create({
   },
   chipText: { fontSize: 12, color: Colors.primary, fontWeight: '600', maxWidth: 220 },
 
+  careOfRow: { gap: 4, marginTop: 6 },
+  careOfLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '600' },
+  careOfHint: { color: Colors.textMuted, fontWeight: '400' },
   recipientInput: {
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,

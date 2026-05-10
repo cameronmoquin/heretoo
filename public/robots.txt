@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Allow: /about
+Allow: /for-grandparents
 Allow: /the-parlor
 Disallow: /welcome/
 Disallow: /letter/

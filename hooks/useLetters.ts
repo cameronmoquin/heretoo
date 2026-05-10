@@ -116,7 +116,7 @@ export interface CreateLetterInput {
   family_id?: string | null;
   recipients: Array<
     | { kind: 'user'; user_id: string }
-    | { kind: 'future'; label: string }
+    | { kind: 'future'; label: string; careOfEmail?: string }
   >;
 }
 
@@ -149,6 +149,7 @@ export function useCreateLetter() {
             letter_id: letter.id,
             future_recipient_label: r.label,
             future_recipient_token: cryptoToken(),
+            care_of_email: r.careOfEmail || null,
           };
         });
         const { error: rErr } = await supabase.from('letter_recipients').insert(rows as any);

@@ -40,6 +40,7 @@ async function sendArrivalEmail(
   letterId: string,
   body: string,
   writtenAt: string,
+  careOfLabel: string | null = null,
 ): Promise<boolean> {
   if (!RESEND_API_KEY) {
     // eslint-disable-next-line no-console
@@ -47,7 +48,9 @@ async function sendArrivalEmail(
     return false;
   }
   const link = `https://heretoo.social/letter/${letterId}`;
-  const subject = `A letter from ${authorName}`;
+  const subject = careOfLabel
+    ? `A letter from ${authorName} — care of ${careOfLabel}`
+    : `A letter from ${authorName}`;
 
   // Format the body for HTML — preserve paragraph breaks, escape
   // the rest. The body_md may contain markdown asterisks for italics
@@ -69,6 +72,13 @@ async function sendArrivalEmail(
     } catch { return writtenAt; }
   })();
 
+  const careOfHtml = careOfLabel
+    ? `<div style="margin-top:12px;padding:12px 14px;background:rgba(201,161,75,0.10);border-left:2px solid #C9A14B;font-size:13px;line-height:1.6;color:#F4F1E8;">
+         This letter is addressed to <strong>${careOfLabel}</strong>. You are
+         receiving it as the trusted adult on file. Please share or hold it
+         for them as you see fit.
+       </div>`
+    : '';
   const html = `
     <!doctype html>
     <html><body style="background:#0A0A0F;margin:0;padding:32px 16px;font-family:'Source Serif 4',Georgia,serif;color:#F4F1E8;">
@@ -79,6 +89,7 @@ async function sendArrivalEmail(
         <div style="font-size:28px;font-weight:800;color:#F4F1E8;letter-spacing:-0.6px;margin-top:8px;font-family:'Syne','Inter',sans-serif;line-height:1.15;">
           From ${authorName}
         </div>
+        ${careOfHtml}
         <div style="display:flex;align-items:center;gap:10px;margin:14px 0 22px;">
           <span style="display:inline-block;width:48px;height:1px;background:#C9A14B;opacity:0.55;"></span>
           <span style="color:#C9A14B;font-size:11px;">✦</span>
@@ -95,7 +106,10 @@ async function sendArrivalEmail(
         </div>
       </div>
     </body></html>`;
-  const text = `A letter has arrived — from ${authorName}.\n\nWritten ${writtenLine}\n\n${body}\n\n---\nRead it on heretoo.social: ${link}`;
+  const careOfText = careOfLabel
+    ? `\nThis letter is addressed to ${careOfLabel}. You are receiving it as the trusted adult on file.\n`
+    : '';
+  const text = `A letter has arrived — from ${authorName}.${careOfText}\n\nWritten ${writtenLine}\n\n${body}\n\n---\nRead it on heretoo.social: ${link}`;
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -137,11 +151,14 @@ export default async () => {
   for (const letter of due) {
     // Resolve recipients on this letter.
     const recipRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/letter_recipients?select=id,user_id,future_recipient_label&letter_id=eq.${letter.id}`,
+      `${SUPABASE_URL}/rest/v1/letter_recipients?select=id,user_id,future_recipient_label,care_of_email&letter_id=eq.${letter.id}`,
       { headers: HEADERS },
     );
     const recipients = (await recipRes.json()) as Array<{
-      id: string; user_id: string | null; future_recipient_label: string | null;
+      id: string;
+      user_id: string | null;
+      future_recipient_label: string | null;
+      care_of_email: string | null;
     }>;
 
     // Mark the letter delivered first — RLS makes future reads possible
@@ -166,18 +183,29 @@ export default async () => {
       letter.author?.display_name?.trim() || letter.author?.handle?.trim() || 'a friend';
 
     for (const r of recipients) {
-      if (!r.user_id) continue;
-      // Look up the recipient's auth.users email via admin API.
-      const userRes = await fetch(
-        `${SUPABASE_URL}/auth/v1/admin/users/${r.user_id}`,
-        { headers: HEADERS },
-      );
-      const u: any = await userRes.json();
-      const to = u?.email;
+      let to: string | null = null;
+      let careOfLabel: string | null = null;
+
+      if (r.user_id) {
+        // Resolved recipient — look up their auth.users email.
+        const userRes = await fetch(
+          `${SUPABASE_URL}/auth/v1/admin/users/${r.user_id}`,
+          { headers: HEADERS },
+        );
+        const u: any = await userRes.json();
+        to = u?.email ?? null;
+      } else if (r.care_of_email) {
+        // Future recipient with a parent / guardian email on file —
+        // letter to "my future grandchild" gets sent c/o the parent.
+        to = r.care_of_email;
+        careOfLabel = r.future_recipient_label ?? 'the recipient';
+      }
+
       if (!to) continue;
+
       const body = (letter.body_plain || letter.body_md || '').toString();
       const ok = await sendArrivalEmail(
-        to, authorName, letter.id, body, letter.created_at,
+        to, authorName, letter.id, body, letter.created_at, careOfLabel,
       );
       if (ok) emailed += 1;
     }
