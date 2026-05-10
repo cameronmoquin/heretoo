@@ -24,34 +24,27 @@ export default function AboutScreen() {
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.masthead}>
-          <Text style={s.kicker}>About HereToo</Text>
-          <Text style={s.title}>The room your family lives in.</Text>
+          <Text style={s.kicker}>HereToo</Text>
+          <Text style={s.title}>A safe place for your family.</Text>
         </View>
 
         <Text style={s.body}>
-          HereToo is a quieter corner of the internet, made for the people you love.
-          Family is the original lifeworld. The platform's job is to keep that lifeworld
-          intact, not to replace it with content.
+          HereToo is a small, private platform for the people you actually love.
+          Each family is its own room, invitation-only. Inside the room you can post,
+          share photos, write a long letter for someone to open in five years, play
+          trivia, get on a video call, or just see what your mother said today.
         </Text>
 
         <Text style={s.body}>
-          Each user picks a wallpaper. Each family votes on a shared one. The feed is
-          three postcards on a mantel, not an infinite scroll. Music plays at low
-          volume in another room. A calm voice can read the day to you while you fold
-          laundry. Letters can be queued for delivery years from now, addressed to a
-          grandchild not yet born.
+          The family rooms have no advertising. They&apos;re paid for by a small family
+          subscription — five dollars a month, paid by whoever in the family wants to
+          cover it. Nobody is the product.
         </Text>
 
         <Text style={s.body}>
-          We do not run advertising and we do not sell user data. The platform is
-          paid for by a small family subscription. The grandmother never sees a price.
-          The family pays it because the family wants the family to have a room.
-        </Text>
-
-        <Text style={s.body}>
-          The destination is not a better social network. The destination is a place
-          a grandmother decorates, dwells in, and gathers her family inside. The rest
-          follows from that.
+          There is also a public side of HereToo, separate from the family rooms,
+          where ads are allowed. It&apos;s pseudonymous, and the posts vanish in a day.
+          That part is optional and clearly marked.
         </Text>
 
         <View style={s.actions}>

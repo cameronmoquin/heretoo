@@ -52,8 +52,7 @@ export default function NewsScreen() {
           <Text style={s.title}>The day, plainly.</Text>
           <Text style={s.lede}>
             Headlines from NPR, BBC World, and PBS NewsHour. Every story links
-            out to its source. No algorithm, no trending tab, no engagement bait —
-            just what the newsroom said today.
+            out to its source — the platform doesn&apos;t host the article.
           </Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />

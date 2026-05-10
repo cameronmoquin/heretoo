@@ -107,7 +107,7 @@ export default function LoftScreen() {
         </TouchableOpacity>
         <View style={{ alignItems: 'center', flex: 1 }}>
           <Text style={s.brand}>HERETOO</Text>
-          <Text style={s.brandSub}>the public square</Text>
+          <Text style={s.brandSub}>the public side</Text>
         </View>
         <View style={{ width: 20 }} />
       </View>
@@ -132,10 +132,23 @@ export default function LoftScreen() {
           <View style={{ flex: 1 }}>
             <Text style={s.subbar}>You are <Text style={s.subbarHandle}>unnamed</Text></Text>
             <TouchableOpacity
-              onPress={() => refetchHandle()}
+              onPress={async () => {
+                try {
+                  await regenerate.mutateAsync();
+                } catch (e: any) {
+                  // Try a refetch as the fallback path.
+                  await refetchHandle();
+                  if (e?.message) {
+                    showAlert('Could not generate a pseudonym', e.message);
+                  }
+                }
+              }}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              disabled={regenerate.isPending}
             >
-              <Text style={s.changeLink}>get a pseudonym</Text>
+              <Text style={s.changeLink}>
+                {regenerate.isPending ? 'rolling…' : 'get a pseudonym'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -201,8 +214,8 @@ export default function LoftScreen() {
 
         <View style={s.footer}>
           <Text style={s.footerText}>
-            no follower counts. no algorithm. posts last 24 hours and disappear.
-            {'\n'}supported by ads — the family rooms stay clean.
+            posts last 24 hours and disappear. ads pay for the lights here.
+            {'\n'}the family rooms stay clean.
           </Text>
         </View>
       </ScrollView>
@@ -211,17 +224,16 @@ export default function LoftScreen() {
       <Modal visible={disclosureOpen} transparent animationType="fade" onRequestClose={dismissDisclosure}>
         <View style={s.discScrim}>
           <View style={s.discSheet}>
-            <Text style={s.discKicker}>HERETOO · THE PUBLIC SQUARE</Text>
-            <Text style={s.discTitle}>This part of HereToo is supported by ads.</Text>
+            <Text style={s.discKicker}>HERETOO · THE PUBLIC SIDE</Text>
+            <Text style={s.discTitle}>A non-toxic social media no one asked for.</Text>
             <Text style={s.discBody}>
-              The family rooms — the parlor, the letters, the memoir, the trivia,
-              all the private surfaces — stay ad-free. They&apos;re paid for by the
-              family subscription.
+              This is the open side of HereToo, separate from the family rooms.
+              Posts here are pseudonymous and vanish in 24 hours. Ads pay for
+              the lights — they appear about every fifth post.
             </Text>
             <Text style={s.discBody}>
-              The public square is the open part of the platform. Anyone signed
-              into HereToo can post or read here, pseudonymously. Ads appear in
-              the feed about every fifth post. Posts vanish in 24 hours.
+              We don&apos;t know if anyone will use it. The family rooms stay clean
+              either way.
             </Text>
             <TouchableOpacity onPress={dismissDisclosure} style={s.discBtn} activeOpacity={0.85}>
               <Text style={s.discBtnText}>I understand</Text>

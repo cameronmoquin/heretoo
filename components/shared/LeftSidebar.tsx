@@ -139,7 +139,7 @@ export function LeftSidebar() {
       <NavRow
         icon={pathname.startsWith('/loft') ? 'globe' : 'globe-outline'}
         label="HereToo"
-        sub="public square"
+        sub="public side"
         active={pathname.startsWith('/loft')}
         onPress={() => router.push('/loft' as any)}
       />

@@ -30,32 +30,28 @@ import { Spacing, Radius } from '../constants/design';
 
 const FAQ: Array<{ q: string; a: string }> = [
   {
-    q: 'Is HereToo really for grandparents?',
-    a: 'Yes. The platform was built around the idea that a 65-year-old should want it for her own sake — slow, beautiful, voice-readable, with a daily noon email summary instead of constant notifications. The 14-year-old grandchild also has reasons to be on it, but the room was decorated with the grandmother in mind first.',
-  },
-  {
     q: 'How do I sign my mother up?',
-    a: "You start a family on HereToo, then send her a printed welcome card from the family page. When she scans the QR code, the platform reads her a 30-second greeting in a calm voice that names you. There are no fields, no signup wall — she taps once and she's inside the room you decorated for her.",
-  },
-  {
-    q: 'Is it like Facebook?',
-    a: 'No. Facebook is loud, public, ad-driven, and runs on follower counts and infinite scroll. HereToo is quiet, private to your family, has no ads, no follower counts, and the home screen has three posts a day at most. The two products solve different problems.',
+    a: "Start a family on HereToo, then send her a printed welcome card from the family page. When she scans the QR code, the platform reads her a short greeting and lets her in. No fields, no signup wall.",
   },
   {
     q: 'Does it cost money?',
-    a: "Five dollars a month or fifty a year, paid by the family for the family. The grandmother never sees a price. One adult in the family covers everyone. The first family is free for trial use.",
+    a: "Five dollars a month or fifty a year, paid by whoever in the family wants to cover it. One adult covers everyone. The first family is free for trial.",
   },
   {
     q: 'Will my mother be able to use it?',
-    a: 'The interface is intentionally minimal. Three taps to read what your family shared today. Voice input for posts and messages — she can speak, the platform transcribes. A calm voice will read posts aloud while she does the dishes. Type is large by default. There is no "complete your profile" prompt and the platform never asks for her birthday.',
+    a: "Three taps to read what the family shared today. Voice input — she can speak, the platform transcribes. A calm voice reads posts aloud while she does the dishes. Type is large by default. The platform never asks for her birthday.",
   },
   {
     q: 'Can she write a letter to a grandchild not yet born?',
-    a: "Yes. The Letter feature lets her queue a long-form letter for delivery on a chosen date up to 80 years out. She can address it to a future grandchild she hasn't met yet. The letter arrives by email — addressed care-of a parent if the grandchild is still small.",
+    a: "Yes. The Letter feature lets her queue a long-form letter for delivery on a chosen date up to 80 years out. The letter arrives by email — addressed care-of a parent if the grandchild is still small.",
+  },
+  {
+    q: 'Is there advertising?',
+    a: "Not in the family rooms. There is a separate public side of the platform where ads are allowed; it's clearly marked and your mother doesn't have to go there.",
   },
   {
     q: 'What about her privacy?',
-    a: 'HereToo never sells data and runs no advertising. There are no third-party tracking pixels. Posts are visible only to the family they were posted to. Direct messages from outside the family network require explicit acceptance. The grandmother is the user, not the product.',
+    a: "Posts are visible only to the family they were posted to. Direct messages from outside the family graph require explicit acceptance. We don't sell data.",
   },
 ];
 
@@ -114,13 +110,12 @@ export default function ForGrandparentsScreen() {
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.masthead}>
-          <Text style={s.kicker}>For grandmothers, grandfathers, and the people who love them</Text>
-          <Text style={s.title}>The social media of your dreams.</Text>
+          <Text style={s.kicker}>For grandparents and the people who love them</Text>
+          <Text style={s.title}>A safe place for your family.</Text>
           <Text style={s.lede}>
-            Quiet. Private to your family. No ads, no follower counts, no
-            algorithm. Three posts on the mantel a day. A calm voice reads them
-            aloud while you do the dishes. The platform was decorated with you
-            in mind first.
+            Each family is its own private room. Inside, you can post, share photos,
+            write a letter to be opened in five years, play trivia, get on a video
+            call, or just see what your mother said today.
           </Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />
@@ -130,66 +125,18 @@ export default function ForGrandparentsScreen() {
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>What it is</Text>
+          <Text style={s.sectionTitle}>How to get started</Text>
           <Text style={s.body}>
-            HereToo is a private social platform for families. Each family is a
-            small, invitation-only room — your children, grandchildren, in-laws,
-            and whoever else you want to gather. The default surface is not a
-            feed. It is a room with wallpaper you choose, the music you last
-            played humming at low volume, and a few postcards on the mantel
-            from your family that day.
+            Someone in the family — usually a daughter or grandchild — starts the
+            family on HereToo and sends a printed welcome card by mail. The card has
+            a QR code on the back. The grandparent scans it, hears a short greeting
+            and is in.
           </Text>
           <Text style={s.body}>
-            You read what your family shared. You leave a heart, a comment, or
-            you let a calm voice read it back to you. You write a post by
-            speaking, if typing is hard, and the platform transcribes it. You
-            queue a letter to be delivered on a date you choose, even years
-            from now, even to a grandchild not yet born.
-          </Text>
-        </View>
-
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>What it isn&apos;t</Text>
-          <Text style={s.body}>
-            The family rooms — the parlor, the letters, the memoir, the trivia,
-            every private surface — run no advertising. The public square area
-            of HereToo is supported by ads, plainly disclosed before you enter.
-            There are no tracking pixels for the family rooms, no third-party
-            data partners, no infinite scroll, no streaks, no notification nudges,
-            no &quot;people you may know&quot; from outside your family graph. There is
-            no follower count anywhere on the platform.
-          </Text>
-          <Text style={s.body}>
-            We do not collect your birthday or your phone number or your address
-            book. We do not auto-suggest content or auto-write your replies. We
-            do not let bots impersonate real people, living or dead. The
-            platform&apos;s job is to leave you alone with the people you love,
-            instead of pulling your face back into the glass.
-          </Text>
-        </View>
-
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>How it works</Text>
-          <Text style={s.body}>
-            <Text style={s.bodyEm}>Your daughter or grandchild starts a family.</Text>{' '}
-            They give it a name (often a last name; sometimes something
-            warmer, like &quot;The Cottage&quot; or &quot;Sunday Lunch&quot;). They invite
-            you with a printed welcome card sent by mail. The card has a QR
-            code on the back.
-          </Text>
-          <Text style={s.body}>
-            <Text style={s.bodyEm}>You scan it.</Text>{' '}
-            The platform plays a 30-second voice greeting in a calm voice that
-            names you and names the person who invited you. There are no fields
-            and no signup wall. You tap once and you are in the room your family
-            decorated for you.
-          </Text>
-          <Text style={s.body}>
-            <Text style={s.bodyEm}>You can come back any time.</Text>{' '}
-            A daily email lands in your inbox at noon, listing what your family
-            posted that you haven&apos;t read yet. If you close the app for two
-            weeks, the platform welcomes you back without scolding you for
-            missing days.
+            Once she&apos;s in, the family page shows what the family posted today.
+            She can read, listen (a calm voice will read posts aloud while she does
+            the dishes), or write something — by typing or by speaking. A daily
+            email summary lands in her inbox at noon.
           </Text>
         </View>
 
