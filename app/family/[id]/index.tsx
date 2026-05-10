@@ -23,6 +23,7 @@ import { WallpaperBackground } from '../../../components/shared/WallpaperBackgro
 import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
 import { FamilyBillingBanner } from '../../../components/family/FamilyBillingBanner';
 import { FamilyTriviaPanel } from '../../../components/trivia/FamilyTriviaPanel';
+import { useStartVideoCall } from '../../../hooks/useStartVideoCall';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -43,6 +44,7 @@ export default function FamilyDetail() {
   const { data: pendingRename } = usePendingRename(id ?? null);
   const proposeRename = useProposeRename();
   const voteRename = useVoteRename();
+  const startCall = useStartVideoCall();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -236,6 +238,25 @@ export default function FamilyDetail() {
               <Ionicons name="mail-outline" size={16} color={Colors.textSecondary} />
               <Text style={s.welcomeCardText}>Send a welcome card</Text>
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.callBtn}
+              activeOpacity={0.85}
+              onPress={async () => {
+                if (!id) return;
+                try {
+                  const callId = await startCall.mutateAsync({ familyId: id });
+                  router.push(`/call/${callId}` as any);
+                } catch (e: any) {
+                  showAlert('Could not start the call', e?.message ?? 'Try again.');
+                }
+              }}
+              disabled={startCall.isPending}
+            >
+              <Ionicons name="videocam" size={16} color={'#0A0A0F'} />
+              <Text style={s.callBtnText}>
+                {startCall.isPending ? 'Starting…' : 'Start a video call'}
+              </Text>
             </TouchableOpacity>
             <FeedComposer familyId={id} />
             {(!posts || posts.length === 0) ? (
@@ -587,6 +608,15 @@ function makeStyles() { return StyleSheet.create({
     marginTop: 4, marginBottom: 4,
   },
   welcomeCardText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, flexShrink: 1 },
+  callBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+    alignSelf: 'flex-start',
+    marginTop: 4, marginBottom: 4,
+  },
+  callBtnText: { fontSize: 13, fontWeight: '700', color: '#0A0A0F', letterSpacing: 0.2 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
   primaryBtn: { paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999, backgroundColor: Colors.primary },
   primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
