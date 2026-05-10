@@ -22,10 +22,11 @@ import { FamilyWallpaperVoting } from '../../../components/family/FamilyWallpape
 import { WallpaperBackground } from '../../../components/shared/WallpaperBackground';
 import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
 import { FamilyBillingBanner } from '../../../components/family/FamilyBillingBanner';
+import { FamilyTriviaPanel } from '../../../components/trivia/FamilyTriviaPanel';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
-type Tab = 'feed' | 'subjects' | 'chat' | 'about';
+type Tab = 'feed' | 'subjects' | 'chat' | 'trivia' | 'about';
 
 export default function FamilyDetail() {
   const s = makeStyles();
@@ -163,11 +164,12 @@ export default function FamilyDetail() {
       </View>
 
       <View style={s.tabs}>
-        {(['feed', 'subjects', 'chat', 'about'] as Tab[]).map((t) => {
+        {(['feed', 'subjects', 'chat', 'trivia', 'about'] as Tab[]).map((t) => {
           const label =
             t === 'feed' ? 'Feed' :
             t === 'subjects' ? 'Subjects' :
             t === 'chat' ? 'Chat' :
+            t === 'trivia' ? 'Trivia' :
             'About';
           return (
             <TouchableOpacity
@@ -261,6 +263,10 @@ export default function FamilyDetail() {
 
         {tab === 'chat' && (
           <FamilyChatPanel familyId={id} />
+        )}
+
+        {tab === 'trivia' && (
+          <FamilyTriviaPanel familyId={id} />
         )}
 
         {tab === 'about' && (
