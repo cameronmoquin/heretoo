@@ -130,8 +130,9 @@ export function LeftSidebar() {
         onPress={() => router.push('/games' as any)}
       />
       <NavRow
-        icon={pathname.startsWith('/loft') ? 'flash' : 'flash-outline'}
-        label="The Loft"
+        icon={pathname.startsWith('/loft') ? 'globe' : 'globe-outline'}
+        label="HereToo"
+        sub="public square"
         active={pathname.startsWith('/loft')}
         onPress={() => router.push('/loft' as any)}
       />

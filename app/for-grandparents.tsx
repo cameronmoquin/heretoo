@@ -151,11 +151,13 @@ export default function ForGrandparentsScreen() {
         <View style={s.section}>
           <Text style={s.sectionTitle}>What it isn&apos;t</Text>
           <Text style={s.body}>
-            HereToo runs no advertising. There are no sponsored posts, no
-            tracking pixels, no third-party data partners. There is no infinite
-            scroll. There are no streaks, no notification nudges, no &quot;people
-            you may know&quot; from outside your family graph. There is no follower
-            count anywhere on the platform.
+            The family rooms — the parlor, the letters, the memoir, the trivia,
+            every private surface — run no advertising. The public square area
+            of HereToo is supported by ads, plainly disclosed before you enter.
+            There are no tracking pixels for the family rooms, no third-party
+            data partners, no infinite scroll, no streaks, no notification nudges,
+            no &quot;people you may know&quot; from outside your family graph. There is
+            no follower count anywhere on the platform.
           </Text>
           <Text style={s.body}>
             We do not collect your birthday or your phone number or your address
