@@ -11,8 +11,9 @@
  * This is decoration: a plaque on the wall.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
+import { ChimePanel } from '../easter/ChimePanel';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 
@@ -23,17 +24,30 @@ interface Props {
 
 export function RoomMasthead({ subtitle }: Props) {
   const s = makeStyles();
+  // Long-press the wordmark to open the chime panel — a discoverable
+  // delight. Tap normally does nothing; you have to find this.
+  const [chimes, setChimes] = useState(false);
   return (
     <View style={s.wrap}>
-      <Text style={s.brand} numberOfLines={1} accessibilityRole="header">
-        HereToo
-      </Text>
+      <Pressable
+        onLongPress={() => setChimes((v) => !v)}
+        delayLongPress={650}
+        accessibilityRole="header"
+        accessibilityLabel="HereToo. Long-press to ring the bowls."
+      >
+        <Text style={s.brand} numberOfLines={1}>HereToo</Text>
+      </Pressable>
       <View style={s.flourish}>
         <View style={s.rule} />
         <Text style={s.glyph}>✦</Text>
         <View style={s.rule} />
       </View>
       {!!subtitle && <Text style={s.subtitle}>{subtitle}</Text>}
+      {chimes && (
+        <View style={{ width: '100%', maxWidth: 480, marginTop: Spacing.sm }}>
+          <ChimePanel visible={chimes} onClose={() => setChimes(false)} />
+        </View>
+      )}
     </View>
   );
 }

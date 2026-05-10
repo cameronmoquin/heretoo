@@ -28,6 +28,7 @@ import { WallpaperBackground } from '../components/shared/WallpaperBackground';
 import { MobileTabBar } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
+import { KonamiChimes } from '../components/easter/KonamiChimes';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -132,6 +133,7 @@ function RootLayoutInner() {
       <UpdateNudge />
       <PWAInstallPrompt />
       <BuildBadge />
+      <KonamiChimes />
     </View>
   );
 }
