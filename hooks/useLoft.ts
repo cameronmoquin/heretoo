@@ -53,7 +53,8 @@ export function useLoftHandle() {
 }
 
 /** Post to the Loft. Server-side denormalizes the pseudonym so any
- *  later change to loft_handle doesn't rewrite history. */
+ *  later change to loft_handle doesn't rewrite history. Optimistic —
+ *  the post appears in the feed the instant the user taps Post. */
 export function useCreateLoftPost() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
@@ -61,9 +62,15 @@ export function useCreateLoftPost() {
     mutationFn: async (body: string): Promise<LoftPost> => {
       if (!userId) throw new Error('Not signed in');
       // Resolve the user's current pseudonym (will create one if needed).
-      const { data: handleData, error: hErr } = await supabase.rpc('claim_loft_handle');
-      if (hErr) throw hErr;
-      const pseudonym = (handleData as string) || 'guest';
+      // Defer hard-failure on handle generation to the insert step so the
+      // optimistic post still gets to render.
+      let pseudonym = 'you';
+      try {
+        const { data: handleData } = await supabase.rpc('claim_loft_handle');
+        if (typeof handleData === 'string' && handleData.length > 0) {
+          pseudonym = handleData;
+        }
+      } catch {}
 
       const { data, error } = await supabase
         .from('loft_posts')
@@ -73,7 +80,44 @@ export function useCreateLoftPost() {
       if (error) throw error;
       return data as LoftPost;
     },
-    onSuccess: () => {
+
+    // Optimistic: drop a placeholder into the feed cache the instant
+    // the user taps Post. The real row replaces it on success.
+    onMutate: async (body) => {
+      if (!userId) return { prev: null as LoftPost[] | null };
+      const key = ['loft-feed'];
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<LoftPost[]>(key) ?? [];
+
+      // Best-effort pseudonym for the placeholder. If we have it
+      // cached from a previous claim, use that; otherwise show "you"
+      // until the real row lands.
+      const cachedHandle = qc.getQueryData<string | null>(['loft-handle', userId]) ?? 'you';
+
+      const optimistic: LoftPost = {
+        id: `optimistic-${Date.now()}`,
+        author_id: userId,
+        body: body.trim(),
+        pseudonym: cachedHandle,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      };
+      qc.setQueryData<LoftPost[]>(key, [optimistic, ...prev]);
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      // Roll back on failure.
+      if (ctx && Array.isArray(ctx.prev)) {
+        qc.setQueryData(['loft-feed'], ctx.prev);
+      }
+    },
+    onSuccess: (real) => {
+      // Replace optimistic with the real row.
+      const cur = qc.getQueryData<LoftPost[]>(['loft-feed']) ?? [];
+      const next = cur.map((p) => (p.id.startsWith('optimistic-') && p.body === real.body ? real : p));
+      qc.setQueryData(['loft-feed'], next);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['loft-feed'] });
     },
   });

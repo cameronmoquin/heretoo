@@ -124,6 +124,12 @@ export function LeftSidebar() {
         onPress={() => router.push('/memoir' as any)}
       />
       <NavRow
+        icon={pathname.startsWith('/games') ? 'game-controller' : 'game-controller-outline'}
+        label="Games"
+        active={pathname.startsWith('/games')}
+        onPress={() => router.push('/games' as any)}
+      />
+      <NavRow
         icon={pathname.startsWith('/loft') ? 'flash' : 'flash-outline'}
         label="The Loft"
         active={pathname.startsWith('/loft')}
