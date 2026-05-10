@@ -33,6 +33,7 @@ import { useFamilyFeed, useMyFamilies } from '../../hooks/useFamily';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { useTTS } from '../../stores/ttsStore';
 import { useTodayDispatch } from '../../hooks/useDispatch';
+import { useTodaysNewsRotation } from '../../hooks/useNews';
 import { useWallpaper, WALLPAPERS } from '../../stores/wallpaperStore';
 import { Postcard } from './Postcard';
 import { RoomMasthead } from './RoomMasthead';
@@ -85,6 +86,11 @@ export function Room({ familyId, familyName }: Props) {
   // the first; the digest will list all of them once wired.
   const { data: dispatches } = useTodayDispatch();
   const candle = (dispatches ?? [])[0];
+
+  // Public-broadcasting headlines rotation — one item per category,
+  // shows global by default. Tap to open /news for the full list.
+  const { data: newsRotation } = useTodaysNewsRotation();
+  const lead = (newsRotation ?? []).find((n) => n.category === 'global') ?? (newsRotation ?? [])[0];
 
   const today = useMemo(() => {
     const now = new Date();
@@ -164,6 +170,20 @@ export function Room({ familyId, familyName }: Props) {
               >
                 <View style={s.candleDot} />
                 <Text style={s.candleText} numberOfLines={3}>{candle.copy}</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Public-broadcasting headline. Rotates daily; tap to
+                open /news for the full list. */}
+            {!!lead && (
+              <TouchableOpacity
+                style={s.newsStrip}
+                activeOpacity={0.75}
+                onPress={() => router.push('/news' as any)}
+              >
+                <Text style={s.newsKicker}>{lead.source_label.toUpperCase()}</Text>
+                <Text style={s.newsHeadline} numberOfLines={2}>{lead.headline}</Text>
+                <Text style={s.newsAction}>READ THE DAY →</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -368,6 +388,28 @@ function makeStyles() { return StyleSheet.create({
     color: Colors.textSecondary,
     fontStyle: 'italic',
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+  },
+
+  // News headline strip
+  newsStrip: {
+    marginTop: 10,
+    paddingVertical: 10, paddingHorizontal: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    borderLeftWidth: 2, borderLeftColor: Colors.primary,
+    gap: 4,
+  },
+  newsKicker: {
+    fontSize: 10, fontWeight: '800', color: Colors.primary, letterSpacing: 1.6,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
+  newsHeadline: {
+    fontSize: 14, lineHeight: 20, fontWeight: '600', color: Colors.brandIvory,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
+  newsAction: {
+    fontSize: 10, color: Colors.textMuted, letterSpacing: 1.4, fontWeight: '700',
+    marginTop: 2,
   },
 
   // Room switcher swatches
