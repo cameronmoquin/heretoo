@@ -11,6 +11,14 @@ export interface MemoirPrompt {
   prompt: string;
   category: string;
   position: number;
+  /** Concrete starter angles per prompt — written by us, not LLM. */
+  starters?: string[];
+}
+
+export interface GrammarEdit {
+  original: string;
+  suggested: string;
+  reason?: string;
 }
 
 export interface MemoirResponse {
@@ -48,6 +56,7 @@ export function useTodaysMemoirPrompt() {
         prompt: row.prompt,
         category: row.category,
         position: row.position,
+        starters: (row.starters as string[]) ?? [],
       } : null;
     },
     enabled: !!userId,
@@ -91,6 +100,64 @@ export function useMemoirProgress() {
       };
     },
     enabled: !!userId,
+  });
+}
+
+/** Reads + writes the user's profile.memoir_guided flag. Default
+ *  true (guidance shown). The Memoir page reads this to decide
+ *  whether to render the starters strip. */
+export function useMemoirGuidedSetting() {
+  const userId = useAuthStore((s) => s.user?.id);
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['memoir-guided', userId],
+    queryFn: async (): Promise<boolean> => {
+      if (!userId) return true;
+      const { data } = await supabase
+        .from('profiles')
+        .select('memoir_guided')
+        .eq('id', userId)
+        .maybeSingle();
+      return (data as any)?.memoir_guided ?? true;
+    },
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+
+  const set = useMutation({
+    mutationFn: async (val: boolean) => {
+      if (!userId) return;
+      await supabase.from('profiles').update({ memoir_guided: val } as any).eq('id', userId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['memoir-guided', userId] });
+    },
+  });
+
+  return { value: query.data ?? true, setValue: (v: boolean) => set.mutate(v) };
+}
+
+/** Run an opt-in spelling + grammar check. Returns a list of
+ *  surgical edits the user can accept or reject one at a time. */
+export function useMemoirGrammarCheck() {
+  return useMutation({
+    mutationFn: async (input: { text: string; responseId?: string }): Promise<GrammarEdit[]> => {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch('/api/memoir-edit', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ text: input.text, response_id: input.responseId }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.error ?? `Editor failed (${res.status})`);
+      }
+      const j = (await res.json()) as { edits: GrammarEdit[] };
+      return j.edits ?? [];
+    },
   });
 }
 
