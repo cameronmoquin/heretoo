@@ -162,33 +162,48 @@ export default async (req: Request) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const s = event.data.object;
-        const familyId = s.metadata?.family_id ?? null;
-        const payerId = s.metadata?.payer_user_id ?? null;
-        const plan = (s.metadata?.plan ?? 'monthly') as string;
         const stripeSubId = s.subscription;
-        const stripeCust = s.customer;
-        if (!stripeSubId) break;
 
-        // Pull the live subscription for current_period_end + status.
-        const subRes = await fetch(`https://api.stripe.com/v1/subscriptions/${stripeSubId}`, {
-          headers: { Authorization: `Bearer ${STRIPE_KEY}` },
-        });
-        const sub = (await subRes.json()) as any;
+        if (stripeSubId) {
+          // Family subscription path.
+          const familyId = s.metadata?.family_id ?? null;
+          const payerId = s.metadata?.payer_user_id ?? null;
+          const plan = (s.metadata?.plan ?? 'monthly') as string;
+          const stripeCust = s.customer;
 
-        await upsertSubscription({
-          family_id: familyId,
-          payer_user_id: payerId,
-          stripe_customer_id: stripeCust,
-          stripe_subscription_id: stripeSubId,
-          plan,
-          status: sub.status ?? 'active',
-          current_period_end: sub.current_period_end
-            ? new Date(sub.current_period_end * 1000).toISOString()
-            : null,
-        });
+          const subRes = await fetch(`https://api.stripe.com/v1/subscriptions/${stripeSubId}`, {
+            headers: { Authorization: `Bearer ${STRIPE_KEY}` },
+          });
+          const sub = (await subRes.json()) as any;
 
-        const subId = await getSubscriptionId(stripeSubId);
-        await logEvent(subId, familyId, 'created', null, event.id);
+          await upsertSubscription({
+            family_id: familyId,
+            payer_user_id: payerId,
+            stripe_customer_id: stripeCust,
+            stripe_subscription_id: stripeSubId,
+            plan,
+            status: sub.status ?? 'active',
+            current_period_end: sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString()
+              : null,
+          });
+
+          const subId = await getSubscriptionId(stripeSubId);
+          await logEvent(subId, familyId, 'created', null, event.id);
+        } else if (s.payment_intent && s.metadata?.beneficiary) {
+          // One-time donation path. Update the pre-recorded pending row.
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/donations?stripe_checkout_id=eq.${s.id}`,
+            {
+              method: 'PATCH',
+              headers: { ...HEADERS, Prefer: 'return=minimal' },
+              body: JSON.stringify({
+                stripe_payment_intent_id: s.payment_intent,
+                status: 'succeeded',
+              }),
+            },
+          );
+        }
         break;
       }
 
