@@ -35,8 +35,7 @@ export function useLoftFeed() {
 }
 
 /** Returns the user's stable Loft pseudonym, generating one on first
- *  call. Cached forever — pseudonyms don't change unless the user
- *  explicitly resets (a future feature). */
+ *  call. Cached forever unless the user explicitly regenerates. */
 export function useLoftHandle() {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
@@ -44,11 +43,32 @@ export function useLoftHandle() {
     queryFn: async (): Promise<string | null> => {
       if (!userId) return null;
       const { data, error } = await supabase.rpc('claim_loft_handle');
-      if (error) throw error;
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn('[loft] claim_loft_handle failed', error.message);
+        return null;
+      }
       return (data as string) ?? null;
     },
     enabled: !!userId,
     staleTime: Infinity,
+    retry: 2,
+  });
+}
+
+/** Roll a new pseudonym. The user clicks "Change" in the Loft sub-bar. */
+export function useRegenerateLoftHandle() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  return useMutation({
+    mutationFn: async (): Promise<string> => {
+      const { data, error } = await supabase.rpc('regenerate_loft_handle');
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (newHandle) => {
+      qc.setQueryData(['loft-handle', userId], newHandle);
+    },
   });
 }
 

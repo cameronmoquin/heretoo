@@ -23,6 +23,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useLoftFeed, useLoftHandle, useCreateLoftPost, useDeleteLoftPost,
+  useRegenerateLoftHandle,
   type LoftPost,
 } from '../../hooks/useLoft';
 import { useAuthStore } from '../../stores/authStore';
@@ -45,7 +46,8 @@ export default function LoftScreen() {
   const s = makeStyles();
   const userId = useAuthStore((st) => st.user?.id);
   const { data: feed, isLoading } = useLoftFeed();
-  const { data: myHandle } = useLoftHandle();
+  const { data: myHandle, refetch: refetchHandle } = useLoftHandle();
+  const regenerate = useRegenerateLoftHandle();
   const create = useCreateLoftPost();
   const remove = useDeleteLoftPost();
   const [draft, setDraft] = useState('');
@@ -91,12 +93,35 @@ export default function LoftScreen() {
       </View>
 
       <View style={s.subbarRow}>
-        <Text style={s.subbar}>
-          You are <Text style={s.subbarHandle}>{myHandle ?? '…'}</Text>
-        </Text>
+        {myHandle ? (
+          <View style={{ flex: 1 }}>
+            <Text style={s.subbar}>
+              You are <Text style={s.subbarHandle}>{myHandle}</Text>
+            </Text>
+            <TouchableOpacity
+              onPress={() => regenerate.mutate()}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              disabled={regenerate.isPending}
+            >
+              <Text style={s.changeLink}>
+                {regenerate.isPending ? 'rolling…' : 'change pseudonym'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <Text style={s.subbar}>You are <Text style={s.subbarHandle}>unnamed</Text></Text>
+            <TouchableOpacity
+              onPress={() => refetchHandle()}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Text style={s.changeLink}>get a pseudonym</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={s.dotRow}>
           <View style={s.dotLive} />
-          <Text style={s.subbarMuted}>posts vanish in 24 hours</Text>
+          <Text style={s.subbarMuted}>24h</Text>
         </View>
       </View>
 
@@ -204,6 +229,10 @@ function makeStyles() { return StyleSheet.create({
   subbar: { fontSize: 12, color: LOFT.muted, fontWeight: '500' },
   subbarHandle: { color: LOFT.accent, fontWeight: '700' },
   subbarMuted: { fontSize: 11, color: LOFT.muted, fontWeight: '500' },
+  changeLink: {
+    fontSize: 10, color: LOFT.muted, fontWeight: '500',
+    textDecorationLine: 'underline', marginTop: 2, letterSpacing: 0.4,
+  },
   dotRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dotLive: {
     width: 6, height: 6, borderRadius: 3,
