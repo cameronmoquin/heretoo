@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useNextTriviaQuestion, useTriviaScore, useAddTriviaQuestion, useAnswerTrivia,
   useFamilyTriviaBank, useRetireTriviaQuestion,
+  useTriviaLeaderboard, useFamilyTriviaRank,
 } from '../../hooks/useTrivia';
 import { showAlert } from '../../lib/alert';
 import { useAuthStore } from '../../stores/authStore';
@@ -33,7 +34,7 @@ interface Props {
   familyId: string;
 }
 
-type Mode = 'play' | 'compose' | 'manage';
+type Mode = 'play' | 'standings' | 'compose' | 'manage';
 
 export function FamilyTriviaPanel({ familyId }: Props) {
   const s = makeStyles();
@@ -55,8 +56,12 @@ export function FamilyTriviaPanel({ familyId }: Props) {
           )}
         </View>
         <View style={s.tabRow}>
-          {(['play', 'compose', 'manage'] as Mode[]).map((m) => {
+          {(['play', 'standings', 'compose', 'manage'] as Mode[]).map((m) => {
             const on = mode === m;
+            const label =
+              m === 'play' ? 'Play' :
+              m === 'standings' ? 'Standings' :
+              m === 'compose' ? 'Add' : 'Yours';
             return (
               <TouchableOpacity
                 key={m}
@@ -64,9 +69,7 @@ export function FamilyTriviaPanel({ familyId }: Props) {
                 style={[s.tabBtn, on && s.tabBtnOn]}
                 activeOpacity={0.75}
               >
-                <Text style={[s.tabBtnText, on && s.tabBtnTextOn]}>
-                  {m === 'play' ? 'Play' : m === 'compose' ? 'Add' : 'Yours'}
-                </Text>
+                <Text style={[s.tabBtnText, on && s.tabBtnTextOn]}>{label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -74,8 +77,79 @@ export function FamilyTriviaPanel({ familyId }: Props) {
       </View>
 
       {mode === 'play' && <PlayPane familyId={familyId} />}
+      {mode === 'standings' && <StandingsPane familyId={familyId} />}
       {mode === 'compose' && <ComposePane familyId={familyId} onDone={() => setMode('play')} />}
       {mode === 'manage' && <ManagePane familyId={familyId} userId={userId ?? null} />}
+    </View>
+  );
+}
+
+// ── Standings ───────────────────────────────────────────────────────
+
+function StandingsPane({ familyId }: { familyId: string }) {
+  const s = makeStyles();
+  const { data: rows, isLoading } = useTriviaLeaderboard(25);
+  const { data: ourRank } = useFamilyTriviaRank(familyId);
+
+  if (isLoading) {
+    return <ActivityIndicator color={Colors.primary} style={{ marginTop: 24 }} />;
+  }
+
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {/* Our family's rank — pulled to the top, never hidden in the list */}
+      {ourRank && ourRank.total_families > 0 && (
+        <View style={s.ourRank}>
+          <Text style={s.ourRankPos}>#{ourRank.rank}</Text>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={s.ourRankLabel}>your family</Text>
+            <Text style={s.ourRankSub}>
+              {ourRank.correct_count} correct of {ourRank.total_count} · {ourRank.total_families} families competing
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {(!rows || rows.length === 0) && (
+        <View style={s.emptyWrap}>
+          <Text style={s.emptyTitle}>No standings yet.</Text>
+          <Text style={s.emptyBody}>
+            Standings appear once families have answered questions. Add a few
+            and play through them.
+          </Text>
+        </View>
+      )}
+
+      {(rows ?? []).map((r, i) => {
+        const isOurs = r.family_id === familyId;
+        const pos = i + 1;
+        const isPodium = pos <= 3;
+        return (
+          <View
+            key={r.family_id}
+            style={[
+              s.boardRow,
+              isOurs && s.boardRowOurs,
+              isPodium && !isOurs && { borderColor: Colors.primary, opacity: 0.95 },
+            ]}
+          >
+            <Text style={[s.boardPos, isPodium && { color: Colors.primary }]}>
+              {pos === 1 ? '1' : pos === 2 ? '2' : pos === 3 ? '3' : pos}
+            </Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={s.boardName} numberOfLines={1}>{r.family_name}</Text>
+              <Text style={s.boardMeta}>
+                {r.correct_count} of {r.total_count} · {r.contributors} {r.contributors === 1 ? 'player' : 'players'}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+
+      <Text style={s.boardFootnote}>
+        Families opt out of standings via family settings. The unit of comparison
+        is the family, not the person.
+      </Text>
     </View>
   );
 }
@@ -464,6 +538,52 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary, marginTop: Spacing.md,
   },
   saveBtnText: { color: '#0A0A0F', fontSize: 14, fontWeight: '700', letterSpacing: 0.2 },
+
+  // Standings
+  ourRank: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    backgroundColor: 'rgba(201, 161, 75, 0.14)',
+    borderWidth: 1, borderColor: Colors.primary,
+  },
+  ourRankPos: {
+    fontSize: 36, fontWeight: '800', color: Colors.primary, letterSpacing: -1,
+    minWidth: 56, textAlign: 'center',
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
+  ourRankLabel: {
+    fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
+  ourRankSub: {
+    fontSize: 12, color: Colors.textSecondary,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+  },
+
+  boardRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
+  },
+  boardRowOurs: {
+    backgroundColor: 'rgba(201, 161, 75, 0.10)',
+    borderColor: Colors.primary,
+  },
+  boardPos: {
+    fontSize: 18, fontWeight: '700', color: Colors.textMuted,
+    minWidth: 32, textAlign: 'center',
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
+  boardName: { fontSize: 14, fontWeight: '700', color: Colors.brandIvory },
+  boardMeta: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+  boardFootnote: {
+    fontSize: 11, color: Colors.textMuted, fontStyle: 'italic',
+    textAlign: 'center', marginTop: Spacing.sm,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+  },
 
   // Manage
   manageRow: {

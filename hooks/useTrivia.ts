@@ -193,6 +193,70 @@ export function useAnswerTrivia() {
   });
 }
 
+/** Cross-family leaderboard — top families by aggregate correct
+ *  answers. Each family is one row; individual users are not exposed.
+ *  Source of Truth-aligned: the unit of comparison is the family. */
+export interface LeaderboardRow {
+  family_id: string;
+  family_name: string;
+  correct_count: number;
+  total_count: number;
+  contributors: number;
+}
+
+export function useTriviaLeaderboard(limit = 25) {
+  return useQuery({
+    queryKey: ['trivia-leaderboard', limit],
+    queryFn: async (): Promise<LeaderboardRow[]> => {
+      const { data, error } = await supabase.rpc('trivia_family_leaderboard', {
+        p_limit: limit,
+      });
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((r) => ({
+        family_id: r.family_id,
+        family_name: r.family_name,
+        correct_count: Number(r.correct_count ?? 0),
+        total_count: Number(r.total_count ?? 0),
+        contributors: r.contributors ?? 0,
+      }));
+    },
+    staleTime: 60_000,
+  });
+}
+
+export interface FamilyRank {
+  rank: number;
+  total_families: number;
+  correct_count: number;
+  total_count: number;
+}
+
+export function useFamilyTriviaRank(familyId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['trivia-family-rank', familyId],
+    queryFn: async (): Promise<FamilyRank> => {
+      if (!familyId) {
+        return { rank: 0, total_families: 0, correct_count: 0, total_count: 0 };
+      }
+      const { data, error } = await supabase.rpc('trivia_family_rank', {
+        p_family_id: familyId,
+      });
+      if (error) {
+        return { rank: 0, total_families: 0, correct_count: 0, total_count: 0 };
+      }
+      const row = ((data ?? []) as any[])[0];
+      return {
+        rank: row?.rank ?? 0,
+        total_families: row?.total_families ?? 0,
+        correct_count: Number(row?.correct_count ?? 0),
+        total_count: Number(row?.total_count ?? 0),
+      };
+    },
+    enabled: !!familyId,
+    staleTime: 60_000,
+  });
+}
+
 /** Retire one of your own questions. Soft-delete via retired_at. */
 export function useRetireTriviaQuestion() {
   const qc = useQueryClient();
