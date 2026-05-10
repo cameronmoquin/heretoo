@@ -193,6 +193,56 @@ export const STATIONS: RadioStation[] = [
     streams: ['https://stream.radioparadise.com/mp3-192'],
     url: 'https://radioparadise.com',
   },
+
+  // ── Boomer-era stations ──────────────────────────────────────────
+  // Curated free streams of music from the 50s/60s/70s/80s. Same
+  // ad-free policy as the rest of our station list — these are the
+  // listener-supported public streams, not commercial broadcasts.
+  {
+    id: 'absolute-oldies',
+    name: 'Absolute Oldies',
+    genre: '50s & 60s',
+    city: 'curated · free',
+    blurb: 'The original rock and roll, doo-wop, and pop of the late 50s and 60s.',
+    streams: [
+      'https://strm112.1.fm/oldies_mobile_mp3',
+      'https://strm112.2.fm/oldies_mobile_mp3',
+    ],
+    url: 'https://1.fm/onair/absoluteoldies',
+  },
+  {
+    id: 'absolute-70s',
+    name: 'Absolute 70s',
+    genre: '1970s',
+    city: 'curated · free',
+    blurb: 'Carole King, Fleetwood Mac, James Taylor, the rest of that decade.',
+    streams: [
+      'https://strm112.1.fm/seventies_mobile_mp3',
+      'https://strm112.2.fm/seventies_mobile_mp3',
+    ],
+    url: 'https://1.fm/onair/absolute70s',
+  },
+  {
+    id: 'absolute-80s',
+    name: 'Absolute 80s',
+    genre: '1980s',
+    city: 'curated · free',
+    blurb: 'Synth-pop, soft rock, and the soundtrack of a generation\'s twenties.',
+    streams: [
+      'https://strm112.1.fm/eightiesfusion_mobile_mp3',
+      'https://strm112.2.fm/eightiesfusion_mobile_mp3',
+    ],
+    url: 'https://1.fm/onair/absolute80s',
+  },
+  {
+    id: 'somafm-poptron',
+    name: 'SomaFM PopTron',
+    genre: 'classic pop',
+    city: 'San Francisco',
+    blurb: 'Indie pop and post-punk that aged into nostalgia.',
+    streams: ['https://ice5.somafm.com/poptron-128-mp3'],
+    url: 'https://somafm.com/poptron/',
+  },
 ];
 
 const DEFAULT_STATION_ID = 'wcrb';

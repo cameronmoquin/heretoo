@@ -118,6 +118,12 @@ export function LeftSidebar() {
         onPress={() => router.push('/letter' as any)}
       />
       <NavRow
+        icon={pathname.startsWith('/memoir') ? 'book' : 'book-outline'}
+        label="Memoir"
+        active={pathname.startsWith('/memoir')}
+        onPress={() => router.push('/memoir' as any)}
+      />
+      <NavRow
         icon={pathname.startsWith('/loft') ? 'flash' : 'flash-outline'}
         label="The Loft"
         active={pathname.startsWith('/loft')}
