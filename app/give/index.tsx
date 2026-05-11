@@ -191,7 +191,7 @@ export default function GiveScreen() {
             )}
 
             <View style={s.about}>
-              <Text style={s.aboutTitle}>How it works</Text>
+              <Text style={s.aboutTitle}>Where it goes</Text>
               <Text style={s.aboutBody}>
                 Stripe processes the transaction. The full balance — minus the
                 standard processing cost — is forwarded to the designated
