@@ -33,6 +33,8 @@ import {
   useEndMemoirSession,
   useMemoirInterviewTurn,
   useMemoirTranscribe,
+  useMemoirCowriter,
+  useResolveCowriterDraft,
   type MemoirPrompt, type MemoirResponse,
 } from '../../hooks/useMemoir';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
@@ -524,6 +526,8 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   // their icon ink is sepia rather than the brand grey.
   const iconColor = elder ? '#5A4A38' : Colors.textSecondary;
   const tts = useTTS();
+  const cowriter = useMemoirCowriter();
+  const resolve = useResolveCowriterDraft();
   const id = `memoir-r-${response.id}`;
   const ttsActive = tts.currentId === id && tts.playing;
   const date = new Date(response.created_at).toLocaleDateString(undefined, {
@@ -531,19 +535,136 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   });
   const q = response.prompt?.primary_question ?? response.custom_prompt_text ?? '';
 
+  // Co-writer state: the draft Claude returned (if any), and whether
+  // the writer is currently editing it.
+  const [draft, setDraft] = useState<string | null>(response.cowriter_draft ?? null);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+
+  const onPolish = async () => {
+    try {
+      const r = await cowriter.mutateAsync({
+        question: q || 'Tell me about this.',
+        transcript: response.final_text,
+      });
+      if (!r.draft) {
+        showAlert('Nothing to polish', 'The answer is short — write a bit more and try again.');
+        return;
+      }
+      setDraft(r.draft);
+    } catch (e: any) {
+      showAlert('Could not polish', e?.message?.includes('not configured')
+        ? 'Co-writer is not turned on yet.'
+        : (e?.message ?? 'Try again.'));
+    }
+  };
+
+  const onAccept = () => {
+    if (!draft) return;
+    resolve.mutate({
+      responseId: response.id,
+      projectId: response.project_id,
+      draft, choice: 'accept_draft', finalText: draft,
+    });
+    setDraft(null);
+  };
+  const onEdit = () => {
+    if (!draft) return;
+    setEditText(draft);
+    setEditing(true);
+  };
+  const onSaveEdit = () => {
+    resolve.mutate({
+      responseId: response.id,
+      projectId: response.project_id,
+      draft: draft ?? '', choice: 'edit_draft', finalText: editText.trim(),
+    });
+    setEditing(false);
+    setDraft(null);
+  };
+  const onReject = () => {
+    resolve.mutate({
+      responseId: response.id,
+      projectId: response.project_id,
+      draft: draft ?? '', choice: 'reject', finalText: response.final_text,
+    });
+    setDraft(null);
+  };
+
   return (
     <View style={s.libRow}>
       <Text style={s.libDate}>{date}</Text>
       {!!q && <Text style={s.libQuestion}>{q}</Text>}
       <Text style={s.libBody}>{response.final_text}</Text>
-      <TouchableOpacity
-        onPress={() => tts.toggle(id, response.final_text)}
-        style={s.libRead}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name={ttsActive ? 'pause' : 'volume-medium-outline'} size={14} color={iconColor} />
-        <Text style={s.libReadText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
-      </TouchableOpacity>
+      <View style={s.libActions}>
+        <TouchableOpacity
+          onPress={() => tts.toggle(id, response.final_text)}
+          style={s.libRead}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name={ttsActive ? 'pause' : 'volume-medium-outline'} size={14} color={iconColor} />
+          <Text style={s.libReadText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
+        </TouchableOpacity>
+        {!draft && (
+          <TouchableOpacity
+            onPress={onPolish}
+            style={s.libPolish}
+            disabled={cowriter.isPending}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            {cowriter.isPending ? (
+              <ActivityIndicator size="small" color={iconColor} />
+            ) : (
+              <>
+                <Ionicons name="sparkles-outline" size={14} color={iconColor} />
+                <Text style={s.libReadText}>Polish</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Co-writer draft drawer */}
+      {draft && (
+        <View style={s.draftCard}>
+          <Text style={s.draftKicker}>A draft for you to consider</Text>
+          {editing ? (
+            <TextInput
+              style={s.draftInput}
+              value={editText}
+              onChangeText={setEditText}
+              multiline
+              maxLength={8000}
+            />
+          ) : (
+            <Text style={s.draftBody}>{draft}</Text>
+          )}
+          <View style={s.draftActions}>
+            {editing ? (
+              <>
+                <TouchableOpacity style={s.draftAccept} onPress={onSaveEdit} activeOpacity={0.85}>
+                  <Text style={s.draftAcceptText}>Save my version</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.draftReject} onPress={() => setEditing(false)} activeOpacity={0.85}>
+                  <Text style={s.draftRejectText}>Back</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity style={s.draftAccept} onPress={onAccept} activeOpacity={0.85}>
+                  <Text style={s.draftAcceptText}>Use this</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.draftReject} onPress={onEdit} activeOpacity={0.85}>
+                  <Text style={s.draftRejectText}>Tweak it</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.draftReject} onPress={onReject} activeOpacity={0.85}>
+                  <Text style={s.draftRejectText}>Throw it back</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -901,7 +1022,52 @@ function makeStyles(elder: boolean = false) {
       fontSize: 16, lineHeight: 26, color: t.pageInk,
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
     },
-    libRead: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+    libActions: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 4 },
+    libRead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    libPolish: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     libReadText: { fontSize: 12, color: t.pageInkSecondary, fontWeight: '600' },
+
+    // Co-writer draft drawer — sits beneath the original response with
+    // a subtle bronze border so it reads as "this is a suggestion."
+    draftCard: {
+      marginTop: 10,
+      padding: 14,
+      borderRadius: 8,
+      backgroundColor: elder ? '#FBF4DE' : Colors.surface,
+      borderLeftWidth: 3, borderLeftColor: t.pageAccent,
+      borderWidth: StyleSheet.hairlineWidth, borderColor: t.pageBorder,
+      gap: 8,
+    },
+    draftKicker: {
+      fontSize: 11, fontWeight: '700', color: t.pageAccent,
+      letterSpacing: 1.6, textTransform: 'uppercase',
+      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    },
+    draftBody: {
+      fontSize: elder ? 17 : 15, lineHeight: elder ? 27 : 23,
+      color: t.pageInk, fontStyle: 'italic',
+      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+    },
+    draftInput: {
+      minHeight: 140, padding: 10,
+      borderRadius: 6, backgroundColor: elder ? '#FFFFFF' : Colors.background,
+      borderWidth: 1, borderColor: t.pageBorder,
+      fontSize: elder ? 17 : 15, lineHeight: elder ? 27 : 23,
+      color: t.pageInk,
+      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+    },
+    draftActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+    draftAccept: {
+      paddingHorizontal: 14, paddingVertical: 8,
+      borderRadius: Radius.full,
+      backgroundColor: t.pageAccent,
+    },
+    draftAcceptText: { fontSize: 12, fontWeight: '700', color: t.onAccent },
+    draftReject: {
+      paddingHorizontal: 14, paddingVertical: 8,
+      borderRadius: Radius.full,
+      borderWidth: 1, borderColor: t.pageBorder,
+    },
+    draftRejectText: { fontSize: 12, fontWeight: '700', color: t.pageInkSecondary },
   });
 }

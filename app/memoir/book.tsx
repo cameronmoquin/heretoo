@@ -145,6 +145,17 @@ export default function MemoirBookScreen() {
           <Stat label="Est. pages" value={`~${estPages}`} elder={elder} />
         </View>
 
+        {/* Quick link into the photo manager — the family book lives or
+            dies by whether photos are in it. */}
+        <TouchableOpacity
+          style={s.photosLink}
+          onPress={() => router.push('/memoir/photos')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="images-outline" size={16} color={ic.page.accent} />
+          <Text style={s.photosLinkText}>Add photographs →</Text>
+        </TouchableOpacity>
+
         {/* Render button */}
         <TouchableOpacity
           style={[s.makeBtn, (busy || render.isPending) && { opacity: 0.6 }]}
@@ -388,6 +399,15 @@ function makeStyles(elder: boolean = false) {
       textAlign: 'center',
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
     },
+
+    photosLink: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      paddingVertical: 10, paddingHorizontal: 14,
+      borderRadius: Radius.full,
+      borderWidth: 1, borderColor: pageAccent,
+      alignSelf: 'flex-start',
+    },
+    photosLinkText: { fontSize: 13, fontWeight: '700', color: pageAccent },
 
     renders: { gap: 10, marginTop: 8 },
     rendersTitle: {

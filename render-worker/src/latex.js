@@ -92,13 +92,22 @@ async function gsNormalize(input, output, cwd) {
 /**
  * Render a book. Returns absolute paths to the generated files plus
  * page count and spine width. Caller uploads + cleans up.
+ *
+ * If `prepareAssets` is given, it runs after the work dir is set up
+ * but before pandoc — used to drop photo files alongside book.md so
+ * `\includegraphics` resolves relative paths like `photos/{id}.jpg`.
  */
-export async function renderBook({ markdown, title, author, paperColor }) {
+export async function renderBook({ markdown, title, author, paperColor, prepareAssets }) {
   const work = await mkdtemp(join(tmpdir(), 'memoir-'));
   try {
     // 1. Write source + template.
     await writeFile(join(work, 'book.md'), markdown, 'utf8');
     await copyFile(TEMPLATE, join(work, 'template.tex'));
+
+    // 1b. Hook for the caller to drop image files into the work dir.
+    if (typeof prepareAssets === 'function') {
+      await prepareAssets(work);
+    }
 
     // 2. Pandoc -> LuaLaTeX interior. Pandoc runs the engine enough
     //    times to resolve the table of contents.

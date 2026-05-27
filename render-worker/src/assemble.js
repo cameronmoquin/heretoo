@@ -98,8 +98,28 @@ export async function fetchResponses(projectId) {
   return data || [];
 }
 
+export async function fetchAssets(projectId) {
+  const { data, error } = await supabase
+    .from('memoir_assets')
+    .select('id, kind, storage_path, caption, chapter_assignment, ordering_hint, date_estimate')
+    .eq('project_id', projectId)
+    .in('kind', ['photo_digital', 'photo_scan']);
+  if (error) throw new Error(`assets fetch: ${error.message}`);
+  return data || [];
+}
+
+/** Local filename used inside the worker's work dir.
+ *  Format: photos/{id}.{ext} — matches the markdown refs generated
+ *  in buildMarkdown. */
+export function assetLocalPath(asset) {
+  const ext = (asset.storage_path.split('.').pop() || 'jpg').toLowerCase();
+  return `photos/${asset.id}.${ext}`;
+}
+
 // Build the full Markdown document (with YAML metadata) for Pandoc.
-export function buildMarkdown({ project, authorName, responses }) {
+// Photos are interleaved at the end of their chapter; assets with no
+// chapter_assignment fall into 'photo_specific'.
+export function buildMarkdown({ project, authorName, responses, assets = [] }) {
   // Group responses by chapter.
   const byChapter = new Map();
   for (const r of responses) {
@@ -109,10 +129,19 @@ export function buildMarkdown({ project, authorName, responses }) {
     byChapter.get(key).push(r);
   }
 
+  // Group assets by chapter (photos w/o a chapter land in photo_specific).
+  const assetsByChapter = new Map();
+  for (const a of assets) {
+    const key = a.chapter_assignment || 'photo_specific';
+    if (!assetsByChapter.has(key)) assetsByChapter.set(key, []);
+    assetsByChapter.get(key).push(a);
+  }
+
   // Order chapters per the canonical spine; unknown keys at the end.
+  const allKeys = new Set([...byChapter.keys(), ...assetsByChapter.keys()]);
   const orderedKeys = [
-    ...CHAPTER_ORDER.filter((k) => byChapter.has(k)),
-    ...[...byChapter.keys()].filter((k) => !CHAPTER_ORDER.includes(k)),
+    ...CHAPTER_ORDER.filter((k) => allKeys.has(k)),
+    ...[...allKeys].filter((k) => !CHAPTER_ORDER.includes(k)),
   ];
 
   const yaml = [
@@ -130,7 +159,12 @@ export function buildMarkdown({ project, authorName, responses }) {
 
   const chapters = orderedKeys.map((key) => {
     const title = CHAPTER_TITLE[key] || 'Other Stories';
-    const entries = byChapter.get(key);
+    const entries = byChapter.get(key) || [];
+    const chapterAssets = (assetsByChapter.get(key) || []).slice().sort((a, b) => {
+      const ao = a.ordering_hint ?? 0;
+      const bo = b.ordering_hint ?? 0;
+      return ao - bo;
+    });
     const sortedEntries = entries.slice().sort((a, b) => {
       const ao = a.ordering_hint ?? 0;
       const bo = b.ordering_hint ?? 0;
@@ -138,7 +172,7 @@ export function buildMarkdown({ project, authorName, responses }) {
       return new Date(a.created_at) - new Date(b.created_at);
     });
 
-    const body = sortedEntries
+    const proseBody = sortedEntries
       .map((r) => {
         const q = r.prompt?.primary_question || r.custom_prompt_text || '';
         const question = q ? `## ${q}\n\n` : '';
@@ -146,6 +180,18 @@ export function buildMarkdown({ project, authorName, responses }) {
       })
       .join('\n\n');
 
+    // Photos appear after the chapter's prose, each with the writer's
+    // caption (sanitised — pandoc treats Markdown special chars in alt
+    // text). If there's no prose, the chapter is still rendered so the
+    // photographs land somewhere.
+    const photoBody = chapterAssets
+      .map((a) => {
+        const caption = sanitiseAlt(a.caption || '');
+        return `![${caption}](${assetLocalPath(a)})${caption ? '' : '{.unnumbered}'}`;
+      })
+      .join('\n\n');
+
+    const body = [proseBody, photoBody].filter(Boolean).join('\n\n');
     return `# ${title}\n\n${body}`;
   });
 
@@ -155,6 +201,12 @@ export function buildMarkdown({ project, authorName, responses }) {
 function yamlString(s) {
   // Quote and escape for YAML scalar safety.
   return `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function sanitiseAlt(s) {
+  // Image alt-text inside Markdown — strip brackets/pipes that would
+  // break the link parser; everything else is fine.
+  return String(s || '').replace(/[\[\]|]/g, '').trim();
 }
 
 export { CHAPTER_TITLE };

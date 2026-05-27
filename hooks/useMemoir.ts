@@ -113,6 +113,25 @@ export interface MemoirBookRender {
 }
 
 const BOOKS_BUCKET = 'memoir-books';
+const ASSETS_BUCKET = 'memoir-assets';
+
+export interface MemoirAsset {
+  id: string;
+  project_id: string;
+  kind: 'photo_digital' | 'photo_scan' | 'document_scan' | 'recorded_audio';
+  storage_path: string;
+  thumbnail_path: string | null;
+  width_px: number | null;
+  height_px: number | null;
+  caption: string | null;
+  date_estimate: string | null;
+  people_named: string[];
+  place_named: string | null;
+  uploaded_at: string;
+  /** Which chapter (life_chapter or thematic_thread key) this asset lands
+   *  in when the book renders. Reuses chapter_or_thread vocabulary. */
+  chapter_assignment?: string | null;
+}
 
 // ── Project + session lifecycle ─────────────────────────────────────
 
@@ -436,6 +455,192 @@ export function useMemoirGuidedSetting() {
   });
 
   return { value: query.data ?? true, setValue: (v: boolean) => set.mutate(v) };
+}
+
+// ── Photos / assets ─────────────────────────────────────────────────
+
+export function useMemoirAssets(projectId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['memoir-assets', projectId],
+    queryFn: async (): Promise<MemoirAsset[]> => {
+      if (!projectId) return [];
+      const { data, error } = await supabase
+        .from('memoir_assets')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('chapter_assignment', { ascending: true, nullsFirst: false })
+        .order('ordering_hint', { ascending: true, nullsFirst: false })
+        .order('uploaded_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MemoirAsset[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+/** Upload a photo file to the private assets bucket and insert the
+ *  matching memoir_assets row. Returns the created row. */
+export function useUploadMemoirAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      projectId: string;
+      file: File;
+      caption?: string;
+      chapterAssignment?: string | null;
+      dateEstimate?: string;
+    }): Promise<MemoirAsset> => {
+      const ext = (input.file.name.split('.').pop() || 'jpg').toLowerCase();
+      // Use a v4-ish id locally so the storage path is stable before
+      // the DB insert. The DB row's own id stays gen_random_uuid().
+      const localId = (crypto as any).randomUUID
+        ? (crypto as any).randomUUID()
+        : Math.random().toString(36).slice(2);
+      const path = `${input.projectId}/${localId}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from(ASSETS_BUCKET)
+        .upload(path, input.file, {
+          contentType: input.file.type || 'image/jpeg',
+          upsert: false,
+        });
+      if (upErr) throw new Error(`Upload: ${upErr.message}`);
+
+      // Read width/height for later DPI checks (best-effort).
+      const dims = await readImageDims(input.file).catch(() => null);
+
+      const { data, error } = await supabase
+        .from('memoir_assets')
+        .insert({
+          project_id: input.projectId,
+          kind: 'photo_digital',
+          storage_path: path,
+          caption: input.caption?.trim() || null,
+          chapter_assignment: input.chapterAssignment ?? null,
+          date_estimate: input.dateEstimate?.trim() || null,
+          width_px: dims?.w ?? null,
+          height_px: dims?.h ?? null,
+        } as any)
+        .select()
+        .single();
+      if (error) {
+        // Best-effort: don't leave an orphan file in storage.
+        await supabase.storage.from(ASSETS_BUCKET).remove([path]).catch(() => {});
+        throw error;
+      }
+      return data as MemoirAsset;
+    },
+    onSuccess: (asset) => {
+      qc.invalidateQueries({ queryKey: ['memoir-assets', asset.project_id] });
+    },
+  });
+}
+
+export function useUpdateMemoirAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; projectId: string; patch: Partial<MemoirAsset> }) => {
+      const { error } = await supabase
+        .from('memoir_assets')
+        .update(input.patch as any)
+        .eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['memoir-assets', vars.projectId] });
+    },
+  });
+}
+
+export function useDeleteMemoirAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; projectId: string; storagePath: string }) => {
+      await supabase.storage.from(ASSETS_BUCKET).remove([input.storagePath]).catch(() => {});
+      const { error } = await supabase.from('memoir_assets').delete().eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['memoir-assets', vars.projectId] });
+    },
+  });
+}
+
+/** Short-lived signed URL for displaying an asset thumbnail in the UI. */
+export async function getAssetDisplayUrl(path: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(ASSETS_BUCKET)
+    .createSignedUrl(path, 60 * 30);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
+async function readImageDims(file: File): Promise<{ w: number; h: number } | null> {
+  if (typeof window === 'undefined' || !file.type.startsWith('image/')) return null;
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { resolve({ w: img.naturalWidth, h: img.naturalHeight }); URL.revokeObjectURL(url); };
+    img.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
+    img.src = url;
+  });
+}
+
+// ── Co-writer mode ──────────────────────────────────────────────────
+
+export interface CowriterDraft {
+  draft: string;
+  phrases_used_verbatim: string[];
+}
+
+/** Ask Claude (Opus) to draft prose from a single Q+A. The writer
+ *  reviews, accepts, edits, or rejects. Fail-soft per the endpoint. */
+export function useMemoirCowriter() {
+  return useMutation({
+    mutationFn: async (input: { question: string; transcript: string }): Promise<CowriterDraft> => {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch('/api/memoir-cowriter', {
+        method: 'POST', headers,
+        body: JSON.stringify({ question: input.question, transcript: input.transcript }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error ?? `Co-writer failed (${res.status})`);
+      return {
+        draft: j.draft ?? '',
+        phrases_used_verbatim: j.phrases_used_verbatim ?? [],
+      };
+    },
+  });
+}
+
+/** Persist the draft + user's decision back to the response row. */
+export function useResolveCowriterDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      responseId: string;
+      projectId: string;
+      draft: string;
+      choice: 'accept_draft' | 'edit_draft' | 'reject';
+      finalText: string;
+    }) => {
+      const { error } = await supabase
+        .from('memoir_responses')
+        .update({
+          cowriter_draft: input.draft,
+          user_chose: input.choice,
+          final_text: input.finalText,
+        } as any)
+        .eq('id', input.responseId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['memoir-responses', vars.projectId] });
+    },
+  });
 }
 
 // ── Voice transcription ─────────────────────────────────────────────

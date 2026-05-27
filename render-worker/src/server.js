@@ -10,11 +10,16 @@
 // GET /health  -> 200 for platform health checks.
 
 import express from 'express';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { supabase, BOOKS_BUCKET } from './supabase.js';
 import {
-  fetchProject, fetchAuthorName, fetchResponses, buildMarkdown,
+  fetchProject, fetchAuthorName, fetchResponses, fetchAssets,
+  assetLocalPath, buildMarkdown,
 } from './assemble.js';
 import { renderBook, readArtifact, cleanup } from './latex.js';
+
+const ASSETS_BUCKET = 'memoir-assets';
 
 const PORT = process.env.PORT || 8080;
 const RENDER_SECRET = process.env.MEMOIR_RENDER_SECRET;
@@ -50,22 +55,46 @@ async function processRender(renderId, projectId) {
     .eq('id', renderId);
 
   const project = await fetchProject(projectId);
-  const [authorName, responses] = await Promise.all([
+  const [authorName, responses, assets] = await Promise.all([
     fetchAuthorName(project.author_id),
     fetchResponses(projectId),
+    fetchAssets(projectId),
   ]);
 
-  if (!responses.length) {
-    await markFailed(renderId, 'No answers saved yet — write at least one before rendering.');
+  if (!responses.length && !assets.length) {
+    await markFailed(renderId, 'Nothing to print yet — write at least one answer or add a photo before rendering.');
     return;
   }
 
-  const markdown = buildMarkdown({ project, authorName, responses });
+  const markdown = buildMarkdown({ project, authorName, responses, assets });
   const result = await renderBook({
     markdown,
     title: project.title || 'My Life, So Far',
     author: authorName,
     paperColor: project.paper_color || 'cream',
+    // Download each photo to {workDir}/photos/{id}.{ext} so the
+    // markdown image refs resolve when LuaLaTeX runs.
+    prepareAssets: async (workDir) => {
+      if (!assets.length) return;
+      await mkdir(join(workDir, 'photos'), { recursive: true });
+      for (const a of assets) {
+        try {
+          const { data, error } = await supabase.storage
+            .from(ASSETS_BUCKET)
+            .download(a.storage_path);
+          if (error || !data) {
+            // eslint-disable-next-line no-console
+            console.warn('[render] asset download failed', a.id, error?.message);
+            continue;
+          }
+          const buf = Buffer.from(await data.arrayBuffer());
+          await writeFile(join(workDir, assetLocalPath(a)), buf);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn('[render] asset write failed', a.id, e?.message);
+        }
+      }
+    },
   });
 
   try {
