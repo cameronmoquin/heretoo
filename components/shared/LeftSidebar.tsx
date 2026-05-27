@@ -254,12 +254,21 @@ const s = StyleSheet.create({
     paddingTop: 24,
     paddingHorizontal: 12,
     paddingBottom: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderRightWidth: 1,
-    borderRightColor: Colors.borderLight,
+    // Solid theme-aware backing on Colors.surface — one tone above
+    // Colors.background (which the centred content "plate" uses) so
+    // the sidebar reads as a distinct piece of furniture, not the
+    // same plane. The previous rgba(255,255,255,0.85) was a fixed
+    // near-white panel that worked in light mode but went invisible
+    // in dark mode (ivory-on-white is the bug).
+    backgroundColor: Colors.surface,
+    // A confident gold rule on the inside edge — turns the sidebar's
+    // border from "hairline div" into "a brass strip in the doorway."
+    borderRightWidth: 0,
     zIndex: 5,
-    // backdrop-filter for a soft frosted look over the wallpaper.
-    backdropFilter: 'blur(8px)',
+    ...(Platform.OS === 'web' ? ({
+      boxShadow: `inset -1px 0 0 ${Colors.primary}, inset -2px 0 0 ${Colors.background}, inset -3px 0 0 ${Colors.primary}`,
+      backdropFilter: 'blur(8px)',
+    } as any) : {}),
   } as any),
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, paddingHorizontal: 6 },
   brandText: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.3 },

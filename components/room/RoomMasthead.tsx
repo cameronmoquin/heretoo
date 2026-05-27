@@ -63,7 +63,10 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.4,
-    color: Colors.brandIvory,
+    // textPrimary, not brandIvory — brandIvory is the *fixed* brand
+    // colour and goes invisible on the warm parchment canvas in light
+    // theme. textPrimary tracks the theme.
+    color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   flourish: {

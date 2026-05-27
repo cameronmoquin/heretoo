@@ -38,6 +38,7 @@ import { useWallpaper, WALLPAPERS } from '../../stores/wallpaperStore';
 import { Postcard } from './Postcard';
 import { RoomMasthead } from './RoomMasthead';
 import { RoomHero } from './RoomHero';
+import { WallpaperStrip } from './WallpaperStrip';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -145,17 +146,29 @@ export function Room({ familyId, familyName }: Props) {
         {/* Brand presence — every Room has a plaque */}
         <RoomMasthead subtitle={familyId ? (familyName ?? 'Family') : 'The Common Room'} />
 
-        {/* ─── Hearth ───────────────────────────────────────────────── */}
+        {/* Wallpaper picker — small row of swatches so the user
+            discovers the wall behind them is a choice. */}
+        <WallpaperStrip />
+
+        {/* ─── Hearth ─────────────────────────────────────────────────
+            Newspaper-folio dateline. The masthead above already names
+            the room (HereToo / The Common Room); the hearth is the
+            date, the candle, and the day's news lede. The giant "Today"
+            block is gone — it was a magazine cover where a folio
+            belongs. */}
         <View style={[s.hearth, isCompact && s.hearthCompact]}>
           <View style={s.hearthMast}>
-            <Text style={s.hearthKicker}>
-              {today.day.toUpperCase()}
-            </Text>
-            <Text style={s.hearthTitle} numberOfLines={1}>
-              {familyId ? (familyName ?? 'Family') : 'Today'}
-            </Text>
+            <View style={s.folioRow}>
+              <Text style={s.folioKicker}>{today.day.toUpperCase()}</Text>
+              <Text style={s.folioGlyph}>·</Text>
+              <Text style={s.folioDate}>{today.date}</Text>
+            </View>
+            {familyId && (
+              <Text style={s.folioFamily} numberOfLines={1}>
+                {familyName ?? 'Family'}
+              </Text>
+            )}
             <View style={s.hearthRule} />
-            <Text style={s.hearthSub}>{today.date}</Text>
             {/* The candle on the mantel — Anniversary Engine dispatch.
                 One sentence. Stays quiet when nothing is to be noticed. */}
             {!!candle && (
@@ -316,13 +329,53 @@ function makeStyles() { return StyleSheet.create({
   // Transparent wrapper — the wallpaper bleeds through to the gutters.
   root: {
     flex: 1, backgroundColor: 'transparent',
-    maxWidth: 720, alignSelf: 'center', width: '100%',
+    maxWidth: 760, alignSelf: 'center', width: '100%',
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.lg,
   },
+  // The Plate — a centred card that hangs on the wallpapered wall like
+  // a framed piece of art. Strong dark/parchment background so text
+  // reads decisively against the busy pattern at the gutters, with a
+  // gold inner double-rule that emulates a picture-frame matte. The
+  // wallpaper around it is the wall; the plate is the painting.
   scroll: {
-    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 14,
+    paddingHorizontal: Spacing.lg + 4,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
     gap: Spacing.lg,
+    ...(Platform.OS === 'web' ? ({
+      // Inset gold double-rule (the matte) + heavy outer shadow so the
+      // card reads as a physical object hanging in front of the wall.
+      boxShadow:
+        'inset 0 0 0 4px ' + Colors.background +
+        ', inset 0 0 0 5px ' + Colors.primary +
+        ', 0 30px 60px rgba(0,0,0,0.45), 0 8px 18px rgba(0,0,0,0.25)',
+    } as any) : {}),
+  },
+
+  // Folio — newspaper-style dateline that replaces the giant "Today".
+  folioRow: {
+    flexDirection: 'row', alignItems: 'baseline', gap: 10,
+    paddingTop: 2,
+  },
+  folioKicker: {
+    fontSize: 12, fontWeight: '800', color: Colors.primary,
+    letterSpacing: 2.6, textTransform: 'uppercase',
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
+  folioGlyph: { fontSize: 14, color: Colors.primary, opacity: 0.7 },
+  folioDate: {
+    fontSize: 18, fontWeight: '500', color: Colors.textSecondary,
+    fontStyle: 'italic', letterSpacing: 0.2,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+  },
+  folioFamily: {
+    fontSize: 26, lineHeight: 32, fontWeight: '700',
+    letterSpacing: -0.5, color: Colors.textPrimary, marginTop: 6,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
 
   // Hearth
@@ -340,10 +393,12 @@ function makeStyles() { return StyleSheet.create({
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   hearthTitle: {
-    fontSize: 56,
-    lineHeight: 60,
-    fontWeight: '800',
-    letterSpacing: -1.2,
+    // Section header, not a magazine cover. 32/40 reads as the room's
+    // name, not a shout. Syne stays; just at a humane size.
+    fontSize: 32,
+    lineHeight: 40,
+    fontWeight: '700',
+    letterSpacing: -0.6,
     color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },

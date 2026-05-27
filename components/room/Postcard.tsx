@@ -203,11 +203,13 @@ function makeStyles() { return StyleSheet.create({
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   typeHero: {
-    fontSize: 26,
-    lineHeight: 38,
+    fontSize: 24,
+    lineHeight: 36,
     fontWeight: '400',
     fontStyle: 'italic',
-    color: Colors.brandIvory,
+    // textPrimary not brandIvory — brandIvory disappears on the
+    // warm parchment canvas in light mode.
+    color: Colors.textPrimary,
     letterSpacing: 0,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
