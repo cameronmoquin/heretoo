@@ -45,8 +45,12 @@ row. The Netlify function `/api/memoir-render` is what calls this.
 - **PDF/X-1a.** v1 ships a Ghostscript `/prepress` PDF (fonts embedded,
   KDP-accepted) rather than strict CMYK PDF/X-1a, to avoid shifting
   photo colour. Hardening to true PDF/X-1a is a future step.
-- **The real test.** Upload `interior.pdf` to KDP, order a $4 proof.
-  That is the only way to know the trim/bleed/margins are right.
+- **The real test.** Order one physical proof. Amazon KDP is the
+  cheapest path (~$4); FedEx Office or Staples will do a one-off
+  perfect-bound proof for around $20. The interior PDF is a standard
+  6×9 paperback file — any printer that handles PDFs with embedded
+  fonts will accept it. See `/memoir/print` in the app for the
+  consumer-facing comparison.
 
 ## Local smoke test
 

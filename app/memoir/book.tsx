@@ -145,16 +145,25 @@ export default function MemoirBookScreen() {
           <Stat label="Est. pages" value={`~${estPages}`} elder={elder} />
         </View>
 
-        {/* Quick link into the photo manager — the family book lives or
-            dies by whether photos are in it. */}
-        <TouchableOpacity
-          style={s.photosLink}
-          onPress={() => router.push('/memoir/photos')}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="images-outline" size={16} color={ic.page.accent} />
-          <Text style={s.photosLinkText}>Add photographs →</Text>
-        </TouchableOpacity>
+        {/* Side links — photos manager and print guide. */}
+        <View style={s.sideLinks}>
+          <TouchableOpacity
+            style={s.photosLink}
+            onPress={() => router.push('/memoir/photos')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="images-outline" size={16} color={ic.page.accent} />
+            <Text style={s.photosLinkText}>Add photographs →</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.photosLink}
+            onPress={() => router.push('/memoir/print')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="print-outline" size={16} color={ic.page.accent} />
+            <Text style={s.photosLinkText}>Where to print →</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Render button */}
         <TouchableOpacity
@@ -249,7 +258,10 @@ function RenderRow({ render, elder }: { render: MemoirBookRender; elder: boolean
 
       {render.status === 'done' && (
         <Text style={s.kdpHint}>
-          Upload the interior PDF and cover to Amazon KDP to order a proof copy.
+          The interior PDF is a standard 6×9 book file with bleed and
+          embedded fonts. Print it wherever you like — Amazon KDP, a
+          local print shop, FedEx Office, Staples, IngramSpark. Tap
+          &ldquo;Where to print&rdquo; below for the comparison.
         </Text>
       )}
     </View>
@@ -400,12 +412,12 @@ function makeStyles(elder: boolean = false) {
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
     },
 
+    sideLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     photosLink: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
       paddingVertical: 10, paddingHorizontal: 14,
       borderRadius: Radius.full,
       borderWidth: 1, borderColor: pageAccent,
-      alignSelf: 'flex-start',
     },
     photosLinkText: { fontSize: 13, fontWeight: '700', color: pageAccent },
 
