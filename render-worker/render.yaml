@@ -1,0 +1,22 @@
+# Render.com blueprint for the HereToo memoir render worker.
+# Deploy: push this repo subtree, then in Render: New > Blueprint and
+# point at this file. Set the secret env vars in the dashboard (they
+# are intentionally not committed).
+services:
+  - type: web
+    name: heretoo-memoir-render
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter            # bump if large books time out on free tier
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: SUPABASE_URL
+        sync: false          # set in dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false          # set in dashboard
+      - key: MEMOIR_RENDER_SECRET
+        sync: false          # set in dashboard; must match Netlify
+      - key: PORT
+        value: 8080

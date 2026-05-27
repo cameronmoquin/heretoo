@@ -47,8 +47,10 @@ create table if not exists public.loft_posts (
   expires_at    timestamptz not null default (now() + interval '24 hours')
 );
 
+-- Partial-index predicate can't reference now() (volatile). Plain
+-- index serves the same query well enough.
 create index if not exists loft_posts_recent_idx
-  on public.loft_posts (expires_at) where expires_at > now();
+  on public.loft_posts (expires_at);
 create index if not exists loft_posts_author_idx
   on public.loft_posts (author_id, created_at desc);
 

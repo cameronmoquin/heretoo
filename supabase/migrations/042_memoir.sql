@@ -173,24 +173,24 @@ create policy memoir_responses_delete on public.memoir_responses
 
 create or replace function public.todays_memoir_prompt()
 returns table (
-  id     uuid,
-  prompt text,
+  id       uuid,
+  prompt   text,
   category text,
-  position int
+  "position" int
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select p.id, p.prompt, p.category, p.position
+  select p.id, p.prompt, p.category, p."position"
   from public.memoir_prompts p
   where p.retired = false
     and not exists (
       select 1 from public.memoir_responses r
       where r.user_id = auth.uid() and r.prompt_id = p.id
     )
-  order by p.position asc
+  order by p."position" asc
   limit 1;
 $$;
 

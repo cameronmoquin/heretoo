@@ -1,0 +1,95 @@
+% HereToo memoir — Pandoc/LuaLaTeX template (memoir.cls).
+% KDP 6x9 trim with 0.125in bleed. Pandoc fills $title$, $author$,
+% $dedication$ and $body$. Compiled with --pdf-engine=lualatex so the
+% variable brand fonts load through luaotfload.
+\documentclass[11pt,openany]{memoir}
+
+% ── Trim + bleed for KDP 6x9 ─────────────────────────────────────────
+\setstocksize{9.25in}{6.125in}   % trim + 0.125in bleed each edge
+\settrimmedsize{9in}{6in}{*}
+\settrims{0.125in}{0.125in}
+\setlrmarginsandblock{0.875in}{0.625in}{*}  % gutter / outside
+\setulmarginsandblock{0.875in}{1in}{*}      % top / bottom
+\checkandfixthelayout
+
+% ── Fonts ────────────────────────────────────────────────────────────
+\usepackage{fontspec}
+% Try the brand faces; if a face is missing the build still proceeds
+% because Libertinus (installed in the image) is set first as a safety
+% net, then overridden when the brand font is present.
+\setmainfont{Libertinus Serif}
+\IfFontExistsTF{Source Serif 4}{%
+  \setmainfont{Source Serif 4}%
+}{}
+\IfFontExistsTF{Inter}{%
+  \setsansfont{Inter}%
+}{\setsansfont{Libertinus Sans}}
+
+% ── Chapter style ────────────────────────────────────────────────────
+\chapterstyle{section}
+\setsecnumdepth{none}
+\renewcommand{\chaptitlefont}{\Large\itshape}
+
+% ── Images, captions, spacing ────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[font=small,labelfont=it]{caption}
+\linespread{1.08}
+\setlength{\parindent}{1.2em}
+
+% Widow / orphan control.
+\widowpenalty=10000
+\clubpenalty=10000
+
+% Pandoc shims (lists, tightlists, links) so converted markdown
+% compiles cleanly regardless of body content.
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={$title$},
+  pdfauthor={$author$},
+  pdfsubject={Memoir},
+  pdfproducer={HereToo}
+}
+
+\begin{document}
+
+\frontmatter
+
+% Title page.
+\thispagestyle{empty}
+\null\vfill
+\begin{center}
+  {\Huge\itshape $title$}\\[2.5em]
+  {\Large $author$}
+\end{center}
+\vfill\null
+\clearpage
+
+$if(dedication)$
+% Dedication.
+\thispagestyle{empty}
+\null\vfill
+\begin{center}
+  {\itshape $dedication$}
+\end{center}
+\vfill\null
+\clearpage
+$endif$
+
+\tableofcontents*
+
+\mainmatter
+
+$body$
+
+\backmatter
+\thispagestyle{empty}
+\null\vfill
+\begin{center}
+  {\footnotesize Made with HereToo.}
+\end{center}
+\vfill\null
+
+\end{document}

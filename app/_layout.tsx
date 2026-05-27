@@ -118,6 +118,7 @@ function RootLayoutInner() {
         <Stack.Screen name="give" options={{ headerShown: false, title: 'Give' }} />
         <Stack.Screen name="call" options={{ headerShown: false }} />
         <Stack.Screen name="memoir" options={{ headerShown: false, title: 'Memoir' }} />
+        <Stack.Screen name="memoir/book" options={{ headerShown: false, title: 'Make the book' }} />
         <Stack.Screen name="games" options={{ headerShown: false, title: 'Games' }} />
         <Stack.Screen name="news" options={{ headerShown: false, title: 'News' }} />
         <Stack.Screen name="u" options={{ headerShown: false }} />

@@ -136,28 +136,31 @@ create policy memoir_edit_runs_self_read on public.memoir_edit_runs
 -- Inserts come from the service-role function only.
 
 -- 4. Refresh todays_memoir_prompt to include starters ─────────────────
+-- Postgres won't let CREATE OR REPLACE change RETURNS TABLE shape, so
+-- drop first.
+drop function if exists public.todays_memoir_prompt();
 
 create or replace function public.todays_memoir_prompt()
 returns table (
-  id        uuid,
-  prompt    text,
-  category  text,
-  position  int,
-  starters  text[]
+  id         uuid,
+  prompt     text,
+  category   text,
+  "position" int,
+  starters   text[]
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select p.id, p.prompt, p.category, p.position, p.starters
+  select p.id, p.prompt, p.category, p."position", p.starters
   from public.memoir_prompts p
   where p.retired = false
     and not exists (
       select 1 from public.memoir_responses r
       where r.user_id = auth.uid() and r.prompt_id = p.id
     )
-  order by p.position asc
+  order by p."position" asc
   limit 1;
 $$;
 
