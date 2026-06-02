@@ -55,6 +55,15 @@ export const CHAPTER_TITLE: Record<string, string> = {
   what_you_would_tell_younger_self: 'What I Would Tell My Younger Self',
 };
 
+/** Chapters a writer can move an *entry* into, in spine order. Excludes
+ *  photo_specific (a photos-only chapter) and the "other" catch-all.
+ *  Shared by the arrange screen's chapter picker. */
+export function chapterChoices(): Array<{ key: string; label: string }> {
+  return CHAPTER_ORDER
+    .filter((k) => k !== 'photo_specific')
+    .map((k) => ({ key: k, label: CHAPTER_TITLE[k] }));
+}
+
 /** A single answer as it appears in the book: the prompt's question
  *  (if any) and the writer's final prose split into paragraphs. */
 export interface BookEntry {

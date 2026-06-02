@@ -157,6 +157,14 @@ export default function MemoirBookScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={s.photosLink}
+            onPress={() => router.push('/memoir/arrange')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="swap-vertical-outline" size={16} color={ic.page.accent} />
+            <Text style={s.photosLinkText}>Arrange chapters →</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.photosLink}
             onPress={() => router.push('/memoir/photos')}
             activeOpacity={0.85}
           >

@@ -138,14 +138,24 @@ export default function MemoirPreviewScreen() {
               into a real 6×9 paperback.
             </Text>
 
-            <TouchableOpacity
-              style={s.makeLink}
-              onPress={() => router.replace('/memoir/book')}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="book-outline" size={16} color={ic.accent} />
-              <Text style={s.makeLinkText}>Make the book →</Text>
-            </TouchableOpacity>
+            <View style={s.closingLinks}>
+              <TouchableOpacity
+                style={s.makeLink}
+                onPress={() => router.push('/memoir/arrange')}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="swap-vertical-outline" size={16} color={ic.accent} />
+                <Text style={s.makeLinkText}>Arrange the order →</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.makeLink}
+                onPress={() => router.replace('/memoir/book')}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="book-outline" size={16} color={ic.accent} />
+                <Text style={s.makeLinkText}>Make the book →</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -399,12 +409,14 @@ function makeStyles(elder: boolean) {
       fontSize: 14, lineHeight: 22, color: pageInkSecondary, fontStyle: 'italic',
       textAlign: 'center', maxWidth: 480, alignSelf: 'center', ...serif,
     },
+    closingLinks: {
+      flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
+      gap: 10, marginTop: 4,
+    },
     makeLink: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      alignSelf: 'center',
       paddingHorizontal: 18, paddingVertical: 10,
       borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
-      marginTop: 4,
     },
     makeLinkText: { fontSize: 14, fontWeight: '700', color: pageAccent },
   });

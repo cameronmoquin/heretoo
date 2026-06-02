@@ -365,6 +365,52 @@ export function useSaveMemoirResponse() {
   });
 }
 
+/** Patch a response's placement — which chapter it lives in and/or its
+ *  order within that chapter. Used by the arrange screen. */
+export function useUpdateMemoirResponse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      projectId: string;
+      patch: { chapter_assignment?: string | null; ordering_hint?: number | null };
+    }) => {
+      const { error } = await supabase
+        .from('memoir_responses')
+        .update(input.patch as any)
+        .eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['memoir-responses', vars.projectId] });
+    },
+  });
+}
+
+/** Renumber a whole chapter: write ordering_hint = index for each id in
+ *  the given order, in one pass, then invalidate once. Idempotent —
+ *  safe to call on every reorder tap. */
+export function useReorderMemoirResponses() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { projectId: string; orderedIds: string[] }) => {
+      // Small chapters (a handful to a few dozen entries) — parallel
+      // single-row updates keep each write inside the row's RLS scope.
+      await Promise.all(
+        input.orderedIds.map((id, idx) =>
+          supabase
+            .from('memoir_responses')
+            .update({ ordering_hint: idx } as any)
+            .eq('id', id),
+        ),
+      );
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['memoir-responses', vars.projectId] });
+    },
+  });
+}
+
 // ── Progress ────────────────────────────────────────────────────────
 
 export function useMemoirProgress(projectId: string | null | undefined) {
