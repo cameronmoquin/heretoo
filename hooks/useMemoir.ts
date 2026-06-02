@@ -131,6 +131,9 @@ export interface MemoirAsset {
   /** Which chapter (life_chapter or thematic_thread key) this asset lands
    *  in when the book renders. Reuses chapter_or_thread vocabulary. */
   chapter_assignment?: string | null;
+  /** Order within its chapter (lower first); the render worker and the
+   *  in-app preview both sort photos by this. */
+  ordering_hint?: number | null;
 }
 
 // ── Project + session lifecycle ─────────────────────────────────────

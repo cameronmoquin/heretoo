@@ -145,8 +145,16 @@ export default function MemoirBookScreen() {
           <Stat label="Est. pages" value={`~${estPages}`} elder={elder} />
         </View>
 
-        {/* Side links — photos manager and print guide. */}
+        {/* Side links — preview, photos manager, and print guide. */}
         <View style={s.sideLinks}>
+          <TouchableOpacity
+            style={s.photosLink}
+            onPress={() => router.push('/memoir/preview')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="book-outline" size={16} color={ic.page.accent} />
+            <Text style={s.photosLinkText}>Read it through →</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={s.photosLink}
             onPress={() => router.push('/memoir/photos')}
