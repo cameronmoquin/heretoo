@@ -23,7 +23,9 @@ import { mediaPathToUrl, mediaPathToThumb } from '../../hooks/useUpload';
 interface MediaItem {
   id: string;
   storage_path: string;
-  media_type: 'image' | 'video';
+  // Accepts the full post media union; only 'video' is special-cased
+  // (rendered as its poster). Anything else renders as an image.
+  media_type: 'image' | 'video' | 'audio';
 }
 
 interface LightboxProps {

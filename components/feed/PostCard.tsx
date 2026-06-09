@@ -13,6 +13,7 @@ import type { Post } from '../../stores/feedStore';
 import { Platform } from 'react-native';
 import { mediaPathToUrl, mediaPathToThumb } from '../../hooks/useUpload';
 import { StatureAvatar } from '../shared/StatureAvatar';
+import { Lightbox } from '../shared/Lightbox';
 import { useDeletePost } from '../../hooks/useFeed';
 import { useLatestComments } from '../../hooks/useComments';
 import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
@@ -44,6 +45,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const deletePost = useDeletePost();
   const [boostOpen, setBoostOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const boost = useBoostPost();
   const { data: families } = useMyFamilies();
 
@@ -138,11 +140,16 @@ export function PostCard({ post, onHeart }: PostCardProps) {
               </View>
             )
           ) : (
-            <Image
-              source={{ uri: mediaPathToUrl(media[0].storage_path) }}
-              style={s.image}
-              resizeMode="cover"
-            />
+            <Pressable
+              onPress={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
+              accessibilityLabel="View photo full screen"
+            >
+              <Image
+                source={{ uri: mediaPathToUrl(media[0].storage_path) }}
+                style={s.image}
+                resizeMode="cover"
+              />
+            </Pressable>
           )}
           {media.length > 1 && (
             <View style={s.mediaCount}>
@@ -297,6 +304,14 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         open={flagOpen}
         onClose={() => setFlagOpen(false)}
         postId={post.id}
+      />
+
+      {/* Tap a photo to open it full-screen; swipe through the rest. */}
+      <Lightbox
+        media={media}
+        startIndex={0}
+        visible={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
       />
     </Pressable>
   );

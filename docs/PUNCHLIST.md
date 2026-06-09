@@ -99,7 +99,8 @@ into product.
 
 - [ ] Pull-to-refresh on family feeds.
 - [ ] Loading skeletons instead of spinners.
-- [ ] Image lightbox on post detail.
+- [x] Image lightbox — on post detail (existing) and now on feed cards
+      too (tap a photo in `PostCard` → full-screen, swipe through all).
 - [ ] Inline comment preview on feed cards.
 - [ ] Search (posts / people by handle / families by name).
 - [ ] Phone-camera photo capture for the memoir (currently web
