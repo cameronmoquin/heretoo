@@ -8,9 +8,10 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useFamily, useFamilyMembers, useFamilyFeed, useFamilyUpdates, useLeaveFamily,
+  useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
   useDeleteFamily, usePendingRename, useProposeRename, useVoteRename,
 } from '../../../hooks/useFamily';
+import { useSubjectsNewActivity } from '../../../hooks/useSubjects';
 import { useToggleHeart } from '../../../hooks/useFeed';
 import { useAuthStore } from '../../../stores/authStore';
 import { goBackToFeed } from '../../../lib/nav';
@@ -37,7 +38,8 @@ export default function FamilyDetail() {
   const { data: family, isLoading } = useFamily(id);
   const { data: members } = useFamilyMembers(id);
   const { data: posts } = useFamilyFeed(id ?? null);
-  const { data: updates } = useFamilyUpdates(id ?? null);
+  // New-activity signal for the Subjects tab badge ("something's happening").
+  const subjectsActivity = useSubjectsNewActivity(id ?? null);
   const leave = useLeaveFamily();
   const deleteFamily = useDeleteFamily();
   const toggleHeart = useToggleHeart();
@@ -57,7 +59,8 @@ export default function FamilyDetail() {
         qc.invalidateQueries({ queryKey: ['family', id] }),
         qc.invalidateQueries({ queryKey: ['family-members', id] }),
         qc.invalidateQueries({ queryKey: ['family-feed', id] }),
-        qc.invalidateQueries({ queryKey: ['family-updates', id] }),
+        qc.invalidateQueries({ queryKey: ['family-subjects', id] }),
+        qc.invalidateQueries({ queryKey: ['subject-activity', id] }),
         qc.invalidateQueries({ queryKey: ['pending-rename', id] }),
       ]);
     } finally {
@@ -173,6 +176,7 @@ export default function FamilyDetail() {
             t === 'chat' ? 'Chat' :
             t === 'trivia' ? 'Trivia' :
             'About';
+          const showDot = t === 'subjects' && subjectsActivity.anyNew && tab !== 'subjects';
           return (
             <TouchableOpacity
               key={t}
@@ -180,7 +184,10 @@ export default function FamilyDetail() {
               onPress={() => setTab(t)}
               activeOpacity={0.75}
             >
-              <Text style={[s.tabText, tab === t && s.tabTextActive]}>{label}</Text>
+              <View style={s.tabLabelRow}>
+                <Text style={[s.tabText, tab === t && s.tabTextActive]}>{label}</Text>
+                {showDot && <View style={s.tabBadge} />}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -507,56 +514,6 @@ export default function FamilyDetail() {
   );
 }
 
-/**
- * UpdateCard — visually distinct from a regular PostCard:
- *   - Bold timestamp + "Update from <author>" header on top
- *   - Left-side accent strip in the primary color so the card reads
- *     as time-sensitive at a glance
- *   - Body in slightly larger type
- *   - Tappable to the post detail (where comments + reactions live)
- */
-function UpdateCard({ post }: { post: any }) {
-  const s = makeStyles();
-  const author = post.author;
-  const media: any[] = post.media ?? [];
-  const dt = new Date(post.created_at);
-  const dateLine = dt.toLocaleDateString(undefined, {
-    weekday: 'short', month: 'short', day: 'numeric',
-  });
-  const timeLine = dt.toLocaleTimeString(undefined, {
-    hour: 'numeric', minute: '2-digit',
-  });
-
-  return (
-    <Pressable
-      style={s.updateCard}
-      onPress={() => router.push(`/(tabs)/feed/${post.id}` as any)}
-    >
-      <View style={s.updateAccent} />
-      <View style={s.updateBody}>
-        <View style={s.updateHeader}>
-          <Text style={s.updateDate}>{dateLine} · {timeLine}</Text>
-          <Text style={s.updateFrom}>
-            from <Text style={{ fontWeight: '700' }}>
-              {author?.display_name ?? author?.handle ?? 'someone'}
-            </Text>
-          </Text>
-        </View>
-        {!!post.body && <Text style={s.updateText}>{post.body}</Text>}
-        {media.length > 0 && (
-          <View style={s.updateMedia}>
-            {/* Just a static thumb here — full media renders on detail */}
-            <Ionicons name="image-outline" size={14} color={Colors.textMuted} />
-            <Text style={s.updateMediaHint}>
-              {media.length} attachment{media.length === 1 ? '' : 's'}
-            </Text>
-          </View>
-        )}
-      </View>
-    </Pressable>
-  );
-}
-
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   header: {
@@ -587,6 +544,10 @@ function makeStyles() { return StyleSheet.create({
   tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.primary },
   tabText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
   tabTextActive: { color: Colors.primary, fontWeight: '600' },
+  tabLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  tabBadge: {
+    width: 7, height: 7, borderRadius: 4, backgroundColor: Colors.primary,
+  },
   scroll: { padding: Spacing.md, gap: 10, maxWidth: 600, alignSelf: 'center', width: '100%' },
   emptyFeed: { alignItems: 'center', paddingTop: 40, gap: 12 },
   feedInviteBtn: {
@@ -641,29 +602,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 13, color: Colors.textMuted, textAlign: 'center',
     maxWidth: 320, marginTop: 6, lineHeight: 19,
   },
-
-  // Update card — emphatic, time-sensitive
-  updateCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Colors.border,
-    overflow: 'hidden',
-    marginVertical: 4,
-  },
-  updateAccent: { width: 4, backgroundColor: Colors.primary },
-  updateBody: { flex: 1, padding: 14, gap: 6 },
-  updateHeader: { gap: 2 },
-  updateDate: {
-    fontSize: 12, fontWeight: '700', color: Colors.primary,
-    textTransform: 'uppercase', letterSpacing: 1.2,
-  },
-  updateFrom: { fontSize: 12, color: Colors.textMuted },
-  updateText: { fontSize: 16, color: Colors.textPrimary, lineHeight: 23, marginTop: 4 },
-  updateMedia: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6,
-  },
-  updateMediaHint: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
 
   // Rename proposal banner
   proposalCard: {

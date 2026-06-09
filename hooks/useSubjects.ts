@@ -10,9 +10,12 @@
  * is updated).
  */
 
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { useSubjectsSeenStore } from '../stores/subjectsSeenStore';
+import { subjectHasNewActivity } from '../lib/subjects-activity';
 
 export interface Subject {
   id: string;
@@ -279,6 +282,91 @@ export function useRetireSubject() {
       qc.invalidateQueries({ queryKey: ['subject'] });
     },
   });
+}
+
+// ── "Something's happening" — new activity in followed subjects ──────
+
+/** Per-subject latest-activity for the subjects the viewer FOLLOWS in
+ *  this family. `byMe` flags activity the viewer themselves added (so
+ *  we never badge someone for their own post). Refetches in realtime
+ *  when a new post lands in the family. */
+export function useFollowedSubjectActivity(familyId: string | null | undefined) {
+  const userId = useAuthStore((s) => s.user?.id);
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['subject-activity', familyId, userId],
+    queryFn: async (): Promise<Record<string, { latestAt: string; byMe: boolean }>> => {
+      if (!familyId || !userId) return {};
+      // Subjects in THIS family that the viewer follows.
+      const { data: follows, error: fErr } = await supabase
+        .from('subject_followers')
+        .select('subject_id, subject:subjects!subject_id(family_id)')
+        .eq('profile_id', userId);
+      if (fErr) throw fErr;
+      const ids = ((follows ?? []) as any[])
+        .filter((r) => r.subject?.family_id === familyId)
+        .map((r) => r.subject_id as string);
+      if (ids.length === 0) return {};
+
+      // Latest tag per subject (newest first → first seen wins).
+      const { data: tags, error: tErr } = await supabase
+        .from('post_subjects')
+        .select('subject_id, added_at, added_by')
+        .in('subject_id', ids)
+        .order('added_at', { ascending: false });
+      if (tErr) throw tErr;
+
+      const map: Record<string, { latestAt: string; byMe: boolean }> = {};
+      for (const row of (tags ?? []) as any[]) {
+        if (!map[row.subject_id]) {
+          map[row.subject_id] = {
+            latestAt: row.added_at,
+            byMe: row.added_by === userId,
+          };
+        }
+      }
+      return map;
+    },
+    enabled: !!familyId && !!userId,
+  });
+
+  // Realtime: a new post in this family is the "something happened"
+  // signal. We invalidate and let the query re-read post_subjects. (A
+  // post is tagged to its subject immediately after insert; the brief
+  // race is covered by React Query's refetch-on-focus.)
+  useEffect(() => {
+    if (!familyId) return;
+    const channel = supabase
+      .channel(`subject-activity:${familyId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts', filter: `family_id=eq.${familyId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ['subject-activity', familyId] });
+          qc.invalidateQueries({ queryKey: ['family-subjects', familyId] });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [familyId, qc]);
+
+  return query;
+}
+
+/** Derived "new activity" state for the Subjects tab + rows. A subject
+ *  is "new" when its latest activity (by someone other than the viewer)
+ *  is more recent than the last time the viewer opened it. */
+export function useSubjectsNewActivity(familyId: string | null | undefined) {
+  const { data: activity } = useFollowedSubjectActivity(familyId);
+  const seen = useSubjectsSeenStore((s) => s.seen);
+  const map = activity ?? {};
+
+  const isNew = (subjectId: string): boolean =>
+    subjectHasNewActivity(map[subjectId], seen[subjectId]);
+  const anyNew = Object.keys(map).some((id) => isNew(id));
+  const latestFor = (subjectId: string): string | undefined => map[subjectId]?.latestAt;
+
+  return { isNew, anyNew, latestFor };
 }
 
 /** Subjects attached to a single post — used by the composer to show

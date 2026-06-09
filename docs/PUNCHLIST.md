@@ -51,24 +51,29 @@ means that capability is silently off. Confirm in the Netlify env UI:
 Tied to `docs/STRATEGY.md`. These are where the disruption thesis turns
 into product.
 
-- **Family Updates — the origin use case. Mostly built; the
-      strategically important gap is the *notification moment*:**
-  - [x] `posts.kind='update'`, `subject_profile_id`, dedicated updates
-        feed/tab, recipient-selectable visibility + RLS, composer
-        toggle (migrations 011/019, `useFamilyUpdates`, `FeedComposer`).
-  - [x] Daily email digest of unseen updates at noon local time
-        (`daily-update-digest.ts`, migration 027).
-  - [ ] **Immediate notify on a new update** — the "win the moment"
-        gap. Today a 2pm hospital update waits until noon tomorrow.
-        Send the moment it's posted: in-app realtime first (no email
-        dependency, testable now), email-per-update once the Resend
-        domain is verified, push/SMS later. **Highest leverage.**
+- **"Something's happening" — now lives in Subjects, not Updates.**
+      Migration 028 (Milestone 3) retired the Updates *tab* in favor of
+      **Subjects** (long-running family-story threads — "Tim's surgery").
+      That's the live surface for the origin use case.
+  - [x] **In-app realtime alert on Subject activity** — a "New" dot on
+        the Subjects tab + per-subject, for subjects you follow, the
+        moment a post lands (realtime, client-side last-seen, no
+        migration). `lib/subjects-activity.ts`, `subjectsSeenStore`,
+        `useSubjectsNewActivity`. The "win the moment" gap, in-app half.
+  - [x] Cleaned up the orphaned `kind='update'` remnants in the family
+        page (unused `useFamilyUpdates` fetch + dead `UpdateCard`).
+  - [ ] **Email-per-update / per-subject-post** — instant email when a
+        followed subject gets a post. Buildable now; can't be validated
+        until the Resend domain is verified (below). push/SMS later.
   - [ ] **(Cameron)** Verify `heretoo.social` in Resend + switch
         `FROM_EMAIL` off the `onboarding@resend.dev` sandbox — until
-        then NO family email (digest or immediate) reaches anyone but
+        then NO family email (digest or otherwise) reaches anyone but
         the account owner. Blocks all email in production.
-  - [ ] Confirm the Updates tab is prominent / default when a family
-        has a `subject_profile_id` set (the rallying-around case).
+  - [ ] **Decide the fate of the composer's "Update" toggle** — it
+        still produces `kind='update'` posts, which now render in no
+        in-app surface (feed filters them out, Updates tab is gone).
+        Either fold it into Subjects or remove it. (Left as-is; needs a
+        product call.)
 - [ ] **Platform-wide elder mode** — extend the memoir's large-serif /
       read-aloud / Aa accessibility to the whole app. The grandmother is
       the acquisition engine; most of the app isn't grandma-optimized.

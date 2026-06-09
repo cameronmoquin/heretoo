@@ -10,7 +10,7 @@
  * No comments here directly — tap a post to open it.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform,
   ActivityIndicator,
@@ -22,6 +22,7 @@ import {
   useSubjectBySlug, useFollowSubject, useUnfollowSubject, useRetireSubject,
 } from '../../../../hooks/useSubjects';
 import { useAuthStore } from '../../../../stores/authStore';
+import { useSubjectsSeenStore } from '../../../../stores/subjectsSeenStore';
 import { useToggleHeart } from '../../../../hooks/useFeed';
 import { PostCard } from '../../../../components/feed/PostCard';
 import { showAlert, showConfirm } from '../../../../lib/alert';
@@ -37,7 +38,15 @@ export default function SubjectScreen() {
   const unfollow = useUnfollowSubject();
   const retire = useRetireSubject();
   const toggleHeart = useToggleHeart();
+  const markSeen = useSubjectsSeenStore((st) => st.markSeen);
   const [retiring, setRetiring] = useState(false);
+
+  // Opening the subject clears its "new activity" dot — you're reading
+  // it now, so everything up to now counts as seen.
+  const subjectId = data?.subject?.id;
+  useEffect(() => {
+    if (subjectId) markSeen(subjectId, new Date().toISOString());
+  }, [subjectId, markSeen]);
 
   if (isLoading) {
     return (

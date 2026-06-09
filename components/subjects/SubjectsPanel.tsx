@@ -17,9 +17,10 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useFamilySubjects, useCreateSubject,
-  useFollowSubject, useUnfollowSubject,
+  useFollowSubject, useUnfollowSubject, useSubjectsNewActivity,
   type SubjectWithCount,
 } from '../../hooks/useSubjects';
+import { useSubjectsSeenStore } from '../../stores/subjectsSeenStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
@@ -33,6 +34,10 @@ export function SubjectsPanel({ familyId }: Props) {
   const { data: subjects, isLoading } = useFamilySubjects(familyId);
   const createSubject = useCreateSubject();
   const [draft, setDraft] = useState('');
+
+  // New-activity state for followed subjects (one realtime subscription
+  // lives in this hook — call it once here, not per row).
+  const activity = useSubjectsNewActivity(familyId);
 
   const open = (subjects ?? []).filter((x) => !x.retired_at);
   const retired = (subjects ?? []).filter((x) => !!x.retired_at);
@@ -91,7 +96,13 @@ export function SubjectsPanel({ familyId }: Props) {
       )}
 
       {open.length > 0 && open.map((subj) => (
-        <SubjectRow key={subj.id} familyId={familyId} subject={subj} />
+        <SubjectRow
+          key={subj.id}
+          familyId={familyId}
+          subject={subj}
+          isNew={activity.isNew(subj.id)}
+          latestAt={activity.latestFor(subj.id)}
+        />
       ))}
 
       {retired.length > 0 && (
@@ -99,7 +110,13 @@ export function SubjectsPanel({ familyId }: Props) {
           <View style={s.divider} />
           <Text style={s.retiredHeader}>Retired</Text>
           {retired.map((subj) => (
-            <SubjectRow key={subj.id} familyId={familyId} subject={subj} />
+            <SubjectRow
+              key={subj.id}
+              familyId={familyId}
+              subject={subj}
+              isNew={activity.isNew(subj.id)}
+              latestAt={activity.latestFor(subj.id)}
+            />
           ))}
         </>
       )}
@@ -107,10 +124,18 @@ export function SubjectsPanel({ familyId }: Props) {
   );
 }
 
-function SubjectRow({ familyId, subject }: { familyId: string; subject: SubjectWithCount }) {
+function SubjectRow({
+  familyId, subject, isNew, latestAt,
+}: {
+  familyId: string;
+  subject: SubjectWithCount;
+  isNew?: boolean;
+  latestAt?: string;
+}) {
   const s = makeStyles();
   const follow = useFollowSubject();
   const unfollow = useUnfollowSubject();
+  const markSeen = useSubjectsSeenStore((st) => st.markSeen);
   const isRetired = !!subject.retired_at;
 
   const onToggleFollow = (e: any) => {
@@ -119,15 +144,28 @@ function SubjectRow({ familyId, subject }: { familyId: string; subject: SubjectW
     else follow.mutate(subject.id);
   };
 
+  const onOpen = () => {
+    // Opening the subject is "I've seen it" — clear the new-activity dot.
+    markSeen(subject.id, latestAt ?? new Date().toISOString());
+    router.push(`/family/${familyId}/subject/${subject.slug}` as any);
+  };
+
   return (
     <TouchableOpacity
       style={[s.row, isRetired && { opacity: 0.6 }]}
-      onPress={() => router.push(`/family/${familyId}/subject/${subject.slug}` as any)}
+      onPress={onOpen}
       activeOpacity={0.7}
     >
-      <View style={s.rowDot} />
+      <View style={[s.rowDot, isNew && s.rowDotNew]} />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={s.rowName} numberOfLines={1}>{subject.name}</Text>
+        <View style={s.rowNameLine}>
+          <Text style={s.rowName} numberOfLines={1}>{subject.name}</Text>
+          {isNew && (
+            <View style={s.newPill}>
+              <Text style={s.newPillText}>New</Text>
+            </View>
+          )}
+        </View>
         <Text style={s.rowMeta}>
           {subject.post_count} {subject.post_count === 1 ? 'post' : 'posts'}
           {isRetired ? ' · retired' : ''}
@@ -192,7 +230,19 @@ function makeStyles() { return StyleSheet.create({
     width: 8, height: 8, borderRadius: 4,
     backgroundColor: Colors.primary, opacity: 0.75,
   },
-  rowName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  rowDotNew: {
+    width: 10, height: 10, borderRadius: 5, opacity: 1,
+  },
+  rowNameLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rowName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary, flexShrink: 1 },
+  newPill: {
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+  },
+  newPillText: {
+    fontSize: 10, fontWeight: '800', color: '#FFF',
+    letterSpacing: 0.6, textTransform: 'uppercase',
+  },
   rowMeta: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
 
   followBtn: {
