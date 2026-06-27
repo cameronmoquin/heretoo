@@ -84,7 +84,7 @@ export default function HuntHome() {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => router.push(`/hunt/${c.share_code}`)} style={s.rowAction} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons name="navigate-outline" size={16} color={Colors.primary} />
-                  <Text style={s.rowActionText}>Seek</Text>
+                  <Text style={s.rowActionText}>Find</Text>
                 </TouchableOpacity>
               </View>
             ))}

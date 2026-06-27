@@ -102,9 +102,13 @@ export default function HuntNew() {
             Send this code or the link. The seeker enters it and follows the
             compass to your spot.
           </Text>
-          <TouchableOpacity style={s.primaryBtn} onPress={copyLink} activeOpacity={0.85}>
-            <Ionicons name="link" size={16} color="#FFF" />
-            <Text style={s.primaryBtnText}>Copy seeker link</Text>
+          <TouchableOpacity style={s.primaryBtn} onPress={() => router.replace(`/hunt/${result.code}`)} activeOpacity={0.85}>
+            <Ionicons name="navigate" size={16} color="#FFF" />
+            <Text style={s.primaryBtnText}>Find it now</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.outlineBtn} onPress={copyLink} activeOpacity={0.85}>
+            <Ionicons name="link" size={16} color={Colors.primary} />
+            <Text style={s.outlineBtnText}>Copy seeker link</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.ghostBtn} onPress={() => router.replace('/hunt')} activeOpacity={0.85}>
             <Text style={s.ghostBtnText}>Back to hunts</Text>
@@ -222,6 +226,12 @@ function makeStyles() {
       paddingVertical: 14, borderRadius: Radius.full, backgroundColor: Colors.primary, marginTop: 10,
     },
     primaryBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+    outlineBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      paddingVertical: 13, borderRadius: Radius.full,
+      borderWidth: 1, borderColor: Colors.primary, marginTop: 8,
+    },
+    outlineBtnText: { color: Colors.primary, fontSize: 15, fontWeight: '700' },
     ghostBtn: { paddingVertical: 12, alignItems: 'center', marginTop: 6 },
     ghostBtnText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '600' },
     successCode: {
