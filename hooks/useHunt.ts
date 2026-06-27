@@ -145,8 +145,10 @@ export function useCacheFinds(cacheId: string | null | undefined) {
 
 // ── Writes ───────────────────────────────────────────────────────────
 
-/** Upload a photo to the hunt bucket. Returns the storage path.
- *  kind 'clue' is the hider's cache photo; 'find' is a seeker's proof. */
+/** Upload a photo to the hunt bucket via /api/hunt-upload (service-role
+ *  write, bypasses storage RLS). Returns the storage path the server
+ *  chose. kind 'clue' is the hider's cache photo; 'find' is a seeker's
+ *  proof. */
 export function useUploadHuntPhoto() {
   return useMutation({
     mutationFn: async (input: {
@@ -155,18 +157,22 @@ export function useUploadHuntPhoto() {
       kind: 'clue' | 'find';
       ext?: string;
     }): Promise<string> => {
-      const userId = useAuthStore.getState().user?.id ?? 'anon';
       const ext = input.ext || (input.file as File).name?.split('.').pop()?.toLowerCase() || 'jpg';
-      const name = input.kind === 'clue' ? `clue.${ext}` : `find-${userId}.${ext}`;
-      const path = `${input.cacheId}/${name}`;
-      const { error } = await supabase.storage
-        .from(HUNT_BUCKET)
-        .upload(path, input.file, {
-          contentType: (input.file as File).type || 'image/jpeg',
-          upsert: true,
-        });
-      if (error) throw new Error(`Upload: ${error.message}`);
-      return path;
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sign in to add a photo.');
+      const qs = new URLSearchParams({ cacheId: input.cacheId, kind: input.kind, ext });
+      const res = await fetch(`/api/hunt-upload?${qs.toString()}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': (input.file as File).type || 'image/jpeg',
+        },
+        body: input.file,
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error ?? `Upload failed (${res.status})`);
+      return j.path as string;
     },
   });
 }
