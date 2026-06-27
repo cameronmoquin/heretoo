@@ -13,7 +13,7 @@
 
 export type ThemeMode = 'dark' | 'light';
 
-const dark = {
+export const dark = {
   // Brand
   brandIvory: '#F4F1E8',
   brandGold: '#C9A14B',
@@ -70,7 +70,7 @@ const dark = {
   info: '#5DA3C9',
 };
 
-const light = {
+export const light = {
   // Brand (same)
   brandIvory: '#F4F1E8',
   brandGold: '#9A7A2E',

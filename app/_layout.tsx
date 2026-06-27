@@ -30,7 +30,9 @@ import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
 import { Colors, setColorMode } from '../constants/colors';
+import { setGeneration } from '../constants/generations';
 import { useThemeStore } from '../stores/themeStore';
+import { useGenerationStore } from '../stores/generationStore';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 2, retry: 2 } },
@@ -39,10 +41,16 @@ const queryClient = new QueryClient({
 function RootLayoutInner() {
   const { isLoading } = useAuth();
   const themeMode = useThemeStore((s) => s.mode);
+  const generation = useGenerationStore((s) => s.generation);
 
-  // Apply the active theme palette before child renders happen.
-  // useEffect would render once with the wrong palette; useMemo runs sync.
-  React.useMemo(() => { setColorMode(themeMode); }, [themeMode]);
+  // Apply the active palette before child renders happen. useEffect
+  // would render once with the wrong palette; useMemo runs sync.
+  // Order matters: the generation owns the palette, so it applies LAST
+  // (it overlays the dark/light base with the cohort's colours).
+  React.useMemo(() => {
+    setColorMode(themeMode);
+    setGeneration(generation);
+  }, [themeMode, generation]);
 
   // Update the document theme-color so mobile browser chrome matches.
   useEffect(() => {
@@ -85,7 +93,7 @@ function RootLayoutInner() {
     // via the baseline stylesheet WallpaperBackground injects. The
     // previous opaque value (Colors.background) is the entire reason
     // wallpapers haven't been showing.
-    <View key={themeMode} style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View key={`${themeMode}:${generation}`} style={{ flex: 1, backgroundColor: 'transparent' }}>
       <WallpaperBackground />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <Stack

@@ -27,6 +27,7 @@ import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { useAuthStore } from '../../../stores/authStore';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { HeadshotCapture, type HeadshotResult } from '../../../components/upload/HeadshotCapture';
+import { GenerationSwitcher } from '../../../components/shared/GenerationSwitcher';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
@@ -242,6 +243,10 @@ export default function ProfileSettings() {
               textAlignVertical="top"
             />
           </Field>
+
+          <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md }} />
+          <GenerationSwitcher />
+          <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md }} />
 
           {err && (
             <View style={s.errorBox}>
