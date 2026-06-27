@@ -9,7 +9,7 @@
 
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -46,6 +46,28 @@ export default function AboutScreen() {
           where ads are allowed. It&apos;s pseudonymous, and the posts vanish in a day.
           That part is optional and clearly marked.
         </Text>
+
+        <View style={s.huntCard}>
+          <Text style={s.huntKicker}>Photo Hunts</Text>
+          <Text style={s.huntTitle}>Run a photo hunt for your event.</Text>
+          <Text style={s.huntBody}>
+            Set it up in sixty seconds. Drop pins at the bar crawl, the cake table,
+            a hidden vista. Guests form teams, snap the targets on camera, and climb
+            a live leaderboard. Free while we&apos;re in early access.
+          </Text>
+          <Text style={s.huntUses}>
+            Built for bachelorette and birthday parties, classrooms, tourism boards,
+            and backyard treasure hunts.
+          </Text>
+          <TouchableOpacity
+            style={s.huntCta}
+            onPress={() => Linking.openURL('https://app.heretoo.social/')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="location" size={16} color="#FFF" />
+            <Text style={s.huntCtaText}>Start a photo hunt</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={s.actions}>
           <TouchableOpacity
@@ -99,6 +121,34 @@ function makeStyles() { return StyleSheet.create({
       ? ({ fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif' } as any)
       : {}),
   },
+
+  huntCard: {
+    gap: 8, marginTop: Spacing.sm,
+    padding: Spacing.lg, borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  huntKicker: {
+    fontSize: 11, fontWeight: '700', color: Colors.primary,
+    textTransform: 'uppercase', letterSpacing: 1.6,
+  },
+  huntTitle: {
+    fontSize: 24, fontWeight: '800', letterSpacing: -0.3, color: Colors.textPrimary,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+  },
+  huntBody: {
+    fontSize: 17, lineHeight: 28, color: Colors.textPrimary,
+    ...(Platform.OS === 'web'
+      ? ({ fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif' } as any)
+      : {}),
+  },
+  huntUses: { fontSize: 14, lineHeight: 22, color: Colors.textSecondary, fontStyle: 'italic' },
+  huntCta: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8,
+    marginTop: 4, paddingHorizontal: 18, paddingVertical: 12,
+    borderRadius: Radius.full, backgroundColor: Colors.primary,
+  },
+  huntCtaText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.1 },
 
   actions: {
     flexDirection: 'row', gap: 8, paddingTop: Spacing.md, flexWrap: 'wrap',
