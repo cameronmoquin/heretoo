@@ -16,6 +16,7 @@ import {
   useMyHuntCaches, usePublicHuntCaches, type HuntCache,
 } from '../../hooks/useHunt';
 import { showAlert } from '../../lib/alert';
+import { GlitchText } from '../../components/shared/GlitchText';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -52,7 +53,7 @@ export default function HuntHome() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={s.kicker}>Deaddrop</Text>
+          <GlitchText style={s.glitchTitle}>DEADDROP</GlitchText>
         </View>
 
         <Text style={s.lede}>
@@ -126,6 +127,7 @@ function makeStyles() {
       fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2, textTransform: 'uppercase',
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
     },
+    glitchTitle: { fontSize: 22, fontWeight: '800', color: Colors.primary },
     lede: { fontSize: 17, lineHeight: 26, color: Colors.textPrimary },
     hideBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

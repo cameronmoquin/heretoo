@@ -26,6 +26,7 @@ import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { WallpaperBackground } from '../components/shared/WallpaperBackground';
+import { ScanlineOverlay } from '../components/shared/ScanlineOverlay';
 import { MobileTabBar } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
@@ -108,6 +109,7 @@ function RootLayoutInner() {
       style={{ flex: 1, backgroundColor: Gen.dark ? Colors.background : 'transparent' }}
     >
       <WallpaperBackground />
+      <ScanlineOverlay />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <ThemeProvider value={NAV_THEME}>
       <Stack
