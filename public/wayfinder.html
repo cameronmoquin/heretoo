@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0f0d">
+<title>WAYFINDER · GPS Hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=JetBrains+Mono:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f0d;
+    --panel:#0e1512;
+    --line:#1c2a24;
+    --phos:#5dffac;
+    --phos-dim:#2f7e5c;
+    --amber:#ffb24d;
+    --red:#ff5a52;
+    --ice:#6fd6ff;
+    --txt:#cfeede;
+    --txt-dim:#5e7a6e;
+    --grain:rgba(93,255,172,.03);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--txt);
+    font-family:'JetBrains Mono',monospace;
+    overflow:hidden;
+    position:fixed;width:100%;height:100%;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(93,255,172,.06), transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 3px);
+  }
+  /* scanline / grain overlay */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+    background:repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,.07) 3px 4px);
+    mix-blend-mode:overlay;
+  }
+  .wrap{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:14px 16px calc(14px + env(safe-area-inset-bottom));}
+
+  /* HEADER */
+  header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;}
+  h1{font-family:'Major Mono Display',monospace;font-size:1.45rem;line-height:.9;color:var(--phos);letter-spacing:.02em;text-shadow:0 0 18px rgba(93,255,172,.35);}
+  .sub{font-size:.58rem;letter-spacing:.32em;color:var(--txt-dim);text-transform:uppercase;margin-top:4px;}
+  .stat-led{font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;text-align:right;color:var(--txt-dim);}
+  .stat-led b{display:block;color:var(--phos);font-weight:500;}
+  .stat-led.bad b{color:var(--red);}
+  .stat-led.warn b{color:var(--amber);}
+
+  /* MODE SWITCH */
+  .modes{display:flex;gap:8px;margin:14px 0;}
+  .modes button{
+    flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);
+    font-family:'JetBrains Mono';font-weight:700;font-size:.72rem;letter-spacing:.22em;
+    padding:11px 0;text-transform:uppercase;cursor:pointer;transition:.18s;border-radius:0;
+  }
+  .modes button.on{color:var(--bg);background:var(--phos);border-color:var(--phos);box-shadow:0 0 22px rgba(93,255,172,.3);}
+
+  main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;min-height:0;}
+  .view{display:none;flex-direction:column;gap:16px;animation:fade .35s ease;}
+  .view.active{display:flex;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  /* COMPASS / RADAR */
+  .scope-wrap{position:relative;width:min(74vw,300px);aspect-ratio:1;margin:0 auto;}
+  .scope{position:absolute;inset:0;border-radius:50%;border:1px solid var(--line);
+    background:
+      radial-gradient(circle at center, rgba(93,255,172,.05), transparent 70%),
+      var(--panel);
+    box-shadow:inset 0 0 40px rgba(0,0,0,.6), 0 0 0 6px rgba(14,21,18,.7), 0 0 0 7px var(--line);
+    overflow:hidden;
+  }
+  .scope .ring{position:absolute;border:1px solid var(--line);border-radius:50%;}
+  .ring.r1{inset:14%;} .ring.r2{inset:30%;} .ring.r3{inset:46%;}
+  .cross{position:absolute;background:var(--line);}
+  .cross.h{left:6%;right:6%;top:50%;height:1px;} .cross.v{top:6%;bottom:6%;left:50%;width:1px;}
+  /* radar sweep */
+  .sweep{position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(93,255,172,.22), transparent 38%);
+    animation:spin 3.4s linear infinite;mix-blend-mode:screen;opacity:.7;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .cardinal{position:absolute;font-size:.6rem;color:var(--txt-dim);letter-spacing:.1em;transform:translate(-50%,-50%);}
+  .cardinal.n{top:7%;left:50%;color:var(--phos);} .cardinal.s{bottom:7%;left:50%;top:auto;transform:translate(-50%,50%);}
+  .cardinal.e{right:7%;top:50%;left:auto;transform:translate(50%,-50%);} .cardinal.w{left:7%;top:50%;transform:translate(-50%,-50%);}
+
+  /* needle */
+  .needle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.2,.8,.2,1);}
+  .arrow{
+    width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;
+    border-bottom:90px solid var(--phos);
+    filter:drop-shadow(0 0 12px rgba(93,255,172,.6));
+    transform:translateY(-26px);
+  }
+  .arrow.tail{border-bottom-color:var(--phos-dim);transform:translateY(64px) rotate(180deg);border-bottom-width:34px;opacity:.5;}
+  .hub{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--bg);border:2px solid var(--phos);box-shadow:0 0 14px rgba(93,255,172,.6);}
+
+  /* found pulse */
+  .scope.found{animation:found 1s ease infinite;}
+  @keyframes found{0%,100%{box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 0 0 6px rgba(14,21,18,.7),0 0 0 7px var(--phos);}50%{box-shadow:inset 0 0 60px rgba(93,255,172,.4),0 0 0 6px rgba(14,21,18,.7),0 0 0 9px var(--phos),0 0 40px rgba(93,255,172,.6);}}
+
+  /* READOUT */
+  .readout{text-align:center;}
+  .dist{font-size:3.4rem;font-weight:800;line-height:1;color:var(--phos);letter-spacing:-.02em;text-shadow:0 0 24px rgba(93,255,172,.3);}
+  .dist .unit{font-size:1.1rem;font-weight:400;color:var(--txt-dim);margin-left:6px;letter-spacing:.1em;}
+  .dist-sec{font-size:.7rem;color:var(--txt-dim);letter-spacing:.18em;margin-top:6px;}
+  .temp{margin-top:10px;font-size:.8rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;height:1.2em;}
+  .bearing-line{display:flex;justify-content:center;gap:22px;margin-top:8px;font-size:.62rem;letter-spacing:.16em;color:var(--txt-dim);text-transform:uppercase;}
+  .bearing-line b{color:var(--txt);font-weight:500;}
+
+  /* GENERIC PANEL */
+  .panel{background:var(--panel);border:1px solid var(--line);padding:16px;}
+  .panel h2{font-size:.62rem;letter-spacing:.28em;color:var(--phos-dim);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .panel h2::before{content:"▸";color:var(--phos);}
+  .label{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-dim);margin-bottom:6px;}
+
+  .coordbox{font-size:.82rem;color:var(--ice);letter-spacing:.05em;word-break:break-all;line-height:1.6;}
+  .code-display{font-size:1.6rem;font-weight:800;letter-spacing:.12em;color:var(--amber);text-align:center;padding:14px 0;text-shadow:0 0 18px rgba(255,178,77,.3);word-break:break-all;}
+
+  button.act{
+    width:100%;background:transparent;border:1px solid var(--phos);color:var(--phos);
+    font-family:'JetBrains Mono';font-weight:700;font-size:.78rem;letter-spacing:.2em;
+    padding:14px 0;text-transform:uppercase;cursor:pointer;transition:.18s;margin-top:10px;
+  }
+  button.act:active{background:var(--phos);color:var(--bg);}
+  button.act.amber{border-color:var(--amber);color:var(--amber);}
+  button.act.amber:active{background:var(--amber);color:var(--bg);}
+  button.act.ghost{border-color:var(--line);color:var(--txt-dim);}
+  button.act:disabled{opacity:.35;cursor:not-allowed;}
+
+  input.codein{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--phos);
+    font-family:'JetBrains Mono';font-size:1.1rem;font-weight:700;letter-spacing:.14em;
+    padding:13px 12px;text-align:center;text-transform:uppercase;outline:none;
+  }
+  input.codein:focus{border-color:var(--phos);box-shadow:0 0 16px rgba(93,255,172,.2);}
+
+  .hint{font-size:.6rem;color:var(--txt-dim);line-height:1.7;letter-spacing:.04em;margin-top:12px;}
+  .hint b{color:var(--amber);}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--phos);color:var(--bg);font-weight:700;font-size:.72rem;letter-spacing:.14em;padding:11px 20px;text-transform:uppercase;z-index:120;transition:.3s;opacity:0;}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+  .accbar{height:4px;background:var(--line);margin-top:4px;overflow:hidden;}
+  .accbar i{display:block;height:100%;background:var(--phos);transition:width .4s, background .4s;}
+
+  .unit-toggle{font-size:.55rem;letter-spacing:.16em;color:var(--txt-dim);text-align:center;text-transform:uppercase;cursor:pointer;margin-top:4px;}
+  .unit-toggle b{color:var(--phos);}
+
+  .footer-led{display:flex;justify-content:space-between;font-size:.5rem;letter-spacing:.18em;color:var(--txt-dim);text-transform:uppercase;border-top:1px solid var(--line);padding-top:8px;margin-top:6px;}
+  .blink{animation:blink 1.4s steps(2) infinite;} @keyframes blink{50%{opacity:.2;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>wayfinder</h1>
+      <div class="sub">gps field hunt unit</div>
+    </div>
+    <div class="stat-led" id="gpsLed">GPS<b id="gpsState">STANDBY</b></div>
+  </header>
+
+  <div class="modes">
+    <button id="mHide" class="on" onclick="setMode('hide')">◆ Hide</button>
+    <button id="mSeek" onclick="setMode('seek')">◇ Seek</button>
+  </div>
+
+  <main>
+    <!-- ===================== HIDE VIEW ===================== -->
+    <section id="hideView" class="view active">
+      <div class="panel">
+        <h2>Drop a cache</h2>
+        <div class="label">Your current position</div>
+        <div class="coordbox" id="hideCoords">—— acquiring fix ——</div>
+        <div class="accbar"><i id="hideAcc" style="width:0%"></i></div>
+        <button class="act amber" id="dropBtn" onclick="dropCache()" disabled>⚑ Drop cache here</button>
+      </div>
+
+      <div class="panel" id="codePanel" style="display:none;">
+        <h2>Cache locked</h2>
+        <div class="label">Share this code with the seeker</div>
+        <div class="code-display" id="codeOut">—</div>
+        <button class="act" onclick="copyCode()">⧉ Copy code</button>
+        <button class="act ghost" onclick="copyLink()">⧉ Copy seeker link</button>
+        <div class="hint">
+          Hide the toy at that exact spot. Send the seeker the <b>code</b> (or link). They switch to <b>SEEK</b>, punch it in, and chase the arrow.<br>
+          GPS lands them within roughly <b>10–25 ft</b> — the final search is eyes-on.
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SEEK VIEW ===================== -->
+    <section id="seekView" class="view">
+      <div class="panel" id="loadPanel">
+        <h2>Load a cache</h2>
+        <div class="label">Enter the cache code</div>
+        <input class="codein" id="codeIn" maxlength="14" placeholder="XXXXXXXXXX" autocomplete="off" spellcheck="false">
+        <button class="act amber" onclick="loadCode()">▶ Begin hunt</button>
+      </div>
+
+      <div id="huntPanel" style="display:none;">
+        <div class="scope-wrap">
+          <div class="scope" id="scope">
+            <div class="sweep"></div>
+            <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+            <div class="cross h"></div><div class="cross v"></div>
+            <span class="cardinal n">N</span><span class="cardinal e">E</span>
+            <span class="cardinal s">S</span><span class="cardinal w">W</span>
+            <div class="needle" id="needle">
+              <div class="arrow"></div>
+              <div class="arrow tail"></div>
+            </div>
+            <div class="hub"></div>
+          </div>
+        </div>
+
+        <div class="readout">
+          <div class="dist"><span id="distVal">—</span><span class="unit" id="distUnit">ft</span></div>
+          <div class="dist-sec" id="distSec">&nbsp;</div>
+          <div class="temp" id="temp">&nbsp;</div>
+          <div class="bearing-line">
+            <span>HEADING <b id="hdg">—°</b></span>
+            <span>TARGET <b id="brg">—°</b></span>
+          </div>
+          <div class="unit-toggle" onclick="toggleUnits()">units · <b id="unitMode">imperial</b></div>
+        </div>
+        <button class="act ghost" onclick="resetHunt()">✕ End hunt</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-led">
+    <span>SAT <span class="blink" id="satDot">●</span> LINK</span>
+    <span id="accFoot">ACC ——</span>
+    <span>v1.0</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   WAYFINDER — single-file GPS hide & seek
+   Geo math: haversine distance + great-circle bearing.
+   Heading: DeviceOrientation (iOS webkitCompassHeading / Android alpha).
+   Cache code: lat/lng packed to base36 (~10 chars), 5-decimal precision.
+   ============================================================ */
+
+const R = 6371000; // earth radius (m)
+const state = {
+  mode:'hide',
+  myPos:null,        // {lat,lng,acc}
+  target:null,       // {lat,lng}
+  heading:null,      // degrees, 0=N clockwise (true-ish)
+  watchId:null,
+  prevDist:null,
+  units:'imperial',
+  found:false,
+};
+
+/* ---------- geo helpers ---------- */
+const toRad = d => d*Math.PI/180;
+const toDeg = r => r*180/Math.PI;
+
+function haversine(a,b){
+  const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
+  const la1=toRad(a.lat), la2=toRad(b.lat);
+  const x=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x)); // metres
+}
+function bearing(a,b){
+  const la1=toRad(a.lat), la2=toRad(b.lat), dLng=toRad(b.lng-a.lng);
+  const y=Math.sin(dLng)*Math.cos(la2);
+  const x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dLng);
+  return (toDeg(Math.atan2(y,x))+360)%360;
+}
+
+/* ---------- cache code pack/unpack ---------- */
+function encode(lat,lng){
+  const la=Math.round((lat+90)*100000);   // 0..18,000,000
+  const ln=Math.round((lng+180)*100000);  // 0..36,000,000
+  const big=la*36000001+ln;                // < 2^53, safe
+  return big.toString(36).toUpperCase();
+}
+function decode(code){
+  const big=parseInt(code.toLowerCase(),36);
+  if(!Number.isFinite(big)) return null;
+  const ln=big%36000001, la=Math.floor(big/36000001);
+  const lat=la/100000-90, lng=ln/100000-180;
+  if(lat<-90||lat>90||lng<-180||lng>180) return null;
+  return {lat,lng};
+}
+
+/* ---------- UI helpers ---------- */
+function $(id){return document.getElementById(id);}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1900);}
+
+function setMode(m){
+  state.mode=m;
+  $('mHide').classList.toggle('on',m==='hide');
+  $('mSeek').classList.toggle('on',m==='seek');
+  $('hideView').classList.toggle('active',m==='hide');
+  $('seekView').classList.toggle('active',m==='seek');
+  ensureGeo();
+}
+
+/* ---------- geolocation ---------- */
+function ensureGeo(){
+  if(state.watchId!==null) return;
+  if(!('geolocation' in navigator)){ $('gpsState').textContent='NO GPS'; $('gpsLed').classList.add('bad'); return; }
+  $('gpsState').textContent='LOCKING…';
+  state.watchId=navigator.geolocation.watchPosition(onPos,onPosErr,{
+    enableHighAccuracy:true, maximumAge:1000, timeout:15000
+  });
+}
+function onPos(p){
+  state.myPos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
+  const acc=Math.round(p.coords.accuracy);
+  $('gpsState').textContent=acc+' m';
+  $('gpsLed').classList.remove('bad');
+  $('gpsLed').classList.toggle('warn',acc>20);
+  $('accFoot').textContent='ACC '+acc+'m';
+  // hide view readout
+  $('hideCoords').textContent=state.myPos.lat.toFixed(5)+', '+state.myPos.lng.toFixed(5);
+  const pct=Math.max(6,Math.min(100,100-acc*2));
+  const bar=$('hideAcc'); bar.style.width=pct+'%';
+  bar.style.background=acc<=10?'var(--phos)':acc<=25?'var(--amber)':'var(--red)';
+  $('dropBtn').disabled=false;
+  if(state.mode==='seek'&&state.target) updateHunt();
+}
+function onPosErr(e){
+  $('gpsState').textContent='DENIED'; $('gpsLed').classList.add('bad');
+  toast(e.code===1?'Location permission blocked':'GPS signal lost');
+}
+
+/* ---------- device heading ---------- */
+function startHeading(){
+  function handler(e){
+    let h=null;
+    if(typeof e.webkitCompassHeading==='number'){ h=e.webkitCompassHeading; }   // iOS, true north
+    else if(typeof e.alpha==='number'){ h=(360-e.alpha)%360; }                   // Android-ish
+    if(h!==null){ state.heading=h; if(state.mode==='seek'&&state.target) renderNeedle(); }
+  }
+  // iOS 13+ needs explicit permission, triggered by a user gesture (Begin hunt tap)
+  if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(s=>{
+      if(s==='granted'){ window.addEventListener('deviceorientation',handler,true); }
+      else { toast('Compass denied — distance still works'); }
+    }).catch(()=>toast('Compass unavailable'));
+  } else {
+    window.addEventListener('deviceorientationabsolute',handler,true);
+    window.addEventListener('deviceorientation',handler,true);
+  }
+}
+
+/* ---------- HIDE actions ---------- */
+function dropCache(){
+  if(!state.myPos){ toast('No GPS fix yet'); return; }
+  const code=encode(state.myPos.lat,state.myPos.lng);
+  $('codeOut').textContent=code;
+  $('codePanel').style.display='block';
+  $('codePanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+  state._lastCode=code;
+  toast('Cache locked ✦');
+}
+function copyCode(){
+  navigator.clipboard?.writeText(state._lastCode).then(()=>toast('Code copied'),()=>toast(state._lastCode));
+}
+function copyLink(){
+  const url=location.origin+location.pathname+'#'+state._lastCode;
+  navigator.clipboard?.writeText(url).then(()=>toast('Link copied'),()=>toast(url));
+}
+
+/* ---------- SEEK actions ---------- */
+function loadCode(){
+  const raw=($('codeIn').value||'').trim().toUpperCase();
+  if(!raw){ toast('Enter a code'); return; }
+  const t=decode(raw);
+  if(!t){ toast('Invalid cache code'); return; }
+  state.target=t; state.prevDist=null; state.found=false;
+  $('loadPanel').style.display='none';
+  $('huntPanel').style.display='block';
+  startHeading();          // user-gesture → request compass permission
+  ensureGeo();
+  if(state.myPos) updateHunt();
+  toast('Cache loaded — hunt on');
+}
+function resetHunt(){
+  state.target=null; state.found=false;
+  $('huntPanel').style.display='none';
+  $('loadPanel').style.display='block';
+  $('codeIn').value='';
+  $('scope').classList.remove('found');
+}
+
+/* ---------- hunt rendering ---------- */
+function fmtDist(m){
+  if(state.units==='imperial'){
+    const ft=m*3.28084;
+    if(ft<1000) return {v:Math.round(ft),u:'ft'};
+    return {v:(ft/5280).toFixed(2),u:'mi'};
+  } else {
+    if(m<1000) return {v:Math.round(m),u:'m'};
+    return {v:(m/1000).toFixed(2),u:'km'};
+  }
+}
+function tempState(m){
+  if(m<=3)  return {t:'◉ ON TARGET', c:'var(--phos)'};
+  if(m<=8)  return {t:'BURNING HOT',  c:'var(--red)'};
+  if(m<=20) return {t:'HOT',          c:'var(--amber)'};
+  if(m<=60) return {t:'WARM',         c:'#ffe08a'};
+  if(m<=150)return {t:'COOL',         c:'var(--ice)'};
+  return {t:'COLD', c:'var(--phos-dim)'};
+}
+function updateHunt(){
+  if(!state.myPos||!state.target) return;
+  const d=haversine(state.myPos,state.target);
+  const f=fmtDist(d);
+  $('distVal').textContent=f.v;
+  $('distUnit').textContent=f.u;
+  // secondary readout (other unit system)
+  const sec = state.units==='imperial'
+    ? (d<1000? Math.round(d)+' m' : (d/1000).toFixed(2)+' km')
+    : (d*3.28084<1000? Math.round(d*3.28084)+' ft' : (d/1609.34).toFixed(2)+' mi');
+  $('distSec').textContent=sec;
+
+  const ts=tempState(d);
+  const tEl=$('temp');
+  // trend arrow vs last reading
+  let trend='';
+  if(state.prevDist!==null && Math.abs(d-state.prevDist)>0.5){
+    trend = d<state.prevDist ? '  ↑ closer' : '  ↓ farther';
+  }
+  tEl.textContent=ts.t+trend; tEl.style.color=ts.c;
+  state.prevDist=d;
+
+  $('brg').textContent=Math.round(bearing(state.myPos,state.target))+'°';
+  renderNeedle();
+
+  // found state
+  const found=d<=3;
+  if(found && !state.found){ state.found=true; celebrate(); }
+  if(!found && state.found){ state.found=false; $('scope').classList.remove('found'); }
+}
+function renderNeedle(){
+  if(!state.myPos||!state.target) return;
+  const brg=bearing(state.myPos,state.target);
+  $('brg').textContent=Math.round(brg)+'°';
+  if(state.heading===null){
+    $('hdg').textContent='— °';
+    // no compass: point needle to absolute bearing (north-up scope)
+    $('needle').style.transform='rotate('+brg+'deg)';
+  } else {
+    $('hdg').textContent=Math.round(state.heading)+'°';
+    const rel=(brg-state.heading+360)%360; // where target sits relative to where phone points
+    $('needle').style.transform='rotate('+rel+'deg)';
+  }
+}
+function celebrate(){
+  $('scope').classList.add('found');
+  $('temp').textContent='◉ FOUND IT';
+  toast('✦ CACHE FOUND ✦');
+  if(navigator.vibrate) navigator.vibrate([90,60,90,60,200]);
+}
+
+function toggleUnits(){
+  state.units = state.units==='imperial'?'metric':'imperial';
+  $('unitMode').textContent=state.units;
+  if(state.target) updateHunt();
+}
+
+/* ---------- boot ---------- */
+(function init(){
+  // deep link: #CODE auto-loads seek mode
+  const hash=location.hash.replace('#','').trim().toUpperCase();
+  if(hash && decode(hash)){
+    setMode('seek');
+    $('codeIn').value=hash;
+    toast('Cache link detected — tap Begin hunt');
+  } else {
+    ensureGeo();
+  }
+  // refresh needle on a steady tick even if sensors are quiet
+  setInterval(()=>{ if(state.mode==='seek'&&state.target&&state.myPos) renderNeedle(); },400);
+})();
+</script>
+</body>
+</html>

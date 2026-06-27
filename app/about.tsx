@@ -48,24 +48,27 @@ export default function AboutScreen() {
         </Text>
 
         <View style={s.huntCard}>
-          <Text style={s.huntKicker}>Photo Hunts</Text>
-          <Text style={s.huntTitle}>Run a photo hunt for your event.</Text>
+          <Text style={s.huntKicker}>GPS Hunt</Text>
+          <Text style={s.huntTitle}>Hide a cache. Chase the arrow.</Text>
           <Text style={s.huntBody}>
-            Set it up in sixty seconds. Drop pins at the bar crawl, the cake table,
-            a hidden vista. Guests form teams, snap the targets on camera, and climb
-            a live leaderboard. Free while we&apos;re in early access.
+            Drop a pin where you stand, stash a toy or a treat, and share a code.
+            The seeker punches it in and follows a live compass and a hot-or-cold
+            readout to the exact spot. Works anywhere outdoors. Free, no signup.
           </Text>
           <Text style={s.huntUses}>
-            Built for bachelorette and birthday parties, classrooms, tourism boards,
-            and backyard treasure hunts.
+            Backyard treasure hunts, birthday parties, classroom waypoints, a
+            bar-crawl dare.
           </Text>
           <TouchableOpacity
             style={s.huntCta}
-            onPress={() => Linking.openURL('https://app.heretoo.social/')}
+            onPress={() => Linking.openURL(
+              (typeof window !== 'undefined' ? window.location.origin : 'https://heretoo.social')
+              + '/wayfinder.html',
+            )}
             activeOpacity={0.85}
           >
-            <Ionicons name="location" size={16} color="#FFF" />
-            <Text style={s.huntCtaText}>Start a photo hunt</Text>
+            <Ionicons name="compass" size={16} color="#FFF" />
+            <Text style={s.huntCtaText}>Open Wayfinder</Text>
           </TouchableOpacity>
         </View>
 
