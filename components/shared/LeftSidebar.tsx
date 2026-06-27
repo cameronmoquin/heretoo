@@ -100,6 +100,12 @@ export function LeftSidebar() {
       <View style={s.divider} />
 
       <NavRow
+        icon={pathname.startsWith('/hunt') ? 'navigate' : 'navigate-outline'}
+        label="Deaddrop"
+        active={pathname.startsWith('/hunt')}
+        onPress={() => router.push('/hunt' as any)}
+      />
+      <NavRow
         icon={onFeed ? 'home' : 'home-outline'}
         label="The Room"
         active={onFeed}

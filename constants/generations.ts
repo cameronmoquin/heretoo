@@ -45,6 +45,10 @@ export interface GenTokens {
   bodyFont: string;
   displayTransform: 'none' | 'uppercase';
   displayLetterSpacing: number;
+  /** Dark-canvas skin. The root paints Colors.background over the
+   *  wallpaper when true, so light type lands on a dark field. Light
+   *  skins stay transparent and let the wallpaper show. */
+  dark: boolean;
   /** Base corner radius the generation prefers (px). Sharp = retro/edgy. */
   radius: number;
   /** Signature effects (web-only flourishes; native falls back clean). */
@@ -159,7 +163,7 @@ export const GENERATIONS: Record<Generation, GenerationTheme> = {
       id: 'alpha', label: 'Gen Alpha', tagline: 'retro digital glitch',
       displayFont: MONO, bodyFont: INTER,
       displayTransform: 'uppercase', displayLetterSpacing: 1.5,
-      radius: 2, glitch: true, scanlines: true, copy: 'hype',
+      dark: true, radius: 2, glitch: true, scanlines: true, copy: 'hype',
     },
   },
   genz: {
@@ -168,7 +172,7 @@ export const GENERATIONS: Record<Generation, GenerationTheme> = {
       id: 'genz', label: 'Gen Z', tagline: 'soft grunge',
       displayFont: SYNE, bodyFont: INTER,
       displayTransform: 'none', displayLetterSpacing: 0.2,
-      radius: 18, glitch: false, scanlines: false, copy: 'casual',
+      dark: true, radius: 18, glitch: false, scanlines: false, copy: 'casual',
     },
   },
   millennial: {
@@ -177,7 +181,7 @@ export const GENERATIONS: Record<Generation, GenerationTheme> = {
       id: 'millennial', label: 'Millennial', tagline: 'clean & bright',
       displayFont: SYNE, bodyFont: INTER,
       displayTransform: 'none', displayLetterSpacing: 0.2,
-      radius: 12, glitch: false, scanlines: false, copy: 'plain',
+      dark: false, radius: 12, glitch: false, scanlines: false, copy: 'plain',
     },
   },
   genx: {
@@ -186,7 +190,7 @@ export const GENERATIONS: Record<Generation, GenerationTheme> = {
       id: 'genx', label: 'Gen X', tagline: 'analog & muted',
       displayFont: INTER, bodyFont: INTER,
       displayTransform: 'none', displayLetterSpacing: 0.4,
-      radius: 8, glitch: false, scanlines: false, copy: 'plain',
+      dark: true, radius: 8, glitch: false, scanlines: false, copy: 'plain',
     },
   },
   boomer: {
@@ -195,7 +199,7 @@ export const GENERATIONS: Record<Generation, GenerationTheme> = {
       id: 'boomer', label: 'Boomer', tagline: 'warm & calm',
       displayFont: SYNE, bodyFont: SERIF,
       displayTransform: 'none', displayLetterSpacing: 0.2,
-      radius: 14, glitch: false, scanlines: false, copy: 'warm',
+      dark: false, radius: 14, glitch: false, scanlines: false, copy: 'warm',
     },
   },
 };

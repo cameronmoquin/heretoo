@@ -9,7 +9,7 @@
 
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Linking,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -48,7 +48,7 @@ export default function AboutScreen() {
         </Text>
 
         <View style={s.huntCard}>
-          <Text style={s.huntKicker}>GPS Hunt</Text>
+          <Text style={s.huntKicker}>Deaddrop</Text>
           <Text style={s.huntTitle}>Hide a cache. Chase the arrow.</Text>
           <Text style={s.huntBody}>
             Drop a pin where you stand, stash a toy or a treat, and share a code.
@@ -61,14 +61,11 @@ export default function AboutScreen() {
           </Text>
           <TouchableOpacity
             style={s.huntCta}
-            onPress={() => Linking.openURL(
-              (typeof window !== 'undefined' ? window.location.origin : 'https://heretoo.social')
-              + '/wayfinder.html',
-            )}
+            onPress={() => router.push('/hunt' as any)}
             activeOpacity={0.85}
           >
-            <Ionicons name="compass" size={16} color="#FFF" />
-            <Text style={s.huntCtaText}>Open Wayfinder</Text>
+            <Ionicons name="navigate" size={16} color="#FFF" />
+            <Text style={s.huntCtaText}>Open Deaddrop</Text>
           </TouchableOpacity>
         </View>
 

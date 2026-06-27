@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
+import { ThemeProvider, DefaultTheme } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -30,13 +31,22 @@ import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
 import { Colors, setColorMode } from '../constants/colors';
-import { setGeneration } from '../constants/generations';
+import { setGeneration, Gen } from '../constants/generations';
 import { useThemeStore } from '../stores/themeStore';
 import { useGenerationStore } from '../stores/generationStore';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 2, retry: 2 } },
 });
+
+// React Navigation paints each screen's scene from its theme; the
+// default is opaque light (#F2F2F2), which would sit on top of the
+// generation canvas / wallpaper and hide it. Transparent lets the root
+// View's background (dark for glitch skins, wallpaper for light) show.
+const NAV_THEME = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: 'transparent' },
+};
 
 function RootLayoutInner() {
   const { isLoading } = useAuth();
@@ -93,9 +103,13 @@ function RootLayoutInner() {
     // via the baseline stylesheet WallpaperBackground injects. The
     // previous opaque value (Colors.background) is the entire reason
     // wallpapers haven't been showing.
-    <View key={`${themeMode}:${generation}`} style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View
+      key={`${themeMode}:${generation}`}
+      style={{ flex: 1, backgroundColor: Gen.dark ? Colors.background : 'transparent' }}
+    >
       <WallpaperBackground />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
+      <ThemeProvider value={NAV_THEME}>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -138,6 +152,7 @@ function RootLayoutInner() {
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
+      </ThemeProvider>
       {/* Global navigation — same hide rules across all three:
           web-only, authed, off auth-flow pages. Width thresholds
           differ so the right configuration shows per viewport:

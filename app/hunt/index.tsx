@@ -52,12 +52,12 @@ export default function HuntHome() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={s.kicker}>Photo Hunt</Text>
+          <Text style={s.kicker}>Deaddrop</Text>
         </View>
 
         <Text style={s.lede}>
           Hide a photo at a spot. Share the code. The seeker follows the
-          compass to find it.
+          compass to the dead drop.
         </Text>
 
         <TouchableOpacity style={s.hideBtn} onPress={() => router.push('/hunt/new')} activeOpacity={0.85}>

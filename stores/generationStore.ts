@@ -24,7 +24,9 @@ function loadInitial(): Generation {
       if (isGeneration(saved)) return saved;
     } catch {}
   }
-  return 'boomer';
+  // Default skin: Gen Alpha (retro digital glitch). Each user can switch
+  // in Profile -> Settings; their choice persists and overrides this.
+  return 'alpha';
 }
 
 function persist(g: Generation) {

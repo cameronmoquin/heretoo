@@ -65,9 +65,23 @@ export function MobileTabBar() {
   const onFeed = path.startsWith('/feed') || path === '/' || path === '/(tabs)/feed';
   const onProfile = path.startsWith('/profile') || path.startsWith('/(tabs)/profile');
   const onChat = path.startsWith('/chat');
+  const onHunt = path.startsWith('/hunt');
 
   return (
     <View style={styles.bar}>
+      <TouchableOpacity
+        style={styles.slot}
+        onPress={() => router.push('/hunt' as any)}
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={onHunt ? 'navigate' : 'navigate-outline'}
+          size={22}
+          color={onHunt ? Colors.primary : Colors.textMuted}
+        />
+        <Text style={[styles.label, onHunt && styles.labelActive]}>Deaddrop</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.slot}
         onPress={() => router.replace('/(tabs)/feed' as any)}
