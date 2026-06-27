@@ -13,11 +13,24 @@
 
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import type { HuntMapProps } from './HuntMap.types';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const STYLE = 'mapbox/streets-v12';
+
+// Load Leaflet's stylesheet from CDN once, rather than importing the
+// node_modules CSS (which would depend on Metro's web CSS handling).
+let cssInjected = false;
+function ensureLeafletCss() {
+  if (cssInjected || typeof document === 'undefined') return;
+  cssInjected = true;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+  link.crossOrigin = '';
+  document.head.appendChild(link);
+}
 
 export function HuntMap({
   center, markers = [], onPick, pin, zoom = 15, height = 320,
@@ -32,6 +45,7 @@ export function HuntMap({
   // Init once.
   useEffect(() => {
     if (!elRef.current || mapRef.current || !TOKEN) return;
+    ensureLeafletCss();
     const map = L.map(elRef.current, { zoomControl: true }).setView(
       [center.lat, center.lng], zoom,
     );
