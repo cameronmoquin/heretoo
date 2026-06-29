@@ -30,15 +30,21 @@ function ensureLeafletCss() {
   link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
   link.crossOrigin = '';
   document.head.appendChild(link);
+  const style = document.createElement('style');
+  style.textContent =
+    '@keyframes ht-you-pulse{0%{box-shadow:0 0 0 0 rgba(45,226,230,.5)}' +
+    '70%{box-shadow:0 0 0 16px rgba(45,226,230,0)}100%{box-shadow:0 0 0 0 rgba(45,226,230,0)}}';
+  document.head.appendChild(style);
 }
 
 export function HuntMap({
-  center, markers = [], onPick, pin, zoom = 15, height = 320,
+  center, markers = [], onPick, pin, you, zoom = 15, height = 320,
 }: HuntMapProps) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayer = useRef<L.LayerGroup | null>(null);
   const pinRef = useRef<L.Marker | null>(null);
+  const youRef = useRef<L.Marker | null>(null);
   const onPickRef = useRef(onPick);
   onPickRef.current = onPick;
 
@@ -105,6 +111,28 @@ export function HuntMap({
       pinRef.current = null;
     }
   }, [pin?.lat, pin?.lng]);
+
+  // The viewer's own position — a pulsing blue dot.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (you) {
+      const icon = L.divIcon({
+        className: 'ht-you',
+        html: '<div style="width:14px;height:14px;border-radius:50%;background:#2DE2E6;border:2px solid #fff;animation:ht-you-pulse 2s infinite"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+      if (!youRef.current) {
+        youRef.current = L.marker([you.lat, you.lng], { icon, interactive: false }).addTo(map);
+      } else {
+        youRef.current.setLatLng([you.lat, you.lng]);
+      }
+    } else if (youRef.current) {
+      map.removeLayer(youRef.current);
+      youRef.current = null;
+    }
+  }, [you?.lat, you?.lng]);
 
   if (!TOKEN) {
     return (

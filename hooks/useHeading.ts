@@ -21,7 +21,15 @@ export function useHeading() {
       let h: number | null = null;
       if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;
       else if (typeof e.alpha === 'number') h = (360 - e.alpha) % 360;
-      if (h !== null) setHeading(h);
+      if (h === null) return;
+      // Low-pass filter to kill needle twitch. Blend along the shortest
+      // arc so the 0/360 seam does not cause a snap. Alpha ~0.18 keeps
+      // it responsive but steady against noisy magnetometer readings.
+      setHeading((prev) => {
+        if (prev === null) return h as number;
+        const diff = (((h as number) - prev + 540) % 360) - 180;
+        return (prev + diff * 0.18 + 360) % 360;
+      });
     };
     handlerRef.current = handler;
     if (DOE && typeof DOE.requestPermission === 'function') {

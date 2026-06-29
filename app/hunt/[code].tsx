@@ -8,7 +8,7 @@
  * gate when you log the find.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Platform, ActivityIndicator, Image as RNImage,
@@ -58,6 +58,22 @@ export default function HuntSeek() {
   useEffect(() => { startCompass(); }, [startCompass]);
 
   const photoUrl = useMemo(() => getHuntPhotoUrl(cache?.photo_path), [cache?.photo_path]);
+
+  // Continuous needle angle: accumulate the shortest-arc delta so the
+  // arrow never spins the long way across the 0/360 seam, and so a web
+  // CSS transition can glide it smoothly. `rel` is already low-pass
+  // smoothed upstream (useHeading).
+  const [needleDeg, setNeedleDeg] = useState(0);
+  const needleRef = useRef(0);
+  useEffect(() => {
+    const diff = (((rel - needleRef.current) % 360) + 540) % 360 - 180;
+    needleRef.current += diff;
+    setNeedleDeg(needleRef.current);
+  }, [rel]);
+
+  // The photo is the payload at the drop. Keep it hidden until the
+  // seeker is physically inside the find radius (or has logged the find).
+  const revealed = gated || found;
 
   const onFound = async () => {
     if (!cache || !coords) return;
@@ -118,21 +134,29 @@ export default function HuntSeek() {
           </View>
         ) : (
           <>
-            {/* Compass */}
+            {/* ── Top half: the directional arrow ─────────────────── */}
             <View style={s.scope}>
-              <View style={[s.needle, { transform: [{ rotate: `${rel}deg` }] }]}>
+              <View
+                style={[
+                  s.needle,
+                  { transform: [{ rotate: `${needleDeg}deg` }] },
+                  Platform.OS === 'web'
+                    ? ({ transitionProperty: 'transform', transitionDuration: '140ms', transitionTimingFunction: 'ease-out' } as any)
+                    : {},
+                ]}
+              >
                 <View style={s.arrow} />
               </View>
               <View style={s.hub} />
             </View>
 
-            {/* Readout */}
             <Text style={s.dist}>{distance !== null ? formatDistance(distance) : '—'}</Text>
             {temp && <Text style={[s.temp, { color: temp.c }]}>{temp.t}</Text>}
             <Text style={s.sub}>
-              {heading === null ? 'Compass off · north-up' : `heading ${Math.round(heading)}°`}
+              {heading === null ? 'compass off · north-up' : `heading ${Math.round(heading)}°`}
               {coords ? ` · ±${Math.round(coords.accuracy)}m` : ''}
             </Text>
+            {!!cache.hint && <Text style={s.hint}>“{cache.hint}”</Text>}
 
             {Platform.OS === 'web' && heading === null && (
               <TouchableOpacity style={s.compassBtn} onPress={startCompass} activeOpacity={0.85}>
@@ -141,12 +165,15 @@ export default function HuntSeek() {
               </TouchableOpacity>
             )}
 
-            {/* Clue */}
-            {photoUrl && <RNImage source={{ uri: photoUrl }} style={s.clue} resizeMode="cover" />}
-            {!!cache.hint && <Text style={s.hint}>“{cache.hint}”</Text>}
-
-            {/* Area map */}
-            {target && <HuntMap center={target} markers={[{ id: cache.id, lat: cache.lat, lng: cache.lng, label: cache.title || 'Cache' }]} height={200} />}
+            {/* ── Bottom half: the map with your dot + the drop ────── */}
+            {target && (
+              <HuntMap
+                center={coords ?? target}
+                markers={[{ id: cache.id, lat: cache.lat, lng: cache.lng, label: cache.title || 'Drop' }]}
+                you={coords}
+                height={240}
+              />
+            )}
 
             {/* Find gate */}
             <TouchableOpacity
@@ -163,6 +190,20 @@ export default function HuntSeek() {
               </Text>
             </TouchableOpacity>
             {geoError === 'denied' && <Text style={s.warn}>Location blocked. Enable it to hunt.</Text>}
+
+            {/* The sealed payload — hidden until inside the radius. */}
+            {revealed ? (
+              photoUrl
+                ? <RNImage source={{ uri: photoUrl }} style={s.clue} resizeMode="cover" />
+                : null
+            ) : (
+              <View style={s.sealed}>
+                <Ionicons name="lock-closed" size={22} color={Colors.textMuted} />
+                <Text style={s.sealedText}>
+                  Sealed. Get within {cache.radius_m}m of the drop to reveal it.
+                </Text>
+              </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -207,8 +248,15 @@ function makeStyles() {
     },
     compassBtnText: { fontSize: 13, fontWeight: '700', color: Colors.primary },
 
-    clue: { width: '100%', height: 200, borderRadius: Radius.lg, backgroundColor: Colors.surface, marginTop: 6 },
+    clue: { width: '100%', height: 240, borderRadius: Radius.lg, backgroundColor: Colors.surface, marginTop: 6 },
     hint: { fontSize: 16, fontStyle: 'italic', color: Colors.textPrimary, textAlign: 'center' },
+    sealed: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      padding: Spacing.md, borderRadius: Radius.lg,
+      backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+      borderStyle: 'dashed' as any,
+    },
+    sealedText: { flex: 1, fontSize: 13, color: Colors.textSecondary, fontStyle: 'italic' },
 
     findBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

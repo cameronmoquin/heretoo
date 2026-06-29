@@ -18,6 +18,8 @@ export interface HuntMapProps {
   onPick?: (p: LatLng) => void;
   /** A single draggable/placed pin (the cache being dropped). */
   pin?: LatLng | null;
+  /** The viewer's own live position, shown as a pulsing dot. */
+  you?: LatLng | null;
   zoom?: number;
   height?: number;
 }
