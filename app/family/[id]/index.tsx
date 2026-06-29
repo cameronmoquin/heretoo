@@ -22,7 +22,6 @@ import { FamilyChatPanel } from '../../../components/family/FamilyChatPanel';
 import { FamilyWallpaperVoting } from '../../../components/family/FamilyWallpaperVoting';
 import { WallpaperBackground } from '../../../components/shared/WallpaperBackground';
 import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
-import { FamilyBillingBanner } from '../../../components/family/FamilyBillingBanner';
 import { FamilyTriviaPanel } from '../../../components/trivia/FamilyTriviaPanel';
 import { useStartVideoCall } from '../../../hooks/useStartVideoCall';
 import { Colors } from '../../../constants/colors';
@@ -201,9 +200,10 @@ export default function FamilyDetail() {
       >
         {tab === 'feed' && (
           <>
-            {/* M12: subscription banner. Renders only for the owner;
-                grandmother + grandchildren never see a price. */}
-            <FamilyBillingBanner familyId={id} isOwner={isOwner} />
+            {/* Everything is free for now (monetization comes later), so
+                the subscription banner is not rendered. Restore
+                <FamilyBillingBanner familyId={id} isOwner={isOwner} />
+                when billing turns back on. */}
             {/* Invite shortcut — same share flow that's also on the About tab,
                 but here on the Feed tab so it's discoverable without hunting. */}
             {!!(family as any).invite_code && (
