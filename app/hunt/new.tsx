@@ -45,6 +45,7 @@ export default function HuntNew() {
   const [hint, setHint] = useState('');
   const [radius, setRadius] = useState('25');
   const [scope, setScope] = useState<'link' | 'public'>('link');
+  const [selfDestruct, setSelfDestruct] = useState(false);
   const [result, setResult] = useState<{ code: string } | null>(null);
 
   const busy = create.isPending || upload.isPending;
@@ -69,7 +70,7 @@ export default function HuntNew() {
         title, hint,
         lat: coords.lat, lng: coords.lng, accuracyM: coords.accuracy,
         radiusM: Math.max(5, parseInt(radius, 10) || 25),
-        photoPath, scope,
+        photoPath, scope, selfDestruct,
       });
       setResult({ code: cache.share_code || '' });
     } catch (e: any) {
@@ -185,6 +186,25 @@ export default function HuntNew() {
           </View>
         </View>
 
+        <TouchableOpacity
+          style={[s.destructRow, selfDestruct && s.destructRowOn]}
+          onPress={() => setSelfDestruct((v) => !v)}
+          activeOpacity={0.85}
+        >
+          <Ionicons
+            name={selfDestruct ? 'flame' : 'flame-outline'}
+            size={20}
+            color={selfDestruct ? '#FF5A52' : Colors.textMuted}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={[s.destructTitle, selfDestruct && { color: '#FF5A52' }]}>This message will self-destruct</Text>
+            <Text style={s.destructSub}>It glitches to nothing the moment they find it. One look, then gone.</Text>
+          </View>
+          <View style={[s.checkbox, selfDestruct && s.checkboxOn]}>
+            {selfDestruct && <Ionicons name="checkmark" size={14} color="#0A0A0F" />}
+          </View>
+        </TouchableOpacity>
+
         <TouchableOpacity style={[s.primaryBtn, !ready && { opacity: 0.5 }]} onPress={onDrop} disabled={!ready} activeOpacity={0.85}>
           {busy ? <ActivityIndicator color="#FFF" /> : <Ionicons name="flag" size={16} color="#FFF" />}
           <Text style={s.primaryBtnText}>{busy ? 'Dropping…' : 'Drop the cache here'}</Text>
@@ -221,6 +241,20 @@ function makeStyles() {
     segBtnOn: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
     segText: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary },
     segTextOn: { color: Colors.primary },
+    destructRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12,
+      padding: Spacing.md, borderRadius: Radius.lg,
+      backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+    },
+    destructRowOn: { borderColor: '#FF5A52' },
+    destructTitle: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
+    destructSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+    checkbox: {
+      width: 22, height: 22, borderRadius: 6,
+      borderWidth: 1, borderColor: Colors.border,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    checkboxOn: { backgroundColor: '#FF5A52', borderColor: '#FF5A52' },
     primaryBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       paddingVertical: 14, borderRadius: Radius.full, backgroundColor: Colors.primary, marginTop: 10,

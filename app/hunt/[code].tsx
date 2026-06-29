@@ -16,7 +16,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useHuntByCode, useClaimFind, getHuntPhotoUrl } from '../../hooks/useHunt';
+import { useHuntByCode, useClaimFind, useBurnCache, getHuntPhotoUrl } from '../../hooks/useHunt';
+import { GlitchText } from '../../components/shared/GlitchText';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useHeading } from '../../hooks/useHeading';
 import { HuntMap } from '../../components/hunt/HuntMap';
@@ -42,6 +43,7 @@ export default function HuntSeek() {
   const { coords, error: geoError } = useGeolocation();
   const { heading, start: startCompass } = useHeading();
   const claim = useClaimFind();
+  const burn = useBurnCache();
   const signedIn = useAuthStore((st) => !!st.user?.id);
 
   const [found, setFound] = useState(false);
@@ -86,6 +88,8 @@ export default function HuntSeek() {
       if (res.ok) {
         setFound(true);
         if (Platform.OS === 'web' && (navigator as any).vibrate) (navigator as any).vibrate([90, 60, 90, 60, 200]);
+        // Self-destructing drop: burn it now that it has been seen.
+        if (cache.self_destruct) burn.mutate(cache.id);
       } else if (res.error === 'too_far') {
         showAlert('Not quite there', `You are ${res.distance_m}m away. Get closer.`);
       } else {
@@ -125,9 +129,20 @@ export default function HuntSeek() {
 
         {found ? (
           <View style={s.foundCard}>
-            <Ionicons name="checkmark-circle" size={48} color="#5BC289" />
-            <Text style={s.foundTitle}>Found it</Text>
-            <Text style={s.foundSub}>Logged. {cache.found_count + 1} finds so far.</Text>
+            {cache.self_destruct ? (
+              <>
+                {photoUrl && <RNImage source={{ uri: photoUrl }} style={[s.clue, s.burning]} resizeMode="cover" />}
+                <GlitchText style={s.goneTitle}>GONE</GlitchText>
+                <Text style={s.foundSub}>The drop self-destructed. One look, then nothing.</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={48} color="#5BC289" />
+                <Text style={s.foundTitle}>Found it</Text>
+                {photoUrl && <RNImage source={{ uri: photoUrl }} style={s.clue} resizeMode="cover" />}
+                <Text style={s.foundSub}>Logged. {cache.found_count + 1} finds so far.</Text>
+              </>
+            )}
             <TouchableOpacity style={s.ghostBtn} onPress={() => router.replace('/hunt')} activeOpacity={0.85}>
               <Text style={s.ghostBtnText}>Back to hunts</Text>
             </TouchableOpacity>
@@ -268,6 +283,14 @@ function makeStyles() {
 
     foundCard: { alignItems: 'center', gap: 8, paddingVertical: 40 },
     foundTitle: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary },
+    goneTitle: { fontSize: 44, fontWeight: '800', color: '#FF5A52', letterSpacing: 4 },
+    burning: Platform.OS === 'web'
+      ? ({
+          filter: 'contrast(1.5) saturate(0.2) hue-rotate(80deg)',
+          animation: 'ht-glitch 0.32s steps(2) infinite',
+          opacity: 0.8,
+        } as any)
+      : { opacity: 0.6 },
     foundSub: { fontSize: 15, color: Colors.textSecondary },
     ghostBtn: { paddingVertical: 12, marginTop: 8 },
     ghostBtnText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '600' },

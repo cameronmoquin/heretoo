@@ -25,26 +25,18 @@ export default function AboutScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.masthead}>
           <Text style={s.kicker}>HereToo</Text>
-          <Text style={s.title}>A safe place for your family.</Text>
+          <Text style={s.title}>Secrets worth leaving the house for.</Text>
         </View>
 
         <Text style={s.body}>
-          HereToo is a small, private platform for the people you actually love.
-          Each family is its own room, invitation-only. Inside the room you can post,
-          share photos, write a long letter for someone to open in five years, play
-          trivia, get on a video call, or just see what your mother said today.
+          A private world for the people you actually trust. Post, share, write a
+          letter someone opens in five years, or hide a message at a real spot on
+          the map and make them go find it.
         </Text>
 
         <Text style={s.body}>
-          The family rooms have no advertising. They&apos;re paid for by a small family
-          subscription — five dollars a month, paid by whoever in the family wants to
-          cover it. Nobody is the product.
-        </Text>
-
-        <Text style={s.body}>
-          There is also a public side of HereToo, separate from the family rooms,
-          where ads are allowed. It&apos;s pseudonymous, and the posts vanish in a day.
-          That part is optional and clearly marked.
+          Some things vanish the moment they are read. Some stay sealed until you
+          are standing in the right place. Nothing here is performing for strangers.
         </Text>
 
         <View style={s.huntCard}>

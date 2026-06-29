@@ -29,6 +29,7 @@ export interface HuntCache {
   share_code: string | null;
   active: boolean;
   found_count: number;
+  self_destruct: boolean;
   created_at: string;
 }
 
@@ -52,6 +53,7 @@ export interface HuntCachePublic {
   photo_path: string | null;
   found_count: number;
   creator_id: string | null;
+  self_destruct: boolean;
 }
 
 export interface ClaimResult {
@@ -193,6 +195,7 @@ export function useCreateHuntCache() {
       photoPath?: string;
       scope?: 'public' | 'family' | 'link';
       familyId?: string | null;
+      selfDestruct?: boolean;
     }): Promise<HuntCache> => {
       const userId = useAuthStore.getState().user?.id;
       if (!userId) throw new Error('Sign in to hide a cache.');
@@ -211,6 +214,7 @@ export function useCreateHuntCache() {
           photo_path: input.photoPath ?? null,
           scope: input.scope ?? 'link',
           family_id: input.familyId ?? null,
+          self_destruct: input.selfDestruct ?? false,
         } as any)
         .select()
         .single();
@@ -246,6 +250,28 @@ export function useClaimFind() {
     },
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: ['hunt-finds', vars.cacheId] });
+    },
+  });
+}
+
+/** Burn a self-destructing drop after finding it: deactivates the cache
+ *  and deletes its photo server-side. Fire-and-forget from the UI. */
+export function useBurnCache() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cacheId: string): Promise<void> => {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) return;
+      await fetch('/api/hunt-burn', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cache_id: cacheId }),
+      }).catch(() => {});
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['hunt-caches-mine'] });
+      qc.invalidateQueries({ queryKey: ['hunt-caches-public'] });
     },
   });
 }
