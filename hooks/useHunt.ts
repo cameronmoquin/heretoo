@@ -30,6 +30,7 @@ export interface HuntCache {
   active: boolean;
   found_count: number;
   self_destruct: boolean;
+  prerequisite_cache_id: string | null;
   created_at: string;
 }
 
@@ -54,11 +55,14 @@ export interface HuntCachePublic {
   found_count: number;
   creator_id: string | null;
   self_destruct: boolean;
+  /** True when a prerequisite drop has not been found yet. When locked,
+   *  lat/lng/hint/photo come back null so the seeker cannot navigate. */
+  locked: boolean;
 }
 
 export interface ClaimResult {
   ok: boolean;
-  error?: 'not_signed_in' | 'not_found' | 'too_far';
+  error?: 'not_signed_in' | 'not_found' | 'too_far' | 'locked';
   distance_m?: number;
 }
 
@@ -196,6 +200,7 @@ export function useCreateHuntCache() {
       scope?: 'public' | 'family' | 'link';
       familyId?: string | null;
       selfDestruct?: boolean;
+      prerequisiteCacheId?: string | null;
     }): Promise<HuntCache> => {
       const userId = useAuthStore.getState().user?.id;
       if (!userId) throw new Error('Sign in to hide a cache.');
@@ -215,6 +220,7 @@ export function useCreateHuntCache() {
           scope: input.scope ?? 'link',
           family_id: input.familyId ?? null,
           self_destruct: input.selfDestruct ?? false,
+          prerequisite_cache_id: input.prerequisiteCacheId ?? null,
         } as any)
         .select()
         .single();

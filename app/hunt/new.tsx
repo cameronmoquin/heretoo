@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  useCreateHuntCache, useUploadHuntPhoto,
+  useCreateHuntCache, useUploadHuntPhoto, useMyHuntCaches,
 } from '../../hooks/useHunt';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { HuntMap } from '../../components/hunt/HuntMap';
@@ -46,6 +46,8 @@ export default function HuntNew() {
   const [radius, setRadius] = useState('25');
   const [scope, setScope] = useState<'link' | 'public'>('link');
   const [selfDestruct, setSelfDestruct] = useState(false);
+  const [prereqId, setPrereqId] = useState<string | null>(null);
+  const { data: myCaches } = useMyHuntCaches();
   const [result, setResult] = useState<{ code: string } | null>(null);
 
   const busy = create.isPending || upload.isPending;
@@ -71,6 +73,7 @@ export default function HuntNew() {
         lat: coords.lat, lng: coords.lng, accuracyM: coords.accuracy,
         radiusM: Math.max(5, parseInt(radius, 10) || 25),
         photoPath, scope, selfDestruct,
+        prerequisiteCacheId: prereqId,
       });
       setResult({ code: cache.share_code || '' });
     } catch (e: any) {
@@ -205,6 +208,34 @@ export default function HuntNew() {
           </View>
         </TouchableOpacity>
 
+        {(myCaches ?? []).filter((c) => c.active).length > 0 && (
+          <View style={s.chainBlock}>
+            <Text style={s.label}>Chain after (optional)</Text>
+            <Text style={s.chainHint}>The seeker must find that drop before this one unlocks.</Text>
+            <View style={s.chainPills}>
+              <TouchableOpacity
+                style={[s.chainPill, !prereqId && s.chainPillOn]}
+                onPress={() => setPrereqId(null)}
+                activeOpacity={0.85}
+              >
+                <Text style={[s.chainPillText, !prereqId && s.chainPillTextOn]}>None</Text>
+              </TouchableOpacity>
+              {(myCaches ?? []).filter((c) => c.active).map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[s.chainPill, prereqId === c.id && s.chainPillOn]}
+                  onPress={() => setPrereqId((p) => (p === c.id ? null : c.id))}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[s.chainPillText, prereqId === c.id && s.chainPillTextOn]} numberOfLines={1}>
+                    {c.title || c.share_code || 'Untitled'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         <TouchableOpacity style={[s.primaryBtn, !ready && { opacity: 0.5 }]} onPress={onDrop} disabled={!ready} activeOpacity={0.85}>
           {busy ? <ActivityIndicator color="#FFF" /> : <Ionicons name="flag" size={16} color="#FFF" />}
           <Text style={s.primaryBtnText}>{busy ? 'Dropping…' : 'Drop the cache here'}</Text>
@@ -255,6 +286,17 @@ function makeStyles() {
       alignItems: 'center', justifyContent: 'center',
     },
     checkboxOn: { backgroundColor: '#FF5A52', borderColor: '#FF5A52' },
+    chainBlock: { gap: 6, marginTop: 12 },
+    chainHint: { fontSize: 12, color: Colors.textSecondary, fontStyle: 'italic' },
+    chainPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+    chainPill: {
+      paddingHorizontal: 12, paddingVertical: 8, maxWidth: 200,
+      borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.border,
+      backgroundColor: Colors.surface,
+    },
+    chainPillOn: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
+    chainPillText: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary },
+    chainPillTextOn: { color: Colors.primary },
     primaryBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       paddingVertical: 14, borderRadius: Radius.full, backgroundColor: Colors.primary, marginTop: 10,

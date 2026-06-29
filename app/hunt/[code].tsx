@@ -92,6 +92,8 @@ export default function HuntSeek() {
         if (cache.self_destruct) burn.mutate(cache.id);
       } else if (res.error === 'too_far') {
         showAlert('Not quite there', `You are ${res.distance_m}m away. Get closer.`);
+      } else if (res.error === 'locked') {
+        showAlert('Locked', 'Find the previous drop in the chain first.');
       } else {
         showAlert('Could not log it', 'Try again.');
       }
@@ -127,7 +129,18 @@ export default function HuntSeek() {
           <Text style={s.kicker}>{cache.title || 'Seek the cache'}</Text>
         </View>
 
-        {found ? (
+        {cache.locked ? (
+          <View style={s.foundCard}>
+            <Ionicons name="lock-closed" size={44} color={Colors.textMuted} />
+            <Text style={s.foundTitle}>Locked</Text>
+            <Text style={s.foundSub}>
+              This drop is part of a chain. Find the one before it, then come back.
+            </Text>
+            <TouchableOpacity style={s.ghostBtn} onPress={() => router.replace('/hunt')} activeOpacity={0.85}>
+              <Text style={s.ghostBtnText}>Back to hunts</Text>
+            </TouchableOpacity>
+          </View>
+        ) : found ? (
           <View style={s.foundCard}>
             {cache.self_destruct ? (
               <>
