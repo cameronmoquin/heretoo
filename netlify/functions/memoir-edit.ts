@@ -42,6 +42,8 @@ If a sentence is unconventional but intelligible, leave it alone.
 Older writers often use ellipses, dashes, and run-on sentences
 deliberately. Respect that.
 
+Separately, you MAY offer up to 3 brief improvement SUGGESTIONS as plain-language advice the author can choose to act on themselves (for example: "This paragraph jumps years; a date would orient the reader," or "You mention your father here for the first time; a sentence on who he was might help."). These are ideas ONLY. Never rewrite the text to satisfy them. Never include a rewritten version. They exist so the author decides what to implement.
+
 Return your output as a JSON object with this exact shape:
 
 {
@@ -51,10 +53,13 @@ Return your output as a JSON object with this exact shape:
       "suggested": "<your minimal corrected version>",
       "reason": "<short reason: 'typo', 'subject-verb', 'punctuation', 'homophone'>"
     }
+  ],
+  "suggestions": [
+    "<a short plain-language improvement idea, advice only, no rewritten text>"
   ]
 }
 
-If nothing needs correcting, return { "edits": [] }. Do not wrap the JSON in markdown fences. Do not explain anything outside the JSON.`;
+If nothing needs correcting, return { "edits": [], "suggestions": [] }. Do not wrap the JSON in markdown fences. Do not explain anything outside the JSON.`;
 
 interface Body {
   text?: string;
@@ -113,12 +118,18 @@ export default async (req: Request) => {
     );
   }
   const claudeJson = (await claudeRes.json()) as any;
-  const raw = claudeJson?.content?.[0]?.text ?? '{"edits":[]}';
-  let parsed: { edits?: Array<{ original: string; suggested: string; reason?: string }> };
-  try { parsed = JSON.parse(raw); } catch { parsed = { edits: [] }; }
+  const raw = claudeJson?.content?.[0]?.text ?? '{"edits":[],"suggestions":[]}';
+  let parsed: {
+    edits?: Array<{ original: string; suggested: string; reason?: string }>;
+    suggestions?: string[];
+  };
+  try { parsed = JSON.parse(raw); } catch { parsed = { edits: [], suggestions: [] }; }
   const edits = (parsed.edits ?? []).filter(
     (e) => typeof e?.original === 'string' && typeof e?.suggested === 'string',
   );
+  const suggestions = (parsed.suggestions ?? [])
+    .filter((s) => typeof s === 'string' && s.trim().length > 0)
+    .slice(0, 3);
 
   // Best-effort metadata audit — content not persisted.
   if (SUPABASE_URL && SERVICE_ROLE) {
@@ -154,7 +165,7 @@ export default async (req: Request) => {
   }
 
   return new Response(
-    JSON.stringify({ edits }),
+    JSON.stringify({ edits, suggestions }),
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 };

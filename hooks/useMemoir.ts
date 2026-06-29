@@ -787,9 +787,14 @@ export async function getBookDownloadUrl(path: string): Promise<string | null> {
 
 /** Opt-in grammar/typo check for the user's final text. Unchanged
  *  from milestone 12 — Haiku-backed, returns surgical edits. */
+export interface CleanupResult {
+  edits: GrammarEdit[];
+  suggestions: string[];
+}
+
 export function useMemoirGrammarCheck() {
   return useMutation({
-    mutationFn: async (input: { text: string; responseId?: string }): Promise<GrammarEdit[]> => {
+    mutationFn: async (input: { text: string; responseId?: string }): Promise<CleanupResult> => {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -803,8 +808,8 @@ export function useMemoirGrammarCheck() {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.error ?? `Editor failed (${res.status})`);
       }
-      const j = (await res.json()) as { edits: GrammarEdit[] };
-      return j.edits ?? [];
+      const j = (await res.json()) as { edits?: GrammarEdit[]; suggestions?: string[] };
+      return { edits: j.edits ?? [], suggestions: j.suggestions ?? [] };
     },
   });
 }

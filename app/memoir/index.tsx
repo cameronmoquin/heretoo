@@ -25,7 +25,6 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useEnsureMemoirProject,
   useMemoirProject,
-  useUpdateMemoirProject,
   useNextMemoirPrompt,
   useMemoirResponses,
   useSaveMemoirResponse,
@@ -33,14 +32,12 @@ import {
   useEndMemoirSession,
   useMemoirInterviewTurn,
   useMemoirTranscribe,
-  useMemoirCowriter,
+  useMemoirGrammarCheck,
   useResolveCowriterDraft,
-  type MemoirPrompt, type MemoirResponse,
+  type MemoirPrompt, type MemoirResponse, type CleanupResult,
 } from '../../hooks/useMemoir';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
-import { useMemoirOnboarded } from '../../hooks/useMemoirOnboarded';
-import { MemoirWelcome } from '../../components/memoir/MemoirWelcome';
 import { useTTS } from '../../stores/ttsStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
@@ -73,8 +70,6 @@ export default function MemoirScreen() {
   const reading = useMemoirReadingMode();
   const { elder } = reading;
   const s = makeStyles(elder);
-  const onboarded = useMemoirOnboarded();
-  const updateProject = useUpdateMemoirProject();
   // Two icon colour contexts in manuscript mode: chrome icons sit on
   // the dark brand wallpaper (header bar, "Aa" toggle, library/book
   // buttons) and stay light; page icons sit inside the vellum card
@@ -302,25 +297,6 @@ export default function MemoirScreen() {
 
   // ─── Render ─────────────────────────────────────────────────────
 
-  // First-visit welcome runs before the interview. Captures a title
-  // (writes it to the project) and the "this is private" reassurance
-  // so a 75-year-old isn't dropped cold into an AI asking about their
-  // father's smell.
-  if (!onboarded.seen) {
-    return (
-      <MemoirWelcome
-        initialTitle={project?.title ?? 'My Life, So Far'}
-        onComplete={(title) => {
-          if (projectId && title && title !== project?.title) {
-            updateProject.mutate({ id: projectId, patch: { title } });
-          }
-          onboarded.markSeen();
-        }}
-        onSkip={onboarded.markSeen}
-      />
-    );
-  }
-
   if (view === 'library') {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
@@ -526,7 +502,7 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   // their icon ink is sepia rather than the brand grey.
   const iconColor = elder ? '#5A4A38' : Colors.textSecondary;
   const tts = useTTS();
-  const cowriter = useMemoirCowriter();
+  const cleanup = useMemoirGrammarCheck();
   const resolve = useResolveCowriterDraft();
   const id = `memoir-r-${response.id}`;
   const ttsActive = tts.currentId === id && tts.playing;
@@ -535,60 +511,41 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   });
   const q = response.prompt?.primary_question ?? response.custom_prompt_text ?? '';
 
-  // Co-writer state: the draft Claude returned (if any), and whether
-  // the writer is currently editing it.
-  const [draft, setDraft] = useState<string | null>(response.cowriter_draft ?? null);
-  const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState('');
+  // Clean-up state: the result of the grammar pass. `edits` are
+  // mechanical fixes the writer can apply; `suggestions` are advice the
+  // writer acts on themselves. The AI never rewrites the prose.
+  const [result, setResult] = useState<CleanupResult | null>(null);
 
-  const onPolish = async () => {
+  const onCleanUp = async () => {
     try {
-      const r = await cowriter.mutateAsync({
-        question: q || 'Tell me about this.',
-        transcript: response.final_text,
-      });
-      if (!r.draft) {
-        showAlert('Nothing to polish', 'The answer is short — write a bit more and try again.');
+      const r = await cleanup.mutateAsync({ text: response.final_text, responseId: response.id });
+      if (r.edits.length === 0 && r.suggestions.length === 0) {
+        showAlert('Looks clean', 'No fixes, no notes. Your words stand as they are.');
         return;
       }
-      setDraft(r.draft);
+      setResult(r);
     } catch (e: any) {
-      showAlert('Could not polish', e?.message?.includes('not configured')
-        ? 'Co-writer is not turned on yet.'
+      showAlert('Could not check', e?.message?.includes('not configured')
+        ? 'The editor is not turned on yet.'
         : (e?.message ?? 'Try again.'));
     }
   };
 
-  const onAccept = () => {
-    if (!draft) return;
+  // Apply only the mechanical fixes to the saved text. Suggestions are
+  // never applied automatically.
+  const applyFixes = () => {
+    if (!result) return;
+    let text = response.final_text;
+    for (const e of result.edits) {
+      const i = text.indexOf(e.original);
+      if (i >= 0) text = text.slice(0, i) + e.suggested + text.slice(i + e.original.length);
+    }
     resolve.mutate({
       responseId: response.id,
       projectId: response.project_id,
-      draft, choice: 'accept_draft', finalText: draft,
+      draft: '', choice: 'edit_draft', finalText: text,
     });
-    setDraft(null);
-  };
-  const onEdit = () => {
-    if (!draft) return;
-    setEditText(draft);
-    setEditing(true);
-  };
-  const onSaveEdit = () => {
-    resolve.mutate({
-      responseId: response.id,
-      projectId: response.project_id,
-      draft: draft ?? '', choice: 'edit_draft', finalText: editText.trim(),
-    });
-    setEditing(false);
-    setDraft(null);
-  };
-  const onReject = () => {
-    resolve.mutate({
-      responseId: response.id,
-      projectId: response.project_id,
-      draft: draft ?? '', choice: 'reject', finalText: response.final_text,
-    });
-    setDraft(null);
+    setResult(null);
   };
 
   return (
@@ -605,63 +562,61 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
           <Ionicons name={ttsActive ? 'pause' : 'volume-medium-outline'} size={14} color={iconColor} />
           <Text style={s.libReadText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
         </TouchableOpacity>
-        {!draft && (
+        {!result && (
           <TouchableOpacity
-            onPress={onPolish}
+            onPress={onCleanUp}
             style={s.libPolish}
-            disabled={cowriter.isPending}
+            disabled={cleanup.isPending}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            {cowriter.isPending ? (
+            {cleanup.isPending ? (
               <ActivityIndicator size="small" color={iconColor} />
             ) : (
               <>
                 <Ionicons name="sparkles-outline" size={14} color={iconColor} />
-                <Text style={s.libReadText}>Polish</Text>
+                <Text style={s.libReadText}>Clean up</Text>
               </>
             )}
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Co-writer draft drawer */}
-      {draft && (
+      {/* Clean-up drawer: mechanical fixes to apply, ideas to consider.
+          The AI never rewrites the prose. */}
+      {result && (
         <View style={s.draftCard}>
-          <Text style={s.draftKicker}>A draft for you to consider</Text>
-          {editing ? (
-            <TextInput
-              style={s.draftInput}
-              value={editText}
-              onChangeText={setEditText}
-              multiline
-              maxLength={8000}
-            />
+          {result.edits.length > 0 ? (
+            <>
+              <Text style={s.draftKicker}>Fixes ({result.edits.length})</Text>
+              {result.edits.map((e, i) => (
+                <Text key={`f${i}`} style={s.fixLine}>
+                  “{e.original}” → “{e.suggested}”{e.reason ? `  (${e.reason})` : ''}
+                </Text>
+              ))}
+            </>
           ) : (
-            <Text style={s.draftBody}>{draft}</Text>
+            <Text style={s.draftKicker}>No grammar fixes needed</Text>
           )}
+
+          {result.suggestions.length > 0 && (
+            <>
+              <Text style={[s.draftKicker, { marginTop: 10 }]}>Ideas to consider</Text>
+              {result.suggestions.map((sug, i) => (
+                <Text key={`s${i}`} style={s.suggestLine}>• {sug}</Text>
+              ))}
+              <Text style={s.suggestNote}>Ideas only. Change them yourself if you want to.</Text>
+            </>
+          )}
+
           <View style={s.draftActions}>
-            {editing ? (
-              <>
-                <TouchableOpacity style={s.draftAccept} onPress={onSaveEdit} activeOpacity={0.85}>
-                  <Text style={s.draftAcceptText}>Save my version</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.draftReject} onPress={() => setEditing(false)} activeOpacity={0.85}>
-                  <Text style={s.draftRejectText}>Back</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <TouchableOpacity style={s.draftAccept} onPress={onAccept} activeOpacity={0.85}>
-                  <Text style={s.draftAcceptText}>Use this</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.draftReject} onPress={onEdit} activeOpacity={0.85}>
-                  <Text style={s.draftRejectText}>Tweak it</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.draftReject} onPress={onReject} activeOpacity={0.85}>
-                  <Text style={s.draftRejectText}>Throw it back</Text>
-                </TouchableOpacity>
-              </>
+            {result.edits.length > 0 && (
+              <TouchableOpacity style={s.draftAccept} onPress={applyFixes} activeOpacity={0.85}>
+                <Text style={s.draftAcceptText}>Apply fixes</Text>
+              </TouchableOpacity>
             )}
+            <TouchableOpacity style={s.draftReject} onPress={() => setResult(null)} activeOpacity={0.85}>
+              <Text style={s.draftRejectText}>Done</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -1047,6 +1002,19 @@ function makeStyles(elder: boolean = false) {
       fontSize: elder ? 17 : 15, lineHeight: elder ? 27 : 23,
       color: t.pageInk, fontStyle: 'italic',
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+    },
+    fixLine: {
+      fontSize: elder ? 15 : 14, lineHeight: elder ? 24 : 21, color: t.pageInk,
+      marginTop: 4,
+      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+    },
+    suggestLine: {
+      fontSize: elder ? 15 : 14, lineHeight: elder ? 24 : 21, color: t.pageInkSecondary,
+      marginTop: 4,
+      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+    },
+    suggestNote: {
+      fontSize: 12, color: t.pageInkMuted, fontStyle: 'italic', marginTop: 6,
     },
     draftInput: {
       minHeight: 140, padding: 10,
