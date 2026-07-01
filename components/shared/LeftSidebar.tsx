@@ -106,6 +106,12 @@ export function LeftSidebar() {
         onPress={() => router.push('/hunt' as any)}
       />
       <NavRow
+        icon={pathname.startsWith('/shakespearean-insults') ? 'book' : 'book-outline'}
+        label="Shakespearean Insults"
+        active={pathname.startsWith('/shakespearean-insults')}
+        onPress={() => router.push('/shakespearean-insults' as any)}
+      />
+      <NavRow
         icon={onFeed ? 'home' : 'home-outline'}
         label="The Room"
         active={onFeed}

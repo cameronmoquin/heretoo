@@ -1,0 +1,2397 @@
+{
+  "meta": {
+    "title": "Shakespearean Insults — complete sourced corpus",
+    "version": "2.3.0",
+    "description": "The faithful canon. Every entry is drawn from a verified line in Shakespeare's plays and tagged with play, act.scene, and speaker. NOTHING is deleted for taste. Filtering is the engine's job, not the data's: each entry carries a `flags` array, and the engine surfaces or withholds entries by whatever policy the host application sets. An empty `flags` array means no content advisory applies.",
+    "filteringModel": "Do not strip the corpus. The engine takes an allowed/blocked flag set and filters at runtime. Default presets are the host's call. This keeps the literary text whole and puts editorial control in the application layer where it belongs.",
+    "flagVocabulary": {
+      "coarse": "vulgar but not targeting a protected class (e.g. whoreson, fat-guts)",
+      "scatological": "bodily/excretory",
+      "sexual": "sexual degradation or sexual slur (e.g. strumpet, Winchester goose)",
+      "misogynist": "gendered abuse of women specifically",
+      "racial": "racial/ethnic dehumanization (Othello, Titus)",
+      "colonial": "abuse of the colonized/enslaved figure (Tempest's Caliban)",
+      "ableist": "mockery of disability/deformity (Richard III)",
+      "violent": "boast of or threat of bodily harm"
+    },
+    "tiers": {
+      "note": "Three sensitivity presets. An entry is permitted in a tier when every flag it carries is in that tier's allowedFlags (entries with no flags are always permitted). The 'full' tier allows all flags, so the literary text passes through UNALTERED. Flag-to-tier assignment is editorial and data-driven: reassign any flag to any tier here without touching engine code.",
+      "safe": {
+        "label": "Safe",
+        "description": "Clean entries only. No content advisories of any kind.",
+        "allowedFlags": [],
+        "ageGated": false
+      },
+      "edgy": {
+        "label": "Edgy",
+        "description": "Bawdy, crude, and pointed — period insults that sting or target individuals, short of modern racial/ethnic/religious slurs.",
+        "allowedFlags": [
+          "coarse",
+          "sexual",
+          "misogynist",
+          "ableist",
+          "statureInsult",
+          "violent"
+        ],
+        "ageGated": false
+      },
+      "full": {
+        "label": "Full Offense",
+        "description": "The unaltered canon. Includes racial and colonial material as Shakespeare wrote it. A study of the literature; output is not modified. Gated to viewers 18 or older.",
+        "allowedFlags": [
+          "coarse",
+          "sexual",
+          "misogynist",
+          "ableist",
+          "statureInsult",
+          "violent",
+          "racial",
+          "colonial"
+        ],
+        "ageGated": true
+      }
+    },
+    "epigraph": {
+      "text": "You taught me language, and my profit on't is, I know how to curse.",
+      "speaker": "Caliban",
+      "play": "The Tempest",
+      "citation": "1.2",
+      "note": "Pinned epigraph. Display only — never enter any random pool."
+    },
+    "categories": [
+      "compoundStack",
+      "objectMetaphor",
+      "cascade",
+      "nameAsWeapon",
+      "deformityBestiary",
+      "universalCurse",
+      "elementalCurse",
+      "threatInsult",
+      "selfDirected",
+      "codedAntic",
+      "baiting",
+      "villainsBoast",
+      "statureInsult",
+      "clothesBurn",
+      "witCombat",
+      "flytingVolley",
+      "massInsult"
+    ],
+    "meterModes": {
+      "note": "Meter is a per-term string: w=weak, S=strong, x=flexible monosyllable (promoted or demoted by position, as in real scansion). The engine scans an assembled candidate against a template, treating x as a wildcard. Compound adjectives whose parts are monosyllables resolve as flexible by design; a future pass may pin compound primary stress for stricter scansion.",
+      "iambicPentameter": {
+        "template": "wSwSwSwSwS (10) ; feminine ending allows trailing w (11)",
+        "lineForm": "Thou {adj} {adj} {noun}. — 'Thou' is the opening weak beat.",
+        "strict": "exact 10-syllable alternation only",
+        "authentic": "permits initial trochee, one spondee or pyrrhic substitution, and feminine ending"
+      },
+      "trochaicTetrameter": {
+        "template": "SwSwSwSw (8) ; catalectic drops final w -> SwSwSwS (7)",
+        "lineForm": "{Adj} {adj} {noun}! — DROP 'Thou'; trochaic lines open on a stress.",
+        "note": "The incantation/curse meter (the witches, Puck, the fairies). Best fit for the trochaic insult-compounds."
+      },
+      "ending": {
+        "masculine": "line ends on a stress — hard landing (recommended for insults)",
+        "feminine": "extra trailing weak syllable — softer"
+      },
+      "comicNonCanonical": {
+        "anapest": "wwS (galloping patter)",
+        "dactyl": "Sww (tumbling)",
+        "warning": "NOT characteristically Shakespearean — limerick/Seuss register. Expose only behind a clearly-labeled comic setting."
+      }
+    },
+    "authorshipNotes": "Corpus follows the modern expanded canon. Edward III (printed anonymously 1596) is now widely accepted as at least partly Shakespeare's; the Countess of Salisbury scenes are the portion most attributed to him. Several included plays are collaborative or disputed (Pericles, The Two Noble Kinsmen, Henry VIII, Timon, Titus). Edward III's invective is chiefly the Countess's contempt for the Scots (1.2), which is ethnic and flagged accordingly."
+  },
+  "lexicon": {
+    "adjectives": [
+      {
+        "term": "clay-brained",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "knotty-pated",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "fat-witted",
+        "play": "1 Henry IV",
+        "citation": "1.2",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "bacon-fed",
+        "play": "1 Henry IV",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "fat-kidneyed",
+        "play": "1 Henry IV",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": false
+      },
+      {
+        "term": "gorbellied",
+        "play": "1 Henry IV",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": false
+      },
+      {
+        "term": "whoreson",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "beef-witted",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "sodden-witted",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "scurvy-valiant",
+        "play": "Troilus and Cressida",
+        "citation": "5.4",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "crusty",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Achilles",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "lily-livered",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "three-suited",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "hundred-pound",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "worsted-stocking",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "action-taking",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "glass-gazing",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "super-serviceable",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 6,
+        "meter": "SwSwww",
+        "meterResolved": true
+      },
+      {
+        "term": "brazen-faced",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "toad-spotted",
+        "play": "King Lear",
+        "citation": "5.3",
+        "speaker": "Edgar",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "beetle-headed",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "flap-eared",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "loggerheaded",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "mad-brain",
+        "play": "The Taming of the Shrew",
+        "citation": "3.2",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "waspish",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "onion-eyed",
+        "play": "Antony and Cleopatra",
+        "citation": "4.2",
+        "speaker": "Enobarbus",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "scarce-bearded",
+        "play": "Antony and Cleopatra",
+        "citation": "1.1",
+        "speaker": "Cleopatra",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "ribaudred",
+        "play": "Antony and Cleopatra",
+        "citation": "3.10",
+        "speaker": "Scarus",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": false
+      },
+      {
+        "term": "triple-turned",
+        "play": "Antony and Cleopatra",
+        "citation": "4.12",
+        "speaker": "Antony",
+        "flags": [
+          "misogynist",
+          "sexual"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "spongy",
+        "play": "Macbeth",
+        "citation": "1.7",
+        "speaker": "Lady Macbeth",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "cream-faced",
+        "play": "Macbeth",
+        "citation": "5.3",
+        "speaker": "Macbeth",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "whey-faced",
+        "play": "Macbeth",
+        "citation": "5.3",
+        "speaker": "Macbeth",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "smooth-faced",
+        "play": "King John",
+        "citation": "2.1",
+        "speaker": "the Bastard",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "cold-blooded",
+        "play": "King John",
+        "citation": "3.1",
+        "speaker": "Constance",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "lean-witted",
+        "play": "Richard II",
+        "citation": "2.1",
+        "speaker": "King Richard",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "high-stomached",
+        "play": "Richard II",
+        "citation": "1.1",
+        "speaker": "Chorus",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": false
+      },
+      {
+        "term": "lack-linen",
+        "play": "2 Henry IV",
+        "citation": "2.4",
+        "speaker": "Doll Tearsheet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "bottle-ale",
+        "play": "2 Henry IV",
+        "citation": "2.4",
+        "speaker": "Doll Tearsheet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "prick-eared",
+        "play": "Henry V",
+        "citation": "2.1",
+        "speaker": "Pistol",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "white-livered",
+        "play": "Henry V",
+        "citation": "3.2",
+        "speaker": "the Boy",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": false
+      },
+      {
+        "term": "red-faced",
+        "play": "Henry V",
+        "citation": "3.2",
+        "speaker": "the Boy",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "banning",
+        "play": "1 Henry VI",
+        "citation": "5.4",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "blunt-witted",
+        "play": "2 Henry VI",
+        "citation": "3.2",
+        "speaker": "Suffolk",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "hard-favoured",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": false
+      },
+      {
+        "term": "ill-beseeming",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "crook-back",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "bunch-backed",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "elvish-marked",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": false
+      },
+      {
+        "term": "bottled",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "hell-governed",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Anne",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "mangy",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "dissentious",
+        "play": "Coriolanus",
+        "citation": "1.1",
+        "speaker": "Coriolanus",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": false
+      },
+      {
+        "term": "rank-scented",
+        "play": "Coriolanus",
+        "citation": "3.1",
+        "speaker": "Coriolanus",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "many-headed",
+        "play": "Coriolanus",
+        "citation": "4.1",
+        "speaker": "Coriolanus",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "measureless",
+        "play": "Coriolanus",
+        "citation": "5.6",
+        "speaker": "Coriolanus",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": false
+      },
+      {
+        "term": "pigeon-livered",
+        "play": "Hamlet",
+        "citation": "2.2",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "muddy-mettled",
+        "play": "Hamlet",
+        "citation": "2.2",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "kindless",
+        "play": "Hamlet",
+        "citation": "2.2",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "lascivious",
+        "play": "Othello",
+        "citation": "1.1",
+        "speaker": "Roderigo",
+        "flags": [
+          "racial",
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": true
+      },
+      {
+        "term": "wall-eyed",
+        "play": "Titus Andronicus",
+        "citation": "5.1",
+        "speaker": "Lucius",
+        "flags": [
+          "racial"
+        ],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "fiend-like",
+        "play": "Titus Andronicus",
+        "citation": "5.1",
+        "speaker": "Lucius",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "green-sickness",
+        "play": "Romeo and Juliet",
+        "citation": "3.5",
+        "speaker": "Capulet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "fishified",
+        "play": "Romeo and Juliet",
+        "citation": "2.4",
+        "speaker": "Mercutio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "SwS",
+        "meterResolved": false
+      },
+      {
+        "term": "thin-faced",
+        "play": "Twelfth Night",
+        "citation": "5.1",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "affectioned",
+        "play": "Twelfth Night",
+        "citation": "2.3",
+        "speaker": "Maria",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": false
+      },
+      {
+        "term": "thrasonical",
+        "play": "Love's Labour's Lost",
+        "citation": "5.1",
+        "speaker": "Holofernes",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": false
+      },
+      {
+        "term": "peregrinate",
+        "play": "Love's Labour's Lost",
+        "citation": "5.1",
+        "speaker": "Holofernes",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwwS",
+        "meterResolved": false
+      },
+      {
+        "term": "ungenitured",
+        "play": "Measure for Measure",
+        "citation": "3.2",
+        "speaker": "Lucio",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": false
+      },
+      {
+        "term": "unweighing",
+        "play": "Measure for Measure",
+        "citation": "3.2",
+        "speaker": "Lucio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": false
+      },
+      {
+        "term": "mankind",
+        "play": "The Winter's Tale",
+        "citation": "2.3",
+        "speaker": "Leontes",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 2,
+        "meter": "SS",
+        "meterResolved": true
+      },
+      {
+        "term": "woman-tired",
+        "play": "The Winter's Tale",
+        "citation": "2.3",
+        "speaker": "Leontes",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "poisonous",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "abhorred",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "wS",
+        "meterResolved": true
+      },
+      {
+        "term": "puppy-headed",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "untuned",
+        "play": "Edward III",
+        "citation": "1.2",
+        "speaker": "Countess of Salisbury",
+        "flags": [],
+        "syllables": 2,
+        "meter": "wS",
+        "meterResolved": false
+      },
+      {
+        "term": "skipping",
+        "play": "Edward III",
+        "citation": "1.2",
+        "speaker": "Countess of Salisbury",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      }
+    ],
+    "nouns": [
+      {
+        "term": "tallow-catch",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "clotpole",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "toadstool",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "porpentine",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 3,
+        "meter": "SwS",
+        "meterResolved": false
+      },
+      {
+        "term": "water-fly",
+        "play": "Hamlet",
+        "citation": "5.2",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "finical rogue",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 4,
+        "meter": "Swwx",
+        "meterResolved": false
+      },
+      {
+        "term": "eater of broken meats",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 6,
+        "meter": "SwxSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "whoreson zed",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": false
+      },
+      {
+        "term": "malt-horse drudge",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xxx",
+        "meterResolved": true
+      },
+      {
+        "term": "peasant swain",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "jolthead",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "King of Cats",
+        "play": "Romeo and Juliet",
+        "citation": "3.1",
+        "speaker": "Mercutio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xxx",
+        "meterResolved": true
+      },
+      {
+        "term": "rat-catcher",
+        "play": "Romeo and Juliet",
+        "citation": "3.1",
+        "speaker": "Mercutio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSS",
+        "meterResolved": true
+      },
+      {
+        "term": "the very butcher of a silk button",
+        "play": "Romeo and Juliet",
+        "citation": "2.4",
+        "speaker": "Mercutio",
+        "flags": [],
+        "syllables": 10,
+        "meter": "xSwSwxxxSw",
+        "meterResolved": true
+      },
+      {
+        "term": "princox",
+        "play": "Romeo and Juliet",
+        "citation": "1.5",
+        "speaker": "Capulet",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "choplogic",
+        "play": "Romeo and Juliet",
+        "citation": "3.5",
+        "speaker": "Capulet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": false
+      },
+      {
+        "term": "hilding",
+        "play": "Romeo and Juliet",
+        "citation": "3.5",
+        "speaker": "Capulet",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "green-sickness carrion",
+        "play": "Romeo and Juliet",
+        "citation": "3.5",
+        "speaker": "Capulet",
+        "flags": [],
+        "syllables": 6,
+        "meter": "xSwSww",
+        "meterResolved": true
+      },
+      {
+        "term": "crusty batch of nature",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Achilles",
+        "flags": [],
+        "syllables": 6,
+        "meter": "SwxxSw",
+        "meterResolved": true
+      },
+      {
+        "term": "full dish of fool",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xxxx",
+        "meterResolved": true
+      },
+      {
+        "term": "box of envy",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xxSw",
+        "meterResolved": true
+      },
+      {
+        "term": "cap of all the fools alive",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Apemantus",
+        "flags": [],
+        "syllables": 7,
+        "meter": "xxxxxwS",
+        "meterResolved": true
+      },
+      {
+        "term": "trencher-friend",
+        "play": "Timon of Athens",
+        "citation": "3.6",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "minute-jack",
+        "play": "Timon of Athens",
+        "citation": "3.6",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "common cry of curs",
+        "play": "Coriolanus",
+        "citation": "3.3",
+        "speaker": "Coriolanus",
+        "flags": [],
+        "syllables": 5,
+        "meter": "Swxxx",
+        "meterResolved": false
+      },
+      {
+        "term": "the beast with many heads",
+        "play": "Coriolanus",
+        "citation": "4.1",
+        "speaker": "Coriolanus",
+        "flags": [],
+        "syllables": 6,
+        "meter": "xxxSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "boy of tears",
+        "play": "Coriolanus",
+        "citation": "5.6",
+        "speaker": "Aufidius",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xxx",
+        "meterResolved": true
+      },
+      {
+        "term": "fishmonger",
+        "play": "Hamlet",
+        "citation": "2.2",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "SSw",
+        "meterResolved": true
+      },
+      {
+        "term": "king of shreds and patches",
+        "play": "Hamlet",
+        "citation": "3.4",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 6,
+        "meter": "xxxxSw",
+        "meterResolved": true
+      },
+      {
+        "term": "John-a-dreams",
+        "play": "Hamlet",
+        "citation": "2.2",
+        "speaker": "Hamlet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xxx",
+        "meterResolved": true
+      },
+      {
+        "term": "dead butcher",
+        "play": "Macbeth",
+        "citation": "5.9",
+        "speaker": "Malcolm",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "hell-hound",
+        "play": "Macbeth",
+        "citation": "5.8",
+        "speaker": "Macduff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "hell-kite",
+        "play": "Macbeth",
+        "citation": "4.3",
+        "speaker": "Macduff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "caterpillar of the commonwealth",
+        "play": "Richard II",
+        "citation": "2.3",
+        "speaker": "Bolingbroke",
+        "flags": [],
+        "syllables": 9,
+        "meter": "SwSwxxSwS",
+        "meterResolved": true
+      },
+      {
+        "term": "lump of foul deformity",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Anne",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 7,
+        "meter": "xxxwSww",
+        "meterResolved": true
+      },
+      {
+        "term": "bottled spider",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "bunch-backed toad",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 3,
+        "meter": "xxx",
+        "meterResolved": true
+      },
+      {
+        "term": "elvish-marked, abortive, rooting hog",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 9,
+        "meter": "SwxwSwSwx",
+        "meterResolved": false
+      },
+      {
+        "term": "diffused infection of a man",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Anne",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 8,
+        "meter": "wSSSwxxx",
+        "meterResolved": true
+      },
+      {
+        "term": "she-wolf of France",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 4,
+        "meter": "xxxx",
+        "meterResolved": true
+      },
+      {
+        "term": "tiger's heart wrapped in a woman's hide",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 9,
+        "meter": "SwxxxxSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "hag of all despite",
+        "play": "1 Henry VI",
+        "citation": "3.2",
+        "speaker": "Talbot",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 5,
+        "meter": "xxxwS",
+        "meterResolved": true
+      },
+      {
+        "term": "kennel, puddle, sink",
+        "play": "2 Henry VI",
+        "citation": "4.1",
+        "speaker": "the Lieutenant",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "Winchester goose",
+        "play": "1 Henry VI",
+        "citation": "1.3",
+        "speaker": "Gloucester",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "SSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "an affectioned ass",
+        "play": "Twelfth Night",
+        "citation": "2.3",
+        "speaker": "Maria",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xwSwx",
+        "meterResolved": false
+      },
+      {
+        "term": "ass-head",
+        "play": "Twelfth Night",
+        "citation": "5.1",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "coxcomb",
+        "play": "Twelfth Night",
+        "citation": "5.1",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      },
+      {
+        "term": "gull",
+        "play": "Twelfth Night",
+        "citation": "5.1",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "alms-basket of words",
+        "play": "Love's Labour's Lost",
+        "citation": "5.1",
+        "speaker": "Costard",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xSwxx",
+        "meterResolved": true
+      },
+      {
+        "term": "pigeon-egg of discretion",
+        "play": "Love's Labour's Lost",
+        "citation": "5.1",
+        "speaker": "Costard",
+        "flags": [],
+        "syllables": 7,
+        "meter": "SwxxwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "canker-blossom",
+        "play": "A Midsummer Night's Dream",
+        "citation": "3.2",
+        "speaker": "Hermia",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "painted maypole",
+        "play": "A Midsummer Night's Dream",
+        "citation": "3.2",
+        "speaker": "Hermia",
+        "flags": [
+          "statureInsult"
+        ],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "Dame Partlet",
+        "play": "The Winter's Tale",
+        "citation": "2.3",
+        "speaker": "Leontes",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": false
+      },
+      {
+        "term": "callat of boundless tongue",
+        "play": "The Winter's Tale",
+        "citation": "2.3",
+        "speaker": "Leontes",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 6,
+        "meter": "SwxSwx",
+        "meterResolved": false
+      },
+      {
+        "term": "bed-swerver",
+        "play": "The Winter's Tale",
+        "citation": "2.1",
+        "speaker": "Leontes",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": false
+      },
+      {
+        "term": "hag-seed",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "mooncalf",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Stephano",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": false
+      }
+    ],
+    "diminutives": [
+      {
+        "term": "thread",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "thimble",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "nit",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "winter-cricket",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "rag",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "remnant",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "dwarf",
+        "play": "A Midsummer Night's Dream",
+        "citation": "3.2",
+        "speaker": "Lysander",
+        "flags": [
+          "statureInsult"
+        ],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "minimus",
+        "play": "A Midsummer Night's Dream",
+        "citation": "3.2",
+        "speaker": "Lysander",
+        "flags": [
+          "statureInsult"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": false
+      },
+      {
+        "term": "bead",
+        "play": "A Midsummer Night's Dream",
+        "citation": "3.2",
+        "speaker": "Lysander",
+        "flags": [
+          "statureInsult"
+        ],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "acorn",
+        "play": "A Midsummer Night's Dream",
+        "citation": "3.2",
+        "speaker": "Lysander",
+        "flags": [
+          "statureInsult"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      }
+    ]
+  },
+  "lines": [
+    {
+      "text": "Thou art a boil, a plague-sore, or embossed carbuncle, in my corrupted blood.",
+      "speaker": "King Lear",
+      "target": "Goneril",
+      "play": "King Lear",
+      "citation": "2.4",
+      "category": "objectMetaphor",
+      "gloss": "A father naming his own daughter an infection in his blood.",
+      "flags": []
+    },
+    {
+      "text": "A knave, a rascal, an eater of broken meats.",
+      "speaker": "Kent",
+      "target": "Oswald",
+      "play": "King Lear",
+      "citation": "2.2",
+      "category": "cascade",
+      "gloss": "Opening salvo of the longest insult in the canon.",
+      "flags": []
+    },
+    {
+      "text": "Thou whoreson zed! thou unnecessary letter!",
+      "speaker": "Kent",
+      "target": "Oswald",
+      "play": "King Lear",
+      "citation": "2.2",
+      "category": "objectMetaphor",
+      "gloss": "A whole man reduced to the most useless letter in the alphabet.",
+      "flags": [
+        "coarse"
+      ]
+    },
+    {
+      "text": "Why, thou clay-brained guts, thou knotty-pated fool.",
+      "speaker": "Prince Hal",
+      "target": "Falstaff",
+      "play": "1 Henry IV",
+      "citation": "2.4",
+      "category": "compoundStack",
+      "gloss": "A skull packed with mud, and tangled wood for thought.",
+      "flags": []
+    },
+    {
+      "text": "That stuffed cloak-bag of guts.",
+      "speaker": "Prince Hal",
+      "target": "Falstaff",
+      "play": "1 Henry IV",
+      "citation": "2.4",
+      "category": "objectMetaphor",
+      "gloss": "A travelling case crammed with offal, walking about.",
+      "flags": []
+    },
+    {
+      "text": "Peace, ye fat-guts!",
+      "speaker": "Prince Hal",
+      "target": "Falstaff",
+      "play": "1 Henry IV",
+      "citation": "2.2",
+      "category": "objectMetaphor",
+      "gloss": "Short, and to the point.",
+      "flags": [
+        "coarse"
+      ]
+    },
+    {
+      "text": "His wit's as thick as Tewkesbury mustard.",
+      "speaker": "Falstaff",
+      "target": "Poins",
+      "play": "2 Henry IV",
+      "citation": "2.4",
+      "category": "objectMetaphor",
+      "gloss": "Thick, and good for nothing but to make the eyes water.",
+      "flags": []
+    },
+    {
+      "text": "Away, you scullion! you rampallian! you fustilarian! I'll tickle your catastrophe!",
+      "speaker": "the Page",
+      "target": "Mistress Quickly",
+      "play": "2 Henry IV",
+      "citation": "2.1",
+      "category": "cascade",
+      "gloss": "Three coined insults and a threat to your backside.",
+      "flags": [
+        "coarse"
+      ]
+    },
+    {
+      "text": "Thou hast no more brain than I have in mine elbows.",
+      "speaker": "Thersites",
+      "target": "Ajax",
+      "play": "Troilus and Cressida",
+      "citation": "2.1",
+      "category": "witCombat",
+      "gloss": "The wit is somewhere. It is not in the head.",
+      "flags": []
+    },
+    {
+      "text": "Thou crusty batch of nature, what's the news?",
+      "speaker": "Achilles",
+      "target": "Thersites",
+      "play": "Troilus and Cressida",
+      "citation": "5.1",
+      "category": "objectMetaphor",
+      "gloss": "A half-baked loaf God forgot to finish.",
+      "flags": []
+    },
+    {
+      "text": "Why, thou full dish of fool, from Troy.",
+      "speaker": "Thersites",
+      "target": "Achilles",
+      "play": "Troilus and Cressida",
+      "citation": "5.1",
+      "category": "objectMetaphor",
+      "gloss": "A heaping serving plate, brimful of idiot.",
+      "flags": []
+    },
+    {
+      "text": "Thou mongrel beef-witted lord!",
+      "speaker": "Thersites",
+      "target": "Ajax",
+      "play": "Troilus and Cressida",
+      "citation": "2.1",
+      "category": "compoundStack",
+      "gloss": "A muddle-bred ox in a coronet.",
+      "flags": []
+    },
+    {
+      "text": "Would thou wert clean enough to spit upon!",
+      "speaker": "Timon",
+      "target": "Apemantus",
+      "play": "Timon of Athens",
+      "citation": "4.3",
+      "category": "universalCurse",
+      "gloss": "Too foul even to be the target of contempt.",
+      "flags": []
+    },
+    {
+      "text": "Thou art the cap of all the fools alive.",
+      "speaker": "Apemantus",
+      "target": "Timon",
+      "play": "Timon of Athens",
+      "citation": "4.3",
+      "category": "objectMetaphor",
+      "gloss": "The crowning fool the rest look up to.",
+      "flags": []
+    },
+    {
+      "text": "A plague on thee! Thou art too bad to curse.",
+      "speaker": "Apemantus",
+      "target": "Timon",
+      "play": "Timon of Athens",
+      "citation": "4.3",
+      "category": "universalCurse",
+      "gloss": "Beyond the reach of even a good curse.",
+      "flags": []
+    },
+    {
+      "text": "What's the matter, you dissentious rogues, that, rubbing the poor itch of your opinion, make yourselves scabs?",
+      "speaker": "Coriolanus",
+      "target": "the citizens",
+      "play": "Coriolanus",
+      "citation": "1.1",
+      "category": "massInsult",
+      "gloss": "Scratch an opinion long enough and you become the sore.",
+      "flags": []
+    },
+    {
+      "text": "You common cry of curs! whose breath I hate as reek o' the rotten fens.",
+      "speaker": "Coriolanus",
+      "target": "the people of Rome",
+      "play": "Coriolanus",
+      "citation": "3.3",
+      "category": "massInsult",
+      "gloss": "A pack of yapping dogs whose breath is swamp-gas.",
+      "flags": []
+    },
+    {
+      "text": "You souls of geese, that bear the shapes of men!",
+      "speaker": "Coriolanus",
+      "target": "his soldiers",
+      "play": "Coriolanus",
+      "citation": "1.4",
+      "category": "massInsult",
+      "gloss": "Men-shaped, but honking and witless inside.",
+      "flags": []
+    },
+    {
+      "text": "Boy! False hound!",
+      "speaker": "Coriolanus",
+      "target": "Aufidius",
+      "play": "Coriolanus",
+      "citation": "5.6",
+      "category": "nameAsWeapon",
+      "gloss": "One syllable, detonating a war hero.",
+      "flags": []
+    },
+    {
+      "text": "Excellent well; you are a fishmonger.",
+      "speaker": "Hamlet",
+      "target": "Polonius",
+      "play": "Hamlet",
+      "citation": "2.2",
+      "category": "codedAntic",
+      "gloss": "The insult lands on the audience; Polonius never catches it.",
+      "flags": []
+    },
+    {
+      "text": "O, what a rogue and peasant slave am I!",
+      "speaker": "Hamlet",
+      "target": "himself",
+      "play": "Hamlet",
+      "citation": "2.2",
+      "category": "selfDirected",
+      "gloss": "The sharpest tongue in the play, turned inward.",
+      "flags": []
+    },
+    {
+      "text": "Remorseless, treacherous, lecherous, kindless villain!",
+      "speaker": "Hamlet",
+      "target": "Claudius",
+      "play": "Hamlet",
+      "citation": "2.2",
+      "category": "cascade",
+      "gloss": "Four hammer-blows and a verdict.",
+      "flags": []
+    },
+    {
+      "text": "A king of shreds and patches.",
+      "speaker": "Hamlet",
+      "target": "Claudius",
+      "play": "Hamlet",
+      "citation": "3.4",
+      "category": "objectMetaphor",
+      "gloss": "A king stitched together from rags.",
+      "flags": []
+    },
+    {
+      "text": "The devil damn thee black, thou cream-faced loon!",
+      "speaker": "Macbeth",
+      "target": "the Servant",
+      "play": "Macbeth",
+      "citation": "5.3",
+      "category": "objectMetaphor",
+      "gloss": "White with fear, and damned for it in the same breath.",
+      "flags": []
+    },
+    {
+      "text": "Go prick thy face and over-red thy fear, thou lily-livered boy!",
+      "speaker": "Macbeth",
+      "target": "the Servant",
+      "play": "Macbeth",
+      "citation": "5.3",
+      "category": "compoundStack",
+      "gloss": "Bleed some courage into that pale face.",
+      "flags": []
+    },
+    {
+      "text": "Turn, hell-hound, turn!",
+      "speaker": "Macduff",
+      "target": "Macbeth",
+      "play": "Macbeth",
+      "citation": "5.8",
+      "category": "objectMetaphor",
+      "gloss": "Three words, and a reckoning behind them.",
+      "flags": []
+    },
+    {
+      "text": "You blocks, you stones, you worse than senseless things!",
+      "speaker": "Marullus",
+      "target": "the commoners",
+      "play": "Julius Caesar",
+      "citation": "1.1",
+      "category": "massInsult",
+      "gloss": "Less responsive than the paving stones they stand on.",
+      "flags": []
+    },
+    {
+      "text": "Away, slight man!",
+      "speaker": "Brutus",
+      "target": "Cassius",
+      "play": "Julius Caesar",
+      "citation": "4.3",
+      "category": "witCombat",
+      "gloss": "Dismissal between equals, which stings worse than rage.",
+      "flags": []
+    },
+    {
+      "text": "Rogue, thou hast lived too long!",
+      "speaker": "Cleopatra",
+      "target": "the Messenger",
+      "play": "Antony and Cleopatra",
+      "citation": "2.5",
+      "category": "threatInsult",
+      "gloss": "A death sentence as a greeting.",
+      "flags": [
+        "violent"
+      ]
+    },
+    {
+      "text": "Thou shalt be whipped with wire and stewed in brine, smarting in lingering pickle.",
+      "speaker": "Cleopatra",
+      "target": "the Messenger",
+      "play": "Antony and Cleopatra",
+      "citation": "2.5",
+      "category": "threatInsult",
+      "gloss": "A three-stage culinary torture, promised.",
+      "flags": [
+        "violent"
+      ]
+    },
+    {
+      "text": "Hadst thou Narcissus in thy face, to me thou wouldst appear most ugly.",
+      "speaker": "Cleopatra",
+      "target": "the Messenger",
+      "play": "Antony and Cleopatra",
+      "citation": "2.5",
+      "category": "objectMetaphor",
+      "gloss": "Even at your best you'd still be hideous.",
+      "flags": []
+    },
+    {
+      "text": "I have done a thousand dreadful things as willingly as one would kill a fly.",
+      "speaker": "Aaron",
+      "target": "(boast)",
+      "play": "Titus Andronicus",
+      "citation": "5.1",
+      "category": "villainsBoast",
+      "gloss": "Atrocity recited as a résumé.",
+      "flags": [
+        "violent"
+      ]
+    },
+    {
+      "text": "If one good deed in all my life I did, I do repent it from my very soul.",
+      "speaker": "Aaron",
+      "target": "(boast)",
+      "play": "Titus Andronicus",
+      "citation": "5.3",
+      "category": "villainsBoast",
+      "gloss": "Unrepentant to the last syllable.",
+      "flags": [
+        "violent"
+      ]
+    },
+    {
+      "text": "Rome is but a wilderness of tigers.",
+      "speaker": "Titus",
+      "target": "Rome",
+      "play": "Titus Andronicus",
+      "citation": "3.1",
+      "category": "objectMetaphor",
+      "gloss": "A whole city named a beast-pit.",
+      "flags": []
+    },
+    {
+      "text": "Tybalt, you rat-catcher, will you walk?",
+      "speaker": "Mercutio",
+      "target": "Tybalt",
+      "play": "Romeo and Juliet",
+      "citation": "3.1",
+      "category": "objectMetaphor",
+      "gloss": "A goad, not a curse — a dare wrapped in a cat joke.",
+      "flags": []
+    },
+    {
+      "text": "Good King of Cats, nothing but one of your nine lives.",
+      "speaker": "Mercutio",
+      "target": "Tybalt",
+      "play": "Romeo and Juliet",
+      "citation": "3.1",
+      "category": "objectMetaphor",
+      "gloss": "Mocking Tybalt's name to his face.",
+      "flags": []
+    },
+    {
+      "text": "Out, you green-sickness carrion! Out, you baggage! You tallow-face!",
+      "speaker": "Capulet",
+      "target": "Juliet",
+      "play": "Romeo and Juliet",
+      "citation": "3.5",
+      "category": "cascade",
+      "gloss": "A pale-faced run of scorn: anemic, worthless, waxen.",
+      "flags": []
+    },
+    {
+      "text": "You are a princox, go!",
+      "speaker": "Capulet",
+      "target": "Tybalt",
+      "play": "Romeo and Juliet",
+      "citation": "1.5",
+      "category": "objectMetaphor",
+      "gloss": "A cocky young upstart, told to sit down.",
+      "flags": []
+    },
+    {
+      "text": "You loggerheaded and unpolished grooms!",
+      "speaker": "Petruchio",
+      "target": "his servants",
+      "play": "The Taming of the Shrew",
+      "citation": "4.1",
+      "category": "compoundStack",
+      "gloss": "Blockheads, and rough-cut ones at that.",
+      "flags": []
+    },
+    {
+      "text": "A whoreson, beetle-headed, flap-eared knave!",
+      "speaker": "Petruchio",
+      "target": "a servant",
+      "play": "The Taming of the Shrew",
+      "citation": "4.1",
+      "category": "compoundStack",
+      "gloss": "Head like a mallet, ears like flaps.",
+      "flags": [
+        "coarse"
+      ]
+    },
+    {
+      "text": "Thou thread, thou thimble, thou nit, thou winter-cricket thou!",
+      "speaker": "Petruchio",
+      "target": "the Tailor",
+      "play": "The Taming of the Shrew",
+      "citation": "4.3",
+      "category": "cascade",
+      "gloss": "A man reduced to a pile of sewing-room scraps.",
+      "flags": []
+    },
+    {
+      "text": "Away, thou rag, thou quantity, thou remnant!",
+      "speaker": "Petruchio",
+      "target": "the Tailor",
+      "play": "The Taming of the Shrew",
+      "citation": "4.3",
+      "category": "cascade",
+      "gloss": "Not even whole cloth — an offcut.",
+      "flags": []
+    },
+    {
+      "text": "I wonder that you will still be talking, Signior Benedick: nobody marks you.",
+      "speaker": "Beatrice",
+      "target": "Benedick",
+      "play": "Much Ado About Nothing",
+      "citation": "1.1",
+      "category": "witCombat",
+      "gloss": "The opening shot of the merry war: you bore the room.",
+      "flags": []
+    },
+    {
+      "text": "What, my dear Lady Disdain! Are you yet living?",
+      "speaker": "Benedick",
+      "target": "Beatrice",
+      "play": "Much Ado About Nothing",
+      "citation": "1.1",
+      "category": "witCombat",
+      "gloss": "Surprised she hasn't died of her own contempt.",
+      "flags": []
+    },
+    {
+      "text": "I had rather hear my dog bark at a crow than a man swear he loves me.",
+      "speaker": "Beatrice",
+      "target": "suitors generally",
+      "play": "Much Ado About Nothing",
+      "citation": "1.1",
+      "category": "witCombat",
+      "gloss": "Ranks a barking dog above a wooing man.",
+      "flags": []
+    },
+    {
+      "text": "She speaks poniards, and every word stabs.",
+      "speaker": "Benedick",
+      "target": "Beatrice",
+      "play": "Much Ado About Nothing",
+      "citation": "2.1",
+      "category": "witCombat",
+      "gloss": "Her sentences come to a point.",
+      "flags": []
+    },
+    {
+      "text": "I cannot endure my Lady Tongue.",
+      "speaker": "Benedick",
+      "target": "Beatrice",
+      "play": "Much Ado About Nothing",
+      "citation": "2.1",
+      "category": "witCombat",
+      "gloss": "A whole woman renamed for her sharpest organ.",
+      "flags": []
+    },
+    {
+      "text": "Will you help? An ass-head, and a coxcomb, and a knave, a thin-faced knave, a gull!",
+      "speaker": "Sir Toby",
+      "target": "Sir Andrew",
+      "play": "Twelfth Night",
+      "citation": "5.1",
+      "category": "cascade",
+      "gloss": "Four names for a fool, piled on a friend.",
+      "flags": []
+    },
+    {
+      "text": "Dost thou think, because thou art virtuous, there shall be no more cakes and ale?",
+      "speaker": "Sir Toby",
+      "target": "Malvolio",
+      "play": "Twelfth Night",
+      "citation": "2.3",
+      "category": "witCombat",
+      "gloss": "The eternal retort of fun to the killjoy.",
+      "flags": []
+    },
+    {
+      "text": "They have been at a great feast of languages, and stolen the scraps.",
+      "speaker": "Moth",
+      "target": "the pedants",
+      "play": "Love's Labour's Lost",
+      "citation": "5.1",
+      "category": "objectMetaphor",
+      "gloss": "Big words, none of them earned.",
+      "flags": []
+    },
+    {
+      "text": "He draweth out the thread of his verbosity finer than the staple of his argument.",
+      "speaker": "Holofernes",
+      "target": "Armado",
+      "play": "Love's Labour's Lost",
+      "citation": "5.1",
+      "category": "objectMetaphor",
+      "gloss": "More words than meaning, spun thin.",
+      "flags": []
+    },
+    {
+      "text": "Thou halfpenny purse of wit, thou pigeon-egg of discretion!",
+      "speaker": "Costard",
+      "target": "Moth",
+      "play": "Love's Labour's Lost",
+      "citation": "5.1",
+      "category": "objectMetaphor",
+      "gloss": "Two tiny containers, both nearly empty.",
+      "flags": []
+    },
+    {
+      "text": "Some report a sea-maid spawned him; some, that he was begot between two stockfishes.",
+      "speaker": "Lucio",
+      "target": "Angelo",
+      "play": "Measure for Measure",
+      "citation": "3.2",
+      "category": "objectMetaphor",
+      "gloss": "Sired by dried fish; cold all the way down.",
+      "flags": [
+        "sexual"
+      ]
+    },
+    {
+      "text": "You are not worth another word, else I'd call you knave.",
+      "speaker": "Lafew",
+      "target": "Parolles",
+      "play": "All's Well That Ends Well",
+      "citation": "2.3",
+      "category": "clothesBurn",
+      "gloss": "Too cheap even to insult properly.",
+      "flags": []
+    },
+    {
+      "text": "The soul of this man is his clothes.",
+      "speaker": "Lafew",
+      "target": "Parolles",
+      "play": "All's Well That Ends Well",
+      "citation": "2.5",
+      "category": "clothesBurn",
+      "gloss": "Nothing underneath the outfit.",
+      "flags": []
+    },
+    {
+      "text": "No, nor thy tailor, rascal, who is thy grandfather: he made those clothes, which make thee.",
+      "speaker": "Guiderius",
+      "target": "Cloten",
+      "play": "Cymbeline",
+      "citation": "4.2",
+      "category": "clothesBurn",
+      "gloss": "You are descended from your own outfit.",
+      "flags": []
+    },
+    {
+      "text": "You juggler! you canker-blossom! you thief of love!",
+      "speaker": "Hermia",
+      "target": "Helena",
+      "play": "A Midsummer Night's Dream",
+      "citation": "3.2",
+      "category": "cascade",
+      "gloss": "A cheat, a blight, and a love-thief in one breath.",
+      "flags": []
+    },
+    {
+      "text": "Fie, fie! you counterfeit, you puppet, you!",
+      "speaker": "Helena",
+      "target": "Hermia",
+      "play": "A Midsummer Night's Dream",
+      "citation": "3.2",
+      "category": "statureInsult",
+      "gloss": "A little doll instead of a woman — which Hermia takes as a dig at her height.",
+      "flags": [
+        "statureInsult"
+      ]
+    },
+    {
+      "text": "How low am I, thou painted maypole?",
+      "speaker": "Hermia",
+      "target": "Helena",
+      "play": "A Midsummer Night's Dream",
+      "citation": "3.2",
+      "category": "statureInsult",
+      "gloss": "Tall and over-made-up, like a decorated pole.",
+      "flags": [
+        "statureInsult"
+      ]
+    },
+    {
+      "text": "Get you gone, you dwarf, you minimus, of hindering knot-grass made; you bead, you acorn!",
+      "speaker": "Lysander",
+      "target": "Hermia",
+      "play": "A Midsummer Night's Dream",
+      "citation": "3.2",
+      "category": "statureInsult",
+      "gloss": "A cascade of the smallest things in the world.",
+      "flags": [
+        "statureInsult"
+      ]
+    },
+    {
+      "text": "A mankind witch! Hence with her, out o' door: a most intelligencing bawd!",
+      "speaker": "Leontes",
+      "target": "Paulina",
+      "play": "The Winter's Tale",
+      "citation": "2.3",
+      "category": "objectMetaphor",
+      "gloss": "A tyrant's slur at the one fearless woman in the room.",
+      "flags": [
+        "misogynist"
+      ]
+    },
+    {
+      "text": "She-wolf of France, but worse than wolves of France, whose tongue more poisons than the adder's tooth!",
+      "speaker": "York",
+      "target": "Margaret",
+      "play": "3 Henry VI",
+      "citation": "1.4",
+      "category": "objectMetaphor",
+      "gloss": "The Wakefield curse — predator and venom in one.",
+      "flags": [
+        "misogynist"
+      ]
+    },
+    {
+      "text": "O tiger's heart wrapped in a woman's hide!",
+      "speaker": "York",
+      "target": "Margaret",
+      "play": "3 Henry VI",
+      "citation": "1.4",
+      "category": "objectMetaphor",
+      "gloss": "Famous enough that Robert Greene parodied it at Shakespeare himself.",
+      "flags": [
+        "misogynist"
+      ]
+    },
+    {
+      "text": "Pole! Sir Pole! Lord! Ay, kennel, puddle, sink!",
+      "speaker": "the Lieutenant",
+      "target": "Suffolk",
+      "play": "2 Henry VI",
+      "citation": "4.1",
+      "category": "objectMetaphor",
+      "gloss": "Punning a duke's name down into plumbing.",
+      "flags": []
+    },
+    {
+      "text": "Thou elvish-marked, abortive, rooting hog!",
+      "speaker": "Margaret",
+      "target": "Richard",
+      "play": "Richard III",
+      "citation": "1.3",
+      "category": "deformityBestiary",
+      "gloss": "The deformity-bestiary at full venom.",
+      "flags": [
+        "ableist"
+      ]
+    },
+    {
+      "text": "Why strew'st thou sugar on that bottled spider?",
+      "speaker": "Margaret",
+      "target": "Elizabeth (of Richard)",
+      "play": "Richard III",
+      "citation": "1.3",
+      "category": "deformityBestiary",
+      "gloss": "A swollen venom-sac with legs.",
+      "flags": [
+        "ableist"
+      ]
+    },
+    {
+      "text": "Blush, blush, thou lump of foul deformity!",
+      "speaker": "Anne",
+      "target": "Richard",
+      "play": "Richard III",
+      "citation": "1.2",
+      "category": "deformityBestiary",
+      "gloss": "Over the corpse of the man he killed.",
+      "flags": [
+        "ableist"
+      ]
+    },
+    {
+      "text": "You taught me language, and my profit on't is, I know how to curse.",
+      "speaker": "Caliban",
+      "target": "Prospero",
+      "play": "The Tempest",
+      "citation": "1.2",
+      "category": "elementalCurse",
+      "gloss": "The keystone: a curse about cursing. (Also the pinned epigraph.)",
+      "flags": [
+        "colonial"
+      ]
+    },
+    {
+      "text": "The red plague rid you for learning me your language!",
+      "speaker": "Caliban",
+      "target": "Prospero",
+      "play": "The Tempest",
+      "citation": "1.2",
+      "category": "elementalCurse",
+      "gloss": "Disease wished on the man who taught him to speak.",
+      "flags": []
+    },
+    {
+      "text": "All the infections that the sun sucks up from bogs, fens, flats, on Prosper fall!",
+      "speaker": "Caliban",
+      "target": "Prospero",
+      "play": "The Tempest",
+      "citation": "2.2",
+      "category": "elementalCurse",
+      "gloss": "The whole rotting marsh, summoned as a weapon.",
+      "flags": []
+    },
+    {
+      "text": "A south-west blow on ye and blister you all o'er!",
+      "speaker": "Caliban",
+      "target": "Prospero and Miranda",
+      "play": "The Tempest",
+      "citation": "1.2",
+      "category": "elementalCurse",
+      "gloss": "The wind itself enlisted to raise blisters.",
+      "flags": []
+    },
+    {
+      "text": "Thou poisonous slave, got by the devil himself!",
+      "speaker": "Prospero",
+      "target": "Caliban",
+      "play": "The Tempest",
+      "citation": "1.2",
+      "category": "objectMetaphor",
+      "gloss": "The master's contempt for the colonized.",
+      "flags": [
+        "colonial"
+      ]
+    },
+    {
+      "text": "Either to be wooed with broad untuned oaths, or forced by rough insulting barbarism.",
+      "speaker": "the Countess of Salisbury",
+      "target": "the Scots",
+      "play": "Edward III",
+      "citation": "1.2",
+      "category": "massInsult",
+      "gloss": "The Scots' courtship: all crude oaths and rough force.",
+      "flags": [
+        "racial"
+      ]
+    },
+    {
+      "text": "Their wild, uncivil, skipping jigs bray forth their conquest and our overthrow.",
+      "speaker": "the Countess of Salisbury",
+      "target": "the Scots",
+      "play": "Edward III",
+      "citation": "1.2",
+      "category": "massInsult",
+      "gloss": "Their victory dance is just braying.",
+      "flags": [
+        "racial"
+      ]
+    }
+  ]
+}

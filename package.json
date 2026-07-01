@@ -19,7 +19,8 @@
     "deploy": "npm run predeploy && npm run build && netlify deploy --prod --dir=dist",
     "deploy:force": "npm run predeploy:force && npm run build && netlify deploy --prod --dir=dist",
     "deploy:force-clean": "npm run clean && npm install && npm run predeploy:force && npm run build && netlify deploy --prod --dir=dist",
-    "verify": "curl -s https://heretoo.social/_build.txt && echo"
+    "verify": "curl -s https://heretoo.social/_build.txt && echo",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -70,7 +71,8 @@
     "@types/react": "~19.1.0",
     "pg": "^8.20.0",
     "rimraf": "^6.1.3",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vitest": "^2.1.9"
   },
   "private": true
 }
