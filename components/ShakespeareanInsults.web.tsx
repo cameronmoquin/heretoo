@@ -38,17 +38,10 @@ function ensureAssets() {
   }
 }
 
-const SESSION_ADULT = 'bard-adult';
-
 export function ShakespeareanInsults() {
   useEffect(() => { ensureAssets(); }, []);
 
   const [tier, setTier] = useState<Tier>('safe');
-  const [adult, setAdult] = useState<boolean>(() => {
-    try { return sessionStorage.getItem(SESSION_ADULT) === '1'; } catch { return false; }
-  });
-  const [gateOpen, setGateOpen] = useState(false);
-  const [dob, setDob] = useState('');
 
   const [forgeRes, setForgeRes] = useState<ForgeResult | null>(null);
   const [spin, setSpin] = useState(0);
@@ -64,29 +57,6 @@ export function ShakespeareanInsults() {
 
   const reduceMotion = typeof window !== 'undefined'
     && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
-  const chooseTier = (t: Tier) => {
-    if (t === 'full' && tierMeta('full').ageGated && !adult) {
-      setGateOpen(true);
-      return;
-    }
-    setTier(t);
-  };
-
-  const confirmAge = () => {
-    const d = new Date(dob);
-    if (Number.isNaN(d.getTime())) return;
-    const now = new Date('2026-07-01T00:00:00Z'); // build-stamped "today"
-    const age = (now.getTime() - d.getTime()) / (365.25 * 24 * 3600 * 1000);
-    if (age >= 18) {
-      setAdult(true);
-      try { sessionStorage.setItem(SESSION_ADULT, '1'); } catch {}
-      setGateOpen(false);
-      setTier('full');
-    } else {
-      setGateOpen(false);
-    }
-  };
 
   const strike = () => {
     const r = insultEngine.forge(tier, { meter, ending, strict });
@@ -119,7 +89,7 @@ export function ShakespeareanInsults() {
             <button
               key={t}
               className={`bard-tier ${tier === t ? 'is-on' : ''}`}
-              onClick={() => chooseTier(t)}
+              onClick={() => setTier(t)}
               aria-pressed={tier === t}
             >
               {tierMeta(t).label}
@@ -127,24 +97,6 @@ export function ShakespeareanInsults() {
           ))}
         </div>
         <p className="bard-tier-desc">{tierMeta(tier).description}</p>
-
-        {gateOpen && (
-          <div className="bard-gate">
-            <p>Full Offense includes the unaltered canon. Confirm you are 18 or older.</p>
-            <div className="bard-gate-row">
-              <input
-                className="bard-input"
-                type="date"
-                value={dob}
-                onChange={(e) => setDob((e.target as HTMLInputElement).value)}
-                aria-label="Date of birth"
-              />
-              <button className="bard-btn" onClick={confirmAge}>Confirm</button>
-              <button className="bard-btn ghost" onClick={() => setGateOpen(false)}>Cancel</button>
-            </div>
-            <p className="bard-fine">Self-attested. This is a minimal gate, not identity verification.</p>
-          </div>
-        )}
 
         {/* Forge */}
         <section className="bard-panel">
