@@ -67,9 +67,11 @@ const RELATIONSHIPS: Record<string, Rel> = {
   Romeo: { play: 'Romeo and Juliet', friends: ['Juliet', 'Mercutio'] },
   Juliet: { play: 'Romeo and Juliet', friends: ['Romeo'] },
   Mercutio: { play: 'Romeo and Juliet', friends: ['Romeo'] },
-  Shylock: { play: 'The Merchant of Venice', enemies: ['Portia'] },
-  Portia: { play: 'The Merchant of Venice', enemies: ['Shylock'] },
-  Jessica: { play: 'The Merchant of Venice', enemies: ['Shylock'] },
+  // The Merchant of Venice is deliberately kept OUT of the banter map.
+  // Its adversary dynamics (Shylock vs. his accusers) trade on an
+  // antisemitic caricature; AI-generated antagonism there is a risk we
+  // do not take. Portia/Jessica still post their neutral lines; they
+  // just do not banter.
   Prospero: { play: 'The Tempest', friends: ['Ariel'], enemies: ['Antonio'] },
   Ariel: { play: 'The Tempest', friends: ['Prospero'] },
   Antonio: { play: 'The Tempest', enemies: ['Prospero'] },
