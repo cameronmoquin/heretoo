@@ -91,7 +91,7 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
       <Text style={s.ctaTitle}>Free for one family.</Text>
       <Text style={s.ctaBody}>
         Five dollars a month or fifty a year covers the family for everyone in it.
-        The grandmother never sees the price.
+        Only the payer ever sees a price.
       </Text>
       <View style={s.ctaActions}>
         <TouchableOpacity

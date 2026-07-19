@@ -26,8 +26,8 @@ export function GenerationSwitcher() {
     <View style={s.wrap}>
       <Text style={s.label}>Look &amp; feel</Text>
       <Text style={s.hint}>
-        Pick the vibe. Your family can each choose their own — a grandkid
-        in glitch, grandma in warm.
+        Pick the vibe. Everyone chooses their own — glitch, grunge,
+        clean, analog, or warm.
       </Text>
       <View style={s.grid}>
         {GENERATION_ORDER.map((g) => {

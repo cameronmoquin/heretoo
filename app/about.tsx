@@ -72,13 +72,6 @@ export default function AboutScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={s.ctaAlt}
-            onPress={() => router.push('/for-grandparents' as any)}
-            activeOpacity={0.85}
-          >
-            <Text style={s.ctaAltText}>For grandparents</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.ctaAlt}
             onPress={() => router.push('/the-parlor' as any)}
             activeOpacity={0.85}
           >

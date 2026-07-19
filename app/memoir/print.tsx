@@ -40,7 +40,7 @@ const OPTIONS: PrintOption[] = [
     category: 'print-on-demand',
     tagline: 'The default for most people. Cheap, fast, no setup fees.',
     approxCost: '$4–$8 per copy, plus shipping',
-    bestFor: 'Sending a copy to every grandchild without paying upfront.',
+    bestFor: 'Sending copies to everyone without paying upfront.',
     how: 'Make a free KDP account, click "Paperback," upload the interior PDF and cover, pick the trim size (6×9). Order a proof first — about $4. Once you approve it, family can order copies directly from the book\'s Amazon page.',
     url: 'https://kdp.amazon.com/',
   },

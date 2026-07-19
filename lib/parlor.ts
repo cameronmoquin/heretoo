@@ -39,62 +39,16 @@ export interface ParlorEssay {
 }
 
 export const PARLOR_ESSAYS: ParlorEssay[] = [
-  {
-    slug: 'how-to-set-up-your-mother-on-heretoo',
-    title: 'How to set up your mother on HereToo',
-    description:
-      'A short, practical walk-through for the granddaughter at the kitchen table.',
-    intent: 'helper',
-    publishedAt: '2026-05-10',
-    published: true,
-    body: [
-      'You start a family. You give it a name — "The Cottage," your last name, "Sunday Lunch," whatever feels right. The name is private; only invited people will see it.',
-      'You add the people you want in the room. You can invite by phone or by email if they already use the internet, or by sending a printed welcome card by mail if they don\'t. The card has a QR code on the back. They scan it with their phone camera, hear a short greeting in a calm voice, and they\'re in. No signup form, no password to remember.',
-      'Inside the family, you can post photos, write a paragraph about your day, ask the family a question, queue a long letter for delivery on a chosen date, or get on a video call. There is also a daily memoir prompt — one open question a day, the kind that produces a story. Your mother can write or speak; the platform transcribes either way.',
-      'A daily email summary arrives at noon, listing what the family posted that she hasn\'t read yet. If she closes the app for two weeks, no one nags her. The room is still there when she comes back.',
-      'The family subscription is five dollars a month or fifty a year, paid by whoever wants to cover it. Your mother never sees a price. The first family is free for trial.',
-    ],
-  },
-
   // ── Forthcoming, in editorial order ─────────────────────────────────
-  {
-    slug: 'when-your-mother-stops-posting-on-facebook',
-    title: 'What to do when your mother stops posting on Facebook',
-    description: 'The grandmother problem named plainly, with three honest suggestions.',
-    intent: 'helper',
-    publishedAt: '2026-05-15',
-    published: false,
-  },
-  {
-    slug: 'a-letter-to-my-granddaughter',
-    title: 'A letter to my granddaughter, written in 2026, to be opened in 2046',
-    description: 'An essay that is itself a letter; doubles as the most affecting demo of the Letter feature.',
-    intent: 'latent',
-    publishedAt: '2026-05-22',
-    published: false,
-  },
+  // (The grandparent-pitch entries were cut 2026-07 with the rest of the
+  //  "safe place for families" marketing. The parlor keeps its neutral
+  //  essays; new editorial direction lands with the new voice.)
   {
     slug: 'why-your-family-group-chat-keeps-dying',
     title: 'Why your family group chat keeps dying',
     description: 'Group chats are loud and shallow. Family deserves quiet and deep.',
     intent: 'latent',
     publishedAt: '2026-05-29',
-    published: false,
-  },
-  {
-    slug: 'how-to-introduce-a-grandparent-to-a-new-app',
-    title: 'How to introduce a 75-year-old to a new app',
-    description: 'A short how-to for the granddaughter at the kitchen table on a Sunday afternoon.',
-    intent: 'helper',
-    publishedAt: '2026-06-05',
-    published: false,
-  },
-  {
-    slug: 'the-wallpaper-your-grandmother-chose',
-    title: 'The wallpaper your grandmother chose',
-    description: 'A short essay on William Morris, dwelling, and why your phone screen has been ugly for fifteen years.',
-    intent: 'latent',
-    publishedAt: '2026-06-12',
     published: false,
   },
   {
@@ -127,14 +81,6 @@ export const PARLOR_ESSAYS: ParlorEssay[] = [
     description: 'A genuinely fair list. HereToo is one entry; we name the strengths of the others.',
     intent: 'helper',
     publishedAt: '2026-07-10',
-    published: false,
-  },
-  {
-    slug: 'how-to-write-a-letter-to-a-grandchild-not-yet-born',
-    title: "How to write a letter to a grandchild who isn't born yet",
-    description: 'Letter feature, future-recipient mode. Writing-craft advice that stands on its own.',
-    intent: 'latent',
-    publishedAt: '2026-07-17',
     published: false,
   },
 ];

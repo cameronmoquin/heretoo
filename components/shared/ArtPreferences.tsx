@@ -251,8 +251,7 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
           </Section>
 
           {/* Read-aloud pace — Source of Truth M6. Three calibrated
-              speeds: slower for grandparents, default, faster for
-              teenagers. Same Bike Messenger voice; different cadence. */}
+              speeds. Same Bike Messenger voice; different cadence. */}
           <Section label="Read-aloud pace">
             <ReadAloudPace />
           </Section>
@@ -429,7 +428,7 @@ function ReadAloudPace() {
   const pace = useTTS((st) => st.pace);
   const setPace = useTTS((st) => st.setPace);
   const opts: Array<{ value: 0.85 | 1.0 | 1.15; label: string; sub: string }> = [
-    { value: 0.85, label: 'Slower', sub: 'Grandparents, evenings, when you want time.' },
+    { value: 0.85, label: 'Slower', sub: 'Evenings, when you want time.' },
     { value: 1.0, label: 'Default', sub: 'A calm friend reading a letter aloud.' },
     { value: 1.15, label: 'Quicker', sub: 'Folding laundry, walking, in a hurry.' },
   ];

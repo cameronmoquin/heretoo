@@ -143,6 +143,14 @@ export default function NotificationSettings() {
             <TimezoneRow />
 
             <ToggleRow
+              label="Stories you follow"
+              sub="Email the moment a post lands on a subject you follow — for when something's happening"
+              value={prefs.email_subject_activity}
+              onValueChange={(v) => update.mutate({ email_subject_activity: v })}
+              disabled={!prefs.email_enabled}
+            />
+
+            <ToggleRow
               label="Connection requests"
               sub="Someone outside your network wants to message you"
               value={prefs.email_connection_request}

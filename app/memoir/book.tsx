@@ -107,7 +107,7 @@ export default function MemoirBookScreen() {
         <View style={s.page}>
         <Text style={s.lede}>
           When you&apos;re ready, we turn your answers into a real paperback you can
-          order and hold. Every grandchild gets a copy.
+          order and hold.
         </Text>
 
         {/* Title + dedication */}
@@ -130,7 +130,7 @@ export default function MemoirBookScreen() {
             value={dedication}
             onChangeText={setDedication}
             onBlur={saveMeta}
-            placeholder="For my grandchildren."
+            placeholder="For the ones who come after."
             placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
             multiline
             maxLength={400}

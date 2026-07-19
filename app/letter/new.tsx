@@ -197,7 +197,7 @@ export default function NewLetterScreen() {
             style={s.recipientInput}
             value={draftRecipient}
             onChangeText={search}
-            placeholder='Type a name, or "my future grandchild"'
+            placeholder='Type a name, or "my future self"'
             placeholderTextColor={Colors.textMuted}
             onSubmitEditing={() => searchResults.length === 0 && addFutureRecipient()}
           />

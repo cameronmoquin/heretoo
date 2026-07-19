@@ -39,7 +39,7 @@ export default function InviteCardScreen() {
   const { data: family } = useFamily(familyId);
   const create = useCreateWelcomeInvitation();
   const [recipientName, setRecipientName] = useState('');
-  const [relationship, setRelationship] = useState('grandmother');
+  const [relationship, setRelationship] = useState('friend');
   const [design, setDesign] = useState<CardDesign>('pressed-flower');
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
 
@@ -131,12 +131,12 @@ export default function InviteCardScreen() {
                 style={s.input}
                 value={relationship}
                 onChangeText={setRelationship}
-                placeholder="grandmother"
+                placeholder="friend"
                 placeholderTextColor={Colors.textMuted}
                 maxLength={60}
               />
               <Text style={s.fieldHint}>
-                The voice greeting will say "Your {relationship.trim() || 'grandmother'}, [your name], made you a place here."
+                The voice greeting will say "Your {relationship.trim() || 'friend'}, [your name], made you a place here."
               </Text>
             </View>
 
