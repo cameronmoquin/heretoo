@@ -30,7 +30,6 @@ export function MobileTabBar() {
   const session = useAuthStore((s) => s.session);
   const radioPlaying = useRadio((s) => s.playing);
   const radioLoading = useRadio((s) => s.loading);
-  const radioToggle = useRadio((s) => s.toggle);
   const station = useActiveStation();
   const { data: unread } = useUnreadCount();
   const { width } = useWindowDimensions();
@@ -66,6 +65,7 @@ export function MobileTabBar() {
   const onProfile = path.startsWith('/profile') || path.startsWith('/(tabs)/profile');
   const onChat = path.startsWith('/chat');
   const onHunt = path.startsWith('/hunt');
+  const onRooms = path.startsWith('/rooms');
 
   return (
     <View style={styles.bar}>
@@ -95,28 +95,27 @@ export function MobileTabBar() {
         <Text style={[styles.label, onFeed && styles.labelActive]}>Feed</Text>
       </TouchableOpacity>
 
+      {/* Center slot: the hallway. Every other room lives one tap in.
+          The radio moved inside — a live control on the Rooms screen
+          (its pulse shows here when playing). */}
       <TouchableOpacity
         style={styles.slot}
-        onPress={() => { radioToggle().catch(() => {}); }}
-        onLongPress={() => router.push('/(tabs)/music' as any)}
+        onPress={() => router.push('/rooms' as any)}
         activeOpacity={0.7}
-        accessibilityLabel={radioPlaying ? `Pause ${station.name}` : `Play ${station.name}`}
+        accessibilityLabel="All rooms"
       >
         <View style={[
           styles.iconRing,
-          radioPlaying && { backgroundColor: Colors.primaryFaint },
+          (onRooms || radioPlaying) && { backgroundColor: Colors.primaryFaint },
         ]}>
           <Ionicons
-            name={radioPlaying ? 'pause' : 'musical-notes'}
+            name={onRooms ? 'grid' : 'grid-outline'}
             size={18}
-            color={radioPlaying ? Colors.primary : Colors.textSecondary}
+            color={onRooms || radioPlaying ? Colors.primary : Colors.textSecondary}
           />
         </View>
-        <Text
-          style={[styles.label, radioPlaying && styles.labelActive]}
-          numberOfLines={1}
-        >
-          {radioLoading ? '…' : station.name}
+        <Text style={[styles.label, (onRooms || radioPlaying) && styles.labelActive]} numberOfLines={1}>
+          {radioPlaying ? (radioLoading ? '…' : station.name) : 'Rooms'}
         </Text>
       </TouchableOpacity>
 

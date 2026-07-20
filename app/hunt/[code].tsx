@@ -203,20 +203,6 @@ export default function HuntSeek() {
               />
             )}
 
-            {/* Find gate */}
-            <TouchableOpacity
-              style={[s.findBtn, !gated && s.findBtnLocked]}
-              onPress={onFound}
-              disabled={!gated || claim.isPending}
-              activeOpacity={0.85}
-            >
-              {claim.isPending
-                ? <ActivityIndicator color="#FFF" />
-                : <Ionicons name={gated ? 'flag' : 'lock-closed'} size={16} color={gated ? '#FFF' : Colors.textMuted} />}
-              <Text style={[s.findBtnText, !gated && { color: Colors.textMuted }]}>
-                {gated ? 'I found it' : distance !== null ? `Get within ${cache.radius_m}m` : 'Locating…'}
-              </Text>
-            </TouchableOpacity>
             {geoError === 'denied' && <Text style={s.warn}>Location blocked. Enable it to hunt.</Text>}
 
             {/* The sealed payload — hidden until inside the radius. */}
@@ -235,6 +221,26 @@ export default function HuntSeek() {
           </>
         )}
       </ScrollView>
+
+      {/* The find gate lives in the thumb zone: pinned above the tab
+          bar while hunting, always reachable one-handed. */}
+      {!found && !cache.locked && (
+        <View style={s.pinned}>
+          <TouchableOpacity
+            style={[s.findBtn, !gated && s.findBtnLocked]}
+            onPress={onFound}
+            disabled={!gated || claim.isPending}
+            activeOpacity={0.85}
+          >
+            {claim.isPending
+              ? <ActivityIndicator color="#FFF" />
+              : <Ionicons name={gated ? 'flag' : 'lock-closed'} size={18} color={gated ? '#FFF' : Colors.textMuted} />}
+            <Text style={[s.findBtnText, !gated && { color: Colors.textMuted }]}>
+              {gated ? 'I found it' : distance !== null ? `Get within ${cache.radius_m}m` : 'Locating…'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -242,7 +248,14 @@ export default function HuntSeek() {
 function makeStyles() {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 520, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.md, alignItems: 'stretch' },
+    scroll: { padding: Spacing.lg, paddingBottom: 170, gap: Spacing.md, alignItems: 'stretch' },
+    // Pinned above the mobile tab bar (~64px + safe area).
+    pinned: {
+      position: 'absolute', left: Spacing.lg, right: Spacing.lg, bottom: 84,
+      ...(Platform.OS === 'web'
+        ? ({ boxShadow: '0 8px 24px rgba(0,0,0,0.45)', borderRadius: 999 } as any)
+        : { elevation: 8 }),
+    },
     header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     kicker: {
       fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2, textTransform: 'uppercase',
