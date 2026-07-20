@@ -1,5 +1,12 @@
 # HereToo — Positioning & Disruption Thesis
 
+> **SUPERSEDED (July 2026).** The grandmother-beachhead and
+> family-first framing below were retired with the pivot; the current
+> thesis is `docs/PARADIGM.md`. What survives from this doc: the two
+> structural moves (change the unit of the network, change what the
+> network is paid to do) and every standing refusal. The demographic
+> targeting does not.
+
 *How HereToo disrupts an entrenched social landscape. Written to sit
 next to `heretoo-source-of-truth.md`. Plainspoken on purpose.*
 

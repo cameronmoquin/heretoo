@@ -12,9 +12,13 @@ two references it names and you are oriented.
 Make real, shippable progress on HereToo, then commit and push so it
 deploys. Specifically:
 
-1. **Orient.** Read `HERETOO_BRIEF.md` (what the product is, the voice,
-   the stack) and `docs/heretoo-source-of-truth.md` (the year-plan
-   bible — twelve milestones gated by the seven-question filter).
+1. **Orient.** Read `docs/PARADIGM.md` FIRST — it is the current
+   thesis (the bar with no sign; worn-media skins; provenance, earned
+   discovery, chosen time) and its six gates replace the old
+   seven-question filter. Then `HERETOO_BRIEF.md` for the stack and
+   `docs/heretoo-source-of-truth.md` for feature specs, knowing both
+   predate the pivot: their family-first framing is superseded, their
+   craft standards are not.
 2. **Pick the highest-value next thing.** Prefer finishing a thread
    that is already in flight over starting something new. Check recent
    commits (`git log --oneline -20`) to see what just shipped.
