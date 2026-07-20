@@ -53,3 +53,4 @@ muxAPI.txt
 # Note: constants/build-info.ts IS committed with a placeholder value,
 # and overwritten on every build. This way TypeScript always compiles
 # even on a fresh clone before running build-info.
+brain/
