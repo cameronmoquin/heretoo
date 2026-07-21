@@ -21,7 +21,24 @@
  *     inside the modal — the component handles its own platform branch).
  *   - Posting reuses the existing useUpload pipeline. No regression on
  *     the dedicated /upload screen; that still works for power-users.
+ *
+ * Destination (main-feed composer only, absent when familyId is set):
+ *   Crew   → the original path. useUpload.createPost. Default, always.
+ *   Public → a loft post. useCreateLoftPost. Pseudonymous byline from
+ *            useLoftHandle, hard 1200-char DB constraint, 24h expiry,
+ *            no attachments (loft_posts has a body column and nothing
+ *            else). This absorbed the composer from the deleted
+ *            /loft screen, including its pseudonym claim flow.
+ *   Destination resets to Crew after every send and on collapse. The
+ *   dangerous mis-send is crew-thought-into-the-public-square, so the
+ *   sticky state is the safe one.
  */
+
+/** Mirrors loft_posts: check (length(body) between 1 and 1200). */
+const LOFT_MAX = 1200;
+const CREW_MAX = 2000;
+
+type Destination = 'crew' | 'public';
 
 import React, { useState } from 'react';
 import {
@@ -32,6 +49,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useUpload } from '../../hooks/useUpload';
 import { useMyConnections, useMyFamilies, useFamilyMembersWithProfiles } from '../../hooks/useFamily';
+import { useLoftHandle, useCreateLoftPost, useRegenerateLoftHandle } from '../../hooks/useLoft';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { TwoWayCapture, type CapturedAsset } from '../upload/TwoWayCapture';
@@ -61,6 +79,17 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
   const [expanded, setExpanded] = useState(false);
 
+  // Destination. Only the main-feed composer offers it; a crew-scoped
+  // composer is pinned to its crew and uses the Post/Update toggle in
+  // this slot instead.
+  const [destination, setDestination] = useState<Destination>('crew');
+  const canChooseDestination = !isFamilyScoped;
+  const isPublic = canChooseDestination && destination === 'public';
+
+  const { data: loftHandle, refetch: refetchLoftHandle } = useLoftHandle();
+  const regenerateLoftHandle = useRegenerateLoftHandle();
+  const createLoftPost = useCreateLoftPost();
+
   const [body, setBody] = useState('');
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
@@ -76,8 +105,44 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const { data: familyMembers } = useFamilyMembersWithProfiles(familyId ?? null);
 
   const hasMedia = upload.selectedAssets.length > 0;
-  const canPost = body.trim().length > 0 || hasMedia;
+  const trimmedLen = body.trim().length;
+  const overLoftLimit = isPublic && trimmedLen > LOFT_MAX;
   const isUploading = upload.stage === 'uploading' || upload.stage === 'creating_post';
+  const isSending = isUploading || createLoftPost.isPending;
+
+  // Public needs a body inside 1..1200 and a claimed pseudonym. It can
+  // never be satisfied by media alone; loft posts carry no media.
+  const canPost = isPublic
+    ? trimmedLen > 0 && !overLoftLimit && !!loftHandle
+    : trimmedLen > 0 || hasMedia;
+
+  /**
+   * Pseudonym claim. Lifted unchanged from the /loft screen: roll a
+   * handle, and if the RPC fails, refetch as the fallback path before
+   * surfacing the error.
+   */
+  const claimPseudonym = async () => {
+    try {
+      await regenerateLoftHandle.mutateAsync();
+    } catch (e: any) {
+      await refetchLoftHandle();
+      if (e?.message) {
+        showAlert('Could not generate a pseudonym', e.message);
+      }
+    }
+  };
+
+  // Switching to Public drops any attachment, so say so before it
+  // happens. loft_posts stores a body and nothing else; carrying the
+  // asset along would silently discard it at insert time.
+  const switchDestination = (next: Destination) => {
+    if (next === destination) return;
+    if (next === 'public' && hasMedia) {
+      showAlert('Attachments dropped', 'Public posts are text only.');
+      upload.reset();
+    }
+    setDestination(next);
+  };
 
   const onTwoWayCapture = (asset: CapturedAsset) => {
     upload.setAssets([asset as any]);
@@ -106,7 +171,36 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     setTaggedIds(next);
   };
 
+  /** Public path. Validates against the DB constraint before the
+   *  insert so the user reads a sentence instead of a Postgres error. */
+  const handlePublicPost = async () => {
+    const text = body.trim();
+    if (text.length < 1) {
+      showAlert('Nothing to post', 'Write something first.');
+      return;
+    }
+    if (text.length > LOFT_MAX) {
+      showAlert('Too long', `Public posts stop at ${LOFT_MAX} characters. Yours is ${text.length}.`);
+      return;
+    }
+    if (!loftHandle) {
+      showAlert('No pseudonym yet', 'Claim one before posting to Public.');
+      return;
+    }
+    try {
+      await createLoftPost.mutateAsync(text);
+      setBody('');
+      setTaggedIds(new Set());
+      setDestination('crew');
+      setExpanded(false);
+      upload.reset();
+    } catch (e: any) {
+      showAlert('Could not post', e?.message ?? 'Try again.');
+    }
+  };
+
   const handlePost = async () => {
+    if (isPublic) return handlePublicPost();
     try {
       let photoUploads: { path: string; width?: number; height?: number }[] | undefined;
       let muxPlaybackId: string | undefined;
@@ -160,7 +254,9 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   // earns the right to post in the common area.
   // Crew-scoped composers skip this gate. If you're on the crew
   // page, you're necessarily a member of that crew.
-  if (!isFamilyScoped && families !== undefined && !inAFamily) {
+  // Public is exempt: loft posts only require an authenticated user,
+  // so the gate steps aside once that destination is chosen.
+  if (!isFamilyScoped && !isPublic && families !== undefined && !inAFamily) {
     return (
       <View style={s.gateCard}>
         <Ionicons name="people-outline" size={24} color={Colors.primary} />
@@ -180,6 +276,14 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           >
             <Text style={s.gateBtnTextAlt}>Start a crew</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.gateBtn, s.gateBtnAlt]}
+            onPress={() => { setDestination('public'); setExpanded(true); }}
+            activeOpacity={0.85}
+            accessibilityLabel="Post to Public instead. Pseudonymous, vanishes after 24 hours"
+          >
+            <Text style={s.gateBtnTextAlt}>Post to Public</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -189,7 +293,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   // direct camera/photo buttons) to expand into the full composer.
   // Posting volume is low enough that giving the feed back ~200px of
   // vertical real-estate is worth the extra tap to expand.
-  const isQuiet = !expanded && body.length === 0 && !hasMedia && !isUploading;
+  const isQuiet = !expanded && body.length === 0 && !hasMedia && !isSending;
   if (isQuiet) {
     return (
       <View style={s.collapsedRow}>
@@ -216,10 +320,14 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   return (
     <View style={s.card}>
       <View style={s.headerRow}>
-        <Text style={s.title}>{isFamilyScoped && postKind === 'update' ? 'New update' : 'New post'}</Text>
+        <Text style={s.title}>
+          {isPublic
+            ? 'New public post'
+            : isFamilyScoped && postKind === 'update' ? 'New update' : 'New post'}
+        </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <TouchableOpacity
-            onPress={() => { setExpanded(false); setBody(''); upload.reset(); }}
+            onPress={() => { setExpanded(false); setBody(''); setDestination('crew'); upload.reset(); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={s.collapseBtn}
             accessibilityLabel="Collapse composer"
@@ -227,17 +335,109 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             <Ionicons name="chevron-up" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[s.postBtn, (!canPost || isUploading) && s.postBtnDisabled]}
+            style={[s.postBtn, isPublic && s.postBtnPublic, (!canPost || isSending) && s.postBtnDisabled]}
             onPress={handlePost}
-            disabled={!canPost || isUploading}
+            disabled={!canPost || isSending}
             activeOpacity={0.85}
+            accessibilityLabel={
+              isPublic ? 'Post to Public'
+                : postKind === 'update' ? 'Send update'
+                  : isFamilyScoped ? 'Post to this crew' : 'Post to the feed'
+            }
           >
-            {isUploading
-              ? <ActivityIndicator color="#000" size="small" />
-              : <Text style={s.postBtnText}>{postKind === 'update' ? 'Send update' : 'Post'}</Text>}
+            {isSending
+              ? <ActivityIndicator color="#FFF" size="small" />
+              : (
+                <Text style={s.postBtnText}>
+                  {isPublic ? 'Post to Public' : postKind === 'update' ? 'Send update' : 'Post'}
+                </Text>
+              )}
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Destination. Two very different audiences, so the control is
+          always on screen before the send, never behind a menu. */}
+      {canChooseDestination && (
+        <View style={s.destRow}>
+          <TouchableOpacity
+            style={[s.destBtn, !isPublic && s.destBtnActive]}
+            onPress={() => switchDestination('crew')}
+            activeOpacity={0.7}
+            accessibilityLabel={isFamilyScoped ? 'Post to this crew' : 'Post to the feed'}
+            accessibilityState={{ selected: !isPublic }}
+          >
+            <Ionicons
+              name="people-outline"
+              size={14}
+              color={!isPublic ? Colors.primary : Colors.textMuted}
+            />
+            {/* Only a crew-scoped composer writes visibility 'family'. On
+                the main feed this writes 'public', so calling it Crew there
+                would promise an audience the post does not get. */}
+            <Text style={[s.destBtnText, !isPublic && s.destBtnTextActive]}>
+              {isFamilyScoped ? 'Crew' : 'Feed'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.destBtn, isPublic && s.destBtnActive]}
+            onPress={() => switchDestination('public')}
+            activeOpacity={0.7}
+            accessibilityLabel="Post to Public. Pseudonymous, vanishes after 24 hours"
+            accessibilityState={{ selected: isPublic }}
+          >
+            <Ionicons
+              name="earth-outline"
+              size={14}
+              color={isPublic ? Colors.primary : Colors.textMuted}
+            />
+            <Text style={[s.destBtnText, isPublic && s.destBtnTextActive]}>Public</Text>
+            <Text style={[s.destTag, isPublic && s.destTagActive]}>24h</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Which pseudonym carries the post. Identity disclosure, shown
+          before the send. Also the claim flow when there is no handle
+          yet, same two paths the /loft sub-bar had. */}
+      {isPublic && (
+        <View style={s.bylineRow}>
+          <Ionicons name="eye-off-outline" size={14} color={Colors.textSecondary} />
+          {loftHandle ? (
+            <>
+              <Text style={s.bylineText}>
+                You are <Text style={s.bylineHandle}>{loftHandle}</Text>
+              </Text>
+              <TouchableOpacity
+                onPress={() => regenerateLoftHandle.mutate()}
+                disabled={regenerateLoftHandle.isPending}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Change pseudonym"
+              >
+                <Text style={s.bylineLink}>
+                  {regenerateLoftHandle.isPending ? 'rolling…' : 'change pseudonym'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={s.bylineText}>
+                You are <Text style={s.bylineHandle}>unnamed</Text>
+              </Text>
+              <TouchableOpacity
+                onPress={claimPseudonym}
+                disabled={regenerateLoftHandle.isPending}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Get a pseudonym"
+              >
+                <Text style={s.bylineLink}>
+                  {regenerateLoftHandle.isPending ? 'rolling…' : 'get a pseudonym'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      )}
 
       {/* Update / Post toggle, crew-scoped composers only. */}
       {isFamilyScoped && (
@@ -290,55 +490,67 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       )}
 
       <TextInput
-        style={s.input}
+        style={[s.input, overLoftLimit && s.inputOver]}
         accessibilityLabel="Post body"
         value={body}
         onChangeText={setBody}
         multiline
-        maxLength={2000}
+        maxLength={isPublic ? LOFT_MAX : CREW_MAX}
         textAlignVertical="top"
       />
 
       <View style={s.actionRow}>
-        <ActionBtn
-          icon="image-outline"
-          label={hasMedia && upload.selectedAssets[0]?.type !== 'video' ? `${upload.selectedAssets.length} photo${upload.selectedAssets.length === 1 ? '' : 's'}` : 'Photo'}
-          onPress={() => upload.pickPhotos()}
-        />
-        <ActionBtn
-          icon="videocam-outline"
-          label="Video"
-          onPress={() => upload.pickVideo()}
-        />
-        <ActionBtn
-          icon="camera-outline"
-          label="One-Way"
-          onPress={() => setOneWayOpen(true)}
-        />
-        <ActionBtn
-          icon="sync-outline"
-          label="Two-Way"
-          onPress={() => setTwoWayOpen(true)}
-        />
-        <ActionBtn
-          icon="at-outline"
-          label="Tag"
-          onPress={() => setTagPickerOpen(true)}
-        />
+        {/* Media and tagging are crew-only. loft_posts has a body
+            column and no media table, and an @handle in a pseudonymous
+            post undoes the pseudonym. */}
+        {!isPublic && (
+          <>
+            <ActionBtn
+              icon="image-outline"
+              label={hasMedia && upload.selectedAssets[0]?.type !== 'video' ? `${upload.selectedAssets.length} photo${upload.selectedAssets.length === 1 ? '' : 's'}` : 'Photo'}
+              onPress={() => upload.pickPhotos()}
+            />
+            <ActionBtn
+              icon="videocam-outline"
+              label="Video"
+              onPress={() => upload.pickVideo()}
+            />
+            <ActionBtn
+              icon="camera-outline"
+              label="One-Way"
+              onPress={() => setOneWayOpen(true)}
+            />
+            <ActionBtn
+              icon="sync-outline"
+              label="Two-Way"
+              onPress={() => setTwoWayOpen(true)}
+            />
+            <ActionBtn
+              icon="at-outline"
+              label="Tag"
+              onPress={() => setTagPickerOpen(true)}
+            />
+          </>
+        )}
         {/* Voice-to-text — speak instead of type. Appends transcribed
             text to the existing body so users can dictate then tweak. */}
         <MicInputButton
           size={16}
           onText={(t) => setBody((b) => (b ? `${b} ${t}`.trim() : t))}
         />
-        {hasMedia && (
+        {hasMedia && !isPublic && (
           <TouchableOpacity onPress={() => upload.reset()} style={s.clearBtn}>
             <Text style={s.clearBtnText}>Clear</Text>
           </TouchableOpacity>
         )}
+        {isPublic && (
+          <Text style={[s.charCount, overLoftLimit && s.charCountOver]}>
+            {LOFT_MAX - trimmedLen}
+          </Text>
+        )}
       </View>
 
-      {hasMedia && (
+      {hasMedia && !isPublic && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbStrip}>
           {upload.selectedAssets.map((a, i) => (
             <Image key={a.uri + i} source={{ uri: a.uri }} style={s.thumb} />
@@ -346,7 +558,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         </ScrollView>
       )}
 
-      {taggedList.length > 0 && (
+      {taggedList.length > 0 && !isPublic && (
         <View style={s.taggedRow}>
           {taggedList.map((c) => (
             <TouchableOpacity
@@ -624,9 +836,59 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   postBtnDisabled: { opacity: 0.4 },
+  // Public send carries a ring so the button itself reads differently
+  // from the crew send at a glance.
+  postBtnPublic: {
+    borderWidth: 1, borderColor: Colors.textPrimary,
+  },
   // White text on the new indigo primary — was '#000' which was fine on
   // the old gold-toned primary but reads as low-contrast on indigo.
   postBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
+
+  // Destination selector — Crew vs Public. Full-width, both options
+  // legible at rest, so the target audience is never a guess.
+  destRow: {
+    flexDirection: 'row', gap: 6,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.full,
+    borderWidth: 1, borderColor: Colors.border,
+    padding: 4,
+  },
+  destBtn: {
+    flex: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: Radius.full,
+  },
+  destBtnActive: {
+    backgroundColor: Colors.primaryFaint,
+    borderWidth: 1, borderColor: Colors.primary,
+  },
+  destBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
+  destBtnTextActive: { color: Colors.textPrimary },
+  destTag: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 0.6,
+    color: Colors.textMuted,
+    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.xs,
+    paddingHorizontal: 4, paddingVertical: 1,
+    overflow: 'hidden',
+  },
+  destTagActive: { color: Colors.primary, borderColor: Colors.primary },
+
+  // Pseudonym byline, public destination only.
+  bylineRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+    paddingHorizontal: 2,
+  },
+  bylineText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+  bylineHandle: { color: Colors.primary, fontWeight: '700' },
+  bylineLink: {
+    fontSize: 11, color: Colors.textMuted, fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+
+  charCount: { marginLeft: 'auto', fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
+  charCountOver: { color: Colors.error },
 
   kindRow: {
     flexDirection: 'row', gap: 6,
@@ -659,6 +921,7 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 15, color: Colors.textPrimary,
     minHeight: 48, lineHeight: 22,    // was 80; multiline still grows naturally
   },
+  inputOver: { borderColor: Colors.error },
 
   actionRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   actionBtn: {

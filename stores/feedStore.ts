@@ -2,6 +2,20 @@ import { create } from 'zustand';
 
 export type FeedTab = 'for_you' | 'connections';
 
+/**
+ * One feed, five lenses. The filter never changes the post query —
+ * useFeed stays on 'for_you'. It changes what FeedList renders out of
+ * the streams it already holds.
+ */
+export type FeedFilter = 'all' | 'crew' | 'public' | 'news' | 'drops';
+
+export const FEED_FILTERS: FeedFilter[] = ['all', 'crew', 'public', 'news', 'drops'];
+
+/** Narrow an untrusted string (query param, deep link) to a FeedFilter. */
+export function isFeedFilter(v: unknown): v is FeedFilter {
+  return typeof v === 'string' && (FEED_FILTERS as string[]).includes(v);
+}
+
 /** Public feed post shape (matches new schema). */
 export interface PostMedia {
   id: string;
@@ -46,9 +60,13 @@ export interface Post {
 interface FeedState {
   activeTab: FeedTab;
   setActiveTab: (tab: FeedTab) => void;
+  filter: FeedFilter;
+  setFilter: (f: FeedFilter) => void;
 }
 
 export const useFeedStore = create<FeedState>((set) => ({
   activeTab: 'for_you',
   setActiveTab: (activeTab) => set({ activeTab }),
+  filter: 'all',
+  setFilter: (filter) => set({ filter }),
 }));

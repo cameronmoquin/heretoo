@@ -51,6 +51,16 @@ export default function AboutScreen() {
             <Text style={s.ctaText}>Step inside</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Publisher-facing fair-use notice. It lived at the bottom of the
+            News room. That room folded into the feed's News lens, and this
+            is legal copy rather than explainer copy, so it needed a home
+            instead of a deletion. */}
+        <Text style={s.footnote}>
+          News headlines and summaries appear on HereToo under standard fair-use
+          practice for aggregators. The full reporting lives on the publisher&apos;s
+          site. Support public broadcasting directly when you can.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -96,4 +106,9 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   ctaText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.1 },
+  footnote: {
+    fontSize: 11, color: Colors.textMuted, fontStyle: 'italic',
+    textAlign: 'center', lineHeight: 17, paddingTop: Spacing.sm,
+    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+  },
 }); }

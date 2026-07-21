@@ -1,20 +1,22 @@
 /**
  * Home tab. The feed.
  *
- * For You / Connections, ranked by get_unifying_feed, paginated with
+ * One stream, ranked by get_unifying_feed, paginated with
  * useInfiniteQuery, kept current by useFeedRealtime. PostCard carries
  * hearts and comments.
  *
- * This replaced the Room view. /common redirects here.
+ * The chip row is a lens on that stream, not a second query. The query
+ * stays pinned to 'for_you'; the chip sets feedStore.filter and FeedList
+ * decides what to render. /loft, /news, and /common all redirect here.
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useFeed, useToggleHeart, useFeedRealtime } from '../../../hooks/useFeed';
-import { useFeedStore, type FeedTab } from '../../../stores/feedStore';
+import { useFeedStore, isFeedFilter, type FeedFilter } from '../../../stores/feedStore';
 import { useThemeStore } from '../../../stores/themeStore';
 import { useMyNetworkStats } from '../../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
@@ -24,17 +26,32 @@ import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
-const TABS: { key: FeedTab; label: string }[] = [
-  { key: 'for_you', label: 'For You' },
-  { key: 'connections', label: 'Connections' },
+const CHIPS: { key: FeedFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'crew', label: 'Crew' },
+  { key: 'public', label: 'Public' },
+  { key: 'news', label: 'News' },
+  { key: 'drops', label: 'Drops' },
 ];
 
 export default function FeedHomeScreen() {
   const styles = makeStyles();
-  const { activeTab, setActiveTab } = useFeedStore();
+  // The query is pinned. useFeed and useFeedRealtime still take the tab
+  // and it is now always 'for_you'.
+  const activeTab = useFeedStore((s) => s.activeTab);
+  const filter = useFeedStore((s) => s.filter);
+  const setFilter = useFeedStore((s) => s.setFilter);
   const feed = useFeed(activeTab);
   useFeedRealtime(activeTab);
   const toggleHeart = useToggleHeart();
+
+  // /loft?filter=public and /news?filter=news land here. Anything else
+  // in the param is ignored and the store keeps whatever it had.
+  const params = useLocalSearchParams<{ filter?: string | string[] }>();
+  const paramFilter = Array.isArray(params.filter) ? params.filter[0] : params.filter;
+  React.useEffect(() => {
+    if (isFeedFilter(paramFilter)) setFilter(paramFilter);
+  }, [paramFilter, setFilter]);
   const themeMode = useThemeStore((s) => s.mode);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const { data: stats } = useMyNetworkStats();
@@ -83,16 +100,30 @@ export default function FeedHomeScreen() {
         </View>
       )}
 
-      <View style={styles.tabRow}>
-        {TABS.map((tab) => {
-          const active = activeTab === tab.key;
-          return (
-            <TouchableOpacity key={tab.key} style={styles.tab} onPress={() => setActiveTab(tab.key)}>
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab.label}</Text>
-              {active && <View style={styles.tabBar} />}
-            </TouchableOpacity>
-          );
-        })}
+      {/* Horizontal scroll so five chips never wrap or clip at 375px. */}
+      <View style={styles.chipRowWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          {CHIPS.map((chip) => {
+            const active = filter === chip.key;
+            return (
+              <TouchableOpacity
+                key={chip.key}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setFilter(chip.key)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={chip.label}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{chip.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {stats && stats.reachable_profiles > 1 && (
@@ -137,18 +168,25 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surface,
     alignItems: 'center', justifyContent: 'center',
   },
-  tabRow: {
-    flexDirection: 'row',
+  chipRowWrap: {
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 12 },
-  tabText: { fontSize: 14, fontWeight: '500', color: Colors.textMuted, letterSpacing: 0.1 },
-  tabTextActive: { color: Colors.textPrimary, fontWeight: '700' },
-  tabBar: {
-    position: 'absolute', bottom: -1,
-    width: 32, height: 2.5, borderRadius: 2,
-    backgroundColor: Colors.primary,
+  chipRow: {
+    flexDirection: 'row', gap: 8, alignItems: 'center',
+    paddingHorizontal: Spacing.md, paddingVertical: 10,
   },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  chipActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryFaint,
+  },
+  chipText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, letterSpacing: 0.2 },
+  chipTextActive: { color: Colors.primary, fontWeight: '800' },
   statsBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginHorizontal: Spacing.md, marginTop: Spacing.sm,
