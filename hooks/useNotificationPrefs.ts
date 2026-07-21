@@ -30,6 +30,7 @@ export interface NotificationPrefs {
   email_connection_accepted: boolean;
   email_new_message: boolean;
   email_family_activity: boolean;
+  email_subject_activity: boolean;
   email_post_reaction: boolean;
   email_marketing: boolean;
 
