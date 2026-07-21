@@ -37,20 +37,6 @@ export function useNewsFeed(category?: NewsItem['category'] | 'all') {
   });
 }
 
-/** Today's rotation — one item per category. Used by the Room hearth's
- *  small headline strip. */
-export function useTodaysNewsRotation() {
-  return useQuery({
-    queryKey: ['news-rotation'],
-    queryFn: async (): Promise<NewsItem[]> => {
-      const { data, error } = await supabase.rpc('todays_news_rotation');
-      if (error) {
-        // eslint-disable-next-line no-console
-        console.warn('[news] rotation rpc failed', error.message);
-        return [];
-      }
-      return (data ?? []) as NewsItem[];
-    },
-    staleTime: 5 * 60_000,
-  });
-}
+// useTodaysNewsRotation was removed with the ornate Room view. It fed that
+// screen's headline strip and had no other caller. The todays_news_rotation
+// RPC it wrapped is still in the database, unused.

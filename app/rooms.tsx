@@ -46,7 +46,6 @@ export default function RoomsScreen() {
     { icon: 'mail', label: 'Letters', route: '/letter' },
     { icon: 'create', label: 'Memoir', route: '/memoir' },
     { icon: 'lock-closed', label: 'Journal', route: '/journal' },
-    { icon: 'reader', label: 'Common', route: '/common' },
     { icon: 'newspaper', label: 'News', route: '/news' },
     { icon: 'people', label: 'Network', route: '/network' },
     { icon: 'boat', label: 'Crews', route: '/family' },
