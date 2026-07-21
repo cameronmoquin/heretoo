@@ -122,7 +122,6 @@ export function HeadshotCapture({ onCapture, onClose }: Props) {
 
       <View pointerEvents="none" style={s.overlay}>
         <View style={s.viewfinderCircle} />
-        <Text style={s.hudLabel}>Center your face in the circle</Text>
       </View>
 
       {!!error && (
@@ -156,11 +155,6 @@ function makeStyles() { return StyleSheet.create({
   viewfinderCircle: {
     width: 280, height: 280, borderRadius: 140,
     borderWidth: 3, borderColor: 'rgba(255,255,255,0.85)',
-  },
-  hudLabel: {
-    backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFF',
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999,
-    fontSize: 12, fontWeight: '600', letterSpacing: 0.5,
   },
   errPill: {
     position: 'absolute', bottom: 130, alignSelf: 'center',

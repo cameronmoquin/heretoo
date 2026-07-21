@@ -9,6 +9,7 @@ import { useJoinFamily } from '../../hooks/useFamily';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 export default function JoinFamily() {
   const s = makeStyles();
@@ -45,15 +46,14 @@ export default function JoinFamily() {
             onSubmitEditing={submit}
             returnKeyType="go"
           />
-          <Text style={s.hint}>
-            Ask the family member who invited you for the 8-character code.
-          </Text>
           <TouchableOpacity
             style={[s.saveBtn, join.isPending && { opacity: 0.5 }]}
             onPress={submit}
             disabled={join.isPending}
           >
-            <Text style={s.saveBtnText}>{join.isPending ? 'Joining…' : 'Join family'}</Text>
+            <Text style={s.saveBtnText}>
+              {join.isPending ? 'Joining…' : `Join ${Vocab.group}`}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -75,7 +75,6 @@ function makeStyles() { return StyleSheet.create({
     textAlign: 'center', letterSpacing: 4,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
-  hint: { fontSize: 12, color: Colors.textMuted, marginTop: 8, lineHeight: 18 },
   saveBtn: {
     marginTop: 24, backgroundColor: Colors.primary, borderRadius: Radius.md,
     paddingVertical: 14, alignItems: 'center',

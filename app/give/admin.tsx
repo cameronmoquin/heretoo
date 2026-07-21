@@ -50,7 +50,7 @@ export default function AdminScreen() {
           <Text style={s.deniedTitle}>Admin only.</Text>
           <Text style={s.deniedBody}>
             Recording disbursements requires donation-admin access. The
-            transparency report itself is public — that&apos;s the page you can use.
+            transparency report is public.
           </Text>
           <TouchableOpacity onPress={() => router.replace('/give/transparency' as any)} style={s.deniedBtn}>
             <Text style={s.deniedBtnText}>See the report</Text>
@@ -99,18 +99,14 @@ export default function AdminScreen() {
         <View style={s.masthead}>
           <Text style={s.kicker}>Donation admin</Text>
           <Text style={s.title}>Record a transfer.</Text>
-          <Text style={s.lede}>
-            One row per wire, ACH, or check sent to the beneficiary. Saves
-            immediately to the public transparency page.
-          </Text>
         </View>
 
         <View style={s.form}>
-          <Field label="Beneficiary" value={beneficiary} onChange={setBeneficiary} placeholder="National Alliance to End Homelessness" />
+          <Field label="Beneficiary" value={beneficiary} onChange={setBeneficiary} />
           <Field label="Amount (USD)" value={amount} onChange={setAmount} placeholder="500.00" keyboardType="decimal-pad" />
           <Field label="Date sent" value={date} onChange={setDate} placeholder="2026-05-10" />
-          <Field label="Reference (optional)" value={reference} onChange={setReference} placeholder="Wire confirmation #ACH-12345" />
-          <Field label="Public note (optional)" value={note} onChange={setNote} placeholder="Q1 2026 quarterly disbursement" multiline />
+          <Field label="Reference (optional)" value={reference} onChange={setReference} />
+          <Field label="Public note (optional)" value={note} onChange={setNote} multiline />
 
           <TouchableOpacity
             style={[s.saveBtn, (record.isPending || !beneficiary.trim() || !amount) && { opacity: 0.5 }]}
@@ -172,6 +168,7 @@ function Field({
         style={[s.input, multiline && { minHeight: 64 }]}
         value={value}
         onChangeText={onChange}
+        accessibilityLabel={label}
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
         multiline={multiline}
@@ -196,11 +193,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 36, fontWeight: '800', letterSpacing: -0.6, color: Colors.brandIvory,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  lede: {
-    fontSize: 14, lineHeight: 22, color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-  },
-
   form: { gap: 12 },
   field: { gap: 4 },
   fieldLabel: {

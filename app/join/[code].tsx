@@ -1,12 +1,15 @@
 /**
- * Shareable family-invite landing page.
+ * Shareable crew-invite landing page.
  *
- * Anyone can land here — signed in, signed out, never been on the site
+ * Anyone can land here. Signed in, signed out, never been on the site
  * before. The whole flow happens on a single screen so a non-technical
  * recipient (your aunt, your brother) just enters an email and a
- * password, taps Accept, and is in the family within ten seconds.
+ * password, taps Accept, and is in the crew within ten seconds.
  *
- * Family preview is fetched via the SECURITY DEFINER RPC
+ * DB identifiers below still say "family" on purpose. Display copy says
+ * "crew" and comes from constants/vocab.
+ *
+ * Crew preview is fetched via the SECURITY DEFINER RPC
  * `find_family_by_invite_code` (migration 008) so anon visitors can
  * see what they're joining without RLS blocking them.
  *
@@ -31,6 +34,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 interface FamilyPreview {
   id: string;
@@ -52,7 +56,7 @@ export default function JoinByCode() {
   const [busy, setBusy] = useState<'auth' | 'join' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Family preview via anon-callable RPC.
+  // Crew preview via anon-callable RPC.
   const family = useQuery({
     queryKey: ['family-preview', normalized],
     queryFn: async (): Promise<FamilyPreview | null> => {
@@ -156,8 +160,8 @@ export default function JoinByCode() {
           <Ionicons name="alert-circle-outline" size={36} color={Colors.textMuted} />
           <Text style={s.title}>Invite not found</Text>
           <Text style={s.sub}>
-            That code is invalid or the family was deleted.
-            Double-check the link, or ask whoever sent it for a fresh one.
+            That code is dead, or the {Vocab.group} was deleted.
+            Check the link. Or ask whoever sent it for a fresh one.
           </Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
             <Text style={s.ctaText}>Go to HereToo</Text>
@@ -256,7 +260,7 @@ export default function JoinByCode() {
                 >
                   <Text style={s.ctaText}>
                     {busy === 'auth' ? 'Setting up your account…' :
-                     busy === 'join' ? 'Joining the family…' :
+                     busy === 'join' ? `Joining the ${Vocab.group}…` :
                      mode === 'signup' ? `Join ${f.name}` : 'Sign in & accept'}
                   </Text>
                 </TouchableOpacity>

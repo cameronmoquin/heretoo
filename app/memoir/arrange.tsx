@@ -95,16 +95,8 @@ export default function MemoirArrangeScreen() {
         </View>
 
         <View style={s.page}>
-          <Text style={s.lede}>
-            Put your stories in the order you want them read. Nudge an
-            entry up or down, or move it to a different chapter. This is
-            the order the book follows.
-          </Text>
-
           {chapters.length === 0 ? (
-            <Text style={s.empty}>
-              Nothing to arrange yet. Answer a prompt or two, then come back.
-            </Text>
+            <Text style={s.empty}>Nothing to arrange yet.</Text>
           ) : (
             chapters.map((chapter) => (
               <View key={chapter.key} style={s.chapterBlock}>
@@ -271,9 +263,6 @@ function makeStyles(elder: boolean) {
       gap: Spacing.lg, ...pageCardWeb,
     } : { gap: Spacing.lg, marginTop: 8 },
 
-    lede: {
-      fontSize: 16, lineHeight: 26, color: pageInk, fontStyle: 'italic', ...serif,
-    },
     empty: {
       fontSize: 16, color: pageInkSecondary, fontStyle: 'italic',
       textAlign: 'center', marginTop: 16, ...serif,

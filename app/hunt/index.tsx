@@ -36,12 +36,12 @@ export default function HuntHome() {
     const url = huntUrl(c.share_code);
     try {
       if (Platform.OS !== 'web' && (Share as any)?.share) {
-        await Share.share({ message: `Find my cache: ${url}` });
+        await Share.share({ message: `I left something. Come collect it: ${url}` });
       } else if (typeof navigator !== 'undefined' && (navigator as any).clipboard) {
         await (navigator as any).clipboard.writeText(url);
         showAlert('Link copied', url);
       } else {
-        showAlert('Seeker link', url);
+        showAlert('Courier link', url);
       }
     } catch {}
   };
@@ -57,25 +57,25 @@ export default function HuntHome() {
         </View>
 
         <Text style={s.lede}>
-          Hide a photo at a spot. Share the code. The seeker follows the
-          compass to the dead drop.
+          Leave a photo at a fixed set of coordinates. The code is the
+          receipt. Whoever holds it rides out and collects.
         </Text>
 
         <TouchableOpacity style={s.hideBtn} onPress={() => router.push('/hunt/new')} activeOpacity={0.85}>
           <Ionicons name="add-circle" size={18} color="#FFF" />
-          <Text style={s.hideBtnText}>Hide a cache</Text>
+          <Text style={s.hideBtnText}>Set a drop</Text>
         </TouchableOpacity>
 
         {/* My caches */}
         {(mine ?? []).length > 0 && (
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Your caches</Text>
+            <Text style={s.sectionTitle}>Your drops</Text>
             {(mine ?? []).map((c) => (
               <View key={c.id} style={s.row}>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.rowTitle}>{c.title || 'Untitled cache'}</Text>
+                  <Text style={s.rowTitle}>{c.title || 'Unmarked drop'}</Text>
                   <Text style={s.rowMeta}>
-                    Code {c.share_code} · {c.found_count} {c.found_count === 1 ? 'find' : 'finds'}
+                    Code {c.share_code} · {c.found_count} {c.found_count === 1 ? 'pickup' : 'pickups'}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => shareCache(c)} style={s.rowAction} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -84,7 +84,7 @@ export default function HuntHome() {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => router.push(`/hunt/${c.share_code}`)} style={s.rowAction} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons name="navigate-outline" size={16} color={Colors.primary} />
-                  <Text style={s.rowActionText}>Find</Text>
+                  <Text style={s.rowActionText}>Collect</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -93,9 +93,9 @@ export default function HuntHome() {
 
         {/* Public caches to seek */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Public hunts</Text>
+          <Text style={s.sectionTitle}>Open runs</Text>
           {(pub ?? []).length === 0 ? (
-            <Text style={s.empty}>No public caches yet. Hide one and make it public.</Text>
+            <Text style={s.empty}>Nothing on the open board. Set a drop and mark it public.</Text>
           ) : (
             (pub ?? []).map((c) => (
               <TouchableOpacity
@@ -105,8 +105,8 @@ export default function HuntHome() {
                 activeOpacity={0.85}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={s.rowTitle}>{c.title || 'Untitled cache'}</Text>
-                  <Text style={s.rowMeta}>{c.found_count} {c.found_count === 1 ? 'find' : 'finds'}</Text>
+                  <Text style={s.rowTitle}>{c.title || 'Unmarked drop'}</Text>
+                  <Text style={s.rowMeta}>{c.found_count} {c.found_count === 1 ? 'pickup' : 'pickups'}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
               </TouchableOpacity>

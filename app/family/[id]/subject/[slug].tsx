@@ -151,10 +151,6 @@ export default function SubjectScreen() {
         {posts.length === 0 ? (
           <View style={s.emptyWrap}>
             <Text style={s.emptyTitle}>Nothing tagged with this subject yet.</Text>
-            <Text style={s.emptySub}>
-              Posts tagged with &quot;{subject.name}&quot; will appear here in the order
-              they were added.
-            </Text>
           </View>
         ) : (
           posts.map((p: any) => (
@@ -227,5 +223,4 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
   emptyTitle: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
-  emptySub: { fontSize: 13, lineHeight: 18, color: Colors.textSecondary },
 }); }

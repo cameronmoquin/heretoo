@@ -155,7 +155,6 @@ export function HeadshotCapture({ onCapture, onClose }: Props) {
       {/* Circular viewfinder overlay — pointer-events-none so taps fall through. */}
       <View pointerEvents="none" style={s.overlay}>
         <View style={s.viewfinderCircle} />
-        <Text style={s.hudLabel}>Center your face in the circle</Text>
       </View>
 
       {(stage === 'requesting' || stage === 'capturing') && (
@@ -224,11 +223,6 @@ function makeStyles() { return StyleSheet.create({
     width: 280, height: 280, borderRadius: 140,
     borderWidth: 3, borderColor: 'rgba(255,255,255,0.85)',
     shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 18,
-  },
-  hudLabel: {
-    backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFF',
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999,
-    fontSize: 12, fontWeight: '600', letterSpacing: 0.5,
   },
   spinnerOverlay: {
     ...StyleSheet.absoluteFillObject,

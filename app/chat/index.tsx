@@ -6,7 +6,7 @@
  *   - Open threads (status='open') as the main list.
  *   - "Requests" pile (status='pending', recipient is the viewer) — these
  *     are unsolicited messages from people more than 3 hops away in the
- *     family graph; the viewer chooses to accept or decline before
+ *     crew graph; the viewer chooses to accept or decline before
  *     they can reply.
  *   - Tapping any row enters /chat/[threadId].
  */
@@ -88,9 +88,6 @@ export default function ChatList() {
             <View style={s.empty}>
               <Ionicons name="chatbubbles-outline" size={32} color={Colors.textMuted} />
               <Text style={s.emptyTitle}>No messages yet</Text>
-              <Text style={s.emptySub}>
-                Tap the pencil to start a chat with someone in your network.
-              </Text>
               <TouchableOpacity
                 style={s.emptyBtn}
                 onPress={() => router.push('/chat/new' as any)}
@@ -222,7 +219,6 @@ function makeStyles() { return StyleSheet.create({
     paddingVertical: 60, gap: 8,
   },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginTop: 8 },
-  emptySub: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', maxWidth: 320, lineHeight: 19 },
   emptyBtn: {
     marginTop: 12, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999,
     backgroundColor: Colors.primary,

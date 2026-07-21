@@ -313,7 +313,7 @@ export default function MemoirScreen() {
           </View>
           <View style={s.libPage}>
             {(responses ?? []).length === 0 ? (
-              <Text style={s.libEmpty}>Nothing saved yet. Answer a prompt and it lands here.</Text>
+              <Text style={s.libEmpty}>Nothing saved yet.</Text>
             ) : (
               (responses ?? []).map((r) => <LibraryRow key={r.id} response={r} />)
             )}
@@ -377,7 +377,7 @@ export default function MemoirScreen() {
         ) : !active ? (
           isPicking
             ? <ActivityIndicator color={ic.page.accent} style={{ marginTop: 80 }} />
-            : <Text style={s.allDone}>You&apos;ve answered every prompt. The library refills as we add to it.</Text>
+            : <Text style={s.allDone}>You&apos;ve answered every prompt.</Text>
         ) : (
           <Animated.View style={[s.stage, { opacity: fade }]}>
             {/* Content-warning chip */}
@@ -430,6 +430,7 @@ export default function MemoirScreen() {
                       onPress={onMicPress}
                       disabled={transcribe.isPending}
                       activeOpacity={0.85}
+                      accessibilityLabel={voice.recording ? 'Stop recording' : 'Speak your answer'}
                     >
                       {transcribe.isPending ? (
                         <ActivityIndicator color={ic.page.accent} size="small" />
@@ -441,13 +442,11 @@ export default function MemoirScreen() {
                         />
                       )}
                     </TouchableOpacity>
-                    <Text style={s.micHint}>
-                      {transcribe.isPending
-                        ? 'Writing down what you said…'
-                        : voice.recording
-                          ? 'Listening… tap to stop'
-                          : 'Tap to speak your answer'}
-                    </Text>
+                    {(transcribe.isPending || voice.recording) && (
+                      <Text style={s.micHint}>
+                        {transcribe.isPending ? 'Writing down what you said…' : 'Listening…'}
+                      </Text>
+                    )}
                   </View>
                 )}
 
@@ -456,8 +455,7 @@ export default function MemoirScreen() {
                   style={s.input}
                   value={answer}
                   onChangeText={setAnswer}
-                  placeholder="Answer in your own words. Write as much or as little as you want."
-                  placeholderTextColor={Colors.textMuted}
+                  accessibilityLabel="Your answer"
                   multiline
                   maxLength={8000}
                   textAlignVertical="top"
@@ -604,7 +602,6 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
               {result.suggestions.map((sug, i) => (
                 <Text key={`s${i}`} style={s.suggestLine}>• {sug}</Text>
               ))}
-              <Text style={s.suggestNote}>Ideas only. Change them yourself if you want to.</Text>
             </>
           )}
 
@@ -1012,9 +1009,6 @@ function makeStyles(elder: boolean = false) {
       fontSize: elder ? 15 : 14, lineHeight: elder ? 24 : 21, color: t.pageInkSecondary,
       marginTop: 4,
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-    suggestNote: {
-      fontSize: 12, color: t.pageInkMuted, fontStyle: 'italic', marginTop: 6,
     },
     draftInput: {
       minHeight: 140, padding: 10,

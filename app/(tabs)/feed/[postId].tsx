@@ -126,7 +126,7 @@ export default function PostDetail() {
           // debugging via DevTools straightforward.
           // eslint-disable-next-line no-console
           console.error('COMMENT_INSERT_ERROR', e, JSON.stringify(e ?? {}, null, 2));
-          const msg = e?.message ?? e?.hint ?? 'Could not post — try again.';
+          const msg = e?.message ?? e?.hint ?? 'Could not post. Try again.';
           setSubmitErr(msg);
           showAlert('Could not post comment', msg);
         },
@@ -219,11 +219,11 @@ export default function PostDetail() {
           </View>
 
           {commentsDisabled && (
-            <Text style={s.noComments}>The author has turned off comments.</Text>
+            <Text style={s.noComments}>Comments off.</Text>
           )}
 
           {!commentsDisabled && comments && comments.length === 0 && (
-            <Text style={s.noComments}>No comments yet. Say something.</Text>
+            <Text style={s.noComments}>No comments yet.</Text>
           )}
 
           {(comments ?? []).map((c) => (
@@ -281,7 +281,7 @@ export default function PostDetail() {
                 style={s.composerInput}
                 value={draft}
                 onChangeText={(t) => { setDraft(t); if (submitErr) setSubmitErr(null); }}
-                placeholder={replyTo ? `Reply to ${replyTo.name}…` : 'Write a comment…'}
+                placeholder={replyTo ? 'Reply' : 'Comment'}
                 placeholderTextColor={Colors.textMuted}
                 multiline
                 maxLength={2000}
@@ -324,11 +324,6 @@ export default function PostDetail() {
         <Pressable style={s.tagBackdrop} onPress={() => setTagPickerOpen(false)}>
           <Pressable style={s.tagCard} onPress={(e) => e.stopPropagation()}>
             <Text style={s.tagTitle}>Tag a connection</Text>
-            <Text style={s.tagSub}>
-              {(connections?.length ?? 0) > 0
-                ? `${connections!.length} ${connections!.length === 1 ? 'person' : 'people'} in your network`
-                : "You're not connected to anyone yet."}
-            </Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {(connections ?? []).map((c) => (
                 <TouchableOpacity
@@ -567,8 +562,7 @@ function makeStyles() { return StyleSheet.create({
     width: '100%', maxWidth: 420, padding: 18, gap: 4,
     borderWidth: 1, borderColor: Colors.border,
   },
-  tagTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  tagSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  tagTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
   tagRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingVertical: 8, paddingHorizontal: 4,

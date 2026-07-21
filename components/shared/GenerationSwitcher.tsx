@@ -25,10 +25,6 @@ export function GenerationSwitcher() {
   return (
     <View style={s.wrap}>
       <Text style={s.label}>Look &amp; feel</Text>
-      <Text style={s.hint}>
-        Pick the vibe. Everyone chooses their own — glitch, grunge,
-        clean, analog, or warm.
-      </Text>
       <View style={s.grid}>
         {GENERATION_ORDER.map((g) => {
           const t = GENERATIONS[g].tokens;
@@ -49,7 +45,6 @@ export function GenerationSwitcher() {
                 <View style={[s.dot, { backgroundColor: swatch.heart }]} />
               </View>
               <Text style={[s.chipLabel, active && s.chipLabelActive]}>{t.label}</Text>
-              <Text style={s.chipTagline}>{t.tagline}</Text>
             </Pressable>
           );
         })}
@@ -58,7 +53,6 @@ export function GenerationSwitcher() {
       {/* Live sample of the active generation's display treatment. */}
       <View style={s.sample}>
         <GlitchText style={s.sampleText}>HERETOO</GlitchText>
-        <Text style={s.sampleSub}>{GENERATIONS[generation].tokens.tagline}</Text>
       </View>
     </View>
   );
@@ -74,7 +68,6 @@ function makeStyles() {
       fontSize: 11, fontWeight: '700', color: Colors.textMuted,
       letterSpacing: 1.4, textTransform: 'uppercase',
     },
-    hint: { fontSize: 13, lineHeight: 19, color: Colors.textSecondary, marginBottom: 4 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: {
       minWidth: 96, flexGrow: 1, gap: 4,
@@ -91,7 +84,6 @@ function makeStyles() {
     dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: Colors.border },
     chipLabel: { fontSize: 14, fontWeight: '700', color: Colors.textSecondary },
     chipLabelActive: { color: Colors.primary },
-    chipTagline: { fontSize: 11, color: Colors.textMuted },
     sample: {
       marginTop: 6, padding: Spacing.md,
       borderRadius: Radius.lg,
@@ -100,6 +92,5 @@ function makeStyles() {
       alignItems: 'center', gap: 4,
     },
     sampleText: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary, ...display },
-    sampleSub: { fontSize: 12, color: Colors.textMuted, fontStyle: 'italic' },
   });
 }

@@ -1,19 +1,12 @@
 /**
- * MemoirWelcome — three plain pages that introduce the memoir to a
- * first-time writer.
+ * MemoirWelcome — three plain pages shown before the interview surface.
  *
- *   1. What this is. We ask questions, you answer in your own voice,
- *      and we turn it into a real paperback your family can hold.
- *   2. Privacy. Your words are yours. We do not train AI on them and
- *      we do not sell them. Only you read them unless you choose to
- *      share.
- *   3. Title. What would you like to call your book? (Optional; you
- *      can change it later from the book screen.)
+ *   1. Title page.
+ *   2. Privacy terms.
+ *   3. Book title entry.
  *
- * Rendered as a full-page overlay before the interview surface.
- * Elder-readable by default so a 75-year-old can read it on first
- * sight without squinting. No nags, no streaks, no quest mechanics —
- * exactly what the spec asks for.
+ * Rendered as a full-page overlay. Elder-readable by default so a
+ * 75-year-old can read it on first sight without squinting.
  */
 
 import React, { useState } from 'react';
@@ -75,21 +68,6 @@ export function MemoirWelcome({ initialTitle, onComplete, onSkip }: Props) {
             <>
               <Text style={s.kicker}>Welcome</Text>
               <Text style={s.h1}>You&apos;re going to write a book.</Text>
-              <Text style={s.body}>
-                We&apos;ll ask you a question. You&apos;ll answer in your own words, by
-                voice or by typing. Then another question. Then another. Over
-                weeks or months — your pace — your answers become a real
-                paperback your family can hold.
-              </Text>
-              <Text style={s.body}>
-                There is no schedule. No deadline. No streak. The room is here
-                whenever you come back.
-              </Text>
-              <View style={s.illoRow}>
-                <Illo icon="mic-outline" label="You speak or type" ic={ic} s={s} />
-                <Illo icon="chatbubble-ellipses-outline" label="We ask the next question" ic={ic} s={s} />
-                <Illo icon="book-outline" label="It becomes a book" ic={ic} s={s} />
-              </View>
             </>
           )}
 
@@ -99,18 +77,18 @@ export function MemoirWelcome({ initialTitle, onComplete, onSkip }: Props) {
               <Text style={s.h1}>Private by default.</Text>
               <View style={s.privacyList}>
                 <PrivacyLine icon="lock-closed-outline"
-                  text="Only you can read your answers. Nobody at HereToo, no other family, nobody else." ic={ic} s={s} />
+                  text="Only you can read your answers. Nobody at HereToo, no other crew, nobody else." ic={ic} s={s} />
                 <PrivacyLine icon="shield-checkmark-outline"
                   text="We do not use your stories to train AI." ic={ic} s={s} />
                 <PrivacyLine icon="cash-outline"
                   text="We do not sell your stories. Ever." ic={ic} s={s} />
                 <PrivacyLine icon="heart-outline"
-                  text="If you want to share a particular answer with your family, you decide which one and when." ic={ic} s={s} />
+                  text="If you want to share a particular answer with your crew, you decide which one and when." ic={ic} s={s} />
               </View>
               <Text style={s.bodySmall}>
                 When the time comes to print the book, you&apos;ll download the
                 files and place the order yourself with Amazon&apos;s print
-                service — the book is yours, start to finish.
+                service.
               </Text>
             </>
           )}
@@ -119,10 +97,6 @@ export function MemoirWelcome({ initialTitle, onComplete, onSkip }: Props) {
             <>
               <Text style={s.kicker}>One last thing</Text>
               <Text style={s.h1}>What should we call your book?</Text>
-              <Text style={s.body}>
-                You can change this any time. If you&apos;re not sure, leave it
-                as &ldquo;My Life, So Far.&rdquo;
-              </Text>
               <TextInput
                 style={s.titleInput}
                 value={title}
@@ -160,17 +134,6 @@ export function MemoirWelcome({ initialTitle, onComplete, onSkip }: Props) {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function Illo({ icon, label, ic, s }: { icon: any; label: string; ic: any; s: any }) {
-  return (
-    <View style={s.illo}>
-      <View style={s.illoCircle}>
-        <Ionicons name={icon} size={22} color={ic.accent} />
-      </View>
-      <Text style={s.illoLabel}>{label}</Text>
-    </View>
   );
 }
 
@@ -244,36 +207,9 @@ function makeStyles(elder: boolean) {
       fontWeight: '800', color: pageInk, letterSpacing: -0.4,
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
     },
-    body: {
-      fontSize: 17, lineHeight: 28,
-      color: pageInk,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
     bodySmall: {
       fontSize: 14, lineHeight: 22,
       color: pageInkSecondary, marginTop: 4, fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-
-    illoRow: {
-      flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: Spacing.md,
-      justifyContent: 'center',
-    },
-    illo: {
-      width: 180, padding: Spacing.md, gap: 8,
-      borderRadius: Radius.lg,
-      backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
-      alignItems: 'center',
-    },
-    illoCircle: {
-      width: 44, height: 44, borderRadius: 22,
-      backgroundColor: elder ? pageCardBg : 'rgba(201,161,75,0.12)',
-      alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1, borderColor: pageAccent,
-    },
-    illoLabel: {
-      fontSize: 14, lineHeight: 20, color: pageInkSecondary, textAlign: 'center',
       ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
     },
 

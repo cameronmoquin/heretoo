@@ -1,7 +1,7 @@
 /**
  * Start a new chat — contact picker.
  *
- * Lists everyone in the viewer's family network (≤3 hops) so they can
+ * Lists everyone in the viewer's crew network (≤3 hops) so they can
  * tap one and land in a thread. People outside the network can be
  * reached via search (handle exact match) — the resulting thread will
  * be in 'pending' status until the recipient accepts.
@@ -82,7 +82,7 @@ export default function NewChat() {
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="Search by name or @handle"
+          placeholder="Search"
           placeholderTextColor={Colors.textMuted}
           style={s.searchInput}
           autoCapitalize="none"
@@ -108,7 +108,7 @@ export default function NewChat() {
 
         {showOutOfNetworkSearch && (
           <>
-            <Text style={s.sectionLabel}>By @handle (outside your network)</Text>
+            <Text style={s.sectionLabel}>By @handle</Text>
             {searching && <ActivityIndicator color={Colors.primary} style={{ marginTop: 8 }} />}
             {!searching && (outOfNetwork ?? []).map((p: any) => (
               <ContactRow
@@ -124,20 +124,13 @@ export default function NewChat() {
             {!searching && (outOfNetwork ?? []).length === 0 && (
               <Text style={s.empty}>No matches.</Text>
             )}
-            <Text style={s.fineprint}>
-              Messages to people outside your family network start as a
-              request — they'll choose to accept or decline before you can
-              keep messaging.
-            </Text>
           </>
         )}
 
         {!showOutOfNetworkSearch && filtered.length === 0 && (
           <View style={s.emptyState}>
             <Ionicons name="people-outline" size={28} color={Colors.textMuted} />
-            <Text style={s.emptyText}>
-              Nobody to chat with yet — join or build a family to grow your network.
-            </Text>
+            <Text style={s.emptyText}>Nobody to chat with yet.</Text>
           </View>
         )}
       </ScrollView>
@@ -231,9 +224,4 @@ function makeStyles() { return StyleSheet.create({
   empty: { color: Colors.textMuted, paddingVertical: 12, textAlign: 'center', fontSize: 13 },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
   emptyText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', maxWidth: 320, lineHeight: 19 },
-
-  fineprint: {
-    fontSize: 11, color: Colors.textMuted, marginTop: 8,
-    paddingHorizontal: 4, lineHeight: 17,
-  },
 }); }

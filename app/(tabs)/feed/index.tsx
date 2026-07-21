@@ -7,7 +7,7 @@
  * ranker, plus a hearth (today / room switcher) and a side table
  * (music + read-aloud + compose).
  *
- * Per-family rooms live at /family/{id} (reached via the hearth's
+ * Per-crew rooms live at /family/{id} (reached via the hearth's
  * room-switcher); they will gain the full Room layout in a follow-up.
  */
 

@@ -232,7 +232,6 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         <Pressable style={s.modalBackdrop} onPress={() => setBoostOpen(false)}>
           <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
             <Text style={s.modalTitle}>Boost this post</Text>
-            <Text style={s.modalSub}>Where should it appear?</Text>
 
             <TouchableOpacity
               style={s.scopeRow}
@@ -264,7 +263,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
               <Ionicons name="git-network-outline" size={20} color={Colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={s.scopeLabel}>Your network</Text>
-                <Text style={s.scopeHint}>Anyone in your family graph</Text>
+                <Text style={s.scopeHint}>Anyone in your crew graph</Text>
               </View>
             </TouchableOpacity>
 
@@ -283,7 +282,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
                 <Ionicons name="people-outline" size={20} color={Colors.primary} />
                 <View style={{ flex: 1 }}>
                   <Text style={s.scopeLabel}>{f.name}</Text>
-                  <Text style={s.scopeHint}>Only members of this family</Text>
+                  <Text style={s.scopeHint}>Only members of this crew</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -362,10 +361,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
           {sent ? (
             <>
               <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary }}>
-                Thanks — we got it.
-              </Text>
-              <Text style={{ fontSize: 13, color: Colors.textSecondary, marginTop: 8, lineHeight: 19 }}>
-                A moderator will review. If a few others flag the same thing, it'll auto-hide while we look.
+                Report sent.
               </Text>
               <TouchableOpacity
                 onPress={() => { reset(); onClose(); }}
@@ -376,11 +372,8 @@ function FlagModal({ open, onClose, postId, commentId }: {
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 }}>
                 Report this {commentId ? 'comment' : 'post'}
-              </Text>
-              <Text style={{ fontSize: 12, color: Colors.textMuted, marginBottom: 8 }}>
-                Pick the reason that fits best.
               </Text>
               {FLAG_REASONS.map((r) => {
                 const isPicked = reason === r.id;
@@ -411,7 +404,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
                 <TextInput
                   value={note}
                   onChangeText={setNote}
-                  placeholder="Tell us what we should know…"
+                  placeholder="Details"
                   placeholderTextColor={Colors.textMuted}
                   multiline
                   maxLength={500}
@@ -639,8 +632,7 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
     ...(Shadow.lg as object),
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 12 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 12 },
   scopeRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8,

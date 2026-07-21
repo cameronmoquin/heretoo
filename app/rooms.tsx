@@ -25,7 +25,6 @@ import { Spacing, Radius } from '../constants/design';
 interface Door {
   icon: any;
   label: string;
-  sub?: string;
   route: string;
   badge?: string;
 }
@@ -38,18 +37,19 @@ export default function RoomsScreen() {
   const station = useActiveStation();
 
   const doors: Door[] = [
-    { icon: 'navigate', label: 'Deaddrop', sub: 'hide it. find it.', route: '/hunt' },
-    { icon: 'home', label: 'The Room', sub: 'the feed', route: '/feed' },
+    { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
+    { icon: 'home', label: 'The Room', route: '/feed' },
     { icon: 'chatbubbles', label: 'Messages', route: '/chat', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
-    { icon: 'globe', label: 'The Loft', sub: 'public. vanishes daily.', route: '/loft' },
-    { icon: 'book', label: 'Insults', sub: 'the playhouse', route: '/shakespearean-insults' },
+    { icon: 'globe', label: 'The Loft', route: '/loft' },
+    { icon: 'book', label: 'Insults', route: '/shakespearean-insults' },
     { icon: 'game-controller', label: 'Games', route: '/games' },
-    { icon: 'mail', label: 'Letters', sub: 'opens years from now', route: '/letter' },
-    { icon: 'create', label: 'Memoir', sub: 'the book of you', route: '/memoir' },
+    { icon: 'mail', label: 'Letters', route: '/letter' },
+    { icon: 'create', label: 'Memoir', route: '/memoir' },
+    { icon: 'lock-closed', label: 'Journal', route: '/journal' },
     { icon: 'reader', label: 'Common', route: '/common' },
-    { icon: 'newspaper', label: 'News', sub: 'public broadcasting', route: '/news' },
+    { icon: 'newspaper', label: 'News', route: '/news' },
     { icon: 'people', label: 'Network', route: '/network' },
-    { icon: 'leaf', label: 'Families', route: '/family' },
+    { icon: 'boat', label: 'Crews', route: '/family' },
     { icon: 'heart', label: 'Give', route: '/give' },
     { icon: 'person', label: 'Profile', route: '/profile' },
   ];
@@ -59,14 +59,23 @@ export default function RoomsScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <GlitchText style={s.title}>ROOMS</GlitchText>
 
-        {/* Radio: a live control, not a door. One tap plays the station. */}
-        <TouchableOpacity style={s.radioRow} onPress={() => { radioToggle().catch(() => {}); }} activeOpacity={0.8}>
+        {/* Radio: a live control, not a door. The visible row shows the
+            station and its genre and says nothing about what tapping does,
+            so the state lives entirely in the icon. Screen readers get it
+            from the label instead. */}
+        <TouchableOpacity
+          style={s.radioRow}
+          onPress={() => { radioToggle().catch(() => {}); }}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={radioPlaying ? `Pause ${station.name}` : `Play ${station.name}`}
+        >
           <View style={[s.radioIcon, radioPlaying && s.radioIconOn]}>
             <Ionicons name={radioPlaying ? 'pause' : 'musical-notes'} size={20} color={radioPlaying ? Colors.primary : Colors.textSecondary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.radioName}>{station.name}</Text>
-            <Text style={s.radioSub}>{radioPlaying ? 'now playing · tap to pause' : station.genre}</Text>
+            <Text style={s.radioSub}>{station.genre}</Text>
           </View>
         </TouchableOpacity>
 
@@ -85,7 +94,6 @@ export default function RoomsScreen() {
                 )}
               </View>
               <Text style={s.doorLabel}>{d.label}</Text>
-              {!!d.sub && <Text style={s.doorSub} numberOfLines={1}>{d.sub}</Text>}
             </TouchableOpacity>
           ))}
         </View>
@@ -129,7 +137,6 @@ function makeStyles() {
       justifyContent: 'center',
     },
     doorLabel: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-    doorSub: { fontSize: 11, color: Colors.textMuted },
     badge: {
       position: 'absolute', top: -6, left: 18,
       minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4,

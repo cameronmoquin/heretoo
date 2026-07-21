@@ -7,7 +7,7 @@
  *   - Viewport ≥1024px (240px sidebar + 600px feed + gutters fits)
  *   - NOT on auth-flow pages (welcome / profile-setup / join / sow)
  *
- * Slots: Feed · Messages (with unread badge) · Network · Families ·
+ * Slots: Feed · Messages (with unread badge) · Network · Crews ·
  * Music (with active station + play state) · Profile · Sign out.
  *
  * Collaborates with MobileTabBar — when this sidebar shows, the
@@ -30,6 +30,7 @@ const HIDE_ON_PATHS = [
   '/welcome',
   '/(auth)',
   '/profile-setup',
+  '/reset-password',
   '/join/',
   '/sow/',
   '/version',
@@ -144,14 +145,12 @@ export function LeftSidebar() {
       <NavRow
         icon={pathname.startsWith('/news') ? 'newspaper' : 'newspaper-outline'}
         label="News"
-        sub="public broadcasting"
         active={pathname.startsWith('/news')}
         onPress={() => router.push('/news' as any)}
       />
       <NavRow
         icon={pathname.startsWith('/loft') ? 'globe' : 'globe-outline'}
         label="HereToo"
-        sub="public side"
         active={pathname.startsWith('/loft')}
         onPress={() => router.push('/loft' as any)}
       />
@@ -177,7 +176,7 @@ export function LeftSidebar() {
       />
       <NavRow
         icon={onFamily ? 'leaf' : 'leaf-outline'}
-        label="Families"
+        label="Crews"
         active={onFamily}
         onPress={() => router.push('/family' as any)}
       />
@@ -188,8 +187,8 @@ export function LeftSidebar() {
         onPress={() => router.replace('/(tabs)/profile' as any)}
       />
 
-      {/* Family quick-list removed — was redundant with the Room hearth
-          swatches and the /family list page. The Families nav row above
+      {/* Crew quick-list removed. It was redundant with the Room hearth
+          swatches and the /family list page. The Crews nav row above
           opens that list when needed. */}
 
       <View style={s.divider} />

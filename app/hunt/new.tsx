@@ -77,7 +77,7 @@ export default function HuntNew() {
       });
       setResult({ code: cache.share_code || '' });
     } catch (e: any) {
-      showAlert('Could not drop the cache', e?.message ?? 'Try again.');
+      showAlert('The drop did not land', e?.message ?? 'Try it again.');
     }
   };
 
@@ -87,7 +87,7 @@ export default function HuntNew() {
     try {
       await (navigator as any).clipboard?.writeText(url);
       showAlert('Link copied', url);
-    } catch { showAlert('Seeker link', url); }
+    } catch { showAlert('Courier link', url); }
   };
 
   const center = useMemo(
@@ -100,22 +100,22 @@ export default function HuntNew() {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
         <ScrollView contentContainerStyle={s.scroll}>
-          <Text style={s.kicker}>Cache dropped</Text>
+          <Text style={s.kicker}>Drop is live</Text>
           <Text style={s.successCode}>{result.code}</Text>
           <Text style={s.successHint}>
-            Send this code or the link. The seeker enters it and follows the
-            compass to your spot.
+            Send the code or the link. It buys a bearing and a distance.
+            The legwork is theirs.
           </Text>
           <TouchableOpacity style={s.primaryBtn} onPress={() => router.replace(`/hunt/${result.code}`)} activeOpacity={0.85}>
             <Ionicons name="navigate" size={16} color="#FFF" />
-            <Text style={s.primaryBtnText}>Find it now</Text>
+            <Text style={s.primaryBtnText}>Collect it now</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.outlineBtn} onPress={copyLink} activeOpacity={0.85}>
             <Ionicons name="link" size={16} color={Colors.primary} />
-            <Text style={s.outlineBtnText}>Copy seeker link</Text>
+            <Text style={s.outlineBtnText}>Copy the courier link</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.ghostBtn} onPress={() => router.replace('/hunt')} activeOpacity={0.85}>
-            <Text style={s.ghostBtnText}>Back to hunts</Text>
+            <Text style={s.ghostBtnText}>Back to the board</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -129,11 +129,11 @@ export default function HuntNew() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={s.kicker}>Hide a cache</Text>
+          <Text style={s.kicker}>Set a drop</Text>
         </View>
 
         {/* Photo */}
-        <Text style={s.label}>The photo</Text>
+        <Text style={s.label}>The payload</Text>
         {previewUrl ? (
           <RNImage source={{ uri: previewUrl }} style={s.preview} resizeMode="cover" />
         ) : (
@@ -146,39 +146,39 @@ export default function HuntNew() {
             border: `1px solid ${Colors.border}`, borderRadius: 999, cursor: 'pointer',
             fontWeight: 700, fontSize: 14,
           } as any)}>
-            {file ? 'Retake / choose another' : 'Take or choose a photo'}
+            {file ? 'Swap the photo' : 'Take or pick the photo'}
             <input type="file" accept="image/*" capture="environment" onChange={onPickFile} style={({ display: 'none' } as any)} />
           </label>
         ) : (
-          <Text style={s.note}>Hiding a cache works from the web app for now.</Text>
+          <Text style={s.note}>Setting a drop runs from the web app for now.</Text>
         )}
 
         {/* Location */}
-        <Text style={s.label}>Where you are</Text>
+        <Text style={s.label}>Your position</Text>
         <HuntMap center={center} pin={coords ?? null} height={220} />
         <Text style={s.coordLine}>
           {coords
             ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)} · ±${Math.round(coords.accuracy)}m`
             : geoError === 'denied'
-              ? 'Location permission blocked. Enable it to drop a cache.'
+              ? 'Location is blocked. Turn it on to set a drop.'
               : geoError === 'unsupported'
-                ? 'Location is not available on this device.'
-                : 'Getting your location…'}
+                ? 'This device has no location to give. Try another one.'
+                : 'Taking a fix…'}
         </Text>
 
         {/* Details */}
         <Text style={s.label}>Title</Text>
-        <TextInput style={s.input} value={title} onChangeText={setTitle} placeholder="The old oak by the pond" placeholderTextColor={Colors.textMuted} maxLength={80} />
+        <TextInput style={s.input} value={title} onChangeText={setTitle} placeholder="The bent oak behind the lot" placeholderTextColor={Colors.textMuted} maxLength={80} />
         <Text style={s.label}>Hint (optional)</Text>
-        <TextInput style={[s.input, { minHeight: 70 }]} value={hint} onChangeText={setHint} placeholder="Look low, near the roots." placeholderTextColor={Colors.textMuted} multiline maxLength={200} textAlignVertical="top" />
+        <TextInput style={[s.input, { minHeight: 70 }]} value={hint} onChangeText={setHint} placeholder="Low. Behind the roots." placeholderTextColor={Colors.textMuted} multiline maxLength={200} textAlignVertical="top" />
 
         <View style={s.rowSplit}>
           <View style={{ flex: 1 }}>
-            <Text style={s.label}>Find radius (m)</Text>
+            <Text style={s.label}>Collect radius (m)</Text>
             <TextInput style={s.input} value={radius} onChangeText={setRadius} keyboardType="number-pad" maxLength={4} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.label}>Visibility</Text>
+            <Text style={s.label}>Access</Text>
             <View style={s.segment}>
               {(['link', 'public'] as const).map((v) => (
                 <TouchableOpacity key={v} style={[s.segBtn, scope === v && s.segBtnOn]} onPress={() => setScope(v)} activeOpacity={0.85}>
@@ -200,8 +200,8 @@ export default function HuntNew() {
             color={selfDestruct ? '#FF5A52' : Colors.textMuted}
           />
           <View style={{ flex: 1 }}>
-            <Text style={[s.destructTitle, selfDestruct && { color: '#FF5A52' }]}>This message will self-destruct</Text>
-            <Text style={s.destructSub}>It glitches to nothing the moment they find it. One look, then gone.</Text>
+            <Text style={[s.destructTitle, selfDestruct && { color: '#FF5A52' }]}>Burn on delivery</Text>
+            <Text style={s.destructSub}>It burns the second they open it. One look, then nothing.</Text>
           </View>
           <View style={[s.checkbox, selfDestruct && s.checkboxOn]}>
             {selfDestruct && <Ionicons name="checkmark" size={14} color="#0A0A0F" />}
@@ -211,7 +211,7 @@ export default function HuntNew() {
         {(myCaches ?? []).filter((c) => c.active).length > 0 && (
           <View style={s.chainBlock}>
             <Text style={s.label}>Chain after (optional)</Text>
-            <Text style={s.chainHint}>The seeker must find that drop before this one unlocks.</Text>
+            <Text style={s.chainHint}>They clear that drop first. This one stays shut until then.</Text>
             <View style={s.chainPills}>
               <TouchableOpacity
                 style={[s.chainPill, !prereqId && s.chainPillOn]}
@@ -228,7 +228,7 @@ export default function HuntNew() {
                   activeOpacity={0.85}
                 >
                   <Text style={[s.chainPillText, prereqId === c.id && s.chainPillTextOn]} numberOfLines={1}>
-                    {c.title || c.share_code || 'Untitled'}
+                    {c.title || c.share_code || 'Unmarked'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -238,7 +238,7 @@ export default function HuntNew() {
 
         <TouchableOpacity style={[s.primaryBtn, !ready && { opacity: 0.5 }]} onPress={onDrop} disabled={!ready} activeOpacity={0.85}>
           {busy ? <ActivityIndicator color="#FFF" /> : <Ionicons name="flag" size={16} color="#FFF" />}
-          <Text style={s.primaryBtnText}>{busy ? 'Dropping…' : 'Drop the cache here'}</Text>
+          <Text style={s.primaryBtnText}>{busy ? 'Dropping…' : 'Drop it here'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

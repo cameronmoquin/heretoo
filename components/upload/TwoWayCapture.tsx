@@ -58,7 +58,7 @@ export function TwoWayCapture({ onCapture, onClose }: Props) {
         <Ionicons name="phone-portrait-outline" size={32} color={Colors.textMuted} />
         <Text style={s.notSupportedTitle}>Two-Way is mobile only</Text>
         <Text style={s.notSupportedText}>
-          Open HereToo on your phone to capture front + back together.
+          Open HereToo on your phone.
         </Text>
         <TouchableOpacity style={s.closeBtn} onPress={onClose}>
           <Text style={s.closeBtnText}>Back</Text>
@@ -206,7 +206,7 @@ function TwoWayNative({ onCapture, onClose }: Props) {
       </View>
 
       <View style={s.hud}>
-        <Text style={s.hudLabel}>Two-Way · front + back</Text>
+        <Text style={s.hudLabel}>Two-Way</Text>
       </View>
 
       {!!error && (

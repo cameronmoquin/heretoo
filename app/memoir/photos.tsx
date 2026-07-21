@@ -93,19 +93,10 @@ export default function MemoirPhotosScreen() {
         </View>
 
         <View style={s.page}>
-          <Text style={s.lede}>
-            Add the photos you want in the book. A caption in your own words,
-            placed in the chapter where the story belongs. The book picks them
-            up when you print.
-          </Text>
-
           {/* Upload zone — web file picker. Phone camera capture flow lands later. */}
           {Platform.OS === 'web' ? (
             <View style={s.uploadZone}>
               <Ionicons name="cloud-upload-outline" size={24} color={ic.accent} />
-              <Text style={s.uploadHint}>
-                Drop a photo, or
-              </Text>
               <label style={({
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '10px 16px',
@@ -122,9 +113,7 @@ export default function MemoirPhotosScreen() {
                   style={({ display: 'none' } as any)}
                 />
               </label>
-              <Text style={s.uploadFootnote}>
-                JPG, PNG, HEIC. We&apos;ll preserve the original at full resolution.
-              </Text>
+              <Text style={s.uploadFootnote}>JPG, PNG, HEIC.</Text>
             </View>
           ) : (
             <Text style={s.lede}>Upload from the desktop site to add photos.</Text>
@@ -132,7 +121,7 @@ export default function MemoirPhotosScreen() {
 
           {/* Photo gallery, grouped by chapter */}
           {chapterKeysInOrder.length === 0 ? (
-            <Text style={s.empty}>No photos yet. The first one goes here.</Text>
+            <Text style={s.empty}>No photos yet.</Text>
           ) : (
             chapterKeysInOrder.map((key) => {
               const label = key === null
@@ -216,7 +205,8 @@ function PhotoCard({
         value={caption}
         onChangeText={setCaption}
         onBlur={saveCaption}
-        placeholder="A caption in your own words"
+        accessibilityLabel="Caption"
+        placeholder="Caption"
         placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
         multiline
         maxLength={400}
@@ -308,7 +298,6 @@ function makeStyles(elder: boolean) {
       borderStyle: 'dashed' as any, alignItems: 'center',
       backgroundColor: pageSurface,
     },
-    uploadHint: { fontSize: 14, color: pageInkSecondary, fontStyle: 'italic' },
     uploadFootnote: { fontSize: 11, color: pageInkMuted, fontStyle: 'italic', textAlign: 'center' },
 
     empty: {

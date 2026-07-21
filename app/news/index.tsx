@@ -50,10 +50,6 @@ export default function NewsScreen() {
         <View style={s.masthead}>
           <Text style={s.kicker}>From public broadcasting</Text>
           <Text style={s.title}>The day, plainly.</Text>
-          <Text style={s.lede}>
-            Headlines from NPR, BBC World, and PBS NewsHour. Every story links
-            out to its source — the platform doesn&apos;t host the article.
-          </Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />
             <Text style={s.flourishGlyph}>✦</Text>
@@ -86,9 +82,6 @@ export default function NewsScreen() {
         {!isLoading && (items ?? []).length === 0 && (
           <View style={s.emptyWrap}>
             <Text style={s.emptyTitle}>Nothing fetched yet.</Text>
-            <Text style={s.emptyBody}>
-              The platform pulls headlines every 30 minutes. Check back in a few.
-            </Text>
           </View>
         )}
 
@@ -171,10 +164,6 @@ function makeStyles() { return StyleSheet.create({
     color: Colors.brandIvory,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  lede: {
-    fontSize: 16, lineHeight: 26, color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-  },
   flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },
   flourishGlyph: { fontSize: 13, color: Colors.primary, opacity: 0.85 },
@@ -193,7 +182,6 @@ function makeStyles() { return StyleSheet.create({
 
   emptyWrap: { padding: Spacing.lg, gap: 6 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: Colors.brandIvory },
-  emptyBody: { fontSize: 14, color: Colors.textSecondary, lineHeight: 21 },
 
   card: {
     position: 'relative',

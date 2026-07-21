@@ -18,7 +18,7 @@ import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 
 interface Props {
-  /** Sub-line under the wordmark — the family or "Common" label. */
+  /** Sub-line under the wordmark, the crew or "Common" label. */
   subtitle?: string;
 }
 

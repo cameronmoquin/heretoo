@@ -9,6 +9,7 @@ import { useCreateFamily } from '../../hooks/useFamily';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 export default function NewFamily() {
   const s = makeStyles();
@@ -18,7 +19,7 @@ export default function NewFamily() {
 
   const save = () => {
     if (!name.trim()) {
-      showAlert('Missing name', 'Give your family a name.');
+      showAlert('Missing name', `Give your ${Vocab.group} a name.`);
       return;
     }
     create.mutate(
@@ -35,10 +36,7 @@ export default function NewFamily() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
           <View style={s.lineageBox}>
-            <Text style={s.lineageLabel}>Starting a family</Text>
-            <Text style={s.lineageHint}>
-              You'll be the owner and the first member. Invite people in once it's saved.
-            </Text>
+            <Text style={s.lineageLabel}>Starting {Vocab.groupWithArticle}</Text>
           </View>
 
           <Text style={s.label}>Name</Text>
@@ -58,7 +56,6 @@ export default function NewFamily() {
             style={[s.input, s.textarea]}
             value={description}
             onChangeText={setDescription}
-            placeholder="What this family is for."
             placeholderTextColor={Colors.textMuted}
             multiline
             maxLength={300}
@@ -71,7 +68,9 @@ export default function NewFamily() {
             onPress={save}
             disabled={create.isPending}
           >
-            <Text style={s.saveBtnText}>{create.isPending ? 'Creating…' : 'Create family'}</Text>
+            <Text style={s.saveBtnText}>
+              {create.isPending ? 'Creating…' : `Create ${Vocab.group}`}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -102,5 +101,4 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 11, color: Colors.textMuted, fontWeight: '600',
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
-  lineageHint: { fontSize: 12, color: Colors.textSecondary, marginTop: 6, lineHeight: 18 },
 }); }

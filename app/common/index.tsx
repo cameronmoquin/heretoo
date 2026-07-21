@@ -1,10 +1,10 @@
 /**
- * /common — the cross-family unifying feed.
+ * /common — the cross-crew unifying feed.
  *
  * Source of Truth, Milestone 1: the feed is no longer the front door.
  * The Room (at /) replaces it. The feed lives here as a fallback
  * for users who want the chronological-ish list view of every post
- * across their family network.
+ * across their crew network.
  *
  * Functionally identical to the old /(tabs)/feed page — same For You
  * and Connections tabs, same unifying-feed ranker, same realtime
@@ -105,7 +105,7 @@ export default function CommonScreen() {
             <Text style={{ fontWeight: '700' }}>{stats.reachable_profiles}</Text>
             {' people in your network · '}
             <Text style={{ fontWeight: '700' }}>{stats.reachable_families}</Text>
-            {stats.reachable_families === 1 ? ' family connected' : ' families connected'}
+            {stats.reachable_families === 1 ? ' crew connected' : ' crews connected'}
           </Text>
         </TouchableOpacity>
       )}

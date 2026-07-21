@@ -3,9 +3,9 @@
  *
  * Replaces the bare avatar+sign-out screen with a proper hub:
  *   - Header: avatar + display name + handle + bio + edit
- *   - Network stats card (people / families)
- *   - Families list (tap to enter)
- *   - Quick actions (compose post, find family by code, theme toggle)
+ *   - Network stats card (people / crews)
+ *   - Crews list (tap to enter)
+ *   - Quick actions (compose post, find crew by code, theme toggle)
  *   - Settings & sign-out at the bottom
  *
  * Mobile: this is now the centerpiece of the bottom nav. Desktop: same
@@ -53,7 +53,7 @@ export default function OwnProfileScreen() {
   // Same RLS-respecting query the /u/[handle] page uses; here we
   // filter to visibility='public' specifically so the page reads as
   // "your contribution to the common feed" rather than mixing in
-  // family-only material.
+  // crew-only material.
   const { data: myPublicPosts } = useQuery({
     queryKey: ['profile-posts', profile?.id, 'public'],
     queryFn: async () => {
@@ -117,20 +117,20 @@ export default function OwnProfileScreen() {
             <View style={s.statDivider} />
             <View style={s.statBlock}>
               <Text style={s.statValue}>{stats.reachable_families}</Text>
-              <Text style={s.statLabel}>Families connected</Text>
+              <Text style={s.statLabel}>Crews connected</Text>
             </View>
             <View style={s.statDivider} />
             <View style={s.statBlock}>
               <Text style={s.statValue}>{stats.direct_family_count}</Text>
-              <Text style={s.statLabel}>Your families</Text>
+              <Text style={s.statLabel}>Your crews</Text>
             </View>
           </View>
         )}
 
-        {/* ── Families ── */}
+        {/* ── Crews ── */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Your families</Text>
+            <Text style={s.sectionTitle}>Your crews</Text>
             <TouchableOpacity onPress={() => router.push('/family' as any)}>
               <Text style={s.sectionLink}>See all →</Text>
             </TouchableOpacity>
@@ -157,7 +157,6 @@ export default function OwnProfileScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={s.familyName}>{f.name}</Text>
-                  <Text style={s.familyRoleSub}>Tap pill to change your role</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={s.rolePill}
@@ -174,13 +173,13 @@ export default function OwnProfileScreen() {
           })}
           {(!families || families.length === 0) && (
             <View style={s.emptyFamilies}>
-              <Text style={s.emptyText}>You're not in a family yet.</Text>
+              <Text style={s.emptyText}>You're not in a crew yet.</Text>
               <View style={s.emptyBtnRow}>
                 <TouchableOpacity
                   style={s.primaryBtn}
                   onPress={() => router.push('/family/new' as any)}
                 >
-                  <Text style={s.primaryBtnText}>Start a family</Text>
+                  <Text style={s.primaryBtnText}>Start a crew</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.primaryBtn, s.altBtn]}
@@ -199,30 +198,26 @@ export default function OwnProfileScreen() {
           <ActionRow
             icon="chatbubbles-outline"
             label="Messages"
-            sub="Direct chats with people in your network"
             onPress={() => router.push('/chat' as any)}
           />
           <ActionRow
             icon="add-circle-outline"
             label="Write a post"
-            sub="Composer is also pinned to the top of your feed"
             onPress={() => router.push('/(tabs)/feed' as any)}
           />
           <ActionRow
             icon="notifications-outline"
             label="Notifications & email"
-            sub="Choose what we email you about"
             onPress={() => router.push('/(tabs)/profile/notifications' as any)}
           />
           <ActionRow
             icon="key-outline"
-            label="Join a family with a code"
+            label="Join a crew with a code"
             onPress={() => router.push('/family/join' as any)}
           />
           <ActionRow
             icon="leaf-outline"
             label="Plant a tree with a friend"
-            sub="Sow a seed for someone outside your network"
             onPress={() => setPlantOpen(true)}
           />
           {/* Dark theme toggle removed for now — light-only while we
@@ -241,9 +236,6 @@ export default function OwnProfileScreen() {
         {myPublicPosts && myPublicPosts.length > 0 && (
           <View style={[s.section, { marginTop: 8 }]}>
             <Text style={s.sectionTitle}>Your posts</Text>
-            <Text style={[s.statLabel, { paddingHorizontal: Spacing.md, marginTop: -4, marginBottom: 8 }]}>
-              Public posts only — what you've shared with the common feed.
-            </Text>
             {myPublicPosts.map((p: any) => (
               <PostCard
                 key={p.id}
@@ -274,7 +266,6 @@ export default function OwnProfileScreen() {
         <Pressable style={s.modalBackdrop} onPress={() => setPicker(null)}>
           <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
             <Text style={s.modalTitle}>Your role in {picker?.familyName}</Text>
-            <Text style={s.modalSub}>This sets the letter on your avatar.</Text>
             <ScrollView style={{ maxHeight: 380 }}>
               {(Object.keys(STATURE_LABELS) as FamilyStature[]).map((key) => {
                 const isCurrent = picker && statures?.[picker.familyId] === key;
@@ -315,8 +306,8 @@ export default function OwnProfileScreen() {
 }
 
 function ActionRow({
-  icon, label, sub, onPress,
-}: { icon: any; label: string; sub?: string; onPress: () => void }) {
+  icon, label, onPress,
+}: { icon: any; label: string; onPress: () => void }) {
   const s = makeStyles();
   return (
     <TouchableOpacity style={s.actionRow} onPress={onPress} activeOpacity={0.7}>
@@ -325,7 +316,6 @@ function ActionRow({
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.actionLabel}>{label}</Text>
-        {!!sub && <Text style={s.actionSub}>{sub}</Text>}
       </View>
       <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
     </TouchableOpacity>
@@ -402,7 +392,6 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   actionLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  actionSub: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
 
   signOutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -411,7 +400,6 @@ function makeStyles() { return StyleSheet.create({
   },
   signOutText: { fontSize: 13, color: Colors.error, fontWeight: '600' },
 
-  familyRoleSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
   rolePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
@@ -429,8 +417,7 @@ function makeStyles() { return StyleSheet.create({
     width: '100%', maxWidth: 420, padding: 18, gap: 4,
     borderWidth: 1, borderColor: Colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
   statureRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10,

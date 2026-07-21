@@ -62,9 +62,6 @@ export default function LettersIndex() {
         {(received?.length ?? 0) === 0 && drafts.length === 0 && sent.length === 0 && (
           <View style={s.emptyWrap}>
             <Text style={s.emptyTitle}>No letters yet.</Text>
-            <Text style={s.emptySub}>
-              A letter is the opposite of a tweet — long, private, addressed to one person, scheduled for a chosen day.
-            </Text>
             <TouchableOpacity
               style={s.emptyBtn}
               onPress={() => router.push('/letter/new' as any)}
@@ -165,7 +162,6 @@ function makeStyles() { return StyleSheet.create({
 
   emptyWrap: { padding: Spacing.xl, gap: 8, alignItems: 'flex-start' },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  emptySub: { fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
   emptyBtn: {
     marginTop: Spacing.md,
     paddingHorizontal: 16, paddingVertical: 11,

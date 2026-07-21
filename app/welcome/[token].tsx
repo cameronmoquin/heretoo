@@ -12,7 +12,7 @@
  *   3. After the voice ends, if the inviter recorded a 20-second
  *      voice note, that plays next.
  *   4. After both audio clips, "Step inside." lights up. Tapping it
- *      routes to the auth flow with the family's invite code
+ *      routes to the auth flow with the crew's invite code
  *      pre-filled, so signup is one form.
  *
  * No fields. No "Skip." No header chrome. The whole screen is the
@@ -47,7 +47,7 @@ export default function WelcomeCeremony() {
     if (!data) return '';
     const recipient = data.recipient_first_name || 'there';
     const relationship = data.recipient_relationship || 'family';
-    const inviter = data.inviter_first_name || 'someone in your family';
+    const inviter = data.inviter_first_name || 'someone in your crew';
     return [
       `${recipient}.`,
       `Your ${relationship}, ${inviter}, made you a place here.`,
@@ -102,7 +102,7 @@ export default function WelcomeCeremony() {
   };
 
   const onStepInside = () => {
-    // Route to the welcome / auth screen, pre-filled with the family
+    // Route to the welcome / auth screen, pre-filled with the crew
     // invite code so signup is one form.
     const code = data?.family_invite_code;
     if (code) {
@@ -181,7 +181,7 @@ export default function WelcomeCeremony() {
         {phase === 'ready' && (
           <>
             <Text style={s.kicker}>Welcome to HereToo</Text>
-            <Text style={s.title}>{data.family_name || 'Your family'}</Text>
+            <Text style={s.title}>{data.family_name || 'Your crew'}</Text>
             <Text style={s.body}>
               You can come back to this any time. Step inside when you're ready.
             </Text>

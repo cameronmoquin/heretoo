@@ -92,7 +92,7 @@ export default function ProfileSetupScreen() {
       if (error) throw error;
       setProfile(data as any);
       // Resume a pending /join/CODE invite if the user landed here from
-      // a shared family invite link.
+      // a shared crew invite link.
       let pending: string | null = null;
       try {
         pending = typeof localStorage !== 'undefined'

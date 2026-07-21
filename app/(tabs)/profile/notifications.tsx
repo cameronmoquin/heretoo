@@ -98,11 +98,6 @@ export default function NotificationSettings() {
               keyboardType="email-address"
               autoCorrect={false}
             />
-            <Text style={s.hint}>
-              {prefs.notification_email
-                ? `We'll send notifications to ${prefs.notification_email}.`
-                : `Defaults to your account email${accountEmail ? ` (${accountEmail})` : ''}.`}
-            </Text>
             {emailErr && <Text style={s.error}>{emailErr}</Text>}
             <TouchableOpacity
               style={[s.saveBtn, !emailDirty && { opacity: 0.5 }]}
@@ -121,21 +116,18 @@ export default function NotificationSettings() {
           <View style={s.card}>
             <ToggleRow
               label="Email notifications"
-              sub="Master switch for all email"
               value={prefs.email_enabled}
               onValueChange={(v) => update.mutate({ email_enabled: v })}
               prominent
             />
             <ToggleRow
               label="New messages"
-              sub="Someone sends you a direct message"
               value={prefs.email_new_message}
               onValueChange={(v) => update.mutate({ email_new_message: v })}
               disabled={!prefs.email_enabled}
             />
             <ToggleRow
-              label="Family activity (daily digest)"
-              sub="At noon in your timezone, an email of unread family updates"
+              label="Crew activity (daily digest)"
               value={prefs.email_family_activity}
               onValueChange={(v) => update.mutate({ email_family_activity: v })}
               disabled={!prefs.email_enabled}
@@ -144,7 +136,6 @@ export default function NotificationSettings() {
 
             <ToggleRow
               label="Stories you follow"
-              sub="Email the moment a post lands on a subject you follow — for when something's happening"
               value={prefs.email_subject_activity}
               onValueChange={(v) => update.mutate({ email_subject_activity: v })}
               disabled={!prefs.email_enabled}
@@ -152,33 +143,23 @@ export default function NotificationSettings() {
 
             <ToggleRow
               label="Connection requests"
-              sub="Someone outside your network wants to message you"
               value={prefs.email_connection_request}
               onValueChange={(v) => update.mutate({ email_connection_request: v })}
               disabled={!prefs.email_enabled}
             />
             <ToggleRow
               label="Reactions to your posts"
-              sub="Hearts, comments, boosts on what you've posted"
               value={prefs.email_post_reaction}
               onValueChange={(v) => update.mutate({ email_post_reaction: v })}
               disabled={!prefs.email_enabled}
             />
             <ToggleRow
               label="Connection accepted"
-              sub="Someone accepted your message request"
               value={prefs.email_connection_accepted}
               onValueChange={(v) => update.mutate({ email_connection_accepted: v })}
               disabled={!prefs.email_enabled}
               isLast
             />
-          </View>
-
-          <View style={s.note}>
-            <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} />
-            <Text style={s.noteText}>
-              Email delivery activates as soon as you turn it on. SMS will follow when our texting integration ships.
-            </Text>
           </View>
 
         </ScrollView>
@@ -188,10 +169,9 @@ export default function NotificationSettings() {
 }
 
 function ToggleRow({
-  label, sub, value, onValueChange, disabled, isLast, prominent,
+  label, value, onValueChange, disabled, isLast, prominent,
 }: {
   label: string;
-  sub?: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
   disabled?: boolean;
@@ -203,7 +183,6 @@ function ToggleRow({
     <View style={[s.toggleRow, !isLast && s.toggleRowDivider, disabled && { opacity: 0.45 }]}>
       <View style={{ flex: 1, paddingRight: 12 }}>
         <Text style={[s.toggleLabel, prominent && { fontWeight: '700', fontSize: 15 }]}>{label}</Text>
-        {!!sub && <Text style={s.toggleSub}>{sub}</Text>}
       </View>
       <Switch
         value={value}
@@ -252,7 +231,6 @@ function TimezoneRow() {
     <View style={[s.toggleRow, { flexDirection: 'column', alignItems: 'stretch', gap: 6 }]}>
       <View>
         <Text style={s.toggleLabel}>Timezone</Text>
-        <Text style={s.toggleSub}>Used to send your daily digest at noon local. Auto-detected from your browser.</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         <TextInput
@@ -324,7 +302,6 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 15, color: Colors.textPrimary,
   },
-  hint: { fontSize: 12, color: Colors.textMuted, lineHeight: 16 },
   error: { fontSize: 12, color: Colors.error },
   saveBtn: {
     paddingVertical: 11, borderRadius: Radius.full,
@@ -348,14 +325,4 @@ function makeStyles() { return StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   toggleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  toggleSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2, lineHeight: 16 },
-
-  note: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    paddingHorizontal: 4, marginTop: Spacing.sm,
-  },
-  noteText: {
-    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
-    color: Colors.textMuted, flex: 1,
-  },
 }); }

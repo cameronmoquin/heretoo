@@ -56,10 +56,6 @@ export default function TransparencyScreen() {
         <View style={s.masthead}>
           <Text style={s.kicker}>Donation transparency</Text>
           <Text style={s.title}>The math.</Text>
-          <Text style={s.lede}>
-            Every donation collected on HereToo and every dollar forwarded to
-            the beneficiary, on one page. No donor names. No commentary.
-          </Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />
             <Text style={s.flourishGlyph}>✦</Text>
@@ -88,7 +84,6 @@ export default function TransparencyScreen() {
             <View style={[s.statCard, s.statCardAccent]}>
               <Text style={[s.statLabel, { color: Colors.primary }]}>Pending</Text>
               <Text style={[s.statValue, { color: Colors.primary }]}>{fmt(report.pending_cents)}</Text>
-              <Text style={s.statSub}>not yet disbursed</Text>
             </View>
           </View>
         )}
@@ -108,10 +103,7 @@ export default function TransparencyScreen() {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Disbursement history</Text>
           {(list ?? []).length === 0 ? (
-            <Text style={s.emptyBody}>
-              No disbursements recorded yet. Funds are forwarded on a quarterly
-              cadence; they appear here once each transfer clears.
-            </Text>
+            <Text style={s.emptyBody}>No disbursements recorded yet.</Text>
           ) : (
             (list ?? []).map((d) => <DisbursementRow key={d.id} d={d} />)
           )}
@@ -176,10 +168,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 50, lineHeight: 56, fontWeight: '800', letterSpacing: -1.2,
     color: Colors.brandIvory,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
-  lede: {
-    fontSize: 17, lineHeight: 28, color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },

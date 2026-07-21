@@ -32,7 +32,7 @@ import { useUnreadCount } from '../../hooks/useChat';
  *   the tabs group). Carries an unread-count badge.
  *
  * Upload tab was dropped earlier — composer is inline at the top of
- * the feed and inside every family page.
+ * the feed and inside every crew page.
  */
 const NAV = [
   { name: 'feed', label: 'Feed', icon: 'home-outline', iconActive: 'home', href: '/(tabs)/feed' },

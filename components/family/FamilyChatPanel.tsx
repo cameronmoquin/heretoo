@@ -1,5 +1,5 @@
 /**
- * Family group chat — drop-in panel for the /family/[id] page.
+ * Crew group chat, drop-in panel for the /family/[id] page.
  *
  * Renders the message list (oldest at top, newest at bottom, auto-
  * scrolls when new arrivals land), then a composer pinned to the
@@ -42,7 +42,7 @@ export function FamilyChatPanel({ familyId }: Props) {
   const { data: messages, isLoading: messagesLoading } = useFamilyChatMessages(chat?.id ?? null);
   const send = useSendFamilyChatMessage();
 
-  // Reframer (M8) — opt-in escalation drawer for family chat.
+  // Reframer (M8), opt-in escalation drawer for crew chat.
   const reframerContext = React.useMemo<ReframerContextMessage[]>(
     () =>
       (messages ?? []).slice(-3).map((m: any) => ({
@@ -94,10 +94,6 @@ export function FamilyChatPanel({ familyId }: Props) {
         {(messages ?? []).length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="chatbubbles-outline" size={28} color={Colors.textMuted} />
-            <Text style={s.emptyTitle}>Start the conversation</Text>
-            <Text style={s.emptySub}>
-              Family chat lives here. Updates from earlier in the day, plans for the weekend, the small stuff.
-            </Text>
           </View>
         ) : (
           (messages ?? []).map((m, i) => {
@@ -195,12 +191,6 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     paddingVertical: 60, gap: 8,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary, marginTop: 4 },
-  emptySub: {
-    fontSize: 13, color: Colors.textMuted, textAlign: 'center',
-    maxWidth: 320, lineHeight: 19,
-  },
-
   row: { flexDirection: 'row', gap: 6, marginVertical: 1 },
   rowMine: { justifyContent: 'flex-end' },
   rowTheirs: { justifyContent: 'flex-start' },

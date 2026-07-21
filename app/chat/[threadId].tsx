@@ -234,11 +234,7 @@ export default function ChatThread() {
               style={s.composerInput}
               value={draft}
               onChangeText={setDraft}
-              placeholder={
-                initiatorIntroSent
-                  ? 'They need to accept before more replies send…'
-                  : isPending ? 'Send an intro message…' : 'Message…'
-              }
+              placeholder="Message…"
               placeholderTextColor={Colors.textMuted}
               multiline
               maxLength={2000}

@@ -40,7 +40,7 @@ export default function VideoCallScreen() {
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
       <View style={s.header}>
-        <Text style={s.label}>Family call</Text>
+        <Text style={s.label}>Crew call</Text>
         <View style={s.dotLive} />
         <Text style={s.subtle}>{1 + remotePeers.length} on</Text>
       </View>

@@ -76,10 +76,7 @@ export default function MemoirPreviewScreen() {
 
         {isEmpty ? (
           <View style={s.page}>
-            <Text style={s.empty}>
-              The book is empty so far. Answer a prompt or two, then come
-              back and read it through.
-            </Text>
+            <Text style={s.empty}>The book is empty so far.</Text>
             <TouchableOpacity
               style={s.emptyBtn}
               onPress={() => router.replace('/memoir')}
@@ -123,19 +120,12 @@ export default function MemoirPreviewScreen() {
               <ChapterBlock key={chapter.key} chapter={chapter} elder={elder} />
             ))}
 
-            {/* Closing note — gentle, sets expectation that the printed
-                book typesets this same content into 6×9 pages. */}
             <Text style={s.colophon}>
               {`${book.entryCount} ${book.entryCount === 1 ? 'entry' : 'entries'}`}
               {book.photoCount > 0
                 ? ` · ${book.photoCount} ${book.photoCount === 1 ? 'photograph' : 'photographs'}`
                 : ''}
               {` · about ${Math.max(1, Math.round(book.wordCount / 320))} printed pages`}
-            </Text>
-            <Text style={s.colophonNote}>
-              This is the order and shape the printed book follows. When
-              you&apos;re ready, &ldquo;Make the book&rdquo; typesets it
-              into a real 6×9 paperback.
             </Text>
 
             <View style={s.closingLinks}>
@@ -176,10 +166,6 @@ function ChapterBlock({ chapter, elder }: { chapter: BookChapter; elder: boolean
       {chapter.entries.map((entry) => (
         <EntryBlock key={entry.id} entry={entry} elder={elder} />
       ))}
-
-      {chapter.entries.length === 0 && chapter.photos.length > 0 && (
-        <Text style={s.photoOnlyNote}>Photographs from this chapter.</Text>
-      )}
 
       {chapter.photos.map((photo) => (
         <PhotoPlate key={photo.id} asset={photo} elder={elder} />
@@ -381,10 +367,6 @@ function makeStyles(elder: boolean) {
     },
     proseFirst: { marginTop: 0 },
 
-    photoOnlyNote: {
-      fontSize: 14, color: pageInkMuted, fontStyle: 'italic', ...serif,
-    },
-
     // ── Photo plate ─────────────────────────────────────────────────
     plate: { gap: 8, marginTop: 8, alignItems: 'center' },
     plateFrame: {
@@ -404,10 +386,6 @@ function makeStyles(elder: boolean) {
     colophon: {
       fontSize: 13, color: pageInkMuted, textAlign: 'center',
       letterSpacing: 0.4, marginTop: 8, ...serif,
-    },
-    colophonNote: {
-      fontSize: 14, lineHeight: 22, color: pageInkSecondary, fontStyle: 'italic',
-      textAlign: 'center', maxWidth: 480, alignSelf: 'center', ...serif,
     },
     closingLinks: {
       flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',

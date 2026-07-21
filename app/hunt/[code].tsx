@@ -80,7 +80,7 @@ export default function HuntSeek() {
   const onFound = async () => {
     if (!cache || !coords) return;
     if (!signedIn) {
-      showAlert('Sign in to log it', 'Logging a find needs a HereToo account. You can still navigate.');
+      showAlert('Sign in to log it', 'Logging a pickup needs a HereToo account. The compass still works.');
       return;
     }
     try {
@@ -91,14 +91,14 @@ export default function HuntSeek() {
         // Self-destructing drop: burn it now that it has been seen.
         if (cache.self_destruct) burn.mutate(cache.id);
       } else if (res.error === 'too_far') {
-        showAlert('Not quite there', `You are ${res.distance_m}m away. Get closer.`);
+        showAlert('Still short', `${res.distance_m}m out. Close the distance.`);
       } else if (res.error === 'locked') {
-        showAlert('Locked', 'Find the previous drop in the chain first.');
+        showAlert('Locked', 'Collect the drop before this one first.');
       } else {
-        showAlert('Could not log it', 'Try again.');
+        showAlert('Could not log it', 'Try it again.');
       }
     } catch (e: any) {
-      showAlert('Could not log it', e?.message ?? 'Try again.');
+      showAlert('Could not log it', e?.message ?? 'Try it again.');
     }
   };
 
@@ -112,9 +112,9 @@ export default function HuntSeek() {
           <TouchableOpacity onPress={() => router.replace('/hunt')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={s.kicker}>Hunt</Text>
+          <Text style={s.kicker}>Deaddrop</Text>
         </View>
-        <Text style={s.notFound}>No cache for code “{String(code)}”. Check the link.</Text>
+        <Text style={s.notFound}>Nothing filed under “{String(code)}”. Check the code.</Text>
       </SafeAreaView>
     );
   }
@@ -126,7 +126,7 @@ export default function HuntSeek() {
           <TouchableOpacity onPress={() => router.replace('/hunt')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={s.kicker}>{cache.title || 'Seek the cache'}</Text>
+          <Text style={s.kicker}>{cache.title || 'Collect the drop'}</Text>
         </View>
 
         {cache.locked ? (
@@ -134,10 +134,10 @@ export default function HuntSeek() {
             <Ionicons name="lock-closed" size={44} color={Colors.textMuted} />
             <Text style={s.foundTitle}>Locked</Text>
             <Text style={s.foundSub}>
-              This drop is part of a chain. Find the one before it, then come back.
+              This one runs second. Collect the drop before it, then come back.
             </Text>
             <TouchableOpacity style={s.ghostBtn} onPress={() => router.replace('/hunt')} activeOpacity={0.85}>
-              <Text style={s.ghostBtnText}>Back to hunts</Text>
+              <Text style={s.ghostBtnText}>Back to the board</Text>
             </TouchableOpacity>
           </View>
         ) : found ? (
@@ -146,18 +146,18 @@ export default function HuntSeek() {
               <>
                 {photoUrl && <RNImage source={{ uri: photoUrl }} style={[s.clue, s.burning]} resizeMode="cover" />}
                 <GlitchText style={s.goneTitle}>GONE</GlitchText>
-                <Text style={s.foundSub}>The drop self-destructed. One look, then nothing.</Text>
+                <Text style={s.foundSub}>It burned on delivery. One look. That was the price.</Text>
               </>
             ) : (
               <>
                 <Ionicons name="checkmark-circle" size={48} color="#5BC289" />
-                <Text style={s.foundTitle}>Found it</Text>
+                <Text style={s.foundTitle}>Collected</Text>
                 {photoUrl && <RNImage source={{ uri: photoUrl }} style={s.clue} resizeMode="cover" />}
-                <Text style={s.foundSub}>Logged. {cache.found_count + 1} finds so far.</Text>
+                <Text style={s.foundSub}>Logged. {cache.found_count + 1} pickups on this one.</Text>
               </>
             )}
             <TouchableOpacity style={s.ghostBtn} onPress={() => router.replace('/hunt')} activeOpacity={0.85}>
-              <Text style={s.ghostBtnText}>Back to hunts</Text>
+              <Text style={s.ghostBtnText}>Back to the board</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -189,7 +189,7 @@ export default function HuntSeek() {
             {Platform.OS === 'web' && heading === null && (
               <TouchableOpacity style={s.compassBtn} onPress={startCompass} activeOpacity={0.85}>
                 <Ionicons name="compass-outline" size={16} color={Colors.primary} />
-                <Text style={s.compassBtnText}>Enable compass</Text>
+                <Text style={s.compassBtnText}>Wake the compass</Text>
               </TouchableOpacity>
             )}
 
@@ -203,7 +203,7 @@ export default function HuntSeek() {
               />
             )}
 
-            {geoError === 'denied' && <Text style={s.warn}>Location blocked. Enable it to hunt.</Text>}
+            {geoError === 'denied' && <Text style={s.warn}>Location is blocked. Turn it on to run this.</Text>}
 
             {/* The sealed payload — hidden until inside the radius. */}
             {revealed ? (
@@ -214,7 +214,7 @@ export default function HuntSeek() {
               <View style={s.sealed}>
                 <Ionicons name="lock-closed" size={22} color={Colors.textMuted} />
                 <Text style={s.sealedText}>
-                  Sealed. Get within {cache.radius_m}m of the drop to reveal it.
+                  Sealed. Close to within {cache.radius_m}m and it opens.
                 </Text>
               </View>
             )}
@@ -236,7 +236,7 @@ export default function HuntSeek() {
               ? <ActivityIndicator color="#FFF" />
               : <Ionicons name={gated ? 'flag' : 'lock-closed'} size={18} color={gated ? '#FFF' : Colors.textMuted} />}
             <Text style={[s.findBtnText, !gated && { color: Colors.textMuted }]}>
-              {gated ? 'I found it' : distance !== null ? `Get within ${cache.radius_m}m` : 'Locating…'}
+              {gated ? 'I have it' : distance !== null ? `Close to ${cache.radius_m}m` : 'Taking a fix…'}
             </Text>
           </TouchableOpacity>
         </View>

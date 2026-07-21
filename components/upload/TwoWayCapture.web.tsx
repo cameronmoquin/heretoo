@@ -67,8 +67,7 @@ export function TwoWayCapture({ onCapture, onClose }: Props) {
         <Ionicons name="phone-portrait-outline" size={32} color={Colors.textMuted} />
         <Text style={s.notSupportedTitle}>Two-Way is a phone thing</Text>
         <Text style={s.notSupportedText}>
-          Open HereToo on your phone (or install the mobile app) to capture
-          front + back together.
+          Open HereToo on your phone.
         </Text>
         <TouchableOpacity style={s.closeBtn} onPress={onClose}>
           <Text style={s.closeBtnText}>Back</Text>
@@ -231,7 +230,7 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
           <ActivityIndicator size="large" color="#FFF" />
           <Text style={s.statusText}>
             {stage === 'requesting' ? 'Asking for camera access…' :
-             stage === 'snapping' ? 'Hold still — both cameras…' :
+             stage === 'snapping' ? 'Hold still…' :
              'Stitching…'}
           </Text>
         </View>
@@ -250,7 +249,7 @@ function TwoWayWebCapture({ onCapture, onClose }: Props) {
       )}
 
       <View style={s.hud} pointerEvents="none">
-        <Text style={s.hudLabel}>Two-Way · one tap, both cameras</Text>
+        <Text style={s.hudLabel}>Two-Way</Text>
       </View>
 
       <View style={s.controls}>

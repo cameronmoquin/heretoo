@@ -27,10 +27,10 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
 type CardDesign = 'pressed-flower' | 'katagami-stencil' | 'type-only';
-const DESIGNS: Array<{ id: CardDesign; label: string; sub: string }> = [
-  { id: 'pressed-flower', label: 'Pressed flower', sub: 'Botanical, soft, watercolor edge.' },
-  { id: 'katagami-stencil', label: 'Katagami stencil', sub: 'Japanese paper-cut floral repeat.' },
-  { id: 'type-only', label: 'Type only', sub: 'Letterpress style, just words.' },
+const DESIGNS: Array<{ id: CardDesign; label: string }> = [
+  { id: 'pressed-flower', label: 'Pressed flower' },
+  { id: 'katagami-stencil', label: 'Katagami stencil' },
+  { id: 'type-only', label: 'Type only' },
 ];
 
 export default function InviteCardScreen() {
@@ -104,15 +104,6 @@ export default function InviteCardScreen() {
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {!savedUrl && (
           <>
-            <View style={s.preamble}>
-              <Text style={s.preambleTitle}>For someone who isn't on HereToo yet.</Text>
-              <Text style={s.preambleBody}>
-                You'll get a link to send them. When they open it, the platform reads
-                them a 30-second greeting in a calm voice that names you. No fields,
-                no signup wall. They step inside on their own time.
-              </Text>
-            </View>
-
             <View style={s.field}>
               <Text style={s.fieldLabel}>Their first name</Text>
               <TextInput
@@ -135,9 +126,6 @@ export default function InviteCardScreen() {
                 placeholderTextColor={Colors.textMuted}
                 maxLength={60}
               />
-              <Text style={s.fieldHint}>
-                The voice greeting will say "Your {relationship.trim() || 'friend'}, [your name], made you a place here."
-              </Text>
             </View>
 
             <View style={s.field}>
@@ -157,16 +145,11 @@ export default function InviteCardScreen() {
                         <Text style={[s.designLabel, on && { color: Colors.primary, fontWeight: '700' }]}>
                           {d.label}
                         </Text>
-                        <Text style={s.designSub}>{d.sub}</Text>
                       </View>
                     </TouchableOpacity>
                   );
                 })}
               </View>
-              <Text style={s.fieldHint}>
-                The printed card pipeline (Lob postage, $4 per card) ships in a follow-up.
-                For now, you'll share the welcome URL by hand.
-              </Text>
             </View>
 
             <TouchableOpacity
@@ -191,10 +174,6 @@ export default function InviteCardScreen() {
           <View style={s.successWrap}>
             <Ionicons name="checkmark-circle" size={28} color={Colors.primary} />
             <Text style={s.successTitle}>Welcome link is ready.</Text>
-            <Text style={s.successBody}>
-              Share this URL with {recipientName}. When they open it, the
-              ceremony begins.
-            </Text>
             <View style={s.urlBox}>
               <Text selectable style={s.urlText} numberOfLines={2}>{savedUrl}</Text>
             </View>
@@ -227,15 +206,6 @@ function makeStyles() { return StyleSheet.create({
   },
   scroll: { padding: Spacing.md, paddingBottom: 80, gap: Spacing.lg },
 
-  preamble: {
-    padding: Spacing.md, borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    gap: 6,
-  },
-  preambleTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-  preambleBody: { fontSize: 13, lineHeight: 19, color: Colors.textSecondary },
-
   field: { gap: 6 },
   fieldLabel: {
     fontSize: 11, fontWeight: '700', color: Colors.textMuted,
@@ -248,8 +218,6 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10,
     fontSize: 15, color: Colors.textPrimary,
   },
-  fieldHint: { fontSize: 11, color: Colors.textMuted, lineHeight: 16 },
-
   designRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: 12, paddingVertical: 10,
@@ -262,7 +230,6 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.textMuted,
   },
   designLabel: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
-  designSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
 
   saveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -279,7 +246,6 @@ function makeStyles() { return StyleSheet.create({
     gap: 10,
   },
   successTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  successBody: { fontSize: 14, lineHeight: 21, color: Colors.textSecondary },
   urlBox: {
     padding: 10,
     borderRadius: Radius.md,

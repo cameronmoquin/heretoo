@@ -131,12 +131,6 @@ export default function MemoirPrintScreen() {
         </View>
 
         <View style={s.page}>
-          <Text style={s.lede}>
-            The PDF you just rendered is a standard 6×9 book file with bleed
-            and embedded fonts. Every printer below will accept it. Pick the
-            one that fits how you want to give the book away.
-          </Text>
-
           {CATEGORY_ORDER.map((cat) => {
             const items = OPTIONS.filter((o) => o.category === cat);
             if (items.length === 0) return null;
@@ -149,8 +143,7 @@ export default function MemoirPrintScreen() {
           })}
 
           <Text style={s.footnote}>
-            None of these companies pay HereToo. The list is here so the
-            choice is yours, not ours.
+            None of these companies pay HereToo.
           </Text>
         </View>
       </ScrollView>
@@ -230,11 +223,6 @@ function makeStyles(elder: boolean) {
       backgroundColor: pageCardBg, borderWidth: 1, borderColor: pageBorder,
       gap: Spacing.lg, ...pageCardWeb,
     } : { gap: Spacing.lg, marginTop: 8 },
-
-    lede: {
-      fontSize: 17, lineHeight: 28, color: pageInk, fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
 
     section: { gap: 10 },
     sectionTitle: {

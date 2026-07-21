@@ -77,13 +77,13 @@ export function InstallAppBanner() {
       // iOS Safari has no API — show instructions
       showAlert(
         'Install HereToo',
-        'In Safari, tap the Share icon (square with up-arrow), then choose "Add to Home Screen". The app will live next to your other apps.',
+        'In Safari, tap the Share icon (square with up-arrow), then choose "Add to Home Screen".',
       );
     } else {
-      // Desktop / browser without prompt — point them to bookmarking or installing via menu
+      // Desktop / browser without prompt — point them to the browser menu
       showAlert(
         'Install HereToo',
-        'In your browser menu, look for "Install HereToo" or "Install app" — usually under the three-dot menu. The app launches in its own window.',
+        'In your browser menu, look for "Install HereToo" or "Install app", usually under the three-dot menu.',
       );
     }
   };
@@ -99,13 +99,6 @@ export function InstallAppBanner() {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.title}>Install HereToo</Text>
-        <Text style={s.sub} numberOfLines={2}>
-          {platform === 'ios'
-            ? 'Add to your Home Screen for fullscreen, fast launch.'
-            : platform === 'android'
-              ? 'One-tap install for a real-app feel.'
-              : 'Install for a desktop window — no browser chrome.'}
-        </Text>
       </View>
       <TouchableOpacity style={s.installBtn} onPress={onInstall} activeOpacity={0.85}>
         <Text style={s.installBtnText}>Install</Text>
@@ -132,7 +125,6 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   title: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
-  sub: { fontSize: 11, color: Colors.textSecondary, marginTop: 1, lineHeight: 15 },
   installBtn: {
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
     backgroundColor: Colors.primary,

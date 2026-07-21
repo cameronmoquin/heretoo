@@ -4,10 +4,10 @@
  * The wider-world section of the platform. Open to anyone signed
  * into HereToo — pseudonymous, sharp-edged, posts that vanish in
  * 24 hours. This is the only part of HereToo where ads are allowed.
- * The family rooms remain ad-free, paid by subscription. A first-
+ * The crew rooms remain ad-free, paid by subscription. A first-
  * visit disclosure makes the carve-out plain.
  *
- * Visually the page is OUTSIDE the parlor wallpaper. We blank the
+ * Visually the page sits OUTSIDE the house wallpaper. We blank the
  * body with a hard near-black background so the modernist register
  * reads. Inter only, no Syne, no Source Serif.
  */
@@ -31,8 +31,8 @@ import { AdSlot } from '../../components/loft/AdSlot';
 
 const DISCLOSURE_KEY = 'heretoo:loft-disclosure-seen';
 
-// The Loft uses its own palette — locked, not theme-driven. The whole
-// point is that it doesn't look like the parlor.
+// The Loft uses its own palette. Locked, never theme-driven. The whole
+// point is that it reads as a different building from the house.
 const LOFT = {
   bg: '#0E0E0E',
   surface: '#1A1A1A',
@@ -107,7 +107,6 @@ export default function LoftScreen() {
         </TouchableOpacity>
         <View style={{ alignItems: 'center', flex: 1 }}>
           <Text style={s.brand}>HERETOO</Text>
-          <Text style={s.brandSub}>the public side</Text>
         </View>
         <View style={{ width: 20 }} />
       </View>
@@ -165,8 +164,7 @@ export default function LoftScreen() {
             style={s.input}
             value={draft}
             onChangeText={setDraft}
-            placeholder="say something. it disappears tomorrow."
-            placeholderTextColor={LOFT.muted}
+            accessibilityLabel="Post"
             multiline
             maxLength={1200}
           />
@@ -196,7 +194,6 @@ export default function LoftScreen() {
         {!isLoading && (feed ?? []).length === 0 && (
           <View style={s.emptyWrap}>
             <Text style={s.emptyTitle}>nothing here right now.</Text>
-            <Text style={s.emptyBody}>be the first. tomorrow it&apos;s gone.</Text>
           </View>
         )}
 
@@ -207,33 +204,19 @@ export default function LoftScreen() {
               isMine={p.author_id === userId}
               onDelete={() => remove.mutate(p.id)}
             />
-            {/* Ads land every 5 posts. Family rooms stay clean. */}
+            {/* Ads land every 5 posts. Crew rooms stay clean. */}
             {(idx + 1) % 5 === 0 && <AdSlot />}
           </React.Fragment>
         ))}
-
-        <View style={s.footer}>
-          <Text style={s.footerText}>
-            posts last 24 hours and disappear. ads pay for the lights here.
-            {'\n'}the family rooms stay clean.
-          </Text>
-        </View>
       </ScrollView>
 
       {/* First-visit disclosure */}
       <Modal visible={disclosureOpen} transparent animationType="fade" onRequestClose={dismissDisclosure}>
         <View style={s.discScrim}>
           <View style={s.discSheet}>
-            <Text style={s.discKicker}>HERETOO · THE PUBLIC SIDE</Text>
-            <Text style={s.discTitle}>A non-toxic social media no one asked for.</Text>
+            <Text style={s.discKicker}>HERETOO</Text>
             <Text style={s.discBody}>
-              This is the open side of HereToo, separate from the family rooms.
-              Posts here are pseudonymous and vanish in 24 hours. Ads pay for
-              the lights — they appear about every fifth post.
-            </Text>
-            <Text style={s.discBody}>
-              We don&apos;t know if anyone will use it. The family rooms stay clean
-              either way.
+              Ads pay for the lights. They appear about every fifth post.
             </Text>
             <TouchableOpacity onPress={dismissDisclosure} style={s.discBtn} activeOpacity={0.85}>
               <Text style={s.discBtnText}>I understand</Text>
@@ -279,10 +262,6 @@ function makeStyles() { return StyleSheet.create({
     letterSpacing: 6,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Inter", system-ui, sans-serif' } as any) : {}),
   },
-  brandSub: {
-    fontSize: 9, fontWeight: '500', color: LOFT.muted, letterSpacing: 1.4,
-    textTransform: 'uppercase', marginTop: 1,
-  },
 
   // Disclosure modal
   discScrim: {
@@ -297,10 +276,6 @@ function makeStyles() { return StyleSheet.create({
   },
   discKicker: {
     fontSize: 10, fontWeight: '700', color: LOFT.accent, letterSpacing: 2.4,
-  },
-  discTitle: {
-    fontSize: 22, fontWeight: '900', color: LOFT.text, lineHeight: 28,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Inter", system-ui, sans-serif' } as any) : {}),
   },
   discBody: {
     fontSize: 14, lineHeight: 21, color: LOFT.text, fontWeight: '400',
@@ -339,7 +314,7 @@ function makeStyles() { return StyleSheet.create({
   composerCard: {
     backgroundColor: LOFT.surface,
     borderWidth: 1, borderColor: LOFT.border,
-    borderRadius: 0,                   // hard edges; no parlor curves
+    borderRadius: 0,                   // hard edges; no house curves
     padding: 14,
     gap: 8,
   },
@@ -368,7 +343,6 @@ function makeStyles() { return StyleSheet.create({
 
   emptyWrap: { padding: 24, gap: 8 },
   emptyTitle: { color: LOFT.text, fontSize: 18, fontWeight: '600' },
-  emptyBody: { color: LOFT.muted, fontSize: 13, lineHeight: 19 },
 
   postCard: {
     backgroundColor: LOFT.surface,
@@ -392,7 +366,4 @@ function makeStyles() { return StyleSheet.create({
   },
   deleteRow: { alignSelf: 'flex-end' },
   deleteText: { fontSize: 11, color: LOFT.muted, textDecorationLine: 'underline', fontWeight: '500' },
-
-  footer: { paddingTop: 12 },
-  footerText: { fontSize: 11, color: LOFT.muted, lineHeight: 16, textAlign: 'center' },
 }); }

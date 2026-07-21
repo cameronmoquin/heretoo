@@ -15,7 +15,7 @@
  *
  * Behaviors:
  *   - "Tag your connections" opens a modal listing everyone in the
- *     viewer's family network. Selecting inserts an @handle into the body
+ *     viewer's crew network. Selecting inserts an @handle into the body
  *     and tracks the profile_id locally for future post_mentions support.
  *   - Two-Way is mobile-only (web shows the existing "use the app" stub
  *     inside the modal — the component handles its own platform branch).
@@ -43,8 +43,8 @@ import { MicInputButton } from '../shared/MicInputButton';
 
 interface FeedComposerProps {
   /**
-   * When set, the composer posts to this family (visibility='family',
-   * family_id=<id>) and skips the "join a family first" gate.
+   * When set, the composer posts to this crew (visibility='family',
+   * family_id=<id>) and skips the "join a crew first" gate.
    * Leave undefined for the public/main-feed composer (visibility='public').
    */
   familyId?: string;
@@ -67,10 +67,10 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const [twoWayOpen, setTwoWayOpen] = useState(false);
   const [oneWayOpen, setOneWayOpen] = useState(false);
 
-  // Recipient-restricted updates: which family members get this update.
-  // Empty set = "broadcast to whole family" (default behavior of any
-  // family post). Picker only opens when kind='update' is selected on
-  // a family-scoped composer.
+  // Recipient-restricted updates: which crew members get this update.
+  // Empty set = "broadcast to whole crew" (default behavior of any
+  // crew post). Picker only opens when kind='update' is selected on
+  // a crew-scoped composer.
   const [updateRecipientIds, setUpdateRecipientIds] = useState<Set<string>>(new Set());
   const [recipientPickerOpen, setRecipientPickerOpen] = useState(false);
   const { data: familyMembers } = useFamilyMembersWithProfiles(familyId ?? null);
@@ -129,7 +129,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         visibility: isFamilyScoped ? 'family' : 'public',
         familyId: familyId,
         kind: isFamilyScoped ? postKind : 'post',
-        // Only pass recipient list for genuine family updates with a
+        // Only pass recipient list for genuine crew updates with a
         // non-empty selection. Author is implicit — RLS lets them read
         // their own posts unconditionally.
         updateRecipientIds:
@@ -155,20 +155,16 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
 
   const taggedList = connections?.filter((c) => taggedIds.has(c.id)) ?? [];
 
-  // Public posting requires at least one active family membership.
-  // The whole point of HereToo: family ties are the anti-spam layer that
+  // Public posting requires at least one active crew membership.
+  // The whole point of HereToo: crew ties are the anti-spam layer that
   // earns the right to post in the common area.
-  // Family-scoped composers skip this gate — if you're on the family
-  // page, you're necessarily a member of that family.
+  // Crew-scoped composers skip this gate. If you're on the crew
+  // page, you're necessarily a member of that crew.
   if (!isFamilyScoped && families !== undefined && !inAFamily) {
     return (
       <View style={s.gateCard}>
         <Ionicons name="people-outline" size={24} color={Colors.primary} />
-        <Text style={s.gateTitle}>Join a family to post here</Text>
-        <Text style={s.gateSub}>
-          HereToo's public feed opens up once you're in at least one family.
-          Got an invite code or link? Use it. Or start your own family.
-        </Text>
+        <Text style={s.gateTitle}>Join a crew to post here</Text>
         <View style={s.gateRow}>
           <TouchableOpacity
             style={s.gateBtn}
@@ -182,7 +178,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             onPress={() => router.push('/family' as any)}
             activeOpacity={0.85}
           >
-            <Text style={s.gateBtnTextAlt}>Start a family</Text>
+            <Text style={s.gateBtnTextAlt}>Start a crew</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -201,11 +197,10 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           style={s.collapsedInput}
           onPress={() => setExpanded(true)}
           activeOpacity={0.7}
+          accessibilityLabel="New post"
         >
           <Ionicons name="create-outline" size={14} color={Colors.textMuted} />
-          <Text style={s.collapsedPlaceholder}>
-            {isFamilyScoped ? 'Share with the family…' : "What's happening?"}
-          </Text>
+          <Text style={s.collapsedPlaceholder}>Post</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.collapsedIcon}
@@ -244,7 +239,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         </View>
       </View>
 
-      {/* Update / Post toggle — family-scoped composers only. */}
+      {/* Update / Post toggle, crew-scoped composers only. */}
       {isFamilyScoped && (
         <View style={s.kindRow}>
           <TouchableOpacity
@@ -274,8 +269,8 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         </View>
       )}
 
-      {/* Recipient row — only for family updates. Defaults to "Everyone
-          in this family"; tap to narrow to specific members (the
+      {/* Recipient row, only for crew updates. Defaults to "Everyone
+          in this crew"; tap to narrow to specific members (the
           health-emergency use case from the original pitch). */}
       {isFamilyScoped && postKind === 'update' && (
         <TouchableOpacity
@@ -287,7 +282,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           <Text style={s.recipientLabel}>To:</Text>
           <Text style={s.recipientValue} numberOfLines={1}>
             {updateRecipientIds.size === 0
-              ? 'Everyone in this family'
+              ? 'Everyone in this crew'
               : recipientSummary(familyMembers ?? [], updateRecipientIds, userId)}
           </Text>
           <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
@@ -296,8 +291,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
 
       <TextInput
         style={s.input}
-        placeholder="What's happening?"
-        placeholderTextColor={Colors.textMuted}
+        accessibilityLabel="Post body"
         value={body}
         onChangeText={setBody}
         multiline
@@ -407,9 +401,9 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         />
       </Modal>
 
-      {/* Recipient picker — for kind='update' only. Restricts the
-          update to specific family members; empty selection means
-          "broadcast to everyone in the family" (the default). */}
+      {/* Recipient picker, for kind='update' only. Restricts the
+          update to specific crew members; empty selection means
+          "broadcast to everyone in the crew" (the default). */}
       <Modal
         visible={recipientPickerOpen}
         transparent
@@ -423,11 +417,6 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         >
           <TouchableOpacity activeOpacity={1} style={s.modalCard}>
             <Text style={s.modalTitle}>Send this update to…</Text>
-            <Text style={s.modalSub}>
-              {updateRecipientIds.size === 0
-                ? 'Currently broadcasting to everyone in this family. Select members to narrow it.'
-                : `${updateRecipientIds.size} selected — only these members + you will see this update.`}
-            </Text>
 
             <ScrollView style={{ maxHeight: 360 }}>
               {(familyMembers ?? [])
@@ -505,11 +494,6 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         >
           <TouchableOpacity activeOpacity={1} style={s.modalCard}>
             <Text style={s.modalTitle}>Tag your connections</Text>
-            <Text style={s.modalSub}>
-              {connections && connections.length > 0
-                ? `${connections.length} ${connections.length === 1 ? 'person' : 'people'} in your network`
-                : 'Nobody yet — join or build a family to connect.'}
-            </Text>
 
             <ScrollView style={{ maxHeight: 360 }}>
               {(connections ?? []).map((c) => {
@@ -657,7 +641,7 @@ function makeStyles() { return StyleSheet.create({
   kindBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
   kindBtnTextActive: { color: Colors.textPrimary },
 
-  // Recipient row — shown only on family-update composers
+  // Recipient row, shown only on crew-update composers
   recipientRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: Colors.surfaceLight,
@@ -720,8 +704,7 @@ function makeStyles() { return StyleSheet.create({
     width: '100%', maxWidth: 460, padding: 18,
     borderWidth: 1, borderColor: Colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  modalSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2, marginBottom: 12 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 12 },
 
   connRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -744,7 +727,7 @@ function makeStyles() { return StyleSheet.create({
   },
   modalDoneText: { color: '#FFF', fontSize: 14, fontWeight: '600', letterSpacing: 0.1 },
 
-  // Gate state — shown when the viewer isn't in any family yet.
+  // Gate state, shown when the viewer is in no crew yet.
   gateCard: {
     backgroundColor: Colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -755,10 +738,6 @@ function makeStyles() { return StyleSheet.create({
   gateTitle: {
     fontSize: 16, fontWeight: '700', color: Colors.textPrimary,
     marginTop: 4,
-  },
-  gateSub: {
-    fontSize: 13, color: Colors.textSecondary, lineHeight: 19,
-    textAlign: 'center', maxWidth: 360,
   },
   gateRow: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' },
   gateBtn: {

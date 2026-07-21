@@ -21,7 +21,7 @@ export const FLAG_REASONS: Array<{ id: FlagReason; label: string; sub: string }>
   { id: 'hate', label: 'Hate or harassment', sub: 'Threats, slurs, or targeted abuse.' },
   { id: 'spam', label: 'Spam', sub: 'Promotional, repetitive, or off-topic.' },
   { id: 'misinfo', label: 'Misinformation', sub: 'Provably false. Especially health or safety.' },
-  { id: 'sexual', label: 'Sexual content', sub: 'Not appropriate for a family-first surface.' },
+  { id: 'sexual', label: 'Sexual content', sub: 'Not appropriate here.' },
   { id: 'other', label: 'Something else', sub: 'Tell us in your own words below.' },
 ];
 

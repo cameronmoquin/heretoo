@@ -4,9 +4,9 @@
  * Shows what HereToo wants to surface about another person without
  * giving away anything they haven't already shared:
  *   - Stature avatar (letter + generation + reach), display name, bio
- *   - Mutual families (where you and they overlap) — tap to enter
+ *   - Mutual crews (where you and they overlap) — tap to enter
  *   - Recent public posts (RLS already filters out anything they've
- *     scoped to family or connections-only that you can't see)
+ *     scoped to crew or connections-only that you can't see)
  *   - "Send message" button — opens a thread, with the >3-hop
  *     approval gate handled by useOpenThread
  *
@@ -73,7 +73,7 @@ export default function UserProfile() {
     enabled: !!profile?.id,
   });
 
-  // 3. Mutual families = both you and them are active members.
+  // 3. Mutual crews = both you and them are active members.
   const { data: myFamilies } = useMyFamilies();
   const { data: theirFamilyIds } = useQuery({
     queryKey: ['their-families', profile?.id],
@@ -173,10 +173,10 @@ export default function UserProfile() {
           )}
         </View>
 
-        {/* Mutual families */}
+        {/* Mutual crews */}
         {mutualFamilies.length > 0 && (
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Mutual families</Text>
+            <Text style={s.sectionTitle}>Mutual crews</Text>
             {mutualFamilies.map((f: any) => (
               <TouchableOpacity
                 key={f.id}

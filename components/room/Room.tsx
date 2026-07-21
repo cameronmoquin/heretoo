@@ -2,12 +2,12 @@
  * Room — the default surface of HereToo (Source of Truth, Milestone 1).
  *
  * Replaces the feed as the front door. The feed still exists at /common
- * and per-family pages still exist; the Room is what the user sees
+ * and per-crew pages still exist; the Room is what the user sees
  * when they open the app.
  *
  * Three zones, top to bottom:
- *   - Hearth: family/today masthead, day-of-week, room-switcher swatches.
- *   - Mantel: up to three Postcards from the (per-family or unifying) feed.
+ *   - Hearth: crew/today masthead, day-of-week, room-switcher swatches.
+ *   - Mantel: up to three Postcards from the (per-crew or unifying) feed.
  *   - Side table: music station card, "read me today" affordance, compose.
  *
  * On mobile the three zones still stack, but the hearth is single-line
@@ -43,10 +43,10 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
 interface Props {
-  /** When set, the Room is scoped to this single family.
-   *  When null/undefined, it is the Common Room — cross-family. */
+  /** When set, the Room is scoped to this single crew.
+   *  When null/undefined, it is the Common Room, cross-crew. */
   familyId?: string | null;
-  /** Family name shown in the hearth when scoped. */
+  /** Crew name shown in the hearth when scoped. */
   familyName?: string | null;
 }
 
@@ -60,7 +60,7 @@ export function Room({ familyId, familyName }: Props) {
   const isCompact = width < 720;
 
   // Source the mantel postcards. Common Room uses the unifying ranker
-  // (paginated useInfiniteQuery); family-scoped Room uses the family's
+  // (paginated useInfiniteQuery); crew-scoped Room uses the crew's
   // own feed (flat useQuery). Both hooks self-gate on their inputs;
   // we simply read whichever is relevant.
   const commonFeed = useFeed('for_you');
@@ -116,10 +116,10 @@ export function Room({ familyId, familyName }: Props) {
     }
   };
 
-  // Compose flow. Posting requires a family — if you're in the
-  // Common Room and have at least one family, route to the most-
-  // recent family's new-post page; if you have none, route to
-  // the families list so you can start one.
+  // Compose flow. Posting requires a crew. If you're in the
+  // Common Room and have at least one crew, route to the most-
+  // recent crew's new-post page; if you have none, route to
+  // the crews list so you can start one.
   const onCompose = () => {
     if (familyId) {
       router.push(`/family/${familyId}/new-post` as any);
@@ -144,7 +144,7 @@ export function Room({ familyId, familyName }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {/* Brand presence — every Room has a plaque */}
-        <RoomMasthead subtitle={familyId ? (familyName ?? 'Family') : 'The Common Room'} />
+        <RoomMasthead subtitle={familyId ? (familyName ?? 'Crew') : 'The Common Room'} />
 
         {/* Wallpaper picker — small row of swatches so the user
             discovers the wall behind them is a choice. */}
@@ -165,7 +165,7 @@ export function Room({ familyId, familyName }: Props) {
             </View>
             {familyId && (
               <Text style={s.folioFamily} numberOfLines={1}>
-                {familyName ?? 'Family'}
+                {familyName ?? 'Crew'}
               </Text>
             )}
             <View style={s.hearthRule} />
@@ -201,9 +201,9 @@ export function Room({ familyId, familyName }: Props) {
             )}
           </View>
 
-          {/* Room switcher: Common + each family swatch.
-              Tapping a family routes to its page (the family page
-              IS the per-family Room in this iteration). */}
+          {/* Room switcher: Common + each crew swatch.
+              Tapping a crew routes to its page (the crew page
+              IS the per-crew Room in this iteration). */}
           {familySwatches.length > 0 && (
             <ScrollView
               horizontal

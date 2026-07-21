@@ -105,11 +105,6 @@ export default function MemoirBookScreen() {
         </View>
 
         <View style={s.page}>
-        <Text style={s.lede}>
-          When you&apos;re ready, we turn your answers into a real paperback you can
-          order and hold.
-        </Text>
-
         {/* Title + dedication */}
         <View style={s.field}>
           <Text style={s.fieldLabel}>Title</Text>
@@ -130,8 +125,7 @@ export default function MemoirBookScreen() {
             value={dedication}
             onChangeText={setDedication}
             onBlur={saveMeta}
-            placeholder="For the ones who come after."
-            placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
+            accessibilityLabel="Dedication"
             multiline
             maxLength={400}
             textAlignVertical="top"
@@ -200,9 +194,6 @@ export default function MemoirBookScreen() {
             </>
           )}
         </TouchableOpacity>
-        <Text style={s.makeHint}>
-          This can take a couple of minutes. You can leave this page; it keeps working.
-        </Text>
 
         {/* Renders */}
         {(renders ?? []).length > 0 && (
@@ -272,14 +263,6 @@ function RenderRow({ render, elder }: { render: MemoirBookRender; elder: boolean
         </View>
       )}
 
-      {render.status === 'done' && (
-        <Text style={s.kdpHint}>
-          The interior PDF is a standard 6×9 book file with bleed and
-          embedded fonts. Print it wherever you like — Amazon KDP, a
-          local print shop, FedEx Office, Staples, IngramSpark. Tap
-          &ldquo;Where to print&rdquo; below for the comparison.
-        </Text>
-      )}
     </View>
   );
 }
@@ -378,13 +361,6 @@ function makeStyles(elder: boolean = false) {
       ...pageCardWeb,
     } : { gap: Spacing.lg, marginTop: 8 },
 
-    lede: {
-      fontSize: 17, lineHeight: 28,
-      color: pageInk,
-      fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-
     field: { gap: 6 },
     fieldLabel: {
       fontSize: 11, fontWeight: '700', color: pageInkMuted,
@@ -421,13 +397,6 @@ function makeStyles(elder: boolean = false) {
       color: onAccent,
       fontSize: 15, fontWeight: '700', letterSpacing: 0.2,
     },
-    makeHint: {
-      fontSize: 13, color: pageInkSecondary,
-      fontStyle: 'italic',
-      textAlign: 'center',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-
     sideLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     photosLink: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -467,10 +436,5 @@ function makeStyles(elder: boolean = false) {
     },
     dlChipPrimary: { backgroundColor: pageAccent },
     dlChipText: { fontSize: 13, fontWeight: '700', color: pageAccent },
-    kdpHint: {
-      fontSize: 12, color: pageInkSecondary,
-      fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
   });
 }

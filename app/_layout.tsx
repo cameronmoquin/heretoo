@@ -88,7 +88,7 @@ function RootLayoutInner() {
     // brand mark, section titles. Per the codex (Source of Truth, M10).
     Syne_600SemiBold, Syne_700Bold, Syne_800ExtraBold,
     // Long-form body — Source Serif 4. Used for the Letter composer,
-    // letter reader, parlor essays, Reframer drawer.
+    // letter reader, Reframer drawer.
     SourceSerif4_400Regular, SourceSerif4_400Regular_Italic, SourceSerif4_600SemiBold,
   });
 
@@ -136,11 +136,12 @@ function RootLayoutInner() {
         <Stack.Screen name="letter" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ headerShown: false, title: 'About HereToo' }} />
-        <Stack.Screen name="the-parlor" options={{ headerShown: false }} />
+        <Stack.Screen name="reset-password" options={{ headerShown: false, title: 'Reset password' }} />
         <Stack.Screen name="loft" options={{ headerShown: false }} />
         <Stack.Screen name="give" options={{ headerShown: false, title: 'Give' }} />
         <Stack.Screen name="call" options={{ headerShown: false }} />
         <Stack.Screen name="memoir" options={{ headerShown: false, title: 'Memoir' }} />
+        <Stack.Screen name="journal" options={{ headerShown: false, title: 'Journal' }} />
         <Stack.Screen name="memoir/book" options={{ headerShown: false, title: 'Make the book' }} />
         <Stack.Screen name="memoir/photos" options={{ headerShown: false, title: 'Photographs' }} />
         <Stack.Screen name="memoir/preview" options={{ headerShown: false, title: 'Read it through' }} />

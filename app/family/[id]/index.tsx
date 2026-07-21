@@ -26,6 +26,7 @@ import { FamilyTriviaPanel } from '../../../components/trivia/FamilyTriviaPanel'
 import { useStartVideoCall } from '../../../hooks/useStartVideoCall';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
+import { Vocab } from '../../../constants/vocab';
 
 type Tab = 'feed' | 'subjects' | 'chat' | 'trivia' | 'about';
 
@@ -78,9 +79,9 @@ export default function FamilyDetail() {
     return (
       <SafeAreaView style={s.root}>
         <View style={{ padding: 24, alignItems: 'center' }}>
-          <Text style={{ color: Colors.textMuted }}>Family not found.</Text>
+          <Text style={{ color: Colors.textMuted }}>{Vocab.Group} not found.</Text>
           <TouchableOpacity onPress={() => router.replace('/family')} style={[s.primaryBtn, { marginTop: 16 }]}>
-            <Text style={s.primaryBtnText}>Back to families</Text>
+            <Text style={s.primaryBtnText}>Back to your {Vocab.groupPlural}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -103,7 +104,7 @@ export default function FamilyDetail() {
       return;
     }
     if (next === family.name) {
-      showAlert('Same name', "That's already this family's name.");
+      showAlert('Same name', `That's already this ${Vocab.group}'s name.`);
       return;
     }
     proposeRename.mutate(
@@ -117,8 +118,8 @@ export default function FamilyDetail() {
 
   const onDeleteFamily = () => {
     showConfirm(
-      'Delete this family?',
-      "This is permanent — all posts and chat history go with it. Allowed only because you're the only member.",
+      `Delete this ${Vocab.group}?`,
+      "This is permanent. Every post and all chat history goes with it. Allowed only because you're the only member.",
       () => {
         deleteFamily.mutate(family.id, {
           onSuccess: () => router.replace('/family' as any),
@@ -132,8 +133,10 @@ export default function FamilyDetail() {
 
   const onLeave = () => {
     showConfirm(
-      isOwner ? 'You own this group' : 'Leave this family?',
-      isOwner ? 'Owners cannot leave. Delete the family instead.' : 'You will no longer see updates.',
+      isOwner ? 'You own this group' : `Leave this ${Vocab.group}?`,
+      isOwner
+        ? `Owners stay. Delete the ${Vocab.group} instead.`
+        : 'Updates stop here for you.',
       () => {
         if (isOwner) return;
         leave.mutate(family.id, { onSuccess: () => router.replace('/family') });
@@ -144,10 +147,10 @@ export default function FamilyDetail() {
 
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
-      {/* Family-scoped wallpaper — overrides the visitor's personal
-          one with whatever the family has voted on. Falls back to the
-          owner's personal wallpaper when no votes exist. Renders
-          absolute below the page chrome. */}
+      {/* Crew-scoped wallpaper. Overrides the visitor's personal one
+          with whatever the crew has voted on. Falls back to the owner's
+          personal wallpaper when no votes exist. Renders absolute below
+          the page chrome. The familyId prop is a DB identifier and stays. */}
       <WallpaperBackground familyId={id} />
       <View style={s.header}>
         <TouchableOpacity
@@ -217,7 +220,7 @@ export default function FamilyDetail() {
                       ? window.location.origin
                       : 'https://heretoo.social';
                   const url = `${origin}/join/${code}`;
-                  const shareText = `Join the ${family.name} family on HereToo: ${url}`;
+                  const shareText = `Join the ${family.name} ${Vocab.group} on HereToo: ${url}`;
                   const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
                   if (nav?.share) {
                     try { await nav.share({ title: family.name, text: shareText, url }); return; } catch {}
@@ -269,7 +272,7 @@ export default function FamilyDetail() {
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>
                 <Ionicons name="chatbubble-outline" size={32} color={Colors.textMuted} />
-                <Text style={s.emptyTitle}>Nothing here yet — be the first.</Text>
+                <Text style={s.emptyTitle}>Nothing here yet.</Text>
               </View>
             ) : (
               posts.map((p: any) => (
@@ -283,7 +286,7 @@ export default function FamilyDetail() {
           </>
         )}
 
-        {/* Subjects — the long-running family-story threads. Replaces
+        {/* Subjects. The long-running crew-story threads. Replaces
             the old Updates tab. Source of Truth, Milestone 3. */}
         {tab === 'subjects' && (
           <SubjectsPanel familyId={id} />
@@ -299,17 +302,17 @@ export default function FamilyDetail() {
 
         {tab === 'about' && (
           <>
-            {/* Wallpaper voting — every active family member can pick.
+            {/* Wallpaper voting. Every active crew member can pick.
                 Plurality wins; ties break toward most recent vote.
-                Default = the family owner's personal wallpaper. */}
+                Default = the crew owner's personal wallpaper. */}
             <FamilyWallpaperVoting familyId={id} />
 
-            {/* Active rename proposal — shown to everyone in the family */}
+            {/* Active rename proposal. Shown to everyone in the crew. */}
             {pendingRename?.proposal && (
               <View style={s.proposalCard}>
                 <Text style={s.sectionLabel}>Pending rename</Text>
                 <Text style={s.proposalText}>
-                  Someone proposed renaming this family to{'\n'}
+                  Someone proposed renaming this {Vocab.group} to{'\n'}
                   <Text style={{ fontWeight: '700', color: Colors.textPrimary }}>
                     "{pendingRename.proposal.proposed_name}"
                   </Text>
@@ -359,10 +362,6 @@ export default function FamilyDetail() {
               <View style={s.inviteCard}>
                 <Text style={s.sectionLabel}>Invite code</Text>
                 <Text style={s.inviteCode} selectable>{(family as any).invite_code}</Text>
-                <Text style={s.inviteHint}>
-                  Share this with someone you want to add. They enter it on the
-                  Join screen and they're in.
-                </Text>
                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                   <TouchableOpacity
                     style={s.copyBtn}
@@ -387,7 +386,7 @@ export default function FamilyDetail() {
                           ? window.location.origin
                           : 'https://heretoo.social';
                       const url = `${origin}/join/${code}`;
-                      const shareText = `Join the ${family.name} family on HereToo: ${url}`;
+                      const shareText = `Join the ${family.name} ${Vocab.group} on HereToo: ${url}`;
                       // Prefer the native share sheet when available (mobile + some desktop browsers).
                       const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
                       if (nav?.share) {
@@ -444,7 +443,7 @@ export default function FamilyDetail() {
 
             {!isOwner && (
               <TouchableOpacity style={s.leaveBtn} onPress={onLeave}>
-                <Text style={s.leaveBtnText}>Leave family</Text>
+                <Text style={s.leaveBtnText}>Leave {Vocab.group}</Text>
               </TouchableOpacity>
             )}
 
@@ -452,13 +451,8 @@ export default function FamilyDetail() {
             {isOwner && isSoloMember && (
               <TouchableOpacity style={s.deleteBtn} onPress={onDeleteFamily} activeOpacity={0.85}>
                 <Ionicons name="trash-outline" size={15} color="#FFF" />
-                <Text style={s.deleteBtnText}>Delete this family</Text>
+                <Text style={s.deleteBtnText}>Delete this {Vocab.group}</Text>
               </TouchableOpacity>
-            )}
-            {isOwner && !isSoloMember && (
-              <Text style={s.deleteHint}>
-                Once another person joins, the family is theirs too — you can't delete it on your own.
-              </Text>
             )}
           </>
         )}
@@ -474,16 +468,11 @@ export default function FamilyDetail() {
         <Pressable style={s.modalBackdrop} onPress={() => setRenameOpen(false)}>
           <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
             <Text style={s.modalTitle}>Propose a new name</Text>
-            <Text style={s.modalSub}>
-              {totalActive <= 1
-                ? "You're the only active member, so this passes immediately."
-                : `Other family members will vote — strictly more than half (${yesNeeded} of ${totalActive}) must agree.`}
-            </Text>
             <TextInput
               style={s.modalInput}
               value={renameDraft}
               onChangeText={setRenameDraft}
-              placeholder="New family name"
+              placeholder={`New ${Vocab.group} name`}
               placeholderTextColor={Colors.textMuted}
               maxLength={80}
               autoFocus
@@ -641,10 +630,6 @@ function makeStyles() { return StyleSheet.create({
     marginTop: 8,
   },
   deleteBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
-  deleteHint: {
-    textAlign: 'center', fontSize: 11, color: Colors.textMuted,
-    marginTop: 8, paddingHorizontal: 24, lineHeight: 16,
-  },
 
   // Rename proposal modal
   modalBackdrop: {
@@ -657,7 +642,6 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  modalSub: { fontSize: 12, color: Colors.textMuted, lineHeight: 17 },
   modalInput: {
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
@@ -703,7 +687,6 @@ function makeStyles() { return StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     marginVertical: 4,
   },
-  inviteHint: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', maxWidth: 320 },
   copyBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,

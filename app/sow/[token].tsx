@@ -2,8 +2,11 @@
  * Founding-seed landing page — `/sow/<TOKEN>`.
  *
  * Sponsor (someone already on HereToo) sent the recipient this link
- * to "plant a tree" with them — i.e. start their OWN family on
+ * to "plant a tree" with them — i.e. start their OWN crew on
  * HereToo while being connected to the sponsor.
+ *
+ * The page does not explain any of that to the recipient. Copy here is
+ * limited to labels, errors, and the auth flow.
  *
  * Flow:
  *   1. Anon-readable preview of the sponsor + their note (via the
@@ -11,11 +14,11 @@
  *   2. If the recipient isn't signed in: inline express signup.
  *      `pending_seed_token` is stashed in localStorage so the welcome
  *      page can resume here after auth.
- *   3. If signed in: prompt for the family name (pre-filled with the
+ *   3. If signed in: prompt for the crew name (pre-filled with the
  *      sponsor's suggestion if any) and call accept_seed_invite. The
- *      RPC creates the new family with the recipient as owner AND a
+ *      RPC creates the new crew with the recipient as owner AND a
  *      connections row so the two trees see each other.
- *   4. Redirect to the new family page.
+ *   4. Redirect to the new crew page.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -52,7 +55,7 @@ export default function SowPlant() {
   const [busy, setBusy] = useState<'auth' | 'plant' | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  // Pre-fill the family name with the sponsor's suggestion when it loads.
+  // Pre-fill the crew name with the sponsor's suggestion when it loads.
   useEffect(() => {
     if (invite?.suggested_family_name && !familyName) {
       setFamilyName(invite.suggested_family_name);
@@ -74,7 +77,7 @@ export default function SowPlant() {
     setErr(null);
     if (!tk) return;
     if (familyName.trim().length < 2) {
-      setErr('Pick a family name with at least 2 characters.');
+      setErr('Pick a crew name with at least 2 characters.');
       return;
     }
     setBusy('plant');
@@ -207,15 +210,9 @@ export default function SowPlant() {
               </View>
             )}
 
-            <Text style={s.headline}>Plant your family tree</Text>
-            <Text style={s.sub}>
-              Pick a name for your family circle. You'll be the matriarch
-              or patriarch — invite people in as you go. We'll connect you
-              with {invite.sponsor_display_name ?? '@' + (invite.sponsor_handle ?? 'them')}{' '}
-              automatically.
-            </Text>
+            <Text style={s.headline}>Start your crew</Text>
 
-            <Field label="Your family's name">
+            <Field label="Your crew's name">
               <TextInput
                 style={s.input}
                 value={familyName}

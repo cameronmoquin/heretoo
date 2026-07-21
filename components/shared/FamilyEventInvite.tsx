@@ -1,5 +1,5 @@
 /**
- * Family event invitation creator — sidebar tile.
+ * Crew event invitation creator, sidebar tile.
  *
  * Lets the user fill in a quick form (title, date/time, location,
  * note) and get an .ics file they can drop into iMessage / email /
@@ -10,7 +10,7 @@
  * (RFC 5545). The UID is deterministic so an updated re-issue
  * replaces the old event in the recipient's calendar.
  *
- * Future: post-as-update to a family page so all members get the
+ * Future: post-as-update to a crew page so all members get the
  * invite without needing the file shared individually.
  */
 
@@ -42,7 +42,7 @@ const EMPTY: EventForm = {
  * Build an RFC 5545 .ics file from an event spec. Times are emitted
  * with a Z suffix (UTC) — quick + simple. Longer-term we should
  * preserve the user's timezone via VTIMEZONE blocks but for casual
- * family events UTC is fine and Apple/Google convert automatically.
+ * crew events UTC is fine and Apple/Google convert automatically.
  */
 function buildIcs(ev: EventForm): string | null {
   if (!ev.title.trim() || !ev.date) return null;
@@ -50,7 +50,7 @@ function buildIcs(ev: EventForm): string | null {
   // Local interpretation — treat the user's input as their local time
   // and emit a "floating" date-time (no Z). Most calendar apps will
   // show in viewer's local zone, which is what people expect for a
-  // birthday or family dinner: "6pm" means 6pm where you are.
+  // birthday or crew dinner: "6pm" means 6pm where you are.
   const [y, m, d] = ev.date.split('-').map((n) => parseInt(n, 10));
   const [hh, mm] = (ev.time || '18:00').split(':').map((n) => parseInt(n, 10));
   if (!y || !m || !d) return null;
@@ -130,11 +130,8 @@ export function FamilyEventInvite() {
     <View style={s.card}>
       <View style={s.header}>
         <Ionicons name="gift-outline" size={14} color={Colors.textSecondary} />
-        <Text style={s.eyebrow}>Family event invite</Text>
+        <Text style={s.eyebrow}>Crew event invite</Text>
       </View>
-      <Text style={s.sub}>
-        Birthdays, holidays, gatherings. Generates an .ics file you can drop into iMessage, email, or a family post.
-      </Text>
 
       <TextInput
         value={form.title}
@@ -196,9 +193,6 @@ export function FamilyEventInvite() {
           {downloaded ? 'Downloaded' : 'Download invite (.ics)'}
         </Text>
       </TouchableOpacity>
-      <Text style={s.help}>
-        The .ics opens in any calendar app — Apple, Google, Outlook. Drop it in iMessage and recipients can add it to their calendar in one tap.
-      </Text>
     </View>
   );
 }
@@ -216,8 +210,6 @@ const s = StyleSheet.create({
     fontSize: 10, fontWeight: '700', color: Colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
-  sub: { fontSize: 12, color: Colors.textSecondary, lineHeight: 17, marginBottom: 2 },
-
   row: { flexDirection: 'row', gap: 6 },
   input: {
     backgroundColor: Colors.surfaceLight,
@@ -234,6 +226,4 @@ const s = StyleSheet.create({
   },
   downloadBtnDisabled: { opacity: 0.4 },
   downloadBtnText: { color: '#FFF', fontSize: 12, fontWeight: '600', letterSpacing: 0.1 },
-
-  help: { fontSize: 10, color: Colors.textMuted, lineHeight: 14, marginTop: 2 },
 });

@@ -1,13 +1,13 @@
 /**
- * Family-wallpaper voting widget — drop-in for the family page About
+ * Crew-wallpaper voting widget, drop-in for the crew page About
  * tab. Shows the currently effective wallpaper at the top, then a
  * grid of swatches the user can tap to cast / change their vote.
  *
- * Everyone in the family votes; plurality wins; ties go to the most
+ * Everyone in the crew votes; plurality wins; ties go to the most
  * recent vote (per the effective_family_wallpaper RPC). Default when
- * no votes exist = the family owner's personal wallpaper.
+ * no votes exist = the crew owner's personal wallpaper.
  *
- * The visible wallpaper updates on the family page as soon as the
+ * The visible wallpaper updates on the crew page as soon as the
  * effective query refetches after the vote (handled by the hook's
  * onSettled invalidation).
  */
@@ -49,12 +49,8 @@ export function FamilyWallpaperVoting({ familyId }: Props) {
     <View style={s.card}>
       <View style={s.header}>
         <Ionicons name="color-fill-outline" size={14} color={Colors.textSecondary} />
-        <Text style={s.eyebrow}>Family wallpaper</Text>
+        <Text style={s.eyebrow}>Crew wallpaper</Text>
       </View>
-
-      <Text style={s.subtitle}>
-        Everyone votes; plurality wins. Default falls back to whatever the family owner has on their personal wallpaper.
-      </Text>
 
       {/* Currently effective + your own vote */}
       <View style={s.statusRow}>
@@ -133,8 +129,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 10, fontWeight: '700', color: Colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
-  subtitle: { fontSize: 12, color: Colors.textSecondary, lineHeight: 17 },
-
   statusRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   statusLabel: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
   statusValue: { fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },

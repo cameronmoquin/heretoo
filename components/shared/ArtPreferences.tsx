@@ -191,7 +191,6 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
             {wallpapersBySchool().map((group) => (
               <View key={group.school} style={s.schoolGroup}>
                 <Text style={s.schoolTitle}>{group.label}</Text>
-                <Text style={s.schoolBlurb}>{group.blurb}</Text>
                 <View style={s.swatchGrid}>
                   {group.items.map((w) => {
                     const on = wallpaperId === w.id;
@@ -242,9 +241,6 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.boldTitle}>Bold pattern</Text>
-                  <Text style={s.boldSub}>
-                    Render the wallpaper at full saturation. Default tones it down so it reads as decor.
-                  </Text>
                 </View>
               </TouchableOpacity>
             )}
@@ -273,7 +269,6 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
                       <Text style={[s.mixTitle, on && s.mixTitleActive]}>
                         {FEED_MIX_LABELS[m].title}
                       </Text>
-                      <Text style={s.mixSub}>{FEED_MIX_LABELS[m].sub}</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -399,9 +394,7 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
           {showNoMatch && (
             <View style={s.noMatchBox}>
               <Ionicons name="information-circle-outline" size={14} color={Colors.textSecondary} />
-              <Text style={s.noMatchText}>
-                Nothing in the gallery matches all of these filters yet. Try removing one.
-              </Text>
+              <Text style={s.noMatchText}>No matches.</Text>
             </View>
           )}
         </ScrollView>
@@ -420,17 +413,16 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-/** Pace picker for read-aloud — 0.85× / 1.0× / 1.15×. The labels are
- *  written in human language so the choice reads as posture, not math.
+/** Pace picker for read-aloud — 0.85× / 1.0× / 1.15×.
  *  Source of Truth, M6. */
 function ReadAloudPace() {
   const s = makeStyles();
   const pace = useTTS((st) => st.pace);
   const setPace = useTTS((st) => st.setPace);
-  const opts: Array<{ value: 0.85 | 1.0 | 1.15; label: string; sub: string }> = [
-    { value: 0.85, label: 'Slower', sub: 'Evenings, when you want time.' },
-    { value: 1.0, label: 'Default', sub: 'A calm friend reading a letter aloud.' },
-    { value: 1.15, label: 'Quicker', sub: 'Folding laundry, walking, in a hurry.' },
+  const opts: Array<{ value: 0.85 | 1.0 | 1.15; label: string }> = [
+    { value: 0.85, label: 'Slower' },
+    { value: 1.0, label: 'Default' },
+    { value: 1.15, label: 'Quicker' },
   ];
   return (
     <View style={{ gap: 6 }}>
@@ -463,7 +455,6 @@ function ReadAloudPace() {
               <Text style={{ fontSize: 13, fontWeight: '700', color: on ? Colors.primary : Colors.textPrimary }}>
                 {o.label} <Text style={{ fontWeight: '400', color: Colors.textMuted }}>· {o.value.toFixed(2)}×</Text>
               </Text>
-              <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 1 }}>{o.sub}</Text>
             </View>
           </TouchableOpacity>
         );
@@ -597,9 +588,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 11, fontWeight: '700', color: Colors.textPrimary,
     textTransform: 'uppercase', letterSpacing: 1.6,
   },
-  schoolBlurb: {
-    fontSize: 11, lineHeight: 15, color: Colors.textMuted, marginBottom: 4,
-  },
   swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   swatch: {
     width: 88, gap: 4,
@@ -626,7 +614,6 @@ function makeStyles() { return StyleSheet.create({
   },
   checkboxActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   boldTitle: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
-  boldSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1, lineHeight: 14 },
 
   mixCol: { gap: 4 },
   mixRow: {
@@ -641,5 +628,4 @@ function makeStyles() { return StyleSheet.create({
   mixDotActive: { borderColor: Colors.primary, backgroundColor: Colors.primary },
   mixTitle: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
   mixTitleActive: { color: Colors.primary },
-  mixSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
 }); }

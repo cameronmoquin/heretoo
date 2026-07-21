@@ -424,9 +424,11 @@ export default function Tetris() {
           <Ionicons name="reload" size={14} color={Colors.textSecondary} />
           <Text style={s.metaBtnText}>Reset</Text>
         </TouchableOpacity>
-        <Text style={s.metaHint}>
-          {Platform.OS === 'web' ? '← → ↓ to move · ↑ rotate · space drop · P pause' : 'Tap to play'}
-        </Text>
+        {Platform.OS === 'web' && (
+          <Text style={s.metaHint}>
+            ← → ↓ to move · ↑ rotate · space drop · P pause
+          </Text>
+        )}
       </View>
     </SafeAreaView>
   );

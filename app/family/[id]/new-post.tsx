@@ -77,7 +77,6 @@ export default function NewFamilyPost() {
             style={[s.input, s.textarea]}
             value={body}
             onChangeText={setBody}
-            placeholder="Write something for the family."
             placeholderTextColor={Colors.textMuted}
             multiline
             maxLength={2000}

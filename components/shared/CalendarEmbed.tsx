@@ -221,9 +221,6 @@ export function CalendarEmbed() {
           </>
         )}
       </View>
-      <Text style={s.body}>
-        Paste a public Google or Apple Calendar URL. It'll show inline so you can plan family stuff without leaving HereToo.
-      </Text>
       <TextInput
         value={draft}
         onChangeText={setDraft}
@@ -243,9 +240,6 @@ export function CalendarEmbed() {
           </TouchableOpacity>
         )}
       </View>
-      <Text style={s.help}>
-        Find your share URL in Google Calendar (Settings → Integrate calendar → Public URL) or Apple Calendar (right-click your calendar → Share Calendar → Public).
-      </Text>
     </View>
   );
 }
@@ -263,7 +257,6 @@ const s = StyleSheet.create({
     fontSize: 10, fontWeight: '700', color: Colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
-  body: { fontSize: 12, color: Colors.textSecondary, lineHeight: 17 },
   input: {
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
@@ -283,7 +276,6 @@ const s = StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
   },
   clearBtnText: { color: Colors.textSecondary, fontSize: 11, fontWeight: '600' },
-  help: { fontSize: 10, color: Colors.textMuted, lineHeight: 14, marginTop: 2 },
   icsLink: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 14, justifyContent: 'center',

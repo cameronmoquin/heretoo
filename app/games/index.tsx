@@ -19,47 +19,16 @@ import { Spacing, Radius } from '../../constants/design';
 interface Game {
   slug: string;
   name: string;
-  blurb: string;
   available: boolean;
   glyph: string;
 }
 
 const GAMES: Game[] = [
-  {
-    slug: 'tetris',
-    name: 'Blocks',
-    blurb: 'The falling-blocks classic. Stack rows; clear them; never get pinned.',
-    available: true,
-    glyph: '◧',
-  },
-  {
-    slug: 'solitaire',
-    name: 'Solitaire',
-    blurb: "Klondike, the version your father played. Coming next week.",
-    available: false,
-    glyph: '♠',
-  },
-  {
-    slug: 'match',
-    name: 'Three in a Row',
-    blurb: 'Match three or more in any direction. The candy game without the candy.',
-    available: false,
-    glyph: '◆',
-  },
-  {
-    slug: 'pacman',
-    name: 'The Maze',
-    blurb: "Eat the dots. Don't get caught. Coming.",
-    available: false,
-    glyph: '◉',
-  },
-  {
-    slug: 'crossword',
-    name: 'Crossword',
-    blurb: 'A new mini crossword once a day. Built from public-domain word lists.',
-    available: false,
-    glyph: '#',
-  },
+  { slug: 'tetris', name: 'Blocks', available: true, glyph: '◧' },
+  { slug: 'solitaire', name: 'Solitaire', available: false, glyph: '♠' },
+  { slug: 'match', name: 'Three in a Row', available: false, glyph: '◆' },
+  { slug: 'pacman', name: 'The Maze', available: false, glyph: '◉' },
+  { slug: 'crossword', name: 'Crossword', available: false, glyph: '#' },
 ];
 
 export default function GamesIndex() {
@@ -78,11 +47,6 @@ export default function GamesIndex() {
         <View style={s.masthead}>
           <Text style={s.kicker}>The Games Room</Text>
           <Text style={s.title}>Play in peace.</Text>
-          <Text style={s.lede}>
-            Calm versions of the classics. No ads, no full-screen video before
-            every move, no &quot;continue?&quot; popups, no daily quest XP. The same games,
-            the way they used to be.
-          </Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />
             <Text style={s.flourishGlyph}>✦</Text>
@@ -101,7 +65,6 @@ export default function GamesIndex() {
             >
               <Text style={s.cardGlyph}>{g.glyph}</Text>
               <Text style={s.cardName}>{g.name}</Text>
-              <Text style={s.cardBlurb}>{g.blurb}</Text>
               {!g.available && <Text style={s.cardSoonLabel}>Coming</Text>}
             </TouchableOpacity>
           ))}
@@ -127,10 +90,6 @@ function makeStyles() { return StyleSheet.create({
     color: Colors.brandIvory,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  lede: {
-    fontSize: 17, lineHeight: 28, color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-  },
   flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },
   flourishGlyph: { fontSize: 13, color: Colors.primary, opacity: 0.85 },
@@ -155,10 +114,6 @@ function makeStyles() { return StyleSheet.create({
   cardName: {
     fontSize: 22, fontWeight: '800', color: Colors.brandIvory, letterSpacing: -0.4,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
-  cardBlurb: {
-    fontSize: 14, lineHeight: 22, color: Colors.textSecondary, fontStyle: 'italic',
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   cardSoonLabel: {
     fontSize: 10, fontWeight: '700', color: Colors.textMuted, letterSpacing: 2,

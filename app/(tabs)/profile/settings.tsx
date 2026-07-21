@@ -184,7 +184,12 @@ export default function ProfileSettings() {
         </View>
 
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={() => setChooserOpen(true)} style={s.avatarWrap} activeOpacity={0.75}>
+          <TouchableOpacity
+            onPress={() => setChooserOpen(true)}
+            style={s.avatarWrap}
+            activeOpacity={0.75}
+            accessibilityLabel="Change profile photo"
+          >
             <StatureAvatar
               profileId={profile.id}
               name={displayName || profile.display_name}
@@ -200,15 +205,12 @@ export default function ProfileSettings() {
               )}
             </View>
           </TouchableOpacity>
-          <Text style={s.avatarHint}>Tap to change photo</Text>
 
           <Field label="Display name">
             <TextInput
               style={s.input}
               value={displayName}
               onChangeText={setDisplayName}
-              placeholder="How your name appears on posts"
-              placeholderTextColor={Colors.textMuted}
               maxLength={64}
               returnKeyType="next"
             />
@@ -226,9 +228,6 @@ export default function ProfileSettings() {
               maxLength={24}
               returnKeyType="next"
             />
-            <Text style={s.fieldHint}>
-              Lowercase letters, numbers, underscore. 3+ characters.
-            </Text>
           </Field>
 
           <Field label="Bio">
@@ -236,8 +235,6 @@ export default function ProfileSettings() {
               style={[s.input, s.textarea]}
               value={bio}
               onChangeText={setBio}
-              placeholder="A line or two about you (optional)"
-              placeholderTextColor={Colors.textMuted}
               multiline
               maxLength={280}
               textAlignVertical="top"
@@ -275,9 +272,6 @@ export default function ProfileSettings() {
         <Pressable style={s.modalBackdrop} onPress={() => setChooserOpen(false)}>
           <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
             <Text style={s.modalTitle}>Profile photo</Text>
-            <Text style={s.modalSub}>
-              Headshots are square — both options crop to a clean 1:1.
-            </Text>
             <TouchableOpacity
               style={s.modalRow}
               onPress={() => { setChooserOpen(false); setHeadshotOpen(true); }}
@@ -286,7 +280,6 @@ export default function ProfileSettings() {
               <Ionicons name="camera-outline" size={20} color={Colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={s.modalRowLabel}>Take a selfie</Text>
-                <Text style={s.modalRowHint}>Front camera with a circle viewfinder</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity
@@ -297,7 +290,6 @@ export default function ProfileSettings() {
               <Ionicons name="images-outline" size={20} color={Colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={s.modalRowLabel}>Choose from library</Text>
-                <Text style={s.modalRowHint}>You'll get a square crop tool on the next step</Text>
               </View>
             </TouchableOpacity>
             {avatarPath && (
@@ -309,7 +301,6 @@ export default function ProfileSettings() {
                 <Ionicons name="trash-outline" size={20} color={Colors.error} />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.modalRowLabel, { color: Colors.error }]}>Remove current photo</Text>
-                  <Text style={s.modalRowHint}>Falls back to your stature letter</Text>
                 </View>
               </TouchableOpacity>
             )}
@@ -383,8 +374,6 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: Colors.surface,
   },
-  avatarHint: { textAlign: 'center', fontSize: 12, color: Colors.textMuted, marginTop: 6 },
-
   field: { gap: 6 },
   fieldLabel: {
     fontSize: 11, fontWeight: '700', color: Colors.textMuted,
@@ -398,7 +387,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 15, color: Colors.textPrimary,
   },
   textarea: { minHeight: 90 },
-  fieldHint: { fontSize: 11, color: Colors.textMuted, lineHeight: 16 },
 
   errorBox: {
     backgroundColor: 'rgba(255,64,80,0.10)',
@@ -423,14 +411,12 @@ function makeStyles() { return StyleSheet.create({
     width: '100%', maxWidth: 420, padding: 18, gap: 4,
     borderWidth: 1, borderColor: Colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  modalSub: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
   modalRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 10, paddingHorizontal: 4, borderRadius: 8,
   },
   modalRowLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  modalRowHint: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
   modalCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
   modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }

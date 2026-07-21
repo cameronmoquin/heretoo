@@ -137,7 +137,6 @@ export function ChimePanel({ visible, onClose }: Props) {
           <Bowl key={i} freq={n.freq} label={n.label} index={i} />
         ))}
       </View>
-      <Text style={s.hint}>tap any bowl. they all harmonize.</Text>
     </View>
   );
 }
@@ -219,9 +218,5 @@ function makeStyles() { return StyleSheet.create({
   bowlLabel: {
     fontSize: 14, fontWeight: '600', color: Colors.primary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-  },
-  hint: {
-    fontSize: 11, color: Colors.textMuted, textAlign: 'center', marginTop: 6,
-    fontStyle: 'italic',
   },
 }); }

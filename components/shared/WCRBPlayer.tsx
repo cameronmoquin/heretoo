@@ -37,7 +37,13 @@ export function WCRBPlayer({ compact = false }: Props) {
   if (compact) {
     return (
       <View style={s.compactWrap}>
-        <TouchableOpacity style={s.compactRow} onPress={onToggle} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={s.compactRow}
+          onPress={onToggle}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={playing ? `Pause ${station.name}` : `Play ${station.name}`}
+        >
           <View style={s.iconRing}>
             <Ionicons
               name={loading ? 'hourglass-outline' : playing ? 'pause' : 'play'}
@@ -50,8 +56,8 @@ export function WCRBPlayer({ compact = false }: Props) {
             <Text style={s.compactSub} numberOfLines={1}>
               {error ?? (
                 playing
-                  ? `Now playing — ${station.genre}`
-                  : `${station.genre} · Tap to play`
+                  ? `Now playing · ${station.genre}`
+                  : station.genre
               )}
             </Text>
           </View>
@@ -74,7 +80,13 @@ export function WCRBPlayer({ compact = false }: Props) {
         <Text style={s.eyebrow}>{station.genre.toUpperCase()} · {station.city}</Text>
       </View>
       <View style={s.row}>
-        <TouchableOpacity style={s.playBtn} onPress={onToggle} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={s.playBtn}
+          onPress={onToggle}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={playing ? `Pause ${station.name}` : `Play ${station.name}`}
+        >
           <Ionicons
             name={loading ? 'hourglass-outline' : playing ? 'pause' : 'play'}
             size={18}

@@ -1,5 +1,5 @@
 /**
- * SubjectsPanel — the family page's Subjects tab.
+ * SubjectsPanel — the crew page's Subjects tab.
  *
  * Lists open subjects first (with post counts and a follow toggle),
  * then a retired section below. A "Start a subject" composer at the
@@ -7,8 +7,8 @@
  * later from the Subject page itself.
  *
  * Source of Truth, Milestone 3. Refusal list:
- *   - No suggestions. The user finds Subjects by being in the family.
- *   - No global hashtag index. These are family-scoped only.
+ *   - No suggestions. The user finds Subjects by being in the crew.
+ *   - No global hashtag index. These are crew-scoped only.
  */
 
 import React, { useState } from 'react';
@@ -62,7 +62,7 @@ export function SubjectsPanel({ familyId }: Props) {
           style={s.input}
           value={draft}
           onChangeText={setDraft}
-          placeholder="Start a subject — e.g., Tim's health"
+          placeholder="Subject"
           placeholderTextColor={Colors.textMuted}
           maxLength={60}
           returnKeyType="done"
@@ -87,11 +87,6 @@ export function SubjectsPanel({ familyId }: Props) {
       {!isLoading && open.length === 0 && retired.length === 0 && (
         <View style={s.emptyWrap}>
           <Text style={s.emptyTitle}>No subjects yet.</Text>
-          <Text style={s.emptySub}>
-            A subject is a long-running family story. Tim&apos;s surgery, the
-            kitchen renovation, Aunt Vee&apos;s wedding. Posts get tagged
-            with a subject so the story stays together across months.
-          </Text>
         </View>
       )}
 
@@ -215,7 +210,6 @@ function makeStyles() { return StyleSheet.create({
 
   emptyWrap: { padding: Spacing.lg, gap: 6 },
   emptyTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-  emptySub: { fontSize: 13, lineHeight: 18, color: Colors.textSecondary },
   emptyText: { color: Colors.textMuted, padding: Spacing.lg },
 
   row: {

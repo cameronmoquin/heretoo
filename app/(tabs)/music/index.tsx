@@ -113,12 +113,6 @@ export default function MusicTab() {
           </View>
         ))}
 
-        <View style={s.note}>
-          <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} />
-          <Text style={s.noteText}>
-            All stations are listener-supported public radio or independent indie. Audio keeps streaming as you move around HereToo. Tap the play button in the bottom nav to toggle the active station from anywhere.
-          </Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -181,10 +175,4 @@ const s = StyleSheet.create({
   rowNameActive: { color: Colors.primary },
   rowMeta: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
 
-  note: {
-    flexDirection: 'row', gap: 6, alignItems: 'flex-start',
-    backgroundColor: Colors.surfaceLight, borderRadius: Radius.md,
-    padding: Spacing.sm, marginTop: 8,
-  },
-  noteText: { flex: 1, fontSize: 12, color: Colors.textSecondary, lineHeight: 17 },
 });

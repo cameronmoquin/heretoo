@@ -105,8 +105,7 @@ export default function GiveScreen() {
             <Ionicons name="checkmark-circle" size={36} color={Colors.primary} />
             <Text style={s.thanksTitle}>Thank you.</Text>
             <Text style={s.thanksBody}>
-              The receipt is on its way to your email. The platform takes nothing —
-              your gift goes to the work of ending homelessness across America.
+              The receipt is on its way to your email.
             </Text>
             <TouchableOpacity
               onPress={() => router.replace('/' as any)}
@@ -121,12 +120,6 @@ export default function GiveScreen() {
             <View style={s.masthead}>
               <Text style={s.kicker}>Always on</Text>
               <Text style={s.title}>For the unhoused.</Text>
-              <Text style={s.lede}>
-                HereToo runs no advertising. The room you read in is paid for by the
-                small family subscription. The Give button is here for one purpose:
-                to route what you choose to give to the work of ending homelessness
-                in America. Every dollar passes through and arrives whole.
-              </Text>
               <View style={s.flourishRow}>
                 <View style={s.flourishRule} />
                 <Text style={s.flourishGlyph}>✦</Text>
@@ -193,14 +186,10 @@ export default function GiveScreen() {
             <View style={s.about}>
               <Text style={s.aboutTitle}>Where it goes</Text>
               <Text style={s.aboutBody}>
-                Stripe processes the transaction. The full balance — minus the
-                standard processing cost — is forwarded to the designated
+                Stripe processes the transaction. The full balance, minus the
+                standard processing cost, is forwarded to the designated
                 organization on a quarterly cadence. Receipts are emailed
                 automatically.
-              </Text>
-              <Text style={s.aboutBody}>
-                Every donation and every disbursement is logged on a public
-                page so the math is visible.
               </Text>
               <TouchableOpacity
                 style={s.transparencyLink}
@@ -233,10 +222,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 50, lineHeight: 56, fontWeight: '800', letterSpacing: -1.2,
     color: Colors.brandIvory,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
-  lede: {
-    fontSize: 17, lineHeight: 28, color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },

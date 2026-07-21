@@ -2,7 +2,7 @@
  * "Plant a tree" modal — sponsor flow.
  *
  * Opens from a Quick Action; lets the user write a note + optionally
- * suggest a family name for the recipient; generates a token; shows
+ * suggest a crew name for the recipient; generates a token; shows
  * the resulting share link with copy + native-share buttons.
  *
  * The recipient lands at /sow/<TOKEN> and goes through the
@@ -55,7 +55,7 @@ export function PlantTreeModal({ visible, onClose }: Props) {
 
   const onShare = async () => {
     if (!link) return;
-    const text = `Start your family on HereToo — I'm sowing a seed for you: ${link}`;
+    const text = `Start your crew on HereToo. I'm sowing a seed for you: ${link}`;
     const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
     if (nav?.share) {
       try { await nav.share({ title: 'HereToo invite', text, url: link }); return; } catch {}
@@ -76,10 +76,6 @@ export function PlantTreeModal({ visible, onClose }: Props) {
       <Pressable style={s.backdrop} onPress={() => { reset(); onClose(); }}>
         <Pressable style={s.card} onPress={(e) => e.stopPropagation()}>
           <Text style={s.title}>Plant a tree</Text>
-          <Text style={s.sub}>
-            Sow a seed for someone who isn't on HereToo yet — they'll start
-            their own family, and you'll be connected automatically.
-          </Text>
 
           {!link ? (
             <>
@@ -88,14 +84,12 @@ export function PlantTreeModal({ visible, onClose }: Props) {
                   style={[s.input, s.textarea]}
                   value={message}
                   onChangeText={setMessage}
-                  placeholder="Hey Mercutio — start your family circle here so we can stay close."
-                  placeholderTextColor={Colors.textMuted}
                   multiline
                   maxLength={300}
                   textAlignVertical="top"
                 />
               </Field>
-              <Field label="Family name suggestion (optional)">
+              <Field label="Crew name suggestion (optional)">
                 <TextInput
                   style={s.input}
                   value={suggestedName}
@@ -131,8 +125,7 @@ export function PlantTreeModal({ visible, onClose }: Props) {
                 <Text style={s.linkText} selectable numberOfLines={2}>{link}</Text>
               </View>
               <Text style={s.fineprint}>
-                One-time use. Expires in 30 days. They'll start their own
-                family on HereToo and you'll be connected.
+                One-time use. Expires in 30 days.
               </Text>
               <View style={s.row}>
                 <TouchableOpacity
@@ -178,7 +171,6 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   title: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
-  sub: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18, marginBottom: 4 },
 
   fieldLabel: {
     fontSize: 11, fontWeight: '700', color: Colors.textMuted,

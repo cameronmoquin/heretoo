@@ -4,7 +4,7 @@
  * Source of Truth, Milestone 5.
  *
  * Layout: single 720px column, Source-Serif body type, "To" autocomplete
- * from the family graph or a free-text "future recipient" label.
+ * from the crew graph or a free-text "future recipient" label.
  * Below the body: a date picker (default tomorrow), then a single
  * "Save and queue" button. No formatting toolbar. The composer trusts
  * the writer.
@@ -52,7 +52,7 @@ export default function NewLetterScreen() {
 
   const tomorrow = useMemo(() => defaultDeliveryDate(), []);
 
-  // Search profiles in the user's family graph (3-hop) by handle/name.
+  // Search profiles in the user's crew graph (3-hop) by handle/name.
   // Cheap LIKE query; results capped at 6.
   const search = async (q: string) => {
     setDraftRecipient(q);
@@ -197,8 +197,7 @@ export default function NewLetterScreen() {
             style={s.recipientInput}
             value={draftRecipient}
             onChangeText={search}
-            placeholder='Type a name, or "my future self"'
-            placeholderTextColor={Colors.textMuted}
+            accessibilityLabel="To"
             onSubmitEditing={() => searchResults.length === 0 && addFutureRecipient()}
           />
           {searchResults.length > 0 ? (
@@ -232,8 +231,7 @@ export default function NewLetterScreen() {
             style={s.bodyInput}
             value={body}
             onChangeText={setBody}
-            placeholder="Write."
-            placeholderTextColor={Colors.textMuted}
+            accessibilityLabel="Body"
             multiline
             textAlignVertical="top"
           />
@@ -248,10 +246,8 @@ export default function NewLetterScreen() {
             onChangeText={(v) => setDeliverAt(v)}
             placeholder={tomorrow}
             placeholderTextColor={Colors.textMuted}
+            accessibilityLabel="Deliver on"
           />
-          <Text style={s.dateHint}>
-            ISO date and time. Default is tomorrow at 9:00 in your local time. Up to 80 years out.
-          </Text>
         </View>
 
         {/* SAVE */}
@@ -368,7 +364,6 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10,
     fontSize: 14, color: Colors.textPrimary,
   },
-  dateHint: { fontSize: 11, color: Colors.textMuted, lineHeight: 16 },
 
   saveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

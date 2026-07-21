@@ -55,6 +55,9 @@ export function MobileTabBar() {
     '/welcome',
     '/(auth)',
     '/profile-setup',
+    // A recovery link leaves the user genuinely signed in, so the bar
+    // would otherwise render over the password form.
+    '/reset-password',
     '/join/',
     '/sow/',
     '/version',

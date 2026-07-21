@@ -1,5 +1,5 @@
 /**
- * Global right sidebar — calendar embed + family event invite widget.
+ * Global right sidebar — calendar embed + crew event invite widget.
  *
  * Mounted at the root layout so it appears on EVERY page when:
  *   - Web platform
@@ -32,6 +32,7 @@ export function RightSidebar() {
     '/welcome',
     '/(auth)',
     '/profile-setup',
+    '/reset-password',
     '/join/',
     '/sow/',
     '/version',

@@ -127,10 +127,6 @@ export default function LetterScreen() {
         {isAuthor && futureRecipients.length > 0 && (
           <View style={s.claims}>
             <Text style={s.claimsTitle}>Claim URLs</Text>
-            <Text style={s.claimsHint}>
-              Hand these to the recipient by any means — email, paper, the will.
-              When they open the URL while signed in, the letter binds to their account.
-            </Text>
             {futureRecipients.map((r) => (
               <View key={r.id} style={s.claimRow}>
                 <Text style={s.claimLabel}>{r.future_recipient_label}</Text>
@@ -198,7 +194,6 @@ function makeStyles() { return StyleSheet.create({
     gap: 8,
   },
   claimsTitle: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
-  claimsHint: { fontSize: 12, lineHeight: 18, color: Colors.textSecondary },
   claimRow: { gap: 2 },
   claimLabel: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
   claimUrl: {

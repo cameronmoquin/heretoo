@@ -18,8 +18,7 @@
 // ── Type ─────────────────────────────────────────────────────────────
 // Web font-family strings; native picks the closest available system
 // fallback. The display face is Syne for masthead and brand mark; body
-// is Inter; long-form (Letters, Reframer drawer, parlor essays) is
-// Source Serif 4.
+// is Inter; long-form (Letters, Reframer drawer) is Source Serif 4.
 
 export const Fonts = {
   display: '"Syne", "Inter", system-ui, sans-serif',
@@ -92,13 +91,17 @@ export const Avatar = {
 } as const;
 
 // ── Empty + error state copy ────────────────────────────────────────
-// Two-sentence calm prose. Never apology. Never "Oops." The platform
-// is never sorry it has nothing to show. Helpers for consistent tone
-// across surfaces that haven't been audited yet.
+// Never apology. Never "Oops." The platform is never sorry it has
+// nothing to show.
+//
+// Empty states do not teach. A terse fragment, or nothing at all. The
+// optional `action` arg on Copy.empty stays for callers that already
+// pass it, but new callers should pass the observation alone.
+//
+// Errors are the exception and always name the next move.
 
 export const Copy = {
-  /** A two-sentence empty state. First sentence: plain observation.
-   *  Second: optional subdued action sentence. */
+  /** An empty state. A plain observation. No instruction. */
   empty: (observation: string, action?: string) =>
     action ? `${observation} ${action}` : observation,
   /** A plain-language error that names the next move. Never "Error 500"
@@ -113,7 +116,7 @@ export const Copy = {
 export const BrandMark = {
   faviconPng: { width: 32, height: 32 },
   pwaIcon: { width: 1024, height: 1024 },
-  ogImage: { width: 1200, height: 630, headline: 'HereToo — the room your family lives in' },
+  ogImage: { width: 1200, height: 630, headline: 'HereToo' },
   emailHeader: { width: 600, height: 100 },
 } as const;
 

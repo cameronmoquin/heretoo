@@ -94,11 +94,11 @@ export function PWAInstallPrompt() {
       />
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>Install HereToo</Text>
-        <Text style={styles.body}>
-          {mode === 'android'
-            ? 'One-tap install for fullscreen, faster launch.'
-            : 'Tap the Share icon, then "Add to Home Screen".'}
-        </Text>
+        {mode === 'ios' && (
+          <Text style={styles.body}>
+            Tap the Share icon, then &quot;Add to Home Screen&quot;.
+          </Text>
+        )}
       </View>
       {mode === 'android' && (
         <TouchableOpacity style={styles.installBtn} onPress={installAndroid}>

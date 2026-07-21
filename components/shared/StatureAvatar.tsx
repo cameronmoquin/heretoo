@@ -1,5 +1,5 @@
 /**
- * StatureAvatar — avatar that telegraphs family standing.
+ * StatureAvatar — avatar that telegraphs crew standing.
  *
  * Layout:
  *   ┌──────────┐
@@ -12,7 +12,7 @@
  * letter takes the whole circle.
  *
  * The data comes from the `profile_stature_summary(uuid)` RPC which
- * returns the most senior stature across all of a user's families,
+ * returns the most senior stature across all of a user's crews,
  * plus their maximum generation depth, plus their 3-hop reach.
  *
  * Memoized at the network level via TanStack Query so a feed full of
@@ -48,7 +48,7 @@ const LETTER: Record<FamilyStature, string> = {
 
 /**
  * Hook: stature summary for a profile. Public RPC; cached 5 min since
- * stature only changes when family memberships change.
+ * stature only changes when crew memberships change.
  */
 export function useStatureSummary(profileId: string | null | undefined) {
   return useQuery({
@@ -93,8 +93,8 @@ export function StatureAvatar({
 
   // Letter is always the first character of the user's name/handle —
   // it's how everyone identifies them at a glance. Stature still
-  // appears as a small corner chip when applicable so the family
-  // role is still surfaced, just without overwriting their identity.
+  // appears as a small corner chip when applicable so the crew
+  // role is still surfaced, while their identity stays on top.
   const letter = (name ?? '?').slice(0, 1).toUpperCase();
   const showMeta = !hideMeta && (generation > 0 || reach > 0);
 

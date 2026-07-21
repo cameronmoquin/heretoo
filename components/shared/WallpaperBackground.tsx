@@ -20,7 +20,7 @@
  *     the React root's transparency reaches our wallpaper div
  *
  * Updates: re-renders the div's style when the wallpaper id changes
- * (personal store, or family-effective if familyId provided).
+ * (personal store, or crew-effective if familyId provided).
  *
  * Native: returns null. The component still mounts so hooks run
  * (rules of hooks), but no DOM happens.

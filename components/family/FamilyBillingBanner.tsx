@@ -1,10 +1,10 @@
 /**
- * FamilyBillingBanner — calm subscription surface for the family
+ * FamilyBillingBanner — calm subscription surface for the crew
  * owner. Source of Truth, Milestone 12.
  *
  * Tone discipline:
  *   - The grandmother never sees a price (this banner only renders for
- *     the family owner / billing payer).
+ *     the crew owner / billing payer).
  *   - No "premium" badges, no upsell pushes.
  *   - Grace-period notice is one short line, no countdown timer.
  *   - One-tap upgrade CTA. One-tap manage. No retention dance.
@@ -22,7 +22,7 @@ import { Spacing, Radius } from '../../constants/design';
 
 interface Props {
   familyId: string;
-  /** Only render for the family owner; pass false otherwise. */
+  /** Only render for the crew owner; pass false otherwise. */
   isOwner: boolean;
 }
 
@@ -34,12 +34,12 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
   if (!isOwner) return null;
   if (isLoading) return null;
 
-  // Memorial families — free forever, low-key acknowledgment.
+  // Memorial crews, free forever, low-key acknowledgment.
   if (sub?.is_memorial) {
     return (
       <View style={[s.row, s.rowSubtle]}>
         <Ionicons name="leaf-outline" size={14} color={Colors.textSecondary} />
-        <Text style={s.subtle}>This family's plan is held free in memory.</Text>
+        <Text style={s.subtle}>This crew's plan is held free in memory.</Text>
       </View>
     );
   }
@@ -51,7 +51,7 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
         <Ionicons name="alert-circle-outline" size={14} color={Colors.warning ?? Colors.primary} />
         <View style={{ flex: 1 }}>
           <Text style={s.alertTitle}>Billing needs attention.</Text>
-          <Text style={s.alertBody}>The latest payment didn't go through. The family stays open for 30 days while you sort it out.</Text>
+          <Text style={s.alertBody}>The latest payment didn't go through. The crew stays open for 30 days while you sort it out.</Text>
         </View>
         <TouchableOpacity
           onPress={() => onStart(sub.plan === 'annual' ? 'annual' : 'monthly')}
@@ -88,10 +88,9 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
 
   return (
     <View style={s.cta}>
-      <Text style={s.ctaTitle}>Free for one family.</Text>
+      <Text style={s.ctaTitle}>Free for one crew.</Text>
       <Text style={s.ctaBody}>
-        Five dollars a month or fifty a year covers the family for everyone in it.
-        Only the payer ever sees a price.
+        Five dollars a month or fifty a year covers the crew for everyone in it.
       </Text>
       <View style={s.ctaActions}>
         <TouchableOpacity

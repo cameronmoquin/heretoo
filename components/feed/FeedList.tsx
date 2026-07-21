@@ -108,8 +108,10 @@ export function FeedList({
     return (
       <View style={{ flex: 1 }}>
         <FeedComposer />
+        {/* A fragment, not an instruction. Without it a loaded-empty feed
+            is indistinguishable from one that failed to load. */}
         <View style={styles.center}>
-          <Text style={styles.empty}>Nothing to see yet. Make the first post.</Text>
+          <Text style={styles.empty}>Empty.</Text>
         </View>
       </View>
     );
@@ -159,5 +161,5 @@ function makeStyles() { return StyleSheet.create({
   center: {
     flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg, minHeight: 200,
   },
-  empty: { color: Colors.textMuted, fontSize: 14, textAlign: 'center' },
+  empty: { fontSize: 14, color: Colors.textMuted },
 }); }

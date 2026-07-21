@@ -1,6 +1,6 @@
 /**
- * Network list page — every profile reachable through the family graph
- * (your families + their families, up to 3 hops).
+ * Network list page — every profile reachable through the crew graph
+ * (your crews + their crews, up to 3 hops).
  *
  * Each row shows the avatar / name / handle, with two quick actions:
  *   - "Profile"  → navigate to /u/<handle>
@@ -55,14 +55,11 @@ export default function NetworkList() {
           <View style={s.empty}>
             <Ionicons name="people-outline" size={32} color={Colors.textMuted} />
             <Text style={s.emptyTitle}>Nobody yet</Text>
-            <Text style={s.emptySub}>
-              Join or start a family to begin building your network. Anyone in your families — and anyone in theirs — shows up here, three hops deep.
-            </Text>
           </View>
         ) : (
           <>
             <Text style={s.subhead}>
-              {connections.length} {connections.length === 1 ? 'person' : 'people'} reachable through your families
+              {connections.length} {connections.length === 1 ? 'person' : 'people'}
             </Text>
             {connections.map((p) => (
               <View key={p.id} style={s.row}>
@@ -126,7 +123,6 @@ function makeStyles() { return StyleSheet.create({
 
   empty: { padding: Spacing.lg, alignItems: 'center', gap: 8 },
   emptyTitle: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary, marginTop: 4 },
-  emptySub: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', maxWidth: 320, lineHeight: 19 },
 
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

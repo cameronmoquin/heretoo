@@ -177,8 +177,8 @@ export default function WelcomeScreen() {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(e, {
         redirectTo: typeof window !== 'undefined'
-          ? `${window.location.origin}/welcome`
-          : 'https://heretoo.social/welcome',
+          ? `${window.location.origin}/reset-password`
+          : 'https://heretoo.social/reset-password',
       });
       if (error) throw error;
       showAlert('Check your email', `We sent a password reset link to ${e}.`);

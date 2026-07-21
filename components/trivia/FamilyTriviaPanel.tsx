@@ -2,7 +2,7 @@
  * FamilyTriviaPanel — players + question composer in one tab.
  *
  * Two modes:
- *   1. Play mode (default): a random question from the family's bank
+ *   1. Play mode (default): a random question from the crew's bank
  *      that the viewer hasn't answered today and didn't author. Tap
  *      a choice → reveal the right answer in gold + the explanation.
  *      "Next question" continues the round.
@@ -10,7 +10,7 @@
  *      four answer choices, mark which is right, optional explanation.
  *
  * No leaderboard. The viewer's own "X of Y right" line shows in the
- * sub-bar — visible only to them. The spec refuses cross-family or
+ * sub-bar, visible only to them. The spec refuses cross-crew or
  * cross-user comparison.
  */
 
@@ -49,10 +49,10 @@ export function FamilyTriviaPanel({ familyId }: Props) {
           {score && score.total_count > 0 ? (
             <>
               <Text style={s.scoreNum}>{score.correct_count} / {score.total_count}</Text>
-              <Text style={s.scoreLabel}>your answers in this family</Text>
+              <Text style={s.scoreLabel}>your answers in this crew</Text>
             </>
           ) : (
-            <Text style={s.scoreLabel}>No answers yet — play a question.</Text>
+            <Text style={s.scoreLabel}>No answers yet.</Text>
           )}
         </View>
         <View style={s.tabRow}>
@@ -97,14 +97,14 @@ function StandingsPane({ familyId }: { familyId: string }) {
 
   return (
     <View style={{ gap: Spacing.md }}>
-      {/* Our family's rank — pulled to the top, never hidden in the list */}
+      {/* Our crew's rank, pulled to the top, never hidden in the list */}
       {ourRank && ourRank.total_families > 0 && (
         <View style={s.ourRank}>
           <Text style={s.ourRankPos}>#{ourRank.rank}</Text>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={s.ourRankLabel}>your family</Text>
+            <Text style={s.ourRankLabel}>your crew</Text>
             <Text style={s.ourRankSub}>
-              {ourRank.correct_count} correct of {ourRank.total_count} · {ourRank.total_families} families competing
+              {ourRank.correct_count} correct of {ourRank.total_count} · {ourRank.total_families} crews competing
             </Text>
           </View>
         </View>
@@ -113,10 +113,6 @@ function StandingsPane({ familyId }: { familyId: string }) {
       {(!rows || rows.length === 0) && (
         <View style={s.emptyWrap}>
           <Text style={s.emptyTitle}>No standings yet.</Text>
-          <Text style={s.emptyBody}>
-            Standings appear once families have answered questions. Add a few
-            and play through them.
-          </Text>
         </View>
       )}
 
@@ -147,8 +143,7 @@ function StandingsPane({ familyId }: { familyId: string }) {
       })}
 
       <Text style={s.boardFootnote}>
-        Families opt out of standings via family settings. The unit of comparison
-        is the family, not the person.
+        Crews opt out of standings via crew settings.
       </Text>
     </View>
   );
@@ -190,10 +185,6 @@ function PlayPane({ familyId }: { familyId: string }) {
     return (
       <View style={s.emptyWrap}>
         <Text style={s.emptyTitle}>The bank is empty.</Text>
-        <Text style={s.emptyBody}>
-          Be the first to add a question. Trivia is just a fun way to ask the
-          family what they remember about each other.
-        </Text>
       </View>
     );
   }
@@ -201,7 +192,7 @@ function PlayPane({ familyId }: { familyId: string }) {
   return (
     <View style={s.playWrap}>
       <Text style={s.kicker}>
-        From {q.author_name ?? q.author_handle ?? 'a family member'}
+        From {q.author_name ?? q.author_handle ?? 'a crew member'}
       </Text>
       <Text style={s.question}>{q.question}</Text>
       <View style={s.choices}>
@@ -313,15 +304,10 @@ function ComposePane({ familyId, onDone }: { familyId: string; onDone: () => voi
           style={s.input}
           value={question}
           onChangeText={setQuestion}
-          placeholder='e.g., Who said "I told you the lasagna was burnt" at Easter 2019?'
-          placeholderTextColor={Colors.textMuted}
           multiline
           maxLength={400}
         />
         <Text style={s.fieldLabel}>Four answers</Text>
-        <Text style={s.hint}>
-          Tap the small circle next to the right one to mark it.
-        </Text>
         {choices.map((c, i) => {
           const idx = i as 0 | 1 | 2 | 3;
           const isCorrect = correctIndex === idx;
@@ -331,6 +317,9 @@ function ComposePane({ familyId, onDone }: { familyId: string; onDone: () => voi
                 style={[s.markCorrect, isCorrect && s.markCorrectOn]}
                 onPress={() => setCorrectIndex(idx)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: isCorrect }}
+                accessibilityLabel={`Mark answer ${String.fromCharCode(65 + i)} as the correct one`}
               >
                 {isCorrect && <Ionicons name="checkmark" size={11} color="#0A0A0F" />}
               </TouchableOpacity>
@@ -352,8 +341,6 @@ function ComposePane({ familyId, onDone }: { familyId: string; onDone: () => voi
           style={s.input}
           value={explanation}
           onChangeText={setExplanation}
-          placeholder="What's the story behind the right answer?"
-          placeholderTextColor={Colors.textMuted}
           multiline
           maxLength={800}
         />
@@ -390,7 +377,6 @@ function ManagePane({ familyId, userId }: { familyId: string; userId: string | n
     return (
       <View style={s.emptyWrap}>
         <Text style={s.emptyTitle}>You haven&apos;t added any questions yet.</Text>
-        <Text style={s.emptyBody}>Switch to Add and write one.</Text>
       </View>
     );
   }
@@ -501,18 +487,12 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 18, fontWeight: '700', color: Colors.brandIvory,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  emptyBody: {
-    fontSize: 14, lineHeight: 22, color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-  },
-
   // Compose
   composeWrap: { gap: 8 },
   fieldLabel: {
     fontSize: 11, fontWeight: '700', color: Colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 1.6, marginTop: 8,
   },
-  hint: { fontSize: 11, color: Colors.textMuted, fontStyle: 'italic' },
   input: {
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,

@@ -10,6 +10,7 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { goBackToFeed } from '../../lib/nav';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 export default function FamilyList() {
   const s = makeStyles();
@@ -32,8 +33,7 @@ export default function FamilyList() {
         </TouchableOpacity>
         <View style={s.header}>
           <View>
-            <Text style={s.eyebrow}>Your circles</Text>
-            <Text style={s.title}>Family</Text>
+            <Text style={s.title}>{Vocab.GroupPlural}</Text>
           </View>
         </View>
 
@@ -44,18 +44,14 @@ export default function FamilyList() {
             <View style={s.emptyIcon}>
               <Ionicons name="people-outline" size={32} color={Colors.primary} />
             </View>
-            <Text style={s.emptyTitle}>You're not in a family yet</Text>
-            <Text style={s.emptyText}>
-              Family groups are private. Start your own and invite people in,
-              or join with a code from someone who invited you.
-            </Text>
+            <Text style={s.emptyTitle}>No {Vocab.group} yet.</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
               <TouchableOpacity
                 style={s.primaryBtn}
                 onPress={() => router.push('/family/new')}
                 activeOpacity={0.85}
               >
-                <Text style={s.primaryBtnText}>Start a family</Text>
+                <Text style={s.primaryBtnText}>Start {Vocab.groupWithArticle}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.primaryBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary }]}
@@ -95,7 +91,7 @@ export default function FamilyList() {
               activeOpacity={0.75}
             >
               <Ionicons name="add" size={18} color={Colors.primary} />
-              <Text style={s.spinoffText}>Start another family</Text>
+              <Text style={s.spinoffText}>Start another {Vocab.group}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -116,7 +112,6 @@ function makeStyles() { return StyleSheet.create({
   },
   backBtnText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 18 },
-  eyebrow: { fontSize: 11, color: Colors.textMuted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.6 },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary, marginTop: 2 },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -144,7 +139,6 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginBottom: 8,
   },
   emptyTitle: { fontSize: 20, fontWeight: '600', color: Colors.textPrimary, marginTop: 4 },
-  emptyText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 320, marginTop: 4 },
   primaryBtn: {
     paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999,
     backgroundColor: Colors.primary,
