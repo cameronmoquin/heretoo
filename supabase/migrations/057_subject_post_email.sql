@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- HereToo — Migration 055: Instant email when a followed Subject gets a post
+-- HereToo — Migration 057: Instant email when a followed Subject gets a post
 -- ════════════════════════════════════════════════════════════════════════
 -- The strategy thesis is "win the moment something is happening." The
 -- in-app half of that already ships (the "New" dot on Subjects, realtime,
@@ -18,19 +18,19 @@
 --      for these instant emails (defaults on; the daily digest toggle is
 --      separate so a user can keep the calm digest but silence the pings,
 --      or vice-versa).
---   2. subject_post_notifications — dedup ledger. One row per (post,
+--   2. subject_post_notifications — dedup log. One row per (post,
 --      person) means a post tagged into two Subjects a user follows still
 --      sends exactly one email, and a re-run of the worker never doubles.
 --   3. pending_subject_post_notifications() — security-definer RPC the
 --      Netlify worker calls to get exactly who to email, already filtered
---      by follow state, pref, authorship, and the dedup ledger.
+--      by follow state, pref, authorship, and the dedup log.
 -- ════════════════════════════════════════════════════════════════════════
 
 -- 1. Per-user toggle ──────────────────────────────────────────────────
 alter table public.notification_prefs
   add column if not exists email_subject_activity boolean not null default true;
 
--- 2. Dedup ledger ─────────────────────────────────────────────────────
+-- 2. Dedup log ────────────────────────────────────────────────────────
 create table if not exists public.subject_post_notifications (
   post_id     uuid not null references public.posts(id) on delete cascade,
   profile_id  uuid not null references public.profiles(id) on delete cascade,
@@ -44,7 +44,7 @@ create index if not exists subject_post_notifications_profile_idx
 
 alter table public.subject_post_notifications enable row level security;
 
--- No client policies. This ledger is written only by the service-role
+-- No client policies. This log is written only by the service-role
 -- worker; RLS-on with no policy means authenticated clients see nothing,
 -- which is correct — it holds no user-facing data.
 
