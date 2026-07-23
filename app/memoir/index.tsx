@@ -333,6 +333,15 @@ export default function MemoirScreen() {
           </TouchableOpacity>
           <Text style={s.kicker}>{project?.title ?? 'Memoir'}</Text>
           <View style={{ flex: 1 }} />
+          <TouchableOpacity
+            style={s.libBtn}
+            onPress={() => router.push('/memoir/timeline')}
+            activeOpacity={0.85}
+            accessibilityLabel="Timeline"
+          >
+            <Ionicons name="git-commit-outline" size={14} color={ic.chrome.secondary} />
+            <Text style={s.libBtnText}>Timeline</Text>
+          </TouchableOpacity>
           {(responses ?? []).length > 0 && (
             <>
               <TouchableOpacity
