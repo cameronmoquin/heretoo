@@ -38,29 +38,19 @@ type FeedItem =
   | { kind: 'loft'; loft: LoftPost }
   | { kind: 'drop'; drop: HuntCache };
 
-const ART_INTERVAL = 6;       // a new piece every N posts after the first slot
-const FIRST_ART_AT = 1;       // show the first art piece right after the very first post
-
-// Density cap. RSS publishes hundreds of items a day; a crew publishes a
-// handful. Ungated, the wire buries the people. One item per this many
-// posts, hard ceiling. Loft and drops carry the same ceiling on their own
-// counters, so no single outside source can spend another's budget or
-// swamp the column.
-const NEWS_EVERY = 4;
+// One secondary card after every this many posts: news, loft, a drop, or an
+// inline art piece. The active sources take these slots round-robin, so the
+// wire, the loft, the drops, and the art each get an even share of the column
+// and none can bury the crew. A post always brackets a secondary card, so two
+// never sit adjacent and the feed never opens on one. This is the single knob
+// to turn. Smaller packs side content tighter. Larger spreads it out. Roughly
+// one secondary card per three to four posts reads as even.
+const SECONDARY_EVERY = 3;
 
 /** Epoch ms, 0 for anything unparseable. Never throws. */
 function ms(iso: string | null | undefined): number {
   const t = Date.parse(iso ?? '');
   return Number.isFinite(t) ? t : 0;
-}
-
-/** One non-crew source walking alongside the post stream. */
-interface Rail {
-  list: readonly any[];
-  at: number;            // pointer into `list`
-  since: number;         // posts emitted since this rail last placed a card
-  time: (row: any) => number;
-  make: (row: any) => FeedItem;
 }
 
 export function FeedList({
@@ -139,29 +129,30 @@ export function FeedList({
       .sort((a, b) => (ms(b.created_at) - ms(a.created_at)) || a.id.localeCompare(b.id));
   }, [dropsRaw, dropsAllowed]);
 
-  // Interleave: post, art (right after the first post), then more art
-  // every ART_INTERVAL after that.
+  // Interleave the crew's posts with the side sources on an even positional
+  // cadence.
   //
-  // Anchor distribution (so we never repeat across the screen):
-  //   idx 0           → top banner
-  //   idx length-1    → bottom banner
-  //   idx length/2    → desktop sidebar
-  //   idx 1, 2, 3...  → inline slots (so they're guaranteed different
-  //                     from banner picks as long as pool is large enough)
-  //
-  // Secondary merge (news, loft, drops):
-  //   - Every stream is walked newest-first and a card is placed at the
-  //     point where its timestamp falls below the posts above it, so the
-  //     column still reads reverse-chronologically.
-  //   - A card is pushed BEFORE the post it precedes. A post always lands
-  //     under it, and only one card may take any single gap, so two
-  //     secondary cards can never sit adjacent.
-  //   - Each rail's `since` starts at 0 and its gate needs NEWS_EVERY, so
-  //     the first four posts run clean. The feed can never open on news,
-  //     on a stranger, or on a drop.
-  //   - Pure function of (posts, news, loft, drops). No Math.random, no
-  //     Date.now, no mutation of any input. Same inputs, same array,
-  //     every render.
+  //   - Posts stream in their ranked order, untouched.
+  //   - After every SECONDARY_EVERY posts one secondary card drops in: news,
+  //     loft, a drop, or an inline art piece, chosen round-robin so the
+  //     sources share the column evenly. No timestamp gate, so a ranked feed
+  //     of recent posts can no longer starve the older wire.
+  //   - The rotation steps over a source that is empty or spent and hands the
+  //     slot to the next one with something to show, so a quiet source never
+  //     costs a slot. Art wraps instead of running dry, so it backs the
+  //     cadence once the wire and the loft are spent.
+  //   - Each source walks newest-first (news/loft/drops are pre-sorted above;
+  //     art starts past the top banner), so the freshest item of each shows
+  //     first.
+  //   - A post sits on both sides of every secondary card. Two secondary
+  //     cards can never touch, and the first SECONDARY_EVERY posts run clean,
+  //     so the feed never opens on a non-post.
+  //   - Pure function of (posts, news, loft, drops, art). No Math.random, no
+  //     Date.now, no mutation of any input. The only mutable state is the
+  //     local pointers below, so the same inputs yield the same array every
+  //     render and nothing reshuffles under a scroll.
+  //   - Card k's source depends only on the cards before it, so appending
+  //     page 2 leaves page 1's cards exactly where they were.
   const items = useMemo<FeedItem[]>(() => {
     // Single-source views. Full density, newest first, no cap. These
     // replace the /loft and /news rooms outright, so every row the
@@ -171,66 +162,62 @@ export function FeedList({
     if (onlyDrops) return drops.map((d): FeedItem => ({ kind: 'drop', drop: d }));
 
     const out: FeedItem[] = [];
-    const haveArt = !!art && art.length > 0 && showBetweenSlots && postsAllowed;
-    let inlineIdx = 1; // start AFTER the top banner's index 0
+    const haveArt = art.length > 0 && showBetweenSlots && postsAllowed;
 
-    let oldestPostSeen = Number.POSITIVE_INFINITY;
+    // Per-source pointers. The only mutable state in this memo, and it never
+    // escapes it.
+    let ni = 0, li = 0, di = 0, ai = 0;
 
-    // Fixed order is the tie-break when several rails are ready at once.
-    // The one that places a card resets its own counter, so the others
-    // take the next gaps rather than starving.
-    const rails: Rail[] = [
-      { list: news, at: 0, since: 0, time: (n: NewsItem) => ms(n.published_at), make: (n: NewsItem) => ({ kind: 'news', news: n }) },
-      { list: loft, at: 0, since: 0, time: (l: LoftPost) => ms(l.created_at), make: (l: LoftPost) => ({ kind: 'loft', loft: l }) },
-      { list: drops, at: 0, since: 0, time: (d: HuntCache) => ms(d.created_at), make: (d: HuntCache) => ({ kind: 'drop', drop: d }) },
+    // Fixed rotation order. `ready` reports whether the source can place a
+    // card at its pointer; `place` builds it and advances. Art reports ready
+    // whenever its pool is non-empty and wraps, so it can repeat.
+    const sources: { ready: () => boolean; place: () => FeedItem }[] = [
+      { ready: () => ni < news.length, place: () => ({ kind: 'news', news: news[ni++] }) },
+      { ready: () => li < loft.length, place: () => ({ kind: 'loft', loft: loft[li++] }) },
+      { ready: () => di < drops.length, place: () => ({ kind: 'drop', drop: drops[di++] }) },
+      {
+        ready: () => haveArt,
+        place: () => {
+          // The running count is the slot. It keeps the key unique when the
+          // pool wraps and stable so pagination never renumbers a piece
+          // already on screen. Start past index 0 so an inline piece does
+          // not echo the top banner while the pool has room.
+          const slot = ai++;
+          const idx = art.length > 1 ? (slot + 1) % art.length : 0;
+          return { kind: 'art', art: art[idx], slot };
+        },
+      },
     ];
+    const N = sources.length;
+    let turn = 0;
+
+    // Fill one secondary slot. Scan from the current turn and take the first
+    // source with something to show, so an empty or spent source is stepped
+    // over rather than left a hole. If every source is spent the slot simply
+    // carries no card.
+    const fillSlot = () => {
+      for (let off = 0; off < N; off++) {
+        const s = sources[(turn + off) % N];
+        if (s.ready()) {
+          out.push(s.place());
+          turn = (turn + off + 1) % N;
+          return;
+        }
+      }
+    };
 
     posts.forEach((p, i) => {
-      const postMs = ms(p.created_at);
-
-      // This slot sits below every post already emitted, so anything
-      // stamped at or after that floor belongs here. Taking the min
-      // keeps the boundary monotonic even though For You is ordered by
-      // unifying score rather than strict recency. Without it a single
-      // out-of-order post could wedge every pointer.
-      const boundary = Math.min(oldestPostSeen, postMs);
-
-      for (const rail of rails) {
-        if (rail.since < NEWS_EVERY) continue;
-        if (rail.at >= rail.list.length) continue;
-        const row = rail.list[rail.at];
-        if (rail.time(row) < boundary) continue;
-        out.push(rail.make(row));
-        rail.at++;
-        rail.since = 0;
-        break; // one non-crew card per gap, hard stop
-      }
-
       out.push({ kind: 'post', post: p });
-      for (const rail of rails) rail.since++;
-      oldestPostSeen = Math.min(oldestPostSeen, postMs);
-
-      const idx1 = i + 1;
-      const shouldSlot =
-        haveArt && (
-          idx1 === FIRST_ART_AT
-          || (idx1 > FIRST_ART_AT && (idx1 - FIRST_ART_AT) % ART_INTERVAL === 0)
-        );
-      if (shouldSlot && art) {
-        // Skip the indices reserved for banner-bottom and sidebar.
-        const reserved = new Set([
-          art.length - 1,                   // bottom banner
-          Math.floor(art.length / 2),       // sidebar
-        ]);
-        while (reserved.has(inlineIdx) && inlineIdx < art.length - 1) inlineIdx++;
-        out.push({ kind: 'art', art: art[inlineIdx % art.length], slot: inlineIdx });
-        inlineIdx++;
-      }
+      // Positional cadence. One secondary card after every SECONDARY_EVERY
+      // posts. The first SECONDARY_EVERY posts run clean and a post always
+      // brackets each secondary card.
+      if ((i + 1) % SECONDARY_EVERY === 0) fillSlot();
     });
+
     // If the feed is empty but we have art, show one piece anyway.
     // No secondary source is offered here. With no posts there is
     // nothing for it to trail, and it would be leading the feed.
-    if (posts.length === 0 && haveArt && art) {
+    if (posts.length === 0 && haveArt) {
       out.push({ kind: 'art', art: art[1] ?? art[0], slot: 0 });
     }
     return out;

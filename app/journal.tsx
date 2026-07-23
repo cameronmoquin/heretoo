@@ -36,6 +36,13 @@ import {
   useDeleteJournalEntry,
   type JournalEntry,
 } from '../hooks/useJournal';
+import {
+  useEnsureMemoirProject,
+  useMemoirProject,
+  useStartMemoirSession,
+  useSaveMemoirResponse,
+  useEndMemoirSession,
+} from '../hooks/useMemoir';
 import { isWrongPassphrase, vaultAvailable } from '../lib/vault';
 import { showAlert, showConfirm } from '../lib/alert';
 import { Colors } from '../constants/colors';
@@ -58,6 +65,14 @@ export default function JournalScreen() {
   const sealExisting = useSealExistingEntry();
   const openSealed = useOpenJournalEntry();
   const remove = useDeleteJournalEntry();
+
+  // Memoir send chain. Open entries only.
+  const ensureProject = useEnsureMemoirProject();
+  const { data: memoirProject } = useMemoirProject(ensureProject.data);
+  const startSession = useStartMemoirSession();
+  const saveResponse = useSaveMemoirResponse();
+  const endSession = useEndMemoirSession();
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   // Composer.
   const [title, setTitle] = useState('');
@@ -233,6 +248,48 @@ export default function JournalScreen() {
     );
   };
 
+  // Copy an OPEN entry into the memoir: ensure a project, open a session,
+  // save the response. Sealed entries never reach here; their body is not
+  // in memory and pushing plaintext into the memoir would defeat the seal.
+  const onSendToMemoir = async (entry: JournalEntry) => {
+    if (entry.sealed || sendingId) return;
+    setSendingId(entry.id);
+    let sessionId: string | null = null;
+    try {
+      let projectId = ensureProject.data ?? null;
+      if (!projectId) {
+        const refreshed = await ensureProject.refetch();
+        projectId = refreshed.data ?? null;
+      }
+      if (!projectId) throw new Error('Your memoir project would not open.');
+
+      sessionId = await startSession.mutateAsync({
+        projectId,
+        guidanceMode: memoirProject?.guidance_mode ?? 'socratic',
+      });
+
+      await saveResponse.mutateAsync({
+        sessionId,
+        projectId,
+        customPromptText: entry.title?.trim() || 'Journal entry',
+        transcript: entry.body ?? '',
+        finalText: entry.body ?? '',
+        chapterAssignment: null,
+      });
+
+      showAlert('Sent to your memoir.');
+    } catch (e: any) {
+      // Best effort: close an empty session so a failed send leaves
+      // nothing half-written and open behind it.
+      if (sessionId) {
+        endSession.mutateAsync({ sessionId, summary: '', nextHint: '' }).catch(() => {});
+      }
+      showAlert('Could not send', e?.message ?? 'Try again.');
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   const busy = saveOpen.isPending || sealNew.isPending || sealExisting.isPending;
 
   // ── Render ───────────────────────────────────────────────────────
@@ -349,6 +406,9 @@ export default function JournalScreen() {
                 }}
                 onSeal={() => onSealExisting(entry)}
                 onDelete={() => onDelete(entry)}
+                onSendToMemoir={() => onSendToMemoir(entry)}
+                sending={sendingId === entry.id}
+                sendLocked={sendingId !== null}
               />
             ))}
             </View>
@@ -531,7 +591,7 @@ export default function JournalScreen() {
 // ── Entry card ─────────────────────────────────────────────────────
 
 function EntryCard({
-  entry, s, onUnlock, onRead, onSeal, onDelete,
+  entry, s, onUnlock, onRead, onSeal, onDelete, onSendToMemoir, sending, sendLocked,
 }: {
   entry: JournalEntry;
   s: ReturnType<typeof makeStyles>;
@@ -539,8 +599,14 @@ function EntryCard({
   onRead: () => void;
   onSeal: () => void;
   onDelete: () => void;
+  onSendToMemoir: () => void;
+  sending: boolean;
+  sendLocked: boolean;
 }) {
-  const when = new Date(entry.created_at).toLocaleDateString();
+  const at = new Date(entry.created_at);
+  const when =
+    `${at.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` +
+    ` · ${at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
 
   if (entry.sealed) {
     return (
@@ -591,6 +657,17 @@ function EntryCard({
         <Text style={s.openLine}>Open. {when}</Text>
       </TouchableOpacity>
       <View style={s.cardActions}>
+        <TouchableOpacity
+          onPress={onSendToMemoir}
+          disabled={sendLocked}
+          style={[s.cardAction, sendLocked && !sending && s.dim]}
+          accessibilityRole="button"
+          accessibilityLabel="Send to memoir"
+        >
+          {sending
+            ? <ActivityIndicator size="small" color={Colors.primary} />
+            : <Ionicons name="arrow-redo-outline" size={18} color={Colors.primary} />}
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={onSeal}
           style={s.cardAction}

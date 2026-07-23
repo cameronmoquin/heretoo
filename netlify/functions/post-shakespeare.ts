@@ -67,6 +67,17 @@ function formatSlugline(character: string, play: string): string {
   return `— ${character} · ${play}`;
 }
 
+/**
+ * Work title = the play string up to the first comma. The play column
+ * embeds act and scene ("Macbeth, Act 2 Scene 1"), and multi-part
+ * histories carry the part too ("Henry IV, Part 1, Act 5 Scene 4"), so
+ * the work is everything before that first comma. Both parts of a
+ * history collapse to one work. Bare works like "Sonnets" pass whole.
+ */
+function workOf(play: string): string {
+  return (play ?? '').split(',')[0].trim();
+}
+
 /** Find the bot profile for a given character — create it if absent. */
 async function findOrCreateCharacterBot(character: string): Promise<string | null> {
   const handle = characterToHandle(character);
@@ -135,15 +146,67 @@ export default async () => {
     return new Response('Missing Supabase credentials', { status: 500 });
   }
 
-  // 1. Pick the quote with the oldest last_posted_at (nulls first).
-  const pickRes = await fetch(
+  // 1. Spread across plays. Long same-play runs happen because oldest-
+  // first ordering walks every scene of one work before moving to the
+  // next. So read the works of the most recently posted quotes, then
+  // pick the oldest quote whose work is NOT among them.
+  const RECENT_WINDOW = 12;
+  const AVOID_WORKS = 3;
+
+  const recentRes = await fetch(
     `${SUPABASE_URL}/rest/v1/shakespeare_quotes` +
-      `?select=id,quote,character,play` +
-      `&order=last_posted_at.asc.nullsfirst` +
-      `&limit=1`,
+      `?select=play` +
+      `&order=last_posted_at.desc.nullslast` +
+      `&limit=${RECENT_WINDOW}`,
     { headers: HEADERS },
   );
-  const picked = await pickRes.json();
+  const recentRows = await recentRes.json();
+  const recentWorks: string[] = [];
+  if (Array.isArray(recentRows)) {
+    for (const r of recentRows) {
+      const w = workOf(r.play);
+      if (w && !recentWorks.includes(w)) recentWorks.push(w);
+      if (recentWorks.length >= AVOID_WORKS) break;
+    }
+  }
+
+  // Exclude by work, not by raw play string. One work spans many play
+  // strings (a row per scene, plus Part 1 / Part 2), so match the work
+  // at its comma boundary ("Macbeth,%") and the bare-work form for
+  // Sonnets. encodeURIComponent keeps spaces, apostrophes, and the comma
+  // intact; the trailing * is the LIKE wildcard and stays literal.
+  // Repeated filters on one column are AND-combined by PostgREST.
+  const exclude = recentWorks
+    .map(
+      (w) =>
+        `&play=not.eq.${encodeURIComponent(w)}` +
+        `&play=not.like.${encodeURIComponent(`${w},`)}*`,
+    )
+    .join('');
+
+  const SELECT = `?select=id,quote,character,play`;
+  const OLDEST_FIRST = `&order=last_posted_at.asc.nullsfirst&limit=1`;
+
+  // Primary pick: oldest quote from a work we have not just posted.
+  let picked: any;
+  if (exclude) {
+    const spreadRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/shakespeare_quotes${SELECT}${exclude}${OLDEST_FIRST}`,
+      { headers: HEADERS },
+    );
+    picked = await spreadRes.json();
+  }
+
+  // Fallback: tiny catalogue, or every work posted recently. Keep the
+  // daily drip alive with the plain oldest-first pick.
+  if (!Array.isArray(picked) || !picked[0]) {
+    const plainRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/shakespeare_quotes${SELECT}${OLDEST_FIRST}`,
+      { headers: HEADERS },
+    );
+    picked = await plainRes.json();
+  }
+
   const q = picked?.[0];
   if (!q) {
     return new Response('No quotes available — seed the catalogue first.', { status: 500 });
