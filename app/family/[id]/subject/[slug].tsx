@@ -28,6 +28,7 @@ import { PostCard } from '../../../../components/feed/PostCard';
 import { showAlert, showConfirm } from '../../../../lib/alert';
 import { Colors } from '../../../../constants/colors';
 import { Spacing, Radius } from '../../../../constants/design';
+import { Vocab } from '../../../../constants/vocab';
 
 export default function SubjectScreen() {
   const s = makeStyles();
@@ -80,7 +81,7 @@ export default function SubjectScreen() {
   const onRetire = () => {
     showConfirm(
       `Retire "${subject.name}"?`,
-      'The subject will be marked closed and read-only. Posts and history stay; nothing is deleted.',
+      `The subject will be marked closed and read-only. ${Vocab.PostPlural} and history stay; nothing is deleted.`,
       async () => {
         setRetiring(true);
         try {
@@ -143,7 +144,7 @@ export default function SubjectScreen() {
             <Text style={s.description}>{subject.description}</Text>
           )}
           <Text style={s.meta}>
-            {posts.length} {posts.length === 1 ? 'post' : 'posts'}
+            {posts.length} {posts.length === 1 ? Vocab.post : Vocab.postPlural}
           </Text>
         </View>
 

@@ -37,6 +37,7 @@ import { PlantTreeModal } from '../../../components/shared/PlantTreeModal';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
+import { Vocab } from '../../../constants/vocab';
 
 export default function OwnProfileScreen() {
   const s = makeStyles();
@@ -202,7 +203,7 @@ export default function OwnProfileScreen() {
           />
           <ActionRow
             icon="add-circle-outline"
-            label="Write a post"
+            label={`Write a ${Vocab.post}`}
             onPress={() => router.push('/(tabs)/feed' as any)}
           />
           <ActionRow
@@ -235,7 +236,7 @@ export default function OwnProfileScreen() {
         {/* ── Your common-area posts ── */}
         {myPublicPosts && myPublicPosts.length > 0 && (
           <View style={[s.section, { marginTop: 8 }]}>
-            <Text style={s.sectionTitle}>Your posts</Text>
+            <Text style={s.sectionTitle}>Your {Vocab.postPlural}</Text>
             {myPublicPosts.map((p: any) => (
               <PostCard
                 key={p.id}

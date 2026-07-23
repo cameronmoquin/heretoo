@@ -32,6 +32,7 @@ import {
 } from '../../stores/wallpaperStore';
 import { useTTS } from '../../stores/ttsStore';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 
 interface ArtPreferencesProps {
   /** Compact mode hides the title — for sidebar usage. */
@@ -253,7 +254,7 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
           </Section>
 
           {/* Feed Mix — what shows up between posts */}
-          <Section label="Between posts">
+          <Section label={`Between ${Vocab.postPlural}`}>
             <View style={s.mixCol}>
               {(Object.keys(FEED_MIX_LABELS) as FeedMix[]).map((m) => {
                 const on = feedMix === m;

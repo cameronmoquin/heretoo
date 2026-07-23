@@ -22,6 +22,7 @@ import {
 import { useAuth } from '../../../hooks/useAuth';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type } from '../../../constants/design';
+import { Vocab } from '../../../constants/vocab';
 
 export default function NotificationSettings() {
   const s = makeStyles();
@@ -148,7 +149,7 @@ export default function NotificationSettings() {
               disabled={!prefs.email_enabled}
             />
             <ToggleRow
-              label="Reactions to your posts"
+              label={`Reactions to your ${Vocab.postPlural}`}
               value={prefs.email_post_reaction}
               onValueChange={(v) => update.mutate({ email_post_reaction: v })}
               disabled={!prefs.email_enabled}

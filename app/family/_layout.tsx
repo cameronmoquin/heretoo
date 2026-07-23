@@ -26,7 +26,7 @@ export default function FamilyLayout() {
       <Stack.Screen name="new" options={{ title: `New ${Vocab.Group}` }} />
       <Stack.Screen name="join" options={{ title: 'Join with Code' }} />
       <Stack.Screen name="[id]/index" options={{ title: Vocab.Group }} />
-      <Stack.Screen name="[id]/new-post" options={{ title: 'New Post' }} />
+      <Stack.Screen name="[id]/new-post" options={{ title: `New ${Vocab.Post}` }} />
       <Stack.Screen name="[id]/subject/[slug]" options={{ title: 'Subject', headerShown: false }} />
       <Stack.Screen name="[id]/invite-card" options={{ title: 'Welcome card', headerShown: false }} />
     </Stack>

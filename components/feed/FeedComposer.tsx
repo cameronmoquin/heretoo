@@ -57,6 +57,7 @@ import { OneWayCapture } from '../upload/OneWayCapture';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 import { MicInputButton } from '../shared/MicInputButton';
 
 interface FeedComposerProps {
@@ -138,7 +139,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const switchDestination = (next: Destination) => {
     if (next === destination) return;
     if (next === 'public' && hasMedia) {
-      showAlert('Attachments dropped', 'Public posts are text only.');
+      showAlert('Attachments dropped', `Public ${Vocab.postPlural} are text only.`);
       upload.reset();
     }
     setDestination(next);
@@ -176,15 +177,15 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const handlePublicPost = async () => {
     const text = body.trim();
     if (text.length < 1) {
-      showAlert('Nothing to post', 'Write something first.');
+      showAlert(`Nothing to ${Vocab.postVerb}`, 'Write something first.');
       return;
     }
     if (text.length > LOFT_MAX) {
-      showAlert('Too long', `Public posts stop at ${LOFT_MAX} characters. Yours is ${text.length}.`);
+      showAlert('Too long', `Public ${Vocab.postPlural} stop at ${LOFT_MAX} characters. Yours is ${text.length}.`);
       return;
     }
     if (!loftHandle) {
-      showAlert('No pseudonym yet', 'Claim one before posting to Public.');
+      showAlert('No pseudonym yet', 'Claim one first.');
       return;
     }
     try {
@@ -195,7 +196,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       setExpanded(false);
       upload.reset();
     } catch (e: any) {
-      showAlert('Could not post', e?.message ?? 'Try again.');
+      showAlert(`Could not ${Vocab.postVerb}`, e?.message ?? 'Try again.');
     }
   };
 
@@ -243,7 +244,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       setExpanded(false);
       upload.reset();
     } catch (e: any) {
-      showAlert('Could not post', e?.message ?? 'Try again.');
+      showAlert(`Could not ${Vocab.postVerb}`, e?.message ?? 'Try again.');
     }
   };
 
@@ -260,7 +261,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     return (
       <View style={s.gateCard}>
         <Ionicons name="people-outline" size={24} color={Colors.primary} />
-        <Text style={s.gateTitle}>Join a crew to post here</Text>
+        <Text style={s.gateTitle}>Join {Vocab.groupWithArticle} to {Vocab.postVerb} here</Text>
         <View style={s.gateRow}>
           <TouchableOpacity
             style={s.gateBtn}
@@ -280,9 +281,9 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             style={[s.gateBtn, s.gateBtnAlt]}
             onPress={() => { setDestination('public'); setExpanded(true); }}
             activeOpacity={0.85}
-            accessibilityLabel="Post to Public instead. Pseudonymous, vanishes after 24 hours"
+            accessibilityLabel={`${Vocab.Post} to Public instead. Pseudonymous, vanishes after 24 hours`}
           >
-            <Text style={s.gateBtnTextAlt}>Post to Public</Text>
+            <Text style={s.gateBtnTextAlt}>{Vocab.Post} to Public</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -301,10 +302,10 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           style={s.collapsedInput}
           onPress={() => setExpanded(true)}
           activeOpacity={0.7}
-          accessibilityLabel="New post"
+          accessibilityLabel={`New ${Vocab.post}`}
         >
           <Ionicons name="create-outline" size={14} color={Colors.textMuted} />
-          <Text style={s.collapsedPlaceholder}>Post</Text>
+          <Text style={s.collapsedPlaceholder}>{Vocab.Post}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.collapsedIcon}
@@ -322,8 +323,8 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       <View style={s.headerRow}>
         <Text style={s.title}>
           {isPublic
-            ? 'New public post'
-            : isFamilyScoped && postKind === 'update' ? 'New update' : 'New post'}
+            ? `New public ${Vocab.post}`
+            : isFamilyScoped && postKind === 'update' ? 'New update' : `New ${Vocab.post}`}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <TouchableOpacity
@@ -340,16 +341,16 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             disabled={!canPost || isSending}
             activeOpacity={0.85}
             accessibilityLabel={
-              isPublic ? 'Post to Public'
+              isPublic ? `${Vocab.Post} to Public`
                 : postKind === 'update' ? 'Send update'
-                  : isFamilyScoped ? 'Post to this crew' : 'Post to the feed'
+                  : isFamilyScoped ? `${Vocab.Post} to this ${Vocab.group}` : `${Vocab.Post} to the feed`
             }
           >
             {isSending
               ? <ActivityIndicator color="#FFF" size="small" />
               : (
                 <Text style={s.postBtnText}>
-                  {isPublic ? 'Post to Public' : postKind === 'update' ? 'Send update' : 'Post'}
+                  {isPublic ? `${Vocab.Post} to Public` : postKind === 'update' ? 'Send update' : Vocab.Post}
                 </Text>
               )}
           </TouchableOpacity>
@@ -364,7 +365,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             style={[s.destBtn, !isPublic && s.destBtnActive]}
             onPress={() => switchDestination('crew')}
             activeOpacity={0.7}
-            accessibilityLabel={isFamilyScoped ? 'Post to this crew' : 'Post to the feed'}
+            accessibilityLabel={isFamilyScoped ? `${Vocab.Post} to this ${Vocab.group}` : `${Vocab.Post} to the feed`}
             accessibilityState={{ selected: !isPublic }}
           >
             <Ionicons
@@ -383,7 +384,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             style={[s.destBtn, isPublic && s.destBtnActive]}
             onPress={() => switchDestination('public')}
             activeOpacity={0.7}
-            accessibilityLabel="Post to Public. Pseudonymous, vanishes after 24 hours"
+            accessibilityLabel={`${Vocab.Post} to Public. Pseudonymous, vanishes after 24 hours`}
             accessibilityState={{ selected: isPublic }}
           >
             <Ionicons
@@ -452,7 +453,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
               size={13}
               color={postKind === 'post' ? Colors.primary : Colors.textMuted}
             />
-            <Text style={[s.kindBtnText, postKind === 'post' && s.kindBtnTextActive]}>Post</Text>
+            <Text style={[s.kindBtnText, postKind === 'post' && s.kindBtnTextActive]}>{Vocab.Post}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[s.kindBtn, postKind === 'update' && s.kindBtnActive]}
@@ -491,7 +492,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
 
       <TextInput
         style={[s.input, overLoftLimit && s.inputOver]}
-        accessibilityLabel="Post body"
+        accessibilityLabel={`${Vocab.Post} body`}
         value={body}
         onChangeText={setBody}
         multiline
@@ -582,7 +583,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
           <Text style={s.progressText}>
             {upload.stage === 'uploading'
               ? `Uploading… ${Math.round(upload.progress * 100)}%`
-              : 'Posting…'}
+              : 'Sending…'}
           </Text>
         </View>
       )}

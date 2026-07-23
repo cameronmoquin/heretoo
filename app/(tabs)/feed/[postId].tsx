@@ -34,6 +34,7 @@ import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
 import { MicInputButton } from '../../../components/shared/MicInputButton';
 import { Spacing, Radius } from '../../../constants/design';
+import { Vocab } from '../../../constants/vocab';
 
 const MAX_INDENT = 4; // visual cap — beyond 4 levels deep all replies share the same indent
 
@@ -101,7 +102,7 @@ export default function PostDetail() {
   if (!post || !postId) {
     return (
       <SafeAreaView style={s.root}>
-        <Text style={s.empty}>Post not found.</Text>
+        <Text style={s.empty}>{Vocab.Post} not found.</Text>
       </SafeAreaView>
     );
   }

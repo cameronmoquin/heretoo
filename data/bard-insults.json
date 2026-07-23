@@ -893,6 +893,1041 @@
         "syllables": 2,
         "meter": "Sw",
         "meterResolved": false
+      },
+      {
+        "term": "trunk-inheriting",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xwSww",
+        "meterResolved": true
+      },
+      {
+        "term": "cullionly",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "unbolted",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "beggarly",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "epileptic",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 4,
+        "meter": "wwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "empty-hearted",
+        "play": "King Lear",
+        "citation": "1.1",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "marble-hearted",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "detested",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "degenerate",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": true
+      },
+      {
+        "term": "embossed",
+        "play": "King Lear",
+        "citation": "2.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 2,
+        "meter": "wS",
+        "meterResolved": true
+      },
+      {
+        "term": "sharp-toothed",
+        "play": "King Lear",
+        "citation": "2.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "servile",
+        "play": "King Lear",
+        "citation": "3.2",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "scurvy",
+        "play": "King Lear",
+        "citation": "4.6",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "milk-livered",
+        "play": "King Lear",
+        "citation": "4.2",
+        "speaker": "Goneril",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "ingrateful",
+        "play": "King Lear",
+        "citation": "3.7",
+        "speaker": "Regan",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "lunatic",
+        "play": "King Lear",
+        "citation": "3.7",
+        "speaker": "Regan",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "goatish",
+        "play": "King Lear",
+        "citation": "1.2",
+        "speaker": "Edmund",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "credulous",
+        "play": "King Lear",
+        "citation": "1.2",
+        "speaker": "Edmund",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "whoremaster",
+        "play": "King Lear",
+        "citation": "1.2",
+        "speaker": "Edmund",
+        "flags": [
+          "coarse",
+          "sexual"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "silly-ducking",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Cornwall",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "stony-hearted",
+        "play": "1 Henry IV",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "foolish-compounded",
+        "play": "2 Henry IV",
+        "citation": "1.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "yea-forsooth",
+        "play": "2 Henry IV",
+        "citation": "1.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xwS",
+        "meterResolved": true
+      },
+      {
+        "term": "starved",
+        "play": "2 Henry IV",
+        "citation": "3.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "sanguine",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "pitiful-hearted",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "not-pated",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "puke-stocking",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "caddis-garter",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "white-bearded",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "frosty-spirited",
+        "play": "1 Henry IV",
+        "citation": "2.3",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwSww",
+        "meterResolved": false
+      },
+      {
+        "term": "half-faced",
+        "play": "1 Henry IV",
+        "citation": "1.3",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "pagan",
+        "play": "1 Henry IV",
+        "citation": "2.3",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "paper-faced",
+        "play": "2 Henry IV",
+        "citation": "5.4",
+        "speaker": "Doll Tearsheet",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "botchy",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "fusty",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "language-less",
+        "play": "Troilus and Cressida",
+        "citation": "3.3",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "false-hearted",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "whore-masterly",
+        "play": "Troilus and Cressida",
+        "citation": "5.4",
+        "speaker": "Thersites",
+        "flags": [
+          "coarse",
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "xSww",
+        "meterResolved": true
+      },
+      {
+        "term": "mouse-eaten",
+        "play": "Troilus and Cressida",
+        "citation": "5.4",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "vinewedst",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Ajax",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "indistinguishable",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Patroclus",
+        "flags": [],
+        "syllables": 6,
+        "meter": "wwSwww",
+        "meterResolved": true
+      },
+      {
+        "term": "high-viced",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "large-handed",
+        "play": "Timon of Athens",
+        "citation": "4.1",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "curl'd-pate",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "tedious",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "sour-cold",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Apemantus",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "unmanly",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Apemantus",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "unpolish'd",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "heedless",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "unmanner'd",
+        "play": "The Taming of the Shrew",
+        "citation": "4.1",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "witless",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "frantic",
+        "play": "The Taming of the Shrew",
+        "citation": "3.2",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "deluding",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "mad-cap",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "shallow",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "perfidious",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": true
+      },
+      {
+        "term": "abominable",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 5,
+        "meter": "wSwww",
+        "meterResolved": true
+      },
+      {
+        "term": "ridiculous",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": true
+      },
+      {
+        "term": "howling",
+        "play": "The Tempest",
+        "citation": "2.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "ignorant",
+        "play": "The Tempest",
+        "citation": "3.2",
+        "speaker": "Trinculo",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "malignant",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "blue-eyed",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "mis-shapen",
+        "play": "The Tempest",
+        "citation": "5.1",
+        "speaker": "Prospero",
+        "flags": [
+          "ableist",
+          "colonial"
+        ],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "pied",
+        "play": "The Tempest",
+        "citation": "3.2",
+        "speaker": "Caliban",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "jesting",
+        "play": "The Tempest",
+        "citation": "3.2",
+        "speaker": "Caliban",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "malapert",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "carnal",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "peevish",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "long-tongued",
+        "play": "3 Henry VI",
+        "citation": "2.2",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "dull-brained",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "King Richard",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "iron-witted",
+        "play": "Richard III",
+        "citation": "4.2",
+        "speaker": "King Richard",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "grim-visaged",
+        "play": "Richard III",
+        "citation": "1.1",
+        "speaker": "Richard",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "disgracious",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "King Richard",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "tetchy",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "the Duchess of York",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "vizard-like",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "obdurate",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "hard-hearted",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "fell-lurking",
+        "play": "2 Henry VI",
+        "citation": "5.1",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "false-heart",
+        "play": "2 Henry VI",
+        "citation": "5.1",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "pestiferous",
+        "play": "1 Henry VI",
+        "citation": "3.1",
+        "speaker": "Gloucester",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": true
+      },
+      {
+        "term": "dull",
+        "play": "Much Ado About Nothing",
+        "citation": "2.1",
+        "speaker": "Beatrice",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "wayward",
+        "play": "Much Ado About Nothing",
+        "citation": "2.1",
+        "speaker": "Beatrice",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "infernal",
+        "play": "Much Ado About Nothing",
+        "citation": "2.1",
+        "speaker": "Benedick",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "gossip-like",
+        "play": "Much Ado About Nothing",
+        "citation": "5.1",
+        "speaker": "Benedick",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "overweening",
+        "play": "Twelfth Night",
+        "citation": "2.5",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "rascally",
+        "play": "Twelfth Night",
+        "citation": "2.5",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "barren",
+        "play": "Twelfth Night",
+        "citation": "1.5",
+        "speaker": "Malvolio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "hyperbolical",
+        "play": "Twelfth Night",
+        "citation": "4.2",
+        "speaker": "Feste",
+        "flags": [],
+        "syllables": 5,
+        "meter": "wwSww",
+        "meterResolved": true
+      },
+      {
+        "term": "dishonest",
+        "play": "Twelfth Night",
+        "citation": "4.2",
+        "speaker": "Feste",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "salt-butter",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "mechanical",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wSww",
+        "meterResolved": true
+      },
+      {
+        "term": "red-lattice",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "bold-beating",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "cat-a-mountain",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "cuckoldly",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "crest-fallen",
+        "play": "The Merry Wives of Windsor",
+        "citation": "4.5",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "unwholesome",
+        "play": "The Merry Wives of Windsor",
+        "citation": "3.3",
+        "speaker": "Mistress Ford",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "watery",
+        "play": "The Merry Wives of Windsor",
+        "citation": "3.3",
+        "speaker": "Mistress Ford",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "Epicurean",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Ford",
+        "flags": [],
+        "syllables": 5,
+        "meter": "wwwSw",
+        "meterResolved": true
       }
     ],
     "nouns": [
@@ -1495,6 +2530,1500 @@
         "syllables": 2,
         "meter": "Sw",
         "meterResolved": false
+      },
+      {
+        "term": "barber-monger",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "wagtail",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "varlet",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "goodman boy",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "goose",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "pander",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "son and heir of a mongrel bitch",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Kent",
+        "flags": [
+          "coarse",
+          "misogynist"
+        ],
+        "syllables": 8,
+        "meter": "xwxwwSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "lubber",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "base football player",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "Kent",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xSwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "kite",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "sea-monster",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "carbuncle",
+        "play": "King Lear",
+        "citation": "2.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "boil",
+        "play": "King Lear",
+        "citation": "2.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "vassal",
+        "play": "King Lear",
+        "citation": "1.1",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "miscreant",
+        "play": "King Lear",
+        "citation": "1.1",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "recreant",
+        "play": "King Lear",
+        "citation": "1.1",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "rascal beadle",
+        "play": "King Lear",
+        "citation": "4.6",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "pelican daughters",
+        "play": "King Lear",
+        "citation": "3.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "vulture",
+        "play": "King Lear",
+        "citation": "2.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "cur",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "whoreson dog",
+        "play": "King Lear",
+        "citation": "1.4",
+        "speaker": "King Lear",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "moral fool",
+        "play": "King Lear",
+        "citation": "4.2",
+        "speaker": "Goneril",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "fox",
+        "play": "King Lear",
+        "citation": "3.7",
+        "speaker": "Regan",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "foppery",
+        "play": "King Lear",
+        "citation": "1.2",
+        "speaker": "Edmund",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "braggart",
+        "play": "King Lear",
+        "citation": "2.2",
+        "speaker": "Cornwall",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "starveling",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "elf-skin",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "bull's pizzle",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "stock-fish",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "standing-tuck",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "pint-pot",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "tickle-brain",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "rabbit-sucker",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "bonfire-light",
+        "play": "1 Henry IV",
+        "citation": "3.3",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "smooth-pates",
+        "play": "2 Henry IV",
+        "citation": "1.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "mandrake",
+        "play": "2 Henry IV",
+        "citation": "1.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "forked radish",
+        "play": "2 Henry IV",
+        "citation": "3.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "cheese-paring",
+        "play": "2 Henry IV",
+        "citation": "3.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "wool-sack",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "bed-presser",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "horseback-breaker",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "trunk of humours",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "reverend vice",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 4,
+        "meter": "Swwx",
+        "meterResolved": true
+      },
+      {
+        "term": "grey iniquity",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xwSww",
+        "meterResolved": true
+      },
+      {
+        "term": "father ruffian",
+        "play": "1 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "candle-mine",
+        "play": "2 Henry IV",
+        "citation": "2.4",
+        "speaker": "Prince Hal",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "lack-brain",
+        "play": "1 Henry IV",
+        "citation": "2.3",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "dish of skim milk",
+        "play": "1 Henry IV",
+        "citation": "2.3",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwxx",
+        "meterResolved": true
+      },
+      {
+        "term": "popinjay",
+        "play": "1 Henry IV",
+        "citation": "1.3",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 3,
+        "meter": "SwS",
+        "meterResolved": true
+      },
+      {
+        "term": "ballad-mongers",
+        "play": "1 Henry IV",
+        "citation": "3.1",
+        "speaker": "Hotspur",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "filthy bung",
+        "play": "2 Henry IV",
+        "citation": "2.4",
+        "speaker": "Doll Tearsheet",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "assinego",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "scab",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "thing of no bowels",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xwwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "gilt counterfeit",
+        "play": "Troilus and Cressida",
+        "citation": "2.3",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xSww",
+        "meterResolved": true
+      },
+      {
+        "term": "land-fish",
+        "play": "Troilus and Cressida",
+        "citation": "3.3",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "finch-egg",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "male varlet",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "masculine whore",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [
+          "coarse",
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "Swwx",
+        "meterResolved": true
+      },
+      {
+        "term": "idol of idiot worshippers",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 9,
+        "meter": "SwwSwwSww",
+        "meterResolved": false
+      },
+      {
+        "term": "dog-fox",
+        "play": "Troilus and Cressida",
+        "citation": "5.4",
+        "speaker": "Thersites",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "cuckold-maker",
+        "play": "Troilus and Cressida",
+        "citation": "5.7",
+        "speaker": "Thersites",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "cobloaf",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Ajax",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "bitch-wolf's son",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Ajax",
+        "flags": [
+          "coarse",
+          "misogynist"
+        ],
+        "syllables": 3,
+        "meter": "xxx",
+        "meterResolved": true
+      },
+      {
+        "term": "stool for a witch",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Ajax",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwwx",
+        "meterResolved": true
+      },
+      {
+        "term": "whoreson cur",
+        "play": "Troilus and Cressida",
+        "citation": "2.1",
+        "speaker": "Ajax",
+        "flags": [
+          "coarse"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "core of envy",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Achilles",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "fragment",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Achilles",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "ruinous butt",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Patroclus",
+        "flags": [],
+        "syllables": 4,
+        "meter": "Swwx",
+        "meterResolved": true
+      },
+      {
+        "term": "gall",
+        "play": "Troilus and Cressida",
+        "citation": "5.1",
+        "speaker": "Patroclus",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "mouth-friends",
+        "play": "Timon of Athens",
+        "citation": "3.6",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "time's flies",
+        "play": "Timon of Athens",
+        "citation": "3.6",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "affable wolves",
+        "play": "Timon of Athens",
+        "citation": "3.6",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 4,
+        "meter": "Swwx",
+        "meterResolved": true
+      },
+      {
+        "term": "poor rogue hereditary",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 7,
+        "meter": "xxwSwww",
+        "meterResolved": true
+      },
+      {
+        "term": "issue of a mangy dog",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Timon",
+        "flags": [],
+        "syllables": 7,
+        "meter": "SwwwSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "caitiff",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Apemantus",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "carper",
+        "play": "Timon of Athens",
+        "citation": "4.3",
+        "speaker": "Apemantus",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "flea",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "quantity",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Sww",
+        "meterResolved": true
+      },
+      {
+        "term": "skein of thread",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xwx",
+        "meterResolved": true
+      },
+      {
+        "term": "custard-coffin",
+        "play": "The Taming of the Shrew",
+        "citation": "4.3",
+        "speaker": "Petruchio",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "rudesby",
+        "play": "The Taming of the Shrew",
+        "citation": "3.2",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "swearing Jack",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "jade",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "buzzard",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "craven",
+        "play": "The Taming of the Shrew",
+        "citation": "2.1",
+        "speaker": "Katherine",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "woodcock",
+        "play": "The Taming of the Shrew",
+        "citation": "1.2",
+        "speaker": "Grumio",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "aglet-baby",
+        "play": "The Taming of the Shrew",
+        "citation": "1.2",
+        "speaker": "Grumio",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "old trot",
+        "play": "The Taming of the Shrew",
+        "citation": "1.2",
+        "speaker": "Grumio",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "demi-devil",
+        "play": "The Tempest",
+        "citation": "5.1",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "thing of darkness",
+        "play": "The Tempest",
+        "citation": "5.1",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "freckled whelp",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "tortoise",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "malice",
+        "play": "The Tempest",
+        "citation": "1.2",
+        "speaker": "Prospero",
+        "flags": [
+          "colonial"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "pied ninny",
+        "play": "The Tempest",
+        "citation": "3.2",
+        "speaker": "Caliban",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "scurvy patch",
+        "play": "The Tempest",
+        "citation": "3.2",
+        "speaker": "Caliban",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "jesting monkey",
+        "play": "The Tempest",
+        "citation": "3.2",
+        "speaker": "Caliban",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "cacodemon",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "wrangling pirates",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "rag of honour",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "slave of nature",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 4,
+        "meter": "xwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "painted queen",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "vain flourish of my fortune",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 7,
+        "meter": "xSwwwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "carnal cur",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "hell's black intelligencer",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "Margaret",
+        "flags": [],
+        "syllables": 7,
+        "meter": "xxwSwww",
+        "meterResolved": true
+      },
+      {
+        "term": "foul defacer of God's handiwork",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 9,
+        "meter": "xwSwwxSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "misshapen stigmatic",
+        "play": "3 Henry VI",
+        "citation": "2.2",
+        "speaker": "Margaret",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 6,
+        "meter": "wSwwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "wrinkled witch",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Richard",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "withered hag",
+        "play": "Richard III",
+        "citation": "1.3",
+        "speaker": "Richard",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "unmannered dog",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Richard",
+        "flags": [],
+        "syllables": 4,
+        "meter": "wSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "child-killer",
+        "play": "3 Henry VI",
+        "citation": "2.2",
+        "speaker": "Richard",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "captive scold",
+        "play": "3 Henry VI",
+        "citation": "5.5",
+        "speaker": "Richard",
+        "flags": [
+          "misogynist"
+        ],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "hedgehog",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Anne",
+        "flags": [
+          "ableist"
+        ],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "dreadful minister of hell",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Anne",
+        "flags": [],
+        "syllables": 7,
+        "meter": "SwSwwwx",
+        "meterResolved": true
+      },
+      {
+        "term": "devilish slave",
+        "play": "Richard III",
+        "citation": "1.2",
+        "speaker": "Anne",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "villain-slave",
+        "play": "Richard III",
+        "citation": "4.4",
+        "speaker": "Queen Elizabeth",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "Amazonian trull",
+        "play": "3 Henry VI",
+        "citation": "1.4",
+        "speaker": "York",
+        "flags": [
+          "sexual",
+          "misogynist"
+        ],
+        "syllables": 5,
+        "meter": "wwSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "dunghill villain",
+        "play": "2 Henry VI",
+        "citation": "1.3",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "fell-lurking curs",
+        "play": "2 Henry VI",
+        "citation": "5.1",
+        "speaker": "York",
+        "flags": [],
+        "syllables": 4,
+        "meter": "xSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "scarlet hypocrite",
+        "play": "1 Henry VI",
+        "citation": "1.3",
+        "speaker": "Gloucester",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwSww",
+        "meterResolved": false
+      },
+      {
+        "term": "dunghill grooms",
+        "play": "1 Henry VI",
+        "citation": "1.3",
+        "speaker": "Gloucester",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "saucy priest",
+        "play": "1 Henry VI",
+        "citation": "3.1",
+        "speaker": "Gloucester",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "pernicious usurer",
+        "play": "1 Henry VI",
+        "citation": "3.1",
+        "speaker": "Gloucester",
+        "flags": [],
+        "syllables": 6,
+        "meter": "wSwSww",
+        "meterResolved": false
+      },
+      {
+        "term": "stuffed man",
+        "play": "Much Ado About Nothing",
+        "citation": "1.1",
+        "speaker": "Beatrice",
+        "flags": [],
+        "syllables": 2,
+        "meter": "xx",
+        "meterResolved": true
+      },
+      {
+        "term": "clod of wayward marl",
+        "play": "Much Ado About Nothing",
+        "citation": "2.1",
+        "speaker": "Beatrice",
+        "flags": [],
+        "syllables": 5,
+        "meter": "xwSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "valiant dust",
+        "play": "Much Ado About Nothing",
+        "citation": "2.1",
+        "speaker": "Beatrice",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "Count Comfect",
+        "play": "Much Ado About Nothing",
+        "citation": "4.1",
+        "speaker": "Beatrice",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "Lady Disdain",
+        "play": "Much Ado About Nothing",
+        "citation": "1.1",
+        "speaker": "Benedick",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwwS",
+        "meterResolved": false
+      },
+      {
+        "term": "parrot-teacher",
+        "play": "Much Ado About Nothing",
+        "citation": "1.1",
+        "speaker": "Benedick",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "Lady Tongue",
+        "play": "Much Ado About Nothing",
+        "citation": "2.1",
+        "speaker": "Benedick",
+        "flags": [],
+        "syllables": 3,
+        "meter": "Swx",
+        "meterResolved": true
+      },
+      {
+        "term": "sheep-biter",
+        "play": "Twelfth Night",
+        "citation": "2.5",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "brock",
+        "play": "Twelfth Night",
+        "citation": "2.5",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "clodpole",
+        "play": "Twelfth Night",
+        "citation": "3.4",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 2,
+        "meter": "Sw",
+        "meterResolved": true
+      },
+      {
+        "term": "firago",
+        "play": "Twelfth Night",
+        "citation": "3.4",
+        "speaker": "Sir Toby",
+        "flags": [],
+        "syllables": 3,
+        "meter": "wSw",
+        "meterResolved": true
+      },
+      {
+        "term": "time-pleaser",
+        "play": "Twelfth Night",
+        "citation": "2.3",
+        "speaker": "Maria",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "barren rascal",
+        "play": "Twelfth Night",
+        "citation": "1.5",
+        "speaker": "Malvolio",
+        "flags": [],
+        "syllables": 4,
+        "meter": "SwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "geck",
+        "play": "Twelfth Night",
+        "citation": "5.1",
+        "speaker": "Malvolio",
+        "flags": [],
+        "syllables": 1,
+        "meter": "x",
+        "meterResolved": true
+      },
+      {
+        "term": "hyperbolical fiend",
+        "play": "Twelfth Night",
+        "citation": "4.2",
+        "speaker": "Feste",
+        "flags": [],
+        "syllables": 6,
+        "meter": "wwSwwx",
+        "meterResolved": true
+      },
+      {
+        "term": "mechanical salt-butter rogue",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 8,
+        "meter": "wSwwxSwx",
+        "meterResolved": true
+      },
+      {
+        "term": "cuckoldly knave",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Falstaff",
+        "flags": [
+          "sexual"
+        ],
+        "syllables": 4,
+        "meter": "Swwx",
+        "meterResolved": true
+      },
+      {
+        "term": "mountain of mummy",
+        "play": "The Merry Wives of Windsor",
+        "citation": "3.5",
+        "speaker": "Falstaff",
+        "flags": [],
+        "syllables": 5,
+        "meter": "SwwSw",
+        "meterResolved": false
+      },
+      {
+        "term": "damned Epicurean rascal",
+        "play": "The Merry Wives of Windsor",
+        "citation": "2.2",
+        "speaker": "Ford",
+        "flags": [],
+        "syllables": 8,
+        "meter": "xwwwSwSw",
+        "meterResolved": true
+      },
+      {
+        "term": "hodge-pudding",
+        "play": "The Merry Wives of Windsor",
+        "citation": "5.5",
+        "speaker": "Ford",
+        "flags": [],
+        "syllables": 3,
+        "meter": "xSw",
+        "meterResolved": true
+      },
+      {
+        "term": "gross watery pumpion",
+        "play": "The Merry Wives of Windsor",
+        "citation": "3.3",
+        "speaker": "Mistress Ford",
+        "flags": [],
+        "syllables": 6,
+        "meter": "xSwwSw",
+        "meterResolved": true
       }
     ],
     "diminutives": [

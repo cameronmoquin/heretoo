@@ -119,7 +119,7 @@ export default function FamilyDetail() {
   const onDeleteFamily = () => {
     showConfirm(
       `Delete this ${Vocab.group}?`,
-      "This is permanent. Every post and all chat history goes with it. Allowed only because you're the only member.",
+      `This is permanent. Every ${Vocab.post} and all chat history goes with it. Allowed only because you're the only member.`,
       () => {
         deleteFamily.mutate(family.id, {
           onSuccess: () => router.replace('/family' as any),

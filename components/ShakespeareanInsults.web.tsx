@@ -109,7 +109,7 @@ export function ShakespeareanInsults() {
                   <div className={`bard-word ${anim}`} key={`${spin}-${i}`}>
                     {p ? p.term : '— — —'}
                   </div>
-                  <div className="bard-word-src">{p ? p.play : ' '}</div>
+                  <div className="bard-word-src">{p ? (p.citation ?? p.play) : ' '}</div>
                 </div>
               );
             })}
@@ -120,6 +120,15 @@ export function ShakespeareanInsults() {
               ? (forgeRes.scanned ? forgeRes.text : 'No line scanned that way — strike again.')
               : ' '}
           </p>
+
+          {/* One voice, one play. Cited the way the true lines are.
+              A play-level line names no single speaker, so it cites the play. */}
+          {forgeRes?.scanned && (
+            <div className="bard-forge-attr" aria-live="polite">
+              {forgeRes.speaker && <p className="bard-clip-attr">— {forgeRes.speaker}</p>}
+              <p className="bard-clip-cite">{forgeRes.play}</p>
+            </div>
+          )}
 
           <div className="bard-controls">
             <button className="bard-btn primary" onClick={strike}>Strike</button>
@@ -277,6 +286,7 @@ const BARD_CSS = `
   text-align:center; font-size:1.5rem; line-height:1.4; min-height:1.4em;
   color:var(--bard-ink); margin:6px 0 16px;
 }
+.bard-root .bard-forge-attr{text-align:center; margin:-8px 0 16px;}
 .bard-root .bard-controls{display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center;}
 .bard-root .bard-ctl{display:flex; gap:6px; align-items:center; font-size:.9rem; color:var(--bard-oak);}
 .bard-root .bard-select{background:var(--bard-paper); border:1px solid var(--bard-oak); padding:6px 8px;}

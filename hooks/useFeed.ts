@@ -82,10 +82,14 @@ export function useFeed(tab: FeedTab = 'for_you') {
       let posts = (data ?? []) as any[];
       if (userId && posts.length > 0) {
         const postIds = posts.map((p) => p.id);
+        // reaction_type filter matters now that post_reactions also
+        // holds line reactions. Without it, firing a Shakespeare line
+        // at a post would light up the heart as well.
         const { data: reactions } = await supabase
           .from('post_reactions')
           .select('post_id, reaction_type')
           .eq('profile_id', userId)
+          .eq('reaction_type', 'heart')
           .in('post_id', postIds);
         const set = new Set((reactions ?? []).map((r: any) => r.post_id));
         posts = posts.map((p) => ({ ...p, viewer_hearted: set.has(p.id) }));

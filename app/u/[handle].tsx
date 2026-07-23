@@ -31,6 +31,7 @@ import { STATIONS } from '../../stores/radioStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 export default function UserProfile() {
   const s = makeStyles();
@@ -208,7 +209,7 @@ export default function UserProfile() {
 
         {/* Posts */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Recent posts</Text>
+          <Text style={s.sectionTitle}>Recent {Vocab.postPlural}</Text>
           {(posts ?? []).length === 0 ? (
             <Text style={s.emptyPosts}>Nothing public to show yet.</Text>
           ) : (

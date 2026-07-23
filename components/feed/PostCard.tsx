@@ -5,8 +5,8 @@
  * counts off the `posts` row. Heart toggle is wired through onHeart prop.
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable, Modal, TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable, Modal, TextInput, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { Post } from '../../stores/feedStore';
@@ -21,14 +21,22 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
 import { useTTS } from '../../stores/ttsStore';
 import { useFlagContent, FLAG_REASONS, type FlagReason } from '../../hooks/useFlagContent';
+import {
+  useLineReactions, useFireLine, useUnfireLine, type LineReactionRow,
+} from '../../hooks/useLineReactions';
+import { drawLines, resolveLineRef, attribution, type PaletteLine } from '../../lib/lineReactions';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Shadow } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 // Recognizable "liked" red — same hue Twitter, Instagram, and Reddit
 // converged on. Sits adjacent to the brand primary indigo without
 // fighting it; the brand color stays meaningful for primary CTAs.
 const HEART_RED = '#E0245E';
+
+/** How many lines the picker lays out per draw. */
+const DRAW = 5;
 
 interface PostCardProps {
   post: Post;
@@ -44,6 +52,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const isMine = userId === post.author_id;
   const deletePost = useDeletePost();
   const [boostOpen, setBoostOpen] = useState(false);
+  const [lineOpen, setLineOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const boost = useBoostPost();
@@ -51,7 +60,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
 
   const onDelete = () => {
     showConfirm(
-      'Delete post?',
+      `Delete ${Vocab.post}?`,
       'This cannot be undone.',
       () => deletePost.mutate(post.id),
       'Delete',
@@ -87,7 +96,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); onDelete(); }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityLabel="Delete post"
+            accessibilityLabel={`Delete ${Vocab.post}`}
           >
             <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
@@ -98,7 +107,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); setFlagOpen(true); }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityLabel="Report post"
+            accessibilityLabel={`Report ${Vocab.post}`}
           >
             <Ionicons name="flag-outline" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
@@ -165,7 +174,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           style={s.actionBtn}
           onPress={(e) => { e.stopPropagation(); onHeart?.(post.id); }}
           activeOpacity={0.7}
-          accessibilityLabel={post.viewer_hearted ? 'Unheart post' : 'Heart post'}
+          accessibilityLabel={post.viewer_hearted ? `Unheart ${Vocab.post}` : `Heart ${Vocab.post}`}
         >
           {/* Filled heart in the recognizable "social red" — Twitter /
               Instagram convention. The outline version for "not yet
@@ -204,10 +213,23 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           )}
         </TouchableOpacity>
 
+        {/* Fire a line. The reaction vocabulary here is language, not
+            glyphs: you answer a slip with a real Shakespeare line and
+            the quote lands on the card with its speaker and play. */}
+        <TouchableOpacity
+          style={s.actionBtn}
+          activeOpacity={0.7}
+          onPress={(e) => { e.stopPropagation(); setLineOpen(true); }}
+          accessibilityLabel={`Fire a Shakespeare line at this ${Vocab.post}`}
+        >
+          <Ionicons name="flame-outline" size={18} color={Colors.textSecondary} />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={s.actionBtn}
           activeOpacity={0.7}
           onPress={(e) => { e.stopPropagation(); setBoostOpen(true); }}
+          accessibilityLabel={`Boost this ${Vocab.post}`}
         >
           <Ionicons name="repeat-outline" size={18} color={Colors.textSecondary} />
           {(post.boost_count ?? 0) > 0 && (
@@ -220,6 +242,9 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         <ReadAloudButton postId={post.id} body={post.body ?? ''} />
       </View>
 
+      {/* Lines fired at this slip, quoted with attribution. */}
+      <LineReactionList postId={post.id} />
+
       {/* Inline comment preview — latest 2 top-level comments. */}
       <CommentPreview postId={post.id} commentCount={post.comment_count ?? 0} />
 
@@ -231,7 +256,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       >
         <Pressable style={s.modalBackdrop} onPress={() => setBoostOpen(false)}>
           <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={s.modalTitle}>Boost this post</Text>
+            <Text style={s.modalTitle}>Boost this {Vocab.post}</Text>
 
             <TouchableOpacity
               style={s.scopeRow}
@@ -305,6 +330,13 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         postId={post.id}
       />
 
+      {/* Barb picker — a handful of real lines, drawn fresh. */}
+      <LinePicker
+        open={lineOpen}
+        onClose={() => setLineOpen(false)}
+        postId={post.id}
+      />
+
       {/* Tap a photo to open it full-screen; swipe through the rest. */}
       <Lightbox
         media={media}
@@ -313,6 +345,153 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         onClose={() => setLightboxOpen(false)}
       />
     </Pressable>
+  );
+}
+
+/**
+ * Barb picker. Opens on a fresh draw of real lines from the corpus,
+ * each shown whole with its speaker and play. Tap one to fire it.
+ * Draw again for another handful. Attribution is the point, so the
+ * speaker and the play sit under every line here and on the card.
+ *
+ * Lines already fired at this slip are held out of the draw.
+ */
+function LinePicker({ open, onClose, postId }: {
+  open: boolean;
+  onClose: () => void;
+  postId: string;
+}) {
+  const s = makeStyles();
+  const { data: existing } = useLineReactions(postId);
+  const fire = useFireLine();
+  const [draw, setDraw] = useState<PaletteLine[]>([]);
+
+  // Held in a ref so a background refetch of the existing reactions
+  // cannot reshuffle the draw under the reader's thumb.
+  const takenRef = useRef<Set<string>>(new Set());
+  takenRef.current = new Set(
+    (existing ?? []).map((r) => r.line_ref ?? '').filter(Boolean),
+  );
+
+  useEffect(() => {
+    if (open) setDraw(drawLines(DRAW, takenRef.current));
+  }, [open]);
+
+  const redraw = () => setDraw(drawLines(DRAW, takenRef.current));
+
+  return (
+    <Modal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <Pressable style={s.modalBackdrop} onPress={onClose}>
+        <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
+          <Text style={s.modalTitle}>Fire a line</Text>
+
+          <ScrollView style={s.pickerScroll} showsVerticalScrollIndicator={false}>
+            {draw.map((l) => (
+              <TouchableOpacity
+                key={l.ref}
+                style={s.lineCard}
+                activeOpacity={0.75}
+                onPress={() => {
+                  fire.mutate(
+                    { postId, line: l },
+                    {
+                      onSuccess: onClose,
+                      onError: (e: any) =>
+                        showAlert('Could not fire that line', e?.message ?? 'Try again.'),
+                    },
+                  );
+                }}
+                accessibilityLabel={`Fire this line: ${l.text} Spoken by ${l.speaker} in ${l.play}`}
+              >
+                <Text style={s.lineQuote}>{`“${l.text}”`}</Text>
+                <Text style={s.lineAttr}>{attribution(l)}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={s.pickerActions}>
+            <TouchableOpacity
+              style={s.pickerBtn}
+              onPress={redraw}
+              accessibilityLabel="Draw another handful of lines"
+            >
+              <Ionicons name="shuffle-outline" size={16} color={Colors.textSecondary} />
+              <Text style={s.pickerBtnText}>Draw again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.pickerBtn}
+              onPress={onClose}
+              accessibilityLabel="Close the line picker"
+            >
+              <Text style={s.pickerBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+/**
+ * The lines fired at this slip, quoted with speaker and play. Your own
+ * line is tappable to take it back.
+ *
+ * No tally. A reaction shows what was said and who said it.
+ *
+ * Renders nothing when the fetch comes back empty, which is also what
+ * happens before migration 060 has been run by hand.
+ */
+function LineReactionList({ postId }: { postId: string }) {
+  const s = makeStyles();
+  const userId = useAuthStore((st) => st.user?.id);
+  const { data } = useLineReactions(postId);
+  const unfire = useUnfireLine();
+
+  const rows = (data ?? [])
+    .map((row) => ({ row, line: resolveLineRef(row.line_ref) }))
+    .filter((x): x is { row: LineReactionRow; line: PaletteLine } => !!x.line);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <View style={s.lineReactions}>
+      {rows.map(({ row, line }) => {
+        const quote = (
+          <>
+            <Text style={s.firedQuote}>{`“${line.text}”`}</Text>
+            <Text style={s.firedAttr}>{attribution(line)}</Text>
+          </>
+        );
+        if (row.profile_id !== userId) {
+          return <View key={row.id} style={s.firedRow}>{quote}</View>;
+        }
+        return (
+          <TouchableOpacity
+            key={row.id}
+            style={s.firedRow}
+            activeOpacity={0.7}
+            onPress={(e) => {
+              e.stopPropagation();
+              unfire.mutate(
+                { postId, reactionId: row.id },
+                {
+                  onError: (err: any) =>
+                    showAlert('Could not take that line back', err?.message ?? 'Try again.'),
+                },
+              );
+            }}
+            accessibilityLabel={`Take back your line: ${line.text} Spoken by ${line.speaker} in ${line.play}`}
+          >
+            {quote}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
@@ -373,7 +552,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
           ) : (
             <>
               <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 }}>
-                Report this {commentId ? 'comment' : 'post'}
+                Report this {commentId ? 'comment' : Vocab.post}
               </Text>
               {FLAG_REASONS.map((r) => {
                 const isPicked = reason === r.id;
@@ -610,6 +789,65 @@ function makeStyles() { return StyleSheet.create({
     fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
     color: Colors.textSecondary, fontWeight: '600',
   },
+
+  // Fired lines. Quoted, indented off a left rule so they read as
+  // spoken text answering the slip rather than more body copy.
+  lineReactions: {
+    marginTop: Spacing.xxs,
+    gap: Spacing.xs,
+  },
+  firedRow: {
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.primary,
+    paddingLeft: Spacing.xs,
+    paddingVertical: 2,
+    gap: 2,
+  },
+  firedQuote: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
+    color: Colors.textPrimary,
+  },
+  firedAttr: {
+    fontSize: 11.5,
+    color: Colors.textMuted,
+    letterSpacing: 0.1,
+  },
+
+  // Picker.
+  pickerScroll: { maxHeight: 340 },
+  lineCard: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.xs,
+    gap: 4,
+  },
+  lineQuote: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+    color: Colors.textPrimary,
+  },
+  lineAttr: {
+    fontSize: 11.5,
+    color: Colors.textMuted,
+    letterSpacing: 0.1,
+  },
+  pickerActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.xs,
+  },
+  pickerBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 10, paddingHorizontal: 8,
+  },
+  pickerBtnText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
 
   commentPreview: {
     marginTop: Spacing.xxs, paddingTop: Spacing.xxs,

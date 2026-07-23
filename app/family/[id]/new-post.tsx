@@ -10,6 +10,7 @@ import { useUpload } from '../../../hooks/useUpload';
 import { showAlert } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
+import { Vocab } from '../../../constants/vocab';
 
 export default function NewFamilyPost() {
   const s = makeStyles();
@@ -63,7 +64,7 @@ export default function NewFamilyPost() {
       console.error('FAMILY_POST_ERROR', raw);
       setLastError(raw);
       // Codex tone (M10): name the next move; never "Something went wrong" alone.
-      showAlert('Could not post', err?.message ?? 'Try again in a moment.');
+      showAlert(`Could not ${Vocab.postVerb}`, err?.message ?? 'Try again in a moment.');
     }
   };
 
@@ -118,7 +119,7 @@ export default function NewFamilyPost() {
               <Text style={s.progressText}>
                 {upload.stage === 'uploading'
                   ? `Uploading… ${Math.round(upload.progress * 100)}%`
-                  : 'Posting…'}
+                  : 'Sending…'}
               </Text>
             </View>
           )}
@@ -137,7 +138,7 @@ export default function NewFamilyPost() {
             onPress={handlePost}
             disabled={!canPost}
           >
-            <Text style={s.saveBtnText}>Post</Text>
+            <Text style={s.saveBtnText}>{Vocab.Post}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

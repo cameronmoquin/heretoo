@@ -24,6 +24,7 @@ import { useSubjectsSeenStore } from '../../stores/subjectsSeenStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 interface Props {
   familyId: string;
@@ -162,7 +163,7 @@ function SubjectRow({
           )}
         </View>
         <Text style={s.rowMeta}>
-          {subject.post_count} {subject.post_count === 1 ? 'post' : 'posts'}
+          {subject.post_count} {subject.post_count === 1 ? Vocab.post : Vocab.postPlural}
           {isRetired ? ' · retired' : ''}
         </Text>
       </View>
