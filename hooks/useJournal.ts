@@ -73,6 +73,35 @@ export function useJournalEntries() {
   });
 }
 
+/** Monotonic temp id for optimistic rows. A module counter is enough:
+ *  it only has to stay unique inside one session's cache until the
+ *  server row replaces it. */
+let optimisticSeq = 0;
+function tempId(): string {
+  optimisticSeq += 1;
+  return `optimistic-${optimisticSeq}-${Date.now()}`;
+}
+
+/** A synthetic list row, shown the instant the user saves and swapped
+ *  for the server row on success. The sealed variant carries NO
+ *  plaintext, matching the row the server will hand back. */
+function optimisticEntry(input: {
+  id: string; authorId: string; title: string;
+  sealed: boolean; body: string | null;
+}): JournalEntry {
+  const now = new Date().toISOString();
+  return {
+    id: input.id,
+    author_id: input.authorId,
+    title: input.title.trim() || null,
+    sealed: input.sealed,
+    body: input.sealed ? null : input.body,
+    ciphertext: null, iv: null, salt: null, iterations: null, crypto_v: null,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
 export function useJournalEntry(entryId: string | null | undefined) {
   return useQuery({
     queryKey: ['journal-entry', entryId],
@@ -93,10 +122,18 @@ export function useJournalEntry(entryId: string | null | undefined) {
 
 // ── Mutations ──────────────────────────────────────────────────────
 
-/** Save an open entry. Body goes to the server as written. */
+/** Save an open entry. Body goes to the server as written.
+ *
+ * Optimistic on purpose. The old version invalidated on success and
+ * leaned on a refetch to show the new row, and that refetch could read
+ * the list a beat before the insert was visible, so the entry only
+ * appeared after the NEXT save. Here the row lands in the cache the
+ * instant the user commits, then the server row replaces it. No refetch
+ * sits in the critical path, so nothing races. */
 export function useSaveJournalEntry() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
+  const key = ['journal-entries', userId] as const;
   return useMutation({
     mutationFn: async (input: { title: string; body: string }) => {
       if (!userId) throw new Error('Sign in first.');
@@ -113,8 +150,23 @@ export function useSaveJournalEntry() {
       if (error) throw error;
       return data as JournalEntry;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['journal-entries', userId] });
+    onMutate: async (input) => {
+      if (!userId) return { snapshot: undefined, tempId: null };
+      await qc.cancelQueries({ queryKey: key });
+      const snapshot = qc.getQueryData<JournalEntry[]>(key);
+      const id = tempId();
+      const row = optimisticEntry({ id, authorId: userId, title: input.title, sealed: false, body: input.body });
+      qc.setQueryData<JournalEntry[]>(key, (prev) => [row, ...(prev ?? [])]);
+      return { snapshot, tempId: id };
+    },
+    onError: (_e, _input, ctx) => {
+      if (ctx && ctx.snapshot !== undefined) qc.setQueryData(key, ctx.snapshot);
+    },
+    onSuccess: (serverRow, _input, ctx) => {
+      // Swap the temp row for the real one. The list is now authoritative
+      // with no refetch, so the racing invalidation is gone for good.
+      qc.setQueryData<JournalEntry[]>(key, (prev) =>
+        (prev ?? []).map((e) => (e.id === ctx?.tempId ? serverRow : e)));
     },
   });
 }
@@ -132,18 +184,22 @@ export function useSaveJournalEntry() {
 export function useSealJournalEntry() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
+  const key = ['journal-entries', userId] as const;
   return useMutation({
     mutationFn: async (input: {
       title: string;
       /** Plaintext. Sealed before the network call. Never persisted. */
       body: string;
       passphrase: string;
-    }): Promise<{ id: string }> => {
+    }): Promise<JournalEntry> => {
       if (!userId) throw new Error('Sign in first.');
 
       // Seal first. A throw here means nothing reaches the server.
       const payload = await sealEntry(input.body, input.passphrase);
 
+      // Selecting the full row is safe: body is null and the ciphertext
+      // is encrypted. No plaintext returns, so the list cache can hold
+      // the row and stay openable without a refetch.
       const { data, error } = await supabase
         .from('journal_entries')
         .insert({
@@ -157,13 +213,27 @@ export function useSealJournalEntry() {
           iterations: payload.iterations,
           crypto_v: payload.v,
         } as any)
-        .select('id')
+        .select()
         .single();
       if (error) throw error;
-      return { id: (data as any).id as string };
+      return data as JournalEntry;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['journal-entries', userId] });
+    onMutate: async (input) => {
+      if (!userId) return { snapshot: undefined, tempId: null };
+      await qc.cancelQueries({ queryKey: key });
+      const snapshot = qc.getQueryData<JournalEntry[]>(key);
+      const id = tempId();
+      // sealed: true, body null. The plaintext never touches the cache.
+      const row = optimisticEntry({ id, authorId: userId, title: input.title, sealed: true, body: null });
+      qc.setQueryData<JournalEntry[]>(key, (prev) => [row, ...(prev ?? [])]);
+      return { snapshot, tempId: id };
+    },
+    onError: (_e, _input, ctx) => {
+      if (ctx && ctx.snapshot !== undefined) qc.setQueryData(key, ctx.snapshot);
+    },
+    onSuccess: (serverRow, _input, ctx) => {
+      qc.setQueryData<JournalEntry[]>(key, (prev) =>
+        (prev ?? []).map((e) => (e.id === ctx?.tempId ? serverRow : e)));
     },
   });
 }
