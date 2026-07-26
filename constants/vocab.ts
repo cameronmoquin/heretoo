@@ -2,7 +2,9 @@
  * Vocab — the platform lexicon.
  *
  * One place for the group noun and the post noun. The product calls a
- * group a "crew" and a post a "slip".
+ * group a "crew" and a post a "drop". A drop with a location is a "dead
+ * drop" (the geocache game), so everything a person posts is a drop and
+ * the physical ones are dead drops. That taxonomy is deliberate.
  * If either word ever changes again, it changes here and nowhere else.
  * Screens import Vocab instead of typing the word into a string.
  *
@@ -34,12 +36,12 @@ export const Vocab = {
   member: 'member',
   memberPlural: 'members',
   groupWithArticle: 'a crew',
-  post: 'slip',
-  postPlural: 'slips',
-  Post: 'Slip',
-  PostPlural: 'Slips',
-  postVerb: 'slip',
-  postVerbPast: 'slipped',
+  post: 'drop',
+  postPlural: 'drops',
+  Post: 'Drop',
+  PostPlural: 'Drops',
+  postVerb: 'drop',
+  postVerbPast: 'dropped',
 } as const;
 
 export type VocabKey = keyof typeof Vocab;

@@ -214,7 +214,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         </TouchableOpacity>
 
         {/* Fire a line. The reaction vocabulary here is language, not
-            glyphs: you answer a slip with a real Shakespeare line and
+            glyphs: you answer a drop with a real Shakespeare line and
             the quote lands on the card with its speaker and play. */}
         <TouchableOpacity
           style={s.actionBtn}
@@ -242,7 +242,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         <ReadAloudButton postId={post.id} body={post.body ?? ''} />
       </View>
 
-      {/* Lines fired at this slip, quoted with attribution. */}
+      {/* Lines fired at this drop, quoted with attribution. */}
       <LineReactionList postId={post.id} />
 
       {/* Inline comment preview — latest 2 top-level comments. */}
@@ -354,7 +354,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
  * Draw again for another handful. Attribution is the point, so the
  * speaker and the play sit under every line here and on the card.
  *
- * Lines already fired at this slip are held out of the draw.
+ * Lines already fired at this drop are held out of the draw.
  */
 function LinePicker({ open, onClose, postId }: {
   open: boolean;
@@ -438,7 +438,7 @@ function LinePicker({ open, onClose, postId }: {
 }
 
 /**
- * The lines fired at this slip, quoted with speaker and play. Your own
+ * The lines fired at this drop, quoted with speaker and play. Your own
  * line is tappable to take it back.
  *
  * No tally. A reaction shows what was said and who said it.
