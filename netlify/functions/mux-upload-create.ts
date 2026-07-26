@@ -100,9 +100,12 @@ export const handler: Handler = async (event) => {
     body: JSON.stringify({
       new_asset_settings: {
         playback_policy: ['public'],
-        encoding_tier: 'baseline',
         // Generate an MP4 rendition so browsers without HLS support
         // (Chrome, most non-Safari) can <video src> the file directly.
+        // mp4_support requires the default (smart) encoding tier. The
+        // baseline tier rejects mp4_support, which 422'd every create
+        // call and blocked all video uploads, so encoding_tier stays
+        // unset here.
         mp4_support: 'standard',
       },
       cors_origin: '*',

@@ -34,12 +34,14 @@ import {
   useMemoirTranscribe,
   useMemoirGrammarCheck,
   useResolveCowriterDraft,
+  useUpdateMemoirResponse,
+  useDeleteMemoirResponse,
   type MemoirPrompt, type MemoirResponse, type CleanupResult,
 } from '../../hooks/useMemoir';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { useTTS } from '../../stores/ttsStore';
-import { showAlert } from '../../lib/alert';
+import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -508,9 +510,12 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   // Library rows live inside the vellum page card in elder mode, so
   // their icon ink is sepia rather than the brand grey.
   const iconColor = elder ? '#5A4A38' : Colors.textSecondary;
+  const onAccent = elder ? '#FBF4DE' : '#0A0A0F';
   const tts = useTTS();
   const cleanup = useMemoirGrammarCheck();
   const resolve = useResolveCowriterDraft();
+  const update = useUpdateMemoirResponse();
+  const del = useDeleteMemoirResponse();
   const id = `memoir-r-${response.id}`;
   const ttsActive = tts.currentId === id && tts.playing;
   const date = new Date(response.created_at).toLocaleDateString(undefined, {
@@ -522,6 +527,43 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   // mechanical fixes the writer can apply; `suggestions` are advice the
   // writer acts on themselves. The AI never rewrites the prose.
   const [result, setResult] = useState<CleanupResult | null>(null);
+
+  // Edit state: the prose opens into a text field, seeded from the
+  // current final_text each time editing begins.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(response.final_text);
+
+  const onSaveEdit = async () => {
+    const text = draft.trim();
+    if (!text) {
+      showAlert('Write a little more', 'Even one or two sentences are enough.');
+      return;
+    }
+    try {
+      await update.mutateAsync({
+        id: response.id,
+        projectId: response.project_id,
+        patch: { final_text: text },
+      });
+      setEditing(false);
+    } catch (e: any) {
+      showAlert('Could not save', e?.message ?? 'Try again.');
+    }
+  };
+
+  const onDelete = () => {
+    showConfirm(
+      'Delete this entry?',
+      'This cannot be undone.',
+      () => {
+        del.mutate(
+          { id: response.id, projectId: response.project_id },
+          { onError: (e: any) => showAlert('Could not delete', e?.message ?? 'Try again.') },
+        );
+      },
+      'Delete',
+    );
+  };
 
   const onCleanUp = async () => {
     try {
@@ -559,34 +601,91 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
     <View style={s.libRow}>
       <Text style={s.libDate}>{date}</Text>
       {!!q && <Text style={s.libQuestion}>{q}</Text>}
-      <Text style={s.libBody}>{response.final_text}</Text>
-      <View style={s.libActions}>
-        <TouchableOpacity
-          onPress={() => tts.toggle(id, response.final_text)}
-          style={s.libRead}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name={ttsActive ? 'pause' : 'volume-medium-outline'} size={14} color={iconColor} />
-          <Text style={s.libReadText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
-        </TouchableOpacity>
-        {!result && (
-          <TouchableOpacity
-            onPress={onCleanUp}
-            style={s.libPolish}
-            disabled={cleanup.isPending}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {cleanup.isPending ? (
-              <ActivityIndicator size="small" color={iconColor} />
-            ) : (
-              <>
-                <Ionicons name="sparkles-outline" size={14} color={iconColor} />
-                <Text style={s.libReadText}>Clean up</Text>
-              </>
+      {editing ? (
+        <>
+          <TextInput
+            style={s.draftInput}
+            value={draft}
+            onChangeText={setDraft}
+            accessibilityLabel="Edit entry text"
+            multiline
+            maxLength={8000}
+            textAlignVertical="top"
+          />
+          <View style={s.draftActions}>
+            <TouchableOpacity
+              style={[s.draftAccept, update.isPending && { opacity: 0.5 }]}
+              onPress={onSaveEdit}
+              disabled={update.isPending}
+              activeOpacity={0.85}
+              accessibilityLabel="Save changes"
+            >
+              {update.isPending
+                ? <ActivityIndicator size="small" color={onAccent} />
+                : <Text style={s.draftAcceptText}>Save</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.draftReject}
+              onPress={() => setEditing(false)}
+              activeOpacity={0.85}
+              accessibilityLabel="Cancel edit"
+            >
+              <Text style={s.draftRejectText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={s.libBody}>{response.final_text}</Text>
+          <View style={s.libActions}>
+            <TouchableOpacity
+              onPress={() => tts.toggle(id, response.final_text)}
+              style={s.libRead}
+              accessibilityLabel="Read this entry aloud"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name={ttsActive ? 'pause' : 'volume-medium-outline'} size={14} color={iconColor} />
+              <Text style={s.libReadText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
+            </TouchableOpacity>
+            {!result && (
+              <TouchableOpacity
+                onPress={onCleanUp}
+                style={s.libPolish}
+                disabled={cleanup.isPending}
+                accessibilityLabel="Check this entry for typos"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                {cleanup.isPending ? (
+                  <ActivityIndicator size="small" color={iconColor} />
+                ) : (
+                  <>
+                    <Ionicons name="sparkles-outline" size={14} color={iconColor} />
+                    <Text style={s.libReadText}>Clean up</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
-        )}
-      </View>
+            <TouchableOpacity
+              onPress={() => { setDraft(response.final_text); setEditing(true); }}
+              style={s.libPolish}
+              accessibilityLabel="Edit this entry"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="pencil-outline" size={14} color={iconColor} />
+              <Text style={s.libReadText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onDelete}
+              style={s.libPolish}
+              accessibilityLabel="Delete this entry"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="trash-outline" size={14} color={iconColor} />
+              <Text style={s.libReadText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       {/* Clean-up drawer: mechanical fixes to apply, ideas to consider.
           The AI never rewrites the prose. */}

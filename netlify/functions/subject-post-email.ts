@@ -26,6 +26,16 @@
  */
 
 import type { Config } from '@netlify/functions';
+import {
+  renderEmailHtml,
+  renderEmailText,
+  escapeHtml,
+  emailEyebrow,
+  emailHeading,
+  emailNote,
+  emailLink,
+  EmailBrand,
+} from '../../lib/email-shell';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -60,63 +70,39 @@ type Pending = {
 
 // ── helpers ─────────────────────────────────────────────────────────
 
-/** Minimal HTML entity escaping for values we drop into the template. */
-function esc(input: string): string {
-  return input.replace(/[<>&]/g, (c) =>
-    c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;',
-  );
-}
+const MANAGE = { href: 'https://heretoo.social/profile/notifications', label: 'Manage email settings' };
 
 /** One instant email about one post on one followed Subject. */
 function renderEmail(
   displayName: string,
   p: Pending,
 ): { subject: string; html: string; text: string } {
-  const greet = displayName ? esc(displayName.split(' ')[0]) : 'there';
-  const subjectName = esc(p.subject_name || 'a family story');
-  const family = esc(p.family_name || 'your family');
-  const author = esc(p.author_name || p.author_handle || 'Someone');
-  const body = esc((p.body ?? '').slice(0, 600));
+  const greet = displayName ? escapeHtml(displayName.split(' ')[0]) : 'there';
+  const subjectName = escapeHtml(p.subject_name || 'a story');
+  const crew = escapeHtml(p.family_name || 'your crew');
+  const author = escapeHtml(p.author_name || p.author_handle || 'Someone');
+  const body = escapeHtml((p.body ?? '').slice(0, 600));
   const link = `https://heretoo.social/subjects/${p.subject_id}`;
   const postLink = `https://heretoo.social/feed/${p.post_id}`;
 
-  const subject = `New on "${p.subject_name}" — ${author} posted`;
+  const subject = `${p.author_name || p.author_handle || 'Someone'} posted to "${p.subject_name}"`;
 
-  const html = `
-    <!doctype html>
-    <html><body style="background:#FFFFFF; margin:0; padding:24px; font-family:-apple-system, system-ui, 'Segoe UI', Roboto, sans-serif; color:#1A1A24;">
-      <div style="max-width:560px; margin:0 auto;">
-        <div style="font-size:11px; color:#8A8A9A; text-transform:uppercase; letter-spacing:1.4px; font-weight:700;">${family} · following</div>
-        <div style="font-size:22px; font-weight:700; color:#1A1A24; letter-spacing:-0.3px; margin-top:6px;">
-          Something new on “${subjectName}”
-        </div>
-        <div style="font-size:14px; color:#5A5A6E; margin-top:8px; line-height:1.5;">
-          Hey ${greet}, <strong>${author}</strong> just added to a story you're following.
-        </div>
-        <div style="margin:18px 0; padding:16px 18px; background:#F6F6F9; border-radius:12px; border:1px solid #E4E4EB;">
-          <div style="font-size:15px; color:#1A1A24; line-height:1.6;">${body || '<em style="color:#8A8A9A;">A new photo or moment was shared.</em>'}</div>
-          <a href="${postLink}" style="display:inline-block; margin-top:12px; font-size:13px; color:#4A6CF0; font-weight:600; text-decoration:none;">Read on HereToo →</a>
-        </div>
-        <a href="${link}" style="display:inline-block; font-size:13px; color:#5A5A6E; text-decoration:none;">See the whole story of “${subjectName}” →</a>
-        <div style="font-size:12px; color:#8A8A9A; margin-top:24px; line-height:1.5;">
-          You're getting this because you follow “${subjectName}.”
-          <a href="https://heretoo.social/subjects/${p.subject_id}" style="color:#4A6CF0; text-decoration:none;">Unfollow</a>
-          or <a href="https://heretoo.social/profile/notifications" style="color:#4A6CF0; text-decoration:none;">manage email settings</a>.
-        </div>
-      </div>
-    </body></html>`;
+  const bodyHtml =
+    emailEyebrow(`${crew} &middot; Following`) +
+    emailHeading(`New on “${subjectName}”`) +
+    emailNote(`Hey ${greet}. ${author} added to a story you follow.`) +
+    `<div style="margin:16px 0;padding:16px 18px;background:${EmailBrand.inset};border:1px solid ${EmailBrand.insetBorder};border-radius:10px;">
+       <div style="font-size:15px;color:${EmailBrand.cream};line-height:1.6;">${body || `<span style="color:${EmailBrand.muted};">A new photo or moment.</span>`}</div>
+       <a href="${postLink}" style="display:inline-block;margin-top:12px;font-size:13px;color:${EmailBrand.gold};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
+     </div>` +
+    emailNote(`See the whole story on ${emailLink(link, 'heretoo.social')}.`);
+  const html = renderEmailHtml({ subject, body: bodyHtml, footerAction: MANAGE });
 
-  const text = `Hey ${greet},
-
-${p.author_name || p.author_handle || 'Someone'} just added to "${p.subject_name}", a story you're following in ${p.family_name || 'your family'}.
-
-${(p.body ?? '').slice(0, 300) || '(A new photo or moment was shared.)'}
-
-Read it: ${postLink}
-See the whole story: ${link}
-
-You're getting this because you follow "${p.subject_name}".
-Manage email settings: https://heretoo.social/profile/notifications`;
+  const text = renderEmailText({
+    subject,
+    text: `${p.author_name || p.author_handle || 'Someone'} added to "${p.subject_name}" in ${p.family_name || 'your crew'}.\n\n${(p.body ?? '').slice(0, 300) || '(A new photo or moment.)'}\n\nRead it: ${postLink}\nWhole story: ${link}`,
+    footerAction: MANAGE,
+  });
 
   return { subject, html, text };
 }

@@ -91,7 +91,8 @@ export function useUpload() {
    * suitable for the post_media.storage_path column.
    */
   async function uploadPhotos(assets: ImagePicker.ImagePickerAsset[]): Promise<{ path: string; width?: number; height?: number }[]> {
-    if (!userId) throw new Error('Not authenticated');
+    const uid = userId;
+    if (!uid) throw new Error('Not authenticated');
     if (assets.length === 0) return [];
     setState((s) => ({ ...s, stage: 'uploading', progress: 0 }));
 
@@ -103,41 +104,42 @@ export function useUpload() {
     // of the "post takes forever" feel. Photos rarely need 2048px on
     // mobile; 1600px @ 0.78 quality is visually indistinguishable on a
     // phone screen and cuts file size roughly in half.
+    //
+    // Resilience layers added here:
+    //   1. normalizePhoto() re-encodes to JPEG, then falls back to a
+    //      plain re-encode, then to the raw bytes, so one odd format
+    //      (PNG, HEIC, animated GIF) can't throw the whole batch.
+    //   2. Each upload retries transient storage errors on a fresh
+    //      object name so a duplicate-name error can't block the retry.
+    //   3. Promise.allSettled lets siblings finish; a failure names the
+    //      exact photo instead of a bare "Photo upload failed".
     const ts = Date.now();
     let done = 0;
     const tasks = assets.map(async (asset, i) => {
-      const normalized = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 1600 } }],
-        { compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
-      );
-
-      const filename = `${userId}/${ts}_${i}.jpg`;
-      const buffer = await readAsArrayBuffer(normalized.uri);
-      const blob = new Blob([buffer], { type: 'image/jpeg' });
-
-      const { data, error } = await supabase.storage
-        .from('posts')
-        .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
-
-      if (error) {
-        // eslint-disable-next-line no-console
-        console.error('STORAGE_UPLOAD_ERROR', JSON.stringify(error, null, 2));
-        throw new Error(`Photo upload failed: ${error.message}`);
-      }
-
+      const prep = await normalizePhoto(asset, uid, ts, i);
+      const path = await uploadPhotoWithRetry(prep);
       done += 1;
       setState((s) => ({ ...s, progress: done / assets.length }));
-      return { path: data.path, width: normalized.width, height: normalized.height };
+      return { path, width: prep.width, height: prep.height };
     });
 
-    try {
-      return await Promise.all(tasks);
-    } catch (err) {
+    const settled = await Promise.allSettled(tasks);
+    const ok: { path: string; width?: number; height?: number }[] = [];
+    const failures: string[] = [];
+    settled.forEach((r, i) => {
+      if (r.status === 'fulfilled') ok.push(r.value);
+      else failures.push((r.reason as Error)?.message ?? `Photo #${i + 1} failed`);
+    });
+
+    if (failures.length > 0) {
       // eslint-disable-next-line no-console
-      console.error('PHOTO_UPLOAD_FAILED', err);
-      throw err;
+      console.error('PHOTO_UPLOAD_FAILED', failures);
+      // Nothing is written to the post yet. Surface the exact failure so
+      // the user can retry rather than silently dropping a photo.
+      const more = failures.length > 1 ? ` (+${failures.length - 1} more)` : '';
+      throw new Error(`${failures[0]}${more}`);
     }
+    return ok;
   }
 
   async function uploadVideo(asset: ImagePicker.ImagePickerAsset) {
@@ -362,6 +364,127 @@ async function readAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes.buffer;
+}
+
+// ── photo upload resilience ──────────────────────────────────────────
+const MAX_PHOTO_BYTES = 25 * 1024 * 1024; // 25 MB after normalization
+
+interface PreparedPhoto {
+  uid: string;
+  baseName: string;        // `${uid}/${ts}_${i}` — retries append a suffix
+  ext: string;
+  blob: Blob;
+  contentType: string;
+  width?: number;
+  height?: number;
+  label: string;           // "#3" for user-facing messages
+}
+
+function extForMime(mime: string): string {
+  switch (mime) {
+    case 'image/png': return 'png';
+    case 'image/webp': return 'webp';
+    case 'image/gif': return 'gif';
+    case 'image/heic': return 'heic';
+    case 'image/heif': return 'heif';
+    default: return 'jpg';
+  }
+}
+
+function assetMime(asset: ImagePicker.ImagePickerAsset): string {
+  if (asset.mimeType) return asset.mimeType;
+  const uri = asset.uri.split('?')[0].toLowerCase();
+  if (uri.endsWith('.png')) return 'image/png';
+  if (uri.endsWith('.webp')) return 'image/webp';
+  if (uri.endsWith('.gif')) return 'image/gif';
+  if (uri.endsWith('.heic')) return 'image/heic';
+  if (uri.endsWith('.heif')) return 'image/heif';
+  return 'image/jpeg';
+}
+
+/**
+ * Turn a picked asset into upload-ready bytes.
+ *
+ * Manipulator first: resize + JPEG re-encode (also does HEIC→JPEG).
+ * If that throws, retry a plain JPEG re-encode with no resize. If that
+ * throws too, upload the original bytes with a best-guess content type.
+ * A single unreadable format then costs one photo, not the whole batch.
+ */
+async function normalizePhoto(
+  asset: ImagePicker.ImagePickerAsset,
+  uid: string,
+  ts: number,
+  i: number,
+): Promise<PreparedPhoto> {
+  const label = `#${i + 1}`;
+  let uri = '';
+  let width = asset.width;
+  let height = asset.height;
+  let contentType = 'image/jpeg';
+  let ext = 'jpg';
+
+  try {
+    const out = await ImageManipulator.manipulateAsync(
+      asset.uri,
+      [{ resize: { width: 1600 } }],
+      { compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    uri = out.uri; width = out.width; height = out.height;
+  } catch {
+    try {
+      const out = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [],
+        { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG },
+      );
+      uri = out.uri; width = out.width; height = out.height;
+    } catch {
+      // Manipulator can't read this asset. Ship the original bytes.
+      uri = asset.uri;
+      contentType = assetMime(asset);
+      ext = extForMime(contentType);
+    }
+  }
+
+  const buffer = await readAsArrayBuffer(uri);
+  if (buffer.byteLength > MAX_PHOTO_BYTES) {
+    throw new Error(
+      `Photo ${label} is too large (${Math.round(buffer.byteLength / 1048576)} MB). Max 25 MB.`,
+    );
+  }
+  const blob = new Blob([buffer], { type: contentType });
+  return { uid, baseName: `${uid}/${ts}_${i}`, ext, blob, contentType, width, height, label };
+}
+
+/** Retry when the storage error looks transient (network / 429 / 5xx). */
+function isTransientStorageError(error: any): boolean {
+  const status = Number(
+    error?.statusCode ?? error?.status ?? error?.originalError?.status,
+  );
+  if (!Number.isFinite(status) || status === 0) return true; // no HTTP response
+  if (status === 429) return true;
+  return status >= 500;
+}
+
+async function uploadPhotoWithRetry(prep: PreparedPhoto): Promise<string> {
+  let lastErr: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // Fresh name per attempt keeps upsert:false safe: a first attempt
+    // that persisted but returned a transient error can't collide with
+    // the retry. Orphaned bytes stay unreferenced and harmless.
+    const suffix = attempt === 0 ? '' : `_r${attempt}`;
+    const filename = `${prep.baseName}${suffix}.${prep.ext}`;
+    const { data, error } = await supabase.storage
+      .from('posts')
+      .upload(filename, prep.blob, { contentType: prep.contentType, upsert: false });
+    if (!error && data) return data.path;
+    lastErr = error;
+    // eslint-disable-next-line no-console
+    console.error('STORAGE_UPLOAD_ERROR', prep.label, JSON.stringify(error, null, 2));
+    if (!isTransientStorageError(error)) break;
+    await new Promise((res) => setTimeout(res, 300 * (attempt + 1)));
+  }
+  throw new Error(`Photo ${prep.label} failed to upload: ${lastErr?.message ?? 'storage error'}`);
 }
 
 /**

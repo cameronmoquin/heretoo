@@ -16,6 +16,16 @@
  */
 
 import type { Config } from '@netlify/functions';
+import {
+  renderEmailHtml,
+  renderEmailText,
+  escapeHtml,
+  emailEyebrow,
+  emailHeading,
+  emailNote,
+  emailLink,
+  EmailBrand,
+} from '../../lib/email-shell';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -49,20 +59,16 @@ async function sendArrivalEmail(
   }
   const link = `https://heretoo.social/letter/${letterId}`;
   const subject = careOfLabel
-    ? `A letter from ${authorName} — care of ${careOfLabel}`
+    ? `A letter from ${authorName}, care of ${careOfLabel}`
     : `A letter from ${authorName}`;
 
   // Format the body for HTML — preserve paragraph breaks, escape
   // the rest. The body_md may contain markdown asterisks for italics
   // but we render plain prose; people who use the Letter feature
   // are writing letters, not formatting documents.
-  const escapedBody = (body ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  const paragraphHtml = escapedBody
+  const paragraphHtml = escapeHtml(body ?? '')
     .split(/\n{2,}/)
-    .map((p) => `<p style="margin:0 0 18px 0;">${p.replace(/\n/g, '<br/>')}</p>`)
+    .map((p) => `<p style="margin:0 0 18px 0;font-size:17px;line-height:1.7;color:${EmailBrand.cream};">${p.replace(/\n/g, '<br/>')}</p>`)
     .join('');
   const writtenLine = (() => {
     try {
@@ -73,43 +79,24 @@ async function sendArrivalEmail(
   })();
 
   const careOfHtml = careOfLabel
-    ? `<div style="margin-top:12px;padding:12px 14px;background:rgba(201,161,75,0.10);border-left:2px solid #C9A14B;font-size:13px;line-height:1.6;color:#F4F1E8;">
-         This letter is addressed to <strong>${careOfLabel}</strong>. You are
-         receiving it as the trusted adult on file. Please share or hold it
-         for them as you see fit.
-       </div>`
+    ? `<div style="margin:16px 0;padding:12px 14px;background:rgba(201,161,75,0.10);border-left:2px solid ${EmailBrand.gold};font-size:13px;line-height:1.6;color:${EmailBrand.cream};">Addressed to <strong>${escapeHtml(careOfLabel)}</strong>. You are the trusted adult on file.</div>`
     : '';
-  const html = `
-    <!doctype html>
-    <html><body style="background:#0A0A0F;margin:0;padding:32px 16px;font-family:'Source Serif 4',Georgia,serif;color:#F4F1E8;">
-      <div style="max-width:580px;margin:0 auto;background:#16161D;border:1px solid rgba(201,161,75,0.55);border-radius:12px;padding:32px 28px;">
-        <div style="font-size:11px;font-weight:700;color:#C9A14B;text-transform:uppercase;letter-spacing:2px;font-family:'Syne','Inter',sans-serif;">
-          A letter has arrived
-        </div>
-        <div style="font-size:28px;font-weight:800;color:#F4F1E8;letter-spacing:-0.6px;margin-top:8px;font-family:'Syne','Inter',sans-serif;line-height:1.15;">
-          From ${authorName}
-        </div>
-        ${careOfHtml}
-        <div style="display:flex;align-items:center;gap:10px;margin:14px 0 22px;">
-          <span style="display:inline-block;width:48px;height:1px;background:#C9A14B;opacity:0.55;"></span>
-          <span style="color:#C9A14B;font-size:11px;">✦</span>
-          <span style="display:inline-block;width:48px;height:1px;background:#C9A14B;opacity:0.55;"></span>
-        </div>
-        <div style="font-size:11px;color:#8A8377;text-transform:uppercase;letter-spacing:1.6px;font-family:'Syne','Inter',sans-serif;">
-          Written ${writtenLine}
-        </div>
-        <div style="margin-top:22px;font-size:17px;line-height:1.7;color:#F4F1E8;">
-          ${paragraphHtml}
-        </div>
-        <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(201,161,75,0.25);font-size:12px;line-height:1.6;color:#8A8377;">
-          You can also <a href="${link}" style="color:#C9A14B;text-decoration:none;">read this letter on heretoo.social</a>, where it stays as a keepsake.
-        </div>
-      </div>
-    </body></html>`;
+  const bodyHtml =
+    emailEyebrow('A letter has arrived') +
+    emailHeading(`From ${escapeHtml(authorName)}`) +
+    careOfHtml +
+    emailNote(`Written ${writtenLine}`) +
+    `<div style="margin-top:18px;">${paragraphHtml}</div>` +
+    emailNote(`Read this letter on ${emailLink(link, 'heretoo.social')}, where it stays as a keepsake.`);
+  const html = renderEmailHtml({ subject, body: bodyHtml });
+
   const careOfText = careOfLabel
-    ? `\nThis letter is addressed to ${careOfLabel}. You are receiving it as the trusted adult on file.\n`
+    ? `\nAddressed to ${careOfLabel}. You are the trusted adult on file.\n`
     : '';
-  const text = `A letter has arrived — from ${authorName}.${careOfText}\n\nWritten ${writtenLine}\n\n${body}\n\n---\nRead it on heretoo.social: ${link}`;
+  const text = renderEmailText({
+    subject,
+    text: `A letter has arrived. From ${authorName}.${careOfText}\n\nWritten ${writtenLine}\n\n${body}\n\nRead it on heretoo.social: ${link}`,
+  });
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',

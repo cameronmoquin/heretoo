@@ -29,6 +29,14 @@
  */
 
 import type { Config } from '@netlify/functions';
+import {
+  renderEmailHtml,
+  renderEmailText,
+  escapeHtml,
+  emailHeading,
+  emailNote,
+  EmailBrand,
+} from '../../lib/email-shell';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -83,55 +91,44 @@ function localDate(tz: string | null): string {
   }
 }
 
-/** Build a simple HTML email body from the unread updates. */
+const MANAGE = { href: 'https://heretoo.social/profile/notifications', label: 'Manage email settings' };
+
+/** Build the branded digest from the unread updates. */
 function renderEmail(displayName: string, updates: any[]): { subject: string; html: string; text: string } {
-  const greet = displayName ? displayName.split(' ')[0] : 'there';
+  const greet = displayName ? escapeHtml(displayName.split(' ')[0]) : 'there';
   const subject =
     updates.length === 1
-      ? `1 new family update on HereToo`
-      : `${updates.length} new family updates on HereToo`;
+      ? `1 new crew update on HereToo`
+      : `${updates.length} new crew updates on HereToo`;
 
   const items = updates
     .map((u) => {
-      const family = (u.family_name ?? 'your family').replace(/[<>]/g, '');
-      const author = (u.author_name ?? u.author_handle ?? 'someone').replace(/[<>]/g, '');
-      const body = (u.body ?? '').replace(/[<>]/g, (c: string) => c === '<' ? '&lt;' : '&gt;').slice(0, 600);
+      const crew = escapeHtml(u.family_name ?? 'your crew');
+      const author = escapeHtml(u.author_name ?? u.author_handle ?? 'someone');
+      const body = escapeHtml((u.body ?? '').slice(0, 600));
       const link = `https://heretoo.social/feed/${u.post_id}`;
-      return `
-        <div style="margin: 16px 0; padding: 14px 16px; background: #F6F6F9; border-radius: 12px; border: 1px solid #E4E4EB;">
-          <div style="font-size: 11px; color: #8A8A9A; text-transform: uppercase; letter-spacing: 1.4px; font-weight: 700;">${family}</div>
-          <div style="font-size: 13px; color: #5A5A6E; margin-top: 4px;">From <strong>${author}</strong></div>
-          <div style="font-size: 14px; color: #1A1A24; line-height: 1.5; margin-top: 8px;">${body}</div>
-          <a href="${link}" style="display: inline-block; margin-top: 10px; font-size: 13px; color: #4A6CF0; font-weight: 600; text-decoration: none;">Read on HereToo →</a>
-        </div>`;
+      return `<div style="margin:14px 0;padding:14px 16px;background:${EmailBrand.inset};border:1px solid ${EmailBrand.insetBorder};border-radius:10px;">
+        <div style="font-family:${EmailBrand.display};font-size:11px;color:${EmailBrand.gold};text-transform:uppercase;letter-spacing:1.4px;font-weight:700;">${crew}</div>
+        <div style="font-size:13px;color:${EmailBrand.muted};margin-top:4px;">From ${author}</div>
+        <div style="font-size:15px;color:${EmailBrand.cream};line-height:1.6;margin-top:8px;">${body}</div>
+        <a href="${link}" style="display:inline-block;margin-top:10px;font-size:13px;color:${EmailBrand.gold};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
+      </div>`;
     })
     .join('\n');
 
-  const html = `
-    <!doctype html>
-    <html><body style="background:#FFFFFF; margin:0; padding:24px; font-family:-apple-system, system-ui, 'Segoe UI', Roboto, sans-serif; color:#1A1A24;">
-      <div style="max-width:560px; margin:0 auto;">
-        <div style="font-size:22px; font-weight:700; color:#1A1A24; letter-spacing:-0.3px;">
-          Hey ${greet},
-        </div>
-        <div style="font-size:14px; color:#5A5A6E; margin-top:8px; line-height:1.5;">
-          ${updates.length === 1 ? "There's an update from your family you haven't read yet." : "There are family updates you haven't read yet."} Here's the digest.
-        </div>
-        ${items}
-        <div style="font-size:12px; color:#8A8A9A; margin-top:24px; line-height:1.5;">
-          You're getting this because you're a member of the family above on HereToo.
-          <a href="https://heretoo.social/profile/notifications" style="color:#4A6CF0; text-decoration:none;">Manage email settings</a>.
-        </div>
-      </div>
-    </body></html>`;
+  const bodyHtml =
+    emailHeading(`Hey ${greet}`) +
+    emailNote('Unread from your crew.') +
+    `<div style="margin-top:8px;">${items}</div>`;
+  const html = renderEmailHtml({ subject, body: bodyHtml, footerAction: MANAGE });
 
-  const text = `Hey ${greet},
-
-${updates.length === 1 ? "There's an update from your family you haven't read yet." : "There are family updates you haven't read yet."} Here's the digest:
-
-${updates.map((u) => `• [${u.family_name ?? 'family'}] ${u.author_name ?? u.author_handle ?? 'someone'}: ${(u.body ?? '').slice(0, 200)}\n  https://heretoo.social/feed/${u.post_id}`).join('\n\n')}
-
-Manage email settings: https://heretoo.social/profile/notifications`;
+  const text = renderEmailText({
+    subject,
+    text: `Hey ${greet}.\n\nUnread from your crew.\n\n${updates
+      .map((u) => `[${u.family_name ?? 'crew'}] ${u.author_name ?? u.author_handle ?? 'someone'}: ${(u.body ?? '').slice(0, 200)}\nhttps://heretoo.social/feed/${u.post_id}`)
+      .join('\n\n')}`,
+    footerAction: MANAGE,
+  });
 
   return { subject, html, text };
 }

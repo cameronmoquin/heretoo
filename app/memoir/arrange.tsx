@@ -23,13 +23,14 @@ import {
   useEnsureMemoirProject,
   useMemoirResponses, useMemoirAssets,
   useUpdateMemoirResponse, useReorderMemoirResponses,
+  useDeleteMemoirResponse,
 } from '../../hooks/useMemoir';
 import {
   assembleBook, chapterChoices,
   type BookChapter, type BookEntry,
 } from '../../lib/memoir-book';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
-import { showAlert } from '../../lib/alert';
+import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
@@ -46,13 +47,14 @@ export default function MemoirArrangeScreen() {
   const { data: assets } = useMemoirAssets(projectId);
   const update = useUpdateMemoirResponse();
   const reorder = useReorderMemoirResponses();
+  const del = useDeleteMemoirResponse();
 
   const book = useMemo(() => assembleBook(responses, assets), [responses, assets]);
   // Only chapters that actually hold written entries are arrangeable
   // here; photo-only chapters are managed on the Photographs screen.
   const chapters = book.chapters.filter((c) => c.entries.length > 0);
 
-  const busy = update.isPending || reorder.isPending;
+  const busy = update.isPending || reorder.isPending || del.isPending;
 
   // Move an entry up/down within its chapter by renumbering the chapter.
   const move = (chapter: BookChapter, id: string, dir: 'up' | 'down') => {
@@ -76,6 +78,22 @@ export default function MemoirArrangeScreen() {
     update.mutate(
       { id, projectId, patch: { chapter_assignment: key, ordering_hint: targetCount } },
       { onError: (e: any) => showAlert('Could not move', e?.message ?? 'Try again.') },
+    );
+  };
+
+  // Remove an entry entirely, after a warning. Optimistic in the hook.
+  const removeEntry = (id: string) => {
+    if (!projectId) return;
+    showConfirm(
+      'Delete this entry?',
+      'This cannot be undone.',
+      () => {
+        del.mutate(
+          { id, projectId },
+          { onError: (e: any) => showAlert('Could not delete', e?.message ?? 'Try again.') },
+        );
+      },
+      'Delete',
     );
   };
 
@@ -113,6 +131,7 @@ export default function MemoirArrangeScreen() {
                     onUp={() => move(chapter, entry.id, 'up')}
                     onDown={() => move(chapter, entry.id, 'down')}
                     onMoveToChapter={(key) => moveToChapter(entry.id, key)}
+                    onDelete={() => removeEntry(entry.id)}
                   />
                 ))}
               </View>
@@ -128,7 +147,7 @@ export default function MemoirArrangeScreen() {
 
 function EntryRow({
   entry, isFirst, isLast, currentKey, disabled, elder,
-  onUp, onDown, onMoveToChapter,
+  onUp, onDown, onMoveToChapter, onDelete,
 }: {
   entry: BookEntry;
   isFirst: boolean;
@@ -139,6 +158,7 @@ function EntryRow({
   onUp: () => void;
   onDown: () => void;
   onMoveToChapter: (key: string) => void;
+  onDelete: () => void;
 }) {
   const s = makeStyles(elder);
   const accent = elder ? '#8A5B1A' : Colors.primary;
@@ -170,6 +190,7 @@ function EntryRow({
           onPress={onUp}
           disabled={isFirst || disabled}
           style={[s.arrowBtn, (isFirst || disabled) && s.arrowDisabled]}
+          accessibilityLabel="Move entry up"
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Ionicons name="chevron-up" size={18} color={isFirst ? muted : accent} />
@@ -178,6 +199,7 @@ function EntryRow({
           onPress={onDown}
           disabled={isLast || disabled}
           style={[s.arrowBtn, (isLast || disabled) && s.arrowDisabled]}
+          accessibilityLabel="Move entry down"
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Ionicons name="chevron-down" size={18} color={isLast ? muted : accent} />
@@ -189,9 +211,21 @@ function EntryRow({
         onPress={() => setMenuOpen((v) => !v)}
         disabled={disabled}
         style={s.moveBtn}
+        accessibilityLabel="Move entry to another chapter"
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >
         <Ionicons name="swap-horizontal" size={16} color={accent} />
+      </TouchableOpacity>
+
+      {/* Delete the entry */}
+      <TouchableOpacity
+        onPress={onDelete}
+        disabled={disabled}
+        style={s.deleteBtn}
+        accessibilityLabel="Delete this entry"
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      >
+        <Ionicons name="trash-outline" size={16} color={muted} />
       </TouchableOpacity>
 
       {menuOpen && (
@@ -300,6 +334,11 @@ function makeStyles(elder: boolean) {
     moveBtn: {
       width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
       borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
+    },
+
+    deleteBtn: {
+      width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
+      borderRadius: Radius.full, borderWidth: 1, borderColor: pageBorder,
     },
 
     menu: {

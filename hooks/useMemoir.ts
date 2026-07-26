@@ -365,15 +365,16 @@ export function useSaveMemoirResponse() {
   });
 }
 
-/** Patch a response's placement — which chapter it lives in and/or its
- *  order within that chapter. Used by the arrange screen. */
+/** Patch a response — its placement (which chapter, order within it) or
+ *  its prose (final_text). Used by the arrange screen and the Past
+ *  entries editor. */
 export function useUpdateMemoirResponse() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
       id: string;
       projectId: string;
-      patch: { chapter_assignment?: string | null; ordering_hint?: number | null };
+      patch: { chapter_assignment?: string | null; ordering_hint?: number | null; final_text?: string };
     }) => {
       const { error } = await supabase
         .from('memoir_responses')
@@ -407,6 +408,44 @@ export function useReorderMemoirResponses() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['memoir-responses', vars.projectId] });
+    },
+  });
+}
+
+/** Delete a response row. RLS (memoir_responses_via_project, FOR ALL)
+ *  scopes the delete to rows whose project belongs to the caller, so a
+ *  reader can only remove their own entries.
+ *
+ *  Optimistic, matching the journal delete: the row leaves the list
+ *  cache the instant the reader confirms, with no refetch in the
+ *  critical path to race, and is restored on error. Progress and the
+ *  next-prompt pick are server-computed, so those refresh on success. */
+export function useDeleteMemoirResponse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; projectId: string }) => {
+      const { error } = await supabase
+        .from('memoir_responses')
+        .delete()
+        .eq('id', input.id);
+      if (error) throw error;
+    },
+    onMutate: async (input) => {
+      const key = ['memoir-responses', input.projectId] as const;
+      await qc.cancelQueries({ queryKey: key });
+      const snapshot = qc.getQueryData<MemoirResponse[]>(key);
+      qc.setQueryData<MemoirResponse[]>(key, (prev) =>
+        (prev ?? []).filter((r) => r.id !== input.id));
+      return { snapshot };
+    },
+    onError: (_e, input, ctx) => {
+      if (ctx && ctx.snapshot !== undefined) {
+        qc.setQueryData(['memoir-responses', input.projectId], ctx.snapshot);
+      }
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['memoir-progress', vars.projectId] });
+      qc.invalidateQueries({ queryKey: ['memoir-next-prompt', vars.projectId] });
     },
   });
 }

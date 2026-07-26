@@ -45,8 +45,19 @@ async function authedPost(body: unknown): Promise<Response> {
 }
 
 async function createDirectUpload(): Promise<{ uploadUrl: string; uploadId: string }> {
-  const r = await authedPost({});
+  let r: Response;
+  try {
+    r = await authedPost({});
+  } catch {
+    // The function was unreachable (no network, or a relative path with
+    // no origin off-web). Fail soft.
+    throw new Error('Video is unavailable right now.');
+  }
   if (!r.ok) {
+    // 500 means the server is missing MUX_TOKEN_ID/SECRET or its Supabase
+    // config. That is an operator problem, not something the user can act
+    // on, so surface a plain message instead of the raw server detail.
+    if (r.status >= 500) throw new Error('Video is unavailable right now.');
     let detail = '';
     try { detail = (await r.json())?.error ?? ''; } catch {}
     throw new Error(`Could not start video upload: ${detail || r.status}`);

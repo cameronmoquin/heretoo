@@ -17,7 +17,10 @@
  *     given email/password, set the chosen handle on the new profile,
  *     and route directly to the feed (no separate profile-setup
  *     screen — handle is already chosen here)
- *   - Forgot password sends a recovery email via supabase.auth.resetPasswordForEmail
+ *   - Forgot password POSTs the email to /api/request-password-reset,
+ *     which generates the recovery token server-side and sends a branded
+ *     Resend email with a link straight to /reset-password. This bypasses
+ *     Supabase's Site-URL redirect entirely.
  *
  * Why this rewrite: the old multi-step (choice → signin / signup_code
  * → signup_form → profile-setup) flow added clicks for no value, and
@@ -174,17 +177,20 @@ export default function WelcomeScreen() {
       setErrorMsg('Type your email above first, then tap "Forgot password".');
       return;
     }
+    // Our own branded endpoint mints the recovery link and sends it via
+    // Resend. It always returns a generic 200, so we never learn (and
+    // never reveal) whether the address has an account.
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://heretoo.social';
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(e, {
-        redirectTo: typeof window !== 'undefined'
-          ? `${window.location.origin}/reset-password`
-          : 'https://heretoo.social/reset-password',
+      await fetch(`${base}/api/request-password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: e }),
       });
-      if (error) throw error;
-      showAlert('Check your email', `We sent a password reset link to ${e}.`);
-    } catch (err: any) {
-      setErrorMsg(err?.message ?? 'Could not send reset email. Try again.');
+    } catch {
+      // Swallow — the message below stays generic regardless.
     }
+    showAlert('Check your email', `If ${e} has an account, a reset link is on its way.`);
   };
 
   return (
