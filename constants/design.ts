@@ -28,8 +28,9 @@ export const Spacing = {
 export const Radius = {
   xs: 6,
   sm: 10,
-  md: 16,   // was 14 — slightly more generous, reads as polished SaaS
-  lg: 20,   // was 18
+  card: 12, // the canonical card corner. Screens split between 10 and 16.
+  md: 16,   // salvage-analog: worn, not glossy. Cards use Radius.card.
+  lg: 20,
   full: 999,
 } as const;
 
@@ -39,6 +40,11 @@ export const Radius = {
  * set. Line-height is paired so vertical rhythm is automatic.
  */
 export const Type = {
+  // Hero — the biggest step. Auth mastheads, the loft headline, big
+  // empty states. Screens were free-typing 36-44px because the scale
+  // stopped at 28. This is the canonical top.
+  hero:     { size: 44, lineHeight: 48, weight: '800' as const, letterSpacing: -0.8 },
+
   // Display / hero — used sparingly (auth screens, big empty states).
   // Heavy display weight + tight tracking reads as confident editorial.
   display:  { size: 28, lineHeight: 34, weight: '700' as const, letterSpacing: -0.5 },
@@ -46,6 +52,10 @@ export const Type = {
   // Section / page titles. Dropped from 700→600 + tightened tracking
   // so titles feel elegant rather than chunky-bold.
   title:    { size: 20, lineHeight: 26, weight: '600' as const, letterSpacing: -0.3 },
+
+  // Card head. The 17px step screens kept hand-rolling between title (20)
+  // and body (16). Now it has a name.
+  cardTitle: { size: 17, lineHeight: 24, weight: '700' as const, letterSpacing: -0.2 },
 
   // Card heads, post bodies, primary content. Bumped lineHeight 22→24
   // for more comfortable long-read.
@@ -74,6 +84,8 @@ export const Heights = {
   input: 44,
   bottomNav: 56,
   topHeader: 52,
+  // The minimum comfortable tap target. Interactive controls floor here.
+  touchTarget: 44,
 } as const;
 
 export const Shadow = {

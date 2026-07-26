@@ -26,6 +26,9 @@ export const dark = {
   primaryDark: '#A38336',
   primaryLight: '#DDB868',
   primaryFaint: 'rgba(201, 161, 75, 0.14)',
+  // Ink that reads on a primary-gold fill. White on #C9A14B is ~1.9:1 and
+  // fails WCAG. Dark ink clears it. Buttons and chips use this, never #FFF.
+  onPrimary: '#16161D',
 
   // Surfaces — warm dark, candlelit. The canvas is near-black with
   // a slight warmth (#0A0A0F per the codex). Cards lift onto a
@@ -82,6 +85,8 @@ export const light = {
   primaryDark: '#7C611F',
   primaryLight: '#B79447',
   primaryFaint: 'rgba(154, 122, 46, 0.10)',
+  // The light primary is a deeper brown-gold; white clears contrast on it.
+  onPrimary: '#FFFFFF',
 
   // Light surfaces — warm parchment instead of cool near-white. The
   // canvas is the brand ivory; cards sit on a slightly brighter

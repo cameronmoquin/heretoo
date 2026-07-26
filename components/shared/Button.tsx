@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle, type TextStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Weight } from '../../constants/typography';
-import { Radius } from '../../constants/design';
+import { Radius, Heights } from '../../constants/design';
 
 interface ButtonProps {
   title: string;
@@ -20,9 +20,17 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', loadi
   const { s, v, sz, tv, ts } = makeStyles();
   const off = disabled || loading;
   return (
-    <TouchableOpacity onPress={onPress} disabled={off} style={[s.base, v[variant], sz[size], off && s.off, style]} activeOpacity={0.75}>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={off}
+      style={[s.base, v[variant], sz[size], off && s.off, style]}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: off, busy: loading }}
+    >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#FFF' : Colors.primary} size="small" />
+        <ActivityIndicator color={variant === 'primary' ? Colors.onPrimary : Colors.primary} size="small" />
       ) : (
         <>{icon}<Text style={[s.text, tv[variant], ts[size], textStyle]}>{title}</Text></>
       )}
@@ -33,7 +41,9 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', loadi
 function makeStyles() {
   return {
     s: StyleSheet.create({
-      base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+      // minHeight floors every button at a 44pt touch target regardless
+      // of the size padding.
+      base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: Heights.touchTarget },
       off: { opacity: 0.4 },
       text: { fontWeight: Weight.semibold },
     }),
@@ -49,7 +59,7 @@ function makeStyles() {
       lg: { paddingHorizontal: 22, paddingVertical: 13 },
     }),
     tv: StyleSheet.create({
-      primary: { color: '#FFF' },
+      primary: { color: Colors.onPrimary },
       secondary: { color: Colors.textPrimary },
       outline: { color: Colors.textPrimary },
       ghost: { color: Colors.primary },

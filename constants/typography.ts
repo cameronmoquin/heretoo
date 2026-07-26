@@ -1,5 +1,4 @@
-import { StyleSheet, Platform } from 'react-native';
-import { Colors } from './colors';
+import { Platform } from 'react-native';
 
 /**
  * System font stack. The most invisible choice.
@@ -32,56 +31,6 @@ export const Weight = {
   bold: '700' as const,
 };
 
-/**
- * Tight, social-app-sized type scale.
- * Instagram body = 14px. Twitter = 15px. We split the difference.
- */
-export const Typography = StyleSheet.create({
-  h1: {
-    fontSize: 22,
-    fontWeight: Weight.bold,
-    color: Colors.textPrimary,
-    lineHeight: 28,
-  },
-  h2: {
-    fontSize: 18,
-    fontWeight: Weight.bold,
-    color: Colors.textPrimary,
-    lineHeight: 24,
-  },
-  h3: {
-    fontSize: 16,
-    fontWeight: Weight.semibold,
-    color: Colors.textPrimary,
-    lineHeight: 21,
-  },
-  body: {
-    fontSize: 14,
-    fontWeight: Weight.regular,
-    color: Colors.textPrimary,
-    lineHeight: 20,
-  },
-  bodySmall: {
-    fontSize: 13,
-    fontWeight: Weight.regular,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-  },
-  caption: {
-    fontSize: 12,
-    fontWeight: Weight.regular,
-    color: Colors.textMuted,
-    lineHeight: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: Weight.semibold,
-    color: Colors.textPrimary,
-    lineHeight: 18,
-  },
-  button: {
-    fontSize: 15,
-    fontWeight: Weight.semibold,
-    lineHeight: 20,
-  },
-});
+// The old `Typography` StyleSheet lived here with a second, contradicting
+// type scale (its `body` was 14 against design.ts `Type.body` 16). Nothing
+// consumed it. The canonical scale is `Type` in constants/design.ts.
