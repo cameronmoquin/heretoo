@@ -35,8 +35,10 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
-const REPLY_TO = 'cameron@billing-therapy.com';
+// Auth mail sends from noreply. notifications@ is for the digests and
+// letters a person might actually want to reply to; a reset link is not.
+const FROM_EMAIL = 'HereToo <noreply@heretoo.social>';
+const REPLY_TO = 'noreply@heretoo.social';
 
 /** One body, returned no matter what happened, so the response never
  *  distinguishes a real account from a miss. */
