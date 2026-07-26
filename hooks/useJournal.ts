@@ -326,6 +326,7 @@ export function useRetitleJournalEntry() {
 export function useDeleteJournalEntry() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
+  const key = ['journal-entries', userId] as const;
   return useMutation({
     mutationFn: async (input: { id: string }) => {
       const { error } = await supabase
@@ -334,8 +335,20 @@ export function useDeleteJournalEntry() {
         .eq('id', input.id);
       if (error) throw error;
     },
+    // Optimistic, same reasoning as the create path: the row leaves the
+    // list the instant the user confirms, no refetch in the critical
+    // path to race. Restored on error.
+    onMutate: async (input) => {
+      await qc.cancelQueries({ queryKey: key });
+      const snapshot = qc.getQueryData<JournalEntry[]>(key);
+      qc.setQueryData<JournalEntry[]>(key, (prev) =>
+        (prev ?? []).filter((e) => e.id !== input.id));
+      return { snapshot };
+    },
+    onError: (_e, _input, ctx) => {
+      if (ctx && ctx.snapshot !== undefined) qc.setQueryData(key, ctx.snapshot);
+    },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['journal-entries', userId] });
       qc.removeQueries({ queryKey: ['journal-entry', vars.id] });
     },
   });
