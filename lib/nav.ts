@@ -52,3 +52,25 @@ export function goBackToFeed() {
 export function goHome() {
   goBackToFeed();
 }
+
+/**
+ * Go back, or land on a safe fallback when the stack is empty. Bare
+ * router.back() no-ops on a deep link, a PWA cold start, or after a
+ * replace, which strands the user on a dead back button (the letters
+ * room hit this). Default fallback is the rooms hallway.
+ */
+export function goBack(fallback: string = '/rooms') {
+  try {
+    if (router.canGoBack && router.canGoBack()) {
+      router.back();
+      return;
+    }
+  } catch {}
+  try {
+    router.replace(fallback as any);
+    return;
+  } catch {}
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.location.assign(fallback);
+  }
+}

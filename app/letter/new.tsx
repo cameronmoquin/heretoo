@@ -10,20 +10,22 @@
  * the writer.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView,
   Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { goBack } from '../../lib/nav';
 import { Ionicons } from '@expo/vector-icons';
 import { useMyFamilies } from '../../hooks/useFamily';
 import { useCreateLetter } from '../../hooks/useLetters';
 import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Chip } from '../../components/shared/Chip';
 
 interface ResolvedRecipient {
   kind: 'user';
@@ -44,13 +46,13 @@ export default function NewLetterScreen() {
   const [body, setBody] = useState('');
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [draftRecipient, setDraftRecipient] = useState('');
-  const [deliverAt, setDeliverAt] = useState<string>(defaultDeliveryISO());
+  const [deliverAt, setDeliverAt] = useState<string>(presetISO('1y'));
+  const [preset, setPreset] = useState<PresetKey | 'custom'>('1y');
   const [saving, setSaving] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<{ id: string; handle: string | null; display_name: string | null }>>([]);
   const { data: families } = useMyFamilies();
   const create = useCreateLetter();
 
-  const tomorrow = useMemo(() => defaultDeliveryDate(), []);
 
   // Search profiles in the user's crew graph (3-hop) by handle/name.
   // Cheap LIKE query; results capped at 6.
@@ -144,7 +146,7 @@ export default function NewLetterScreen() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity onPress={() => goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>A letter</Text>
@@ -237,17 +239,40 @@ export default function NewLetterScreen() {
           />
         </View>
 
-        {/* DELIVERY DATE */}
+        {/* DELIVERY DELAY. Pick how far out, no keyboard, no code-shaped
+            date string. A specific day is available on web. */}
         <View style={s.field}>
-          <Text style={s.fieldLabel}>Deliver on</Text>
-          <TextInput
-            style={s.dateInput}
-            value={deliverAt.slice(0, 16)}
-            onChangeText={(v) => setDeliverAt(v)}
-            placeholder={tomorrow}
-            placeholderTextColor={Colors.textMuted}
-            accessibilityLabel="Deliver on"
-          />
+          <Text style={s.fieldLabel}>Deliver</Text>
+          <View style={s.presetRow}>
+            {DELAY_PRESETS.map((p) => (
+              <Chip
+                key={p.key}
+                label={p.label}
+                selected={preset === p.key}
+                onPress={() => { setPreset(p.key); setDeliverAt(presetISO(p.key)); }}
+              />
+            ))}
+          </View>
+          {Platform.OS === 'web' && React.createElement('input', {
+            type: 'date',
+            value: deliverAt.slice(0, 10),
+            min: presetISO('tomorrow').slice(0, 10),
+            onChange: (e: any) => {
+              const v = e?.target?.value;
+              if (!v) return;
+              setPreset('custom');
+              setDeliverAt(new Date(`${v}T09:00:00`).toISOString());
+            },
+            'aria-label': 'Pick a specific delivery date',
+            style: {
+              marginTop: 10, padding: '10px 12px', borderRadius: 10,
+              border: `1px solid ${Colors.border}`, background: Colors.surface,
+              color: Colors.textPrimary, fontSize: 14,
+            },
+          })}
+          {!!deliverAt && (
+            <Text style={s.deliverResolved}>Arrives {formatDelivery(deliverAt)}</Text>
+          )}
         </View>
 
         {/* SAVE */}
@@ -271,17 +296,32 @@ export default function NewLetterScreen() {
   );
 }
 
-function defaultDeliveryDate(): string {
-  const t = new Date();
-  t.setDate(t.getDate() + 1);
-  t.setHours(9, 0, 0, 0);
-  return t.toISOString().slice(0, 16);
+// Delay presets. A letter is a message to the future, so the natural
+// unit is "how far out", not a typed date. Each stamps 9am on the day.
+type PresetKey = 'tomorrow' | '1w' | '1m' | '6m' | '1y' | '5y' | '10y' | '18y';
+const DELAY_PRESETS: { key: PresetKey; label: string; add: (d: Date) => void }[] = [
+  { key: 'tomorrow', label: 'Tomorrow',  add: (d) => d.setDate(d.getDate() + 1) },
+  { key: '1w',       label: '1 week',    add: (d) => d.setDate(d.getDate() + 7) },
+  { key: '1m',       label: '1 month',   add: (d) => d.setMonth(d.getMonth() + 1) },
+  { key: '6m',       label: '6 months',  add: (d) => d.setMonth(d.getMonth() + 6) },
+  { key: '1y',       label: '1 year',    add: (d) => d.setFullYear(d.getFullYear() + 1) },
+  { key: '5y',       label: '5 years',   add: (d) => d.setFullYear(d.getFullYear() + 5) },
+  { key: '10y',      label: '10 years',  add: (d) => d.setFullYear(d.getFullYear() + 10) },
+  { key: '18y',      label: '18 years',  add: (d) => d.setFullYear(d.getFullYear() + 18) },
+];
+
+function presetISO(key: PresetKey): string {
+  const d = new Date();
+  d.setHours(9, 0, 0, 0);
+  const p = DELAY_PRESETS.find((x) => x.key === key);
+  if (p) p.add(d);
+  return d.toISOString();
 }
-function defaultDeliveryISO(): string {
-  const t = new Date();
-  t.setDate(t.getDate() + 1);
-  t.setHours(9, 0, 0, 0);
-  return t.toISOString();
+
+function formatDelivery(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function makeStyles() { return StyleSheet.create({
@@ -357,12 +397,9 @@ function makeStyles() { return StyleSheet.create({
       : {}),
   },
 
-  dateInput: {
-    backgroundColor: Colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    borderRadius: Radius.md,
-    paddingHorizontal: 12, paddingVertical: 10,
-    fontSize: 14, color: Colors.textPrimary,
+  presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  deliverResolved: {
+    marginTop: Spacing.sm, fontSize: Type.caption.size, color: Colors.textMuted,
   },
 
   saveBtn: {

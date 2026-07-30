@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { goBack } from '../../lib/nav';
 import { Ionicons } from '@expo/vector-icons';
 import { useReceivedLetters, useMyLetters, type LetterWithMeta } from '../../hooks/useLetters';
 import { Colors } from '../../constants/colors';
@@ -26,7 +27,7 @@ export default function LettersIndex() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity onPress={() => goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Letters</Text>

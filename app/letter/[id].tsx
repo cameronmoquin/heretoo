@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
+import { goBack } from '../../lib/nav';
 import { Ionicons } from '@expo/vector-icons';
 import { useLetter, useMarkLetterRead, useDeleteLetter } from '../../hooks/useLetters';
 import { useAuthStore } from '../../stores/authStore';
@@ -53,7 +54,7 @@ export default function LetterScreen() {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
         <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity onPress={() => goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
           </TouchableOpacity>
         </View>
@@ -93,7 +94,7 @@ export default function LetterScreen() {
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => goBack()}
           style={s.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
