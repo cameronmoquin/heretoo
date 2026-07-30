@@ -32,15 +32,16 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 export default function MemoirArrangeScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  const ic = elder
-    ? { chrome: Colors.brandIvory, accent: '#8A5B1A', onAccent: '#FBF4DE' }
-    : { chrome: Colors.textPrimary, accent: Colors.primary, onAccent: '#0A0A0F' };
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
 
   const { data: projectId } = useEnsureMemoirProject();
   const { data: responses } = useMemoirResponses(projectId);
@@ -99,26 +100,24 @@ export default function MemoirArrangeScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title="Arrange"
+        showBack
+        right={(
+          <>
+            {busy && <ActivityIndicator color={Colors.primary} size="small" />}
+            <ReadingSizeAction large={large} onToggle={reading.toggle} />
+          </>
+        )}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>Arrange</Text>
-          <View style={{ flex: 1 }} />
-          {busy && <ActivityIndicator color={ic.accent} size="small" />}
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
-        </View>
-
         <View style={s.page}>
           {chapters.length === 0 ? (
             <Text style={s.empty}>Nothing to arrange yet.</Text>
           ) : (
             chapters.map((chapter) => (
               <View key={chapter.key} style={s.chapterBlock}>
-                <Text style={s.chapterTitle}>{chapter.title}</Text>
+                <Eyebrow accentColor={Colors.primary}>{chapter.title}</Eyebrow>
                 {chapter.entries.map((entry, idx) => (
                   <EntryRow
                     key={entry.id}
@@ -127,7 +126,7 @@ export default function MemoirArrangeScreen() {
                     isLast={idx === chapter.entries.length - 1}
                     currentKey={chapter.key}
                     disabled={busy}
-                    elder={elder}
+                    scale={scale}
                     onUp={() => move(chapter, entry.id, 'up')}
                     onDown={() => move(chapter, entry.id, 'down')}
                     onMoveToChapter={(key) => moveToChapter(entry.id, key)}
@@ -146,7 +145,7 @@ export default function MemoirArrangeScreen() {
 // ── Entry row ────────────────────────────────────────────────────────
 
 function EntryRow({
-  entry, isFirst, isLast, currentKey, disabled, elder,
+  entry, isFirst, isLast, currentKey, disabled, scale,
   onUp, onDown, onMoveToChapter, onDelete,
 }: {
   entry: BookEntry;
@@ -154,15 +153,15 @@ function EntryRow({
   isLast: boolean;
   currentKey: string;
   disabled: boolean;
-  elder: boolean;
+  scale: number;
   onUp: () => void;
   onDown: () => void;
   onMoveToChapter: (key: string) => void;
   onDelete: () => void;
 }) {
-  const s = makeStyles(elder);
-  const accent = elder ? '#8A5B1A' : Colors.primary;
-  const muted = elder ? '#8C7E60' : Colors.textMuted;
+  const s = makeStyles(scale);
+  const accent = Colors.primary;
+  const muted = Colors.textMuted;
   const [menuOpen, setMenuOpen] = useState(false);
 
   // A short, readable label for the entry: its question if it has one,
@@ -250,114 +249,73 @@ function EntryRow({
 
 // ── Styles ───────────────────────────────────────────────────────────
 
-function makeStyles(elder: boolean) {
-  const chromeSecondary = Colors.textSecondary;
-  const chromeBorder = Colors.border;
-
-  const pageCardBg = elder ? '#F2E8CC' : 'transparent';
-  const pageInk = elder ? '#2A1F18' : Colors.textPrimary;
-  const pageInkSecondary = elder ? '#5A4A38' : Colors.textSecondary;
-  const pageInkMuted = elder ? '#8C7E60' : Colors.textMuted;
-  const pageAccent = elder ? '#8A5B1A' : Colors.primary;
-  const pageBorder = elder ? '#CFC0A0' : Colors.border;
-  const pageSurface = elder ? '#FBF4DE' : Colors.surface;
-
-  const serif = Platform.OS === 'web'
-    ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any)
-    : {};
-  const display = Platform.OS === 'web'
-    ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any)
-    : {};
-
-  const pageCardWeb = (elder && Platform.OS === 'web') ? ({
-    backgroundImage:
-      'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(95,70,40,0.07) 31px, rgba(95,70,40,0.07) 32px)',
-    boxShadow:
-      '0 24px 50px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(95,70,40,0.08)',
-  } as any) : {};
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 120, gap: Spacing.lg },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 120, paddingTop: Spacing.sm, gap: Spacing.lg },
 
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2,
-      textTransform: 'uppercase', ...display,
-    },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: chromeBorder,
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: chromeSecondary, letterSpacing: 0.4 },
-
-    page: elder ? {
-      marginTop: 24, padding: 32, borderRadius: 14,
-      backgroundColor: pageCardBg, borderWidth: 1, borderColor: pageBorder,
-      gap: Spacing.lg, ...pageCardWeb,
-    } : { gap: Spacing.lg, marginTop: 8 },
+    page: { gap: Spacing.lg, marginTop: Spacing.xs },
 
     empty: {
-      fontSize: 16, color: pageInkSecondary, fontStyle: 'italic',
-      textAlign: 'center', marginTop: 16, ...serif,
+      fontSize: fs(Type.body.size), color: Colors.textSecondary, fontStyle: 'italic',
+      textAlign: 'center', marginTop: 16, ...bodyFont,
     },
 
-    chapterBlock: { gap: 8 },
-    chapterTitle: {
-      fontSize: 12, fontWeight: '700', color: pageAccent,
-      letterSpacing: 1.8, textTransform: 'uppercase', marginTop: 8, ...display,
-    },
+    chapterBlock: { gap: Spacing.xs },
 
     entryRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
       padding: Spacing.md,
-      borderRadius: Radius.lg,
-      backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Radius.card,
+      backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
       // The chapter menu is positioned relative to this row.
       position: 'relative',
     },
     entryMain: { flex: 1, gap: 2 },
-    entrySnippet: { fontSize: 15, lineHeight: 21, color: pageInk, ...serif },
+    entrySnippet: { fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 2), color: Colors.textPrimary, ...bodyFont },
     entryMeta: {
-      fontSize: 11, color: pageInkMuted, letterSpacing: 0.6,
+      fontSize: Type.eyebrow.size, color: Colors.textMuted, letterSpacing: 0.6,
       textTransform: 'uppercase',
     },
 
     arrows: { flexDirection: 'column', gap: 2 },
     arrowBtn: {
       width: 30, height: 24, alignItems: 'center', justifyContent: 'center',
-      borderRadius: 6, borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Radius.xs, borderWidth: 1, borderColor: Colors.border,
     },
     arrowDisabled: { opacity: 0.4 },
 
     moveBtn: {
       width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
     },
 
     deleteBtn: {
       width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.border,
     },
 
     menu: {
       position: 'absolute', right: Spacing.md, top: '100%', zIndex: 20,
       marginTop: 4, width: 240,
-      padding: 6, borderRadius: 10,
-      backgroundColor: elder ? '#FFFCF1' : Colors.surfaceLight,
-      borderWidth: 1, borderColor: pageBorder,
+      padding: 6, borderRadius: Radius.sm,
+      backgroundColor: Colors.surfaceLight,
+      borderWidth: 1, borderColor: Colors.border,
       ...(Platform.OS === 'web'
         ? ({ boxShadow: '0 12px 28px rgba(0,0,0,0.35)' } as any)
         : { elevation: 8 }),
     },
     menuHeading: {
-      fontSize: 11, fontWeight: '700', color: pageInkMuted,
+      fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.textMuted,
       letterSpacing: 1.2, textTransform: 'uppercase',
       paddingHorizontal: 8, paddingVertical: 6,
     },
     menuScroll: { maxHeight: 280 },
-    menuItem: { paddingVertical: 9, paddingHorizontal: 8, borderRadius: 6 },
-    menuItemText: { fontSize: 14, color: pageInk, ...serif },
+    menuItem: { paddingVertical: 9, paddingHorizontal: 8, borderRadius: Radius.xs },
+    menuItemText: { fontSize: fs(Type.ui.size), color: Colors.textPrimary, ...bodyFont },
   });
 }

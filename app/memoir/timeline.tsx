@@ -63,7 +63,12 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 // ── Vocabulary of the spine ─────────────────────────────────────────
 
@@ -124,23 +129,14 @@ function partsOf(dateStr: string | null, precision: Precision | null): DateParts
   return { y: y ?? '', m: m ?? '', d: d ?? '', precision: precision ?? 'year' };
 }
 
-// ── Icon ink per reading mode ───────────────────────────────────────
-
-function icFor(elder: boolean) {
-  return elder
-    ? { chrome: Colors.brandIvory, page: '#2A1F18', accent: '#8A5B1A', muted: '#8C7E60', onAccent: '#FBF4DE', danger: '#9C3D2C' }
-    : { chrome: Colors.textPrimary, page: Colors.textPrimary, accent: Colors.primary, muted: Colors.textMuted, onAccent: '#0A0A0F', danger: '#C2604F' };
-}
-
 // ════════════════════════════════════════════════════════════════════
 // Screen
 // ════════════════════════════════════════════════════════════════════
 
 export default function MemoirTimelineScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  const ic = icFor(elder);
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
 
   const { data: projectId } = useEnsureMemoirProject();
   const eventsQ = useTimelineEvents(projectId);
@@ -327,33 +323,37 @@ export default function MemoirTimelineScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title="Timeline"
+        showBack
+        onBack={onBack}
+        backLabel="Back"
+        right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {/* Chrome */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={onBack} accessibilityLabel="Back" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>Timeline</Text>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} accessibilityLabel="Text size" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Add affordances */}
         <View style={s.addRow}>
-          <TouchableOpacity style={s.chromeBtn} onPress={() => openAdd()} accessibilityLabel="Add event" activeOpacity={0.85}>
-            <Ionicons name="add" size={16} color={ic.accent} />
-            <Text style={s.chromeBtnText}>Add event</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.chromeBtn} onPress={() => setSeedOpen(true)} accessibilityLabel="Seed school years" activeOpacity={0.85}>
-            <Ionicons name="school-outline" size={14} color={ic.accent} />
-            <Text style={s.chromeBtnText}>Seed school years</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.chromeBtn} onPress={() => openAdd('baby')} accessibilityLabel="Add baby milestone" activeOpacity={0.85}>
-            <Ionicons name="happy-outline" size={14} color={ic.accent} />
-            <Text style={s.chromeBtnText}>Baby book</Text>
-          </TouchableOpacity>
+          <Button
+            title="Add event"
+            variant="outline"
+            size="sm"
+            onPress={() => openAdd()}
+            icon={<Ionicons name="add" size={16} color={Colors.primary} />}
+          />
+          <Button
+            title="Seed school years"
+            variant="outline"
+            size="sm"
+            onPress={() => setSeedOpen(true)}
+            icon={<Ionicons name="school-outline" size={14} color={Colors.primary} />}
+          />
+          <Button
+            title="Baby book"
+            variant="outline"
+            size="sm"
+            onPress={() => openAdd('baby')}
+            icon={<Ionicons name="happy-outline" size={14} color={Colors.primary} />}
+          />
         </View>
 
         {/* Spine */}
@@ -364,7 +364,7 @@ export default function MemoirTimelineScreen() {
                 key={e.id}
                 event={e}
                 projectId={projectId ?? null}
-                elder={elder}
+                scale={scale}
                 first={i === 0}
                 last={i === dated.length - 1 && undated.length === 0}
                 ensureSession={ensureSession}
@@ -375,7 +375,7 @@ export default function MemoirTimelineScreen() {
 
             {undated.length > 0 && (
               <View style={s.undatedDivider}>
-                <Text style={s.undatedLabel}>Undated</Text>
+                <Eyebrow>Undated</Eyebrow>
               </View>
             )}
             {undated.map((e, i) => (
@@ -383,7 +383,7 @@ export default function MemoirTimelineScreen() {
                 key={e.id}
                 event={e}
                 projectId={projectId ?? null}
-                elder={elder}
+                scale={scale}
                 first={dated.length === 0 && i === 0}
                 last={i === undated.length - 1}
                 ensureSession={ensureSession}
@@ -403,7 +403,7 @@ export default function MemoirTimelineScreen() {
               <View style={s.modalHead}>
                 <Text style={s.modalTitle}>{editing ? 'Edit event' : 'New event'}</Text>
                 <TouchableOpacity onPress={() => setFormOpen(false)} accessibilityLabel="Close" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Ionicons name="close" size={20} color={ic.muted} />
+                  <Ionicons name="close" size={20} color={Colors.textMuted} />
                 </TouchableOpacity>
               </View>
 
@@ -419,7 +419,7 @@ export default function MemoirTimelineScreen() {
                       accessibilityLabel={KIND_META[k].label}
                       activeOpacity={0.85}
                     >
-                      <Ionicons name={KIND_META[k].icon} size={13} color={on ? ic.onAccent : ic.accent} />
+                      <Ionicons name={KIND_META[k].icon} size={13} color={on ? Colors.onPrimary : Colors.primary} />
                       <Text style={[s.kindChipText, on && s.kindChipTextActive]}>{KIND_META[k].label}</Text>
                     </TouchableOpacity>
                   );
@@ -443,20 +443,20 @@ export default function MemoirTimelineScreen() {
                 </View>
               )}
 
-              <Field label="Title">
-                <TextInput style={s.input} value={title} onChangeText={setTitle} accessibilityLabel="Title" placeholder="Title" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} />
+              <Field label="Title" scale={scale}>
+                <TextInput style={s.input} value={title} onChangeText={setTitle} accessibilityLabel="Title" placeholder="Title" placeholderTextColor={Colors.textMuted} />
               </Field>
-              <Field label="Organization">
-                <TextInput style={s.input} value={organization} onChangeText={setOrganization} accessibilityLabel="Organization" placeholder="Organization" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} />
+              <Field label="Organization" scale={scale}>
+                <TextInput style={s.input} value={organization} onChangeText={setOrganization} accessibilityLabel="Organization" placeholder="Organization" placeholderTextColor={Colors.textMuted} />
               </Field>
-              <Field label="Role or grade">
-                <TextInput style={s.input} value={role} onChangeText={setRole} accessibilityLabel="Role or grade" placeholder="Role or grade" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} />
+              <Field label="Role or grade" scale={scale}>
+                <TextInput style={s.input} value={role} onChangeText={setRole} accessibilityLabel="Role or grade" placeholder="Role or grade" placeholderTextColor={Colors.textMuted} />
               </Field>
-              <Field label="Location">
-                <TextInput style={s.input} value={location} onChangeText={setLocation} accessibilityLabel="Location" placeholder="Location" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} />
+              <Field label="Location" scale={scale}>
+                <TextInput style={s.input} value={location} onChangeText={setLocation} accessibilityLabel="Location" placeholder="Location" placeholderTextColor={Colors.textMuted} />
               </Field>
 
-              <DateBlock label="Start" value={start} onChange={setStart} elder={elder} s={s} ic={ic} />
+              <DateBlock label="Start" value={start} onChange={setStart} s={s} />
 
               <View style={s.switchRow}>
                 <Text style={s.formLabel}>Ongoing</Text>
@@ -464,40 +464,35 @@ export default function MemoirTimelineScreen() {
                   value={ongoing}
                   onValueChange={setOngoing}
                   accessibilityLabel="Ongoing"
-                  trackColor={{ true: ic.accent, false: elder ? '#CFC0A0' : Colors.border }}
-                  thumbColor={Platform.OS === 'android' ? (ongoing ? ic.onAccent : '#f4f3f4') : undefined}
+                  trackColor={{ true: Colors.primary, false: Colors.border }}
+                  thumbColor={Platform.OS === 'android' ? (ongoing ? Colors.onPrimary : '#f4f3f4') : undefined}
                 />
               </View>
 
               {!ongoing && (
-                <DateBlock label="End" value={end} onChange={setEnd} elder={elder} s={s} ic={ic} />
+                <DateBlock label="End" value={end} onChange={setEnd} s={s} />
               )}
 
-              <Field label="Notes">
-                <TextInput style={[s.input, s.inputMultiline]} value={notes} onChangeText={setNotes} accessibilityLabel="Notes" placeholder="Notes" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} multiline textAlignVertical="top" maxLength={4000} />
+              <Field label="Notes" scale={scale}>
+                <TextInput style={[s.input, s.inputMultiline]} value={notes} onChangeText={setNotes} accessibilityLabel="Notes" placeholder="Notes" placeholderTextColor={Colors.textMuted} multiline textAlignVertical="top" maxLength={4000} />
               </Field>
 
               <View style={s.modalActions}>
-                <TouchableOpacity
-                  style={s.primaryBtn}
+                <Button
+                  title="Save"
                   onPress={onSaveEvent}
-                  disabled={createEvent.isPending || updateEvent.isPending}
-                  accessibilityLabel="Save event"
-                  activeOpacity={0.85}
-                >
-                  {(createEvent.isPending || updateEvent.isPending)
-                    ? <ActivityIndicator color={ic.onAccent} />
-                    : <Text style={s.primaryBtnText}>Save</Text>}
-                </TouchableOpacity>
+                  loading={createEvent.isPending || updateEvent.isPending}
+                />
                 {editing && (
-                  <TouchableOpacity style={s.dangerBtn} onPress={() => onDeleteEvent(editing)} accessibilityLabel="Delete event" activeOpacity={0.85}>
-                    <Ionicons name="trash-outline" size={15} color={ic.danger} />
-                    <Text style={[s.ghostBtnText, { color: ic.danger }]}>Delete</Text>
-                  </TouchableOpacity>
+                  <Button
+                    title="Delete"
+                    variant="outline"
+                    onPress={() => onDeleteEvent(editing)}
+                    textStyle={{ color: Colors.error }}
+                    icon={<Ionicons name="trash-outline" size={15} color={Colors.error} />}
+                  />
                 )}
-                <TouchableOpacity style={s.ghostBtn} onPress={() => setFormOpen(false)} accessibilityLabel="Cancel" activeOpacity={0.85}>
-                  <Text style={s.ghostBtnText}>Cancel</Text>
-                </TouchableOpacity>
+                <Button title="Cancel" variant="ghost" onPress={() => setFormOpen(false)} />
               </View>
             </ScrollView>
           </View>
@@ -512,17 +507,17 @@ export default function MemoirTimelineScreen() {
               <View style={s.modalHead}>
                 <Text style={s.modalTitle}>Seed school years</Text>
                 <TouchableOpacity onPress={() => setSeedOpen(false)} accessibilityLabel="Close" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Ionicons name="close" size={20} color={ic.muted} />
+                  <Ionicons name="close" size={20} color={Colors.textMuted} />
                 </TouchableOpacity>
               </View>
 
-              <Field label="School">
-                <TextInput style={s.input} value={seedSchool} onChangeText={setSeedSchool} accessibilityLabel="School name" placeholder="School" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} />
+              <Field label="School" scale={scale}>
+                <TextInput style={s.input} value={seedSchool} onChangeText={setSeedSchool} accessibilityLabel="School name" placeholder="School" placeholderTextColor={Colors.textMuted} />
               </Field>
-              <Field label="Start year">
-                <TextInput style={s.input} value={seedYear} onChangeText={setSeedYear} accessibilityLabel="Start year" placeholder="Year" placeholderTextColor={elder ? '#9A9684' : Colors.textMuted} keyboardType="number-pad" maxLength={4} />
+              <Field label="Start year" scale={scale}>
+                <TextInput style={s.input} value={seedYear} onChangeText={setSeedYear} accessibilityLabel="Start year" placeholder="Year" placeholderTextColor={Colors.textMuted} keyboardType="number-pad" maxLength={4} />
               </Field>
-              <Field label="Grades">
+              <Field label="Grades" scale={scale}>
                 <View style={s.kindWrap}>
                   {(Object.keys(SEED_RANGES) as Array<keyof typeof SEED_RANGES>).map((r) => {
                     const on = seedRange === r;
@@ -542,12 +537,8 @@ export default function MemoirTimelineScreen() {
               </Field>
 
               <View style={s.modalActions}>
-                <TouchableOpacity style={s.primaryBtn} onPress={onSeedGrades} disabled={seeding} accessibilityLabel="Seed grades" activeOpacity={0.85}>
-                  {seeding ? <ActivityIndicator color={ic.onAccent} /> : <Text style={s.primaryBtnText}>Seed</Text>}
-                </TouchableOpacity>
-                <TouchableOpacity style={s.ghostBtn} onPress={() => setSeedOpen(false)} accessibilityLabel="Cancel" activeOpacity={0.85}>
-                  <Text style={s.ghostBtnText}>Cancel</Text>
-                </TouchableOpacity>
+                <Button title="Seed" onPress={onSeedGrades} loading={seeding} />
+                <Button title="Cancel" variant="ghost" onPress={() => setSeedOpen(false)} />
               </View>
             </ScrollView>
           </View>
@@ -562,19 +553,18 @@ export default function MemoirTimelineScreen() {
 // ════════════════════════════════════════════════════════════════════
 
 function EventCard({
-  event, projectId, elder, first, last, ensureSession, onEdit, onDelete,
+  event, projectId, scale, first, last, ensureSession, onEdit, onDelete,
 }: {
   event: TimelineEvent;
   projectId: string | null;
-  elder: boolean;
+  scale: number;
   first: boolean;
   last: boolean;
   ensureSession: () => Promise<string | null>;
   onEdit: (e: TimelineEvent) => void;
   onDelete: (e: TimelineEvent) => void;
 }) {
-  const s = makeStyles(elder);
-  const ic = icFor(elder);
+  const s = makeStyles(scale);
   const [expanded, setExpanded] = useState(false);
   const [answerOpen, setAnswerOpen] = useState(false);
   const [answer, setAnswer] = useState('');
@@ -686,7 +676,7 @@ function EventCard({
       <View style={s.gutter}>
         <View style={[s.line, first && s.lineFirst, last && s.lineLast]} />
         <View style={s.node}>
-          <Ionicons name={KIND_META[event.kind].icon} size={15} color={ic.onAccent} />
+          <Ionicons name={KIND_META[event.kind].icon} size={15} color={Colors.onPrimary} />
         </View>
       </View>
 
@@ -705,7 +695,7 @@ function EventCard({
               <Text style={s.eventSub}>{subParts.join('   ·   ')}</Text>
             )}
           </View>
-          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={ic.muted} />
+          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
         </TouchableOpacity>
 
         {expanded && (
@@ -715,18 +705,18 @@ function EventCard({
             {/* Answered prompts */}
             {responses.length > 0 && (
               <View style={s.section}>
-                <Text style={s.sectionLabel}>Answers</Text>
-                {responses.map((r) => <ResponseRow key={r.id} response={r} elder={elder} />)}
+                <Eyebrow accentColor={Colors.primary}>Answers</Eyebrow>
+                {responses.map((r) => <ResponseRow key={r.id} response={r} scale={scale} />)}
               </View>
             )}
 
             {/* Photos */}
             {photos.length > 0 && (
               <View style={s.section}>
-                <Text style={s.sectionLabel}>Photos</Text>
+                <Eyebrow accentColor={Colors.primary}>Photos</Eyebrow>
                 <View style={s.photoStrip}>
                   {photos.map((a) => (
-                    <PhotoTile key={a.id} asset={a} projectId={projectId!} eventId={event.id} elder={elder} />
+                    <PhotoTile key={a.id} asset={a} projectId={projectId!} eventId={event.id} scale={scale} />
                   ))}
                 </View>
               </View>
@@ -746,25 +736,17 @@ function EventCard({
                   maxLength={8000}
                 />
                 <View style={s.answerActions}>
-                  <TouchableOpacity
-                    style={s.primaryBtn}
+                  <Button
+                    title="Save answer"
                     onPress={onSaveAnswer}
-                    disabled={save.isPending || linkResponse.isPending}
-                    accessibilityLabel="Save answer"
-                    activeOpacity={0.85}
-                  >
-                    {(save.isPending || linkResponse.isPending)
-                      ? <ActivityIndicator color={ic.onAccent} />
-                      : <Text style={s.primaryBtnText}>Save answer</Text>}
-                  </TouchableOpacity>
+                    loading={save.isPending || linkResponse.isPending}
+                  />
                   {openPrompts.length > 1 && (
                     <TouchableOpacity style={s.linkBtn} onPress={() => setPromptIdx((i) => i + 1)} accessibilityLabel="Different question" activeOpacity={0.85}>
                       <Text style={s.linkText}>Different question</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity style={s.ghostBtn} onPress={() => { setAnswerOpen(false); setAnswer(''); }} accessibilityLabel="Close answer" activeOpacity={0.85}>
-                    <Text style={s.ghostBtnText}>Close</Text>
-                  </TouchableOpacity>
+                  <Button title="Close" variant="ghost" onPress={() => { setAnswerOpen(false); setAnswer(''); }} />
                 </View>
               </View>
             )}
@@ -773,7 +755,7 @@ function EventCard({
             <View style={s.actionRow}>
               {!answerOpen && (
                 <TouchableOpacity style={s.actionBtn} onPress={() => setAnswerOpen(true)} accessibilityLabel="Answer a prompt" activeOpacity={0.85}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={14} color={ic.accent} />
+                  <Ionicons name="chatbubble-ellipses-outline" size={14} color={Colors.primary} />
                   <Text style={s.actionBtnText}>Answer a prompt</Text>
                 </TouchableOpacity>
               )}
@@ -781,9 +763,9 @@ function EventCard({
               {Platform.OS === 'web' ? (
                 <label style={({
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  padding: '7px 12px', borderRadius: 999, cursor: 'pointer',
-                  border: `1px solid ${ic.accent}`,
-                  color: ic.accent, fontWeight: 700, fontSize: 12,
+                  padding: '7px 12px', borderRadius: Gen.radius, cursor: 'pointer',
+                  border: `1px solid ${Colors.primary}`,
+                  color: Colors.primary, fontWeight: 700, fontSize: 12,
                 } as any)} aria-label="Add a photo">
                   {upload.isPending || setAssetTimeline.isPending ? 'Adding…' : 'Add a photo'}
                   <input type="file" accept="image/*" multiple onChange={onPickPhoto} style={({ display: 'none' } as any)} />
@@ -791,13 +773,13 @@ function EventCard({
               ) : null}
 
               <TouchableOpacity style={s.actionBtn} onPress={() => onEdit(event)} accessibilityLabel="Edit event" activeOpacity={0.85}>
-                <Ionicons name="create-outline" size={14} color={ic.accent} />
+                <Ionicons name="create-outline" size={14} color={Colors.primary} />
                 <Text style={s.actionBtnText}>Edit</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={s.actionBtn} onPress={() => onDelete(event)} accessibilityLabel="Delete event" activeOpacity={0.85}>
-                <Ionicons name="trash-outline" size={14} color={ic.danger} />
-                <Text style={[s.actionBtnText, { color: ic.danger }]}>Delete</Text>
+                <Ionicons name="trash-outline" size={14} color={Colors.error} />
+                <Text style={[s.actionBtnText, { color: Colors.error }]}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -809,8 +791,8 @@ function EventCard({
 
 // ── An answered prompt inside an event ──────────────────────────────
 
-function ResponseRow({ response, elder }: { response: MemoirResponse; elder: boolean }) {
-  const s = makeStyles(elder);
+function ResponseRow({ response, scale }: { response: MemoirResponse; scale: number }) {
+  const s = makeStyles(scale);
   const q = response.prompt?.primary_question ?? response.custom_prompt_text ?? '';
   return (
     <View style={s.respRow}>
@@ -823,12 +805,11 @@ function ResponseRow({ response, elder }: { response: MemoirResponse; elder: boo
 // ── A dated photo tile with an inline re-date editor ────────────────
 
 function PhotoTile({
-  asset, projectId, eventId, elder,
+  asset, projectId, eventId, scale,
 }: {
-  asset: MemoirAsset; projectId: string; eventId: string; elder: boolean;
+  asset: MemoirAsset; projectId: string; eventId: string; scale: number;
 }) {
-  const s = makeStyles(elder);
-  const ic = icFor(elder);
+  const s = makeStyles(scale);
   const setAssetTimeline = useSetAssetTimeline();
   const [url, setUrl] = useState<string | null>(null);
   const [dateOpen, setDateOpen] = useState(false);
@@ -871,18 +852,16 @@ function PhotoTile({
   return (
     <View style={s.photoTile}>
       <View style={s.photoFrame}>
-        {url ? <RNImage source={{ uri: url }} style={s.photoImg} resizeMode="cover" /> : <ActivityIndicator color={ic.accent} />}
+        {url ? <RNImage source={{ uri: url }} style={s.photoImg} resizeMode="cover" /> : <ActivityIndicator color={Colors.primary} />}
       </View>
       <TouchableOpacity style={s.photoDateBtn} onPress={() => setDateOpen((v) => !v)} accessibilityLabel={`Date: ${label}`} activeOpacity={0.85}>
-        <Ionicons name="calendar-outline" size={11} color={ic.accent} />
+        <Ionicons name="calendar-outline" size={11} color={Colors.primary} />
         <Text style={s.photoDate}>{label}</Text>
       </TouchableOpacity>
       {dateOpen && (
         <View style={s.photoDateEditor}>
-          <DateBlock label="Taken" value={parts} onChange={setParts} elder={elder} s={s} ic={ic} compact />
-          <TouchableOpacity style={s.primaryBtn} onPress={onSaveDate} disabled={setAssetTimeline.isPending} accessibilityLabel="Save date" activeOpacity={0.85}>
-            {setAssetTimeline.isPending ? <ActivityIndicator color={ic.onAccent} /> : <Text style={s.primaryBtnText}>Save</Text>}
-          </TouchableOpacity>
+          <DateBlock label="Taken" value={parts} onChange={setParts} s={s} compact />
+          <Button title="Save" size="sm" onPress={onSaveDate} loading={setAssetTimeline.isPending} />
         </View>
       )}
     </View>
@@ -891,9 +870,8 @@ function PhotoTile({
 
 // ── Small form building blocks ──────────────────────────────────────
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  const { elder } = useMemoirReadingMode();
-  const s = makeStyles(elder);
+function Field({ label, scale, children }: { label: string; scale: number; children: React.ReactNode }) {
+  const s = makeStyles(scale);
   return (
     <View style={s.field}>
       <Text style={s.formLabel}>{label}</Text>
@@ -904,14 +882,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 /** Precision toggle plus the year/month/day inputs the precision reveals. */
 function DateBlock({
-  label, value, onChange, elder, s, ic, compact,
+  label, value, onChange, s, compact,
 }: {
   label: string;
   value: DateParts;
   onChange: (dp: DateParts) => void;
-  elder: boolean;
   s: ReturnType<typeof makeStyles>;
-  ic: ReturnType<typeof icFor>;
   compact?: boolean;
 }) {
   const set = (patch: Partial<DateParts>) => onChange({ ...value, ...patch });
@@ -944,7 +920,7 @@ function DateBlock({
           onChangeText={(t) => set({ y: t.replace(/[^0-9]/g, '') })}
           accessibilityLabel={`${label} year`}
           placeholder="Year"
-          placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
+          placeholderTextColor={Colors.textMuted}
           keyboardType="number-pad"
           maxLength={4}
         />
@@ -955,7 +931,7 @@ function DateBlock({
             onChangeText={(t) => set({ m: t.replace(/[^0-9]/g, '') })}
             accessibilityLabel={`${label} month`}
             placeholder="Mo"
-            placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
+            placeholderTextColor={Colors.textMuted}
             keyboardType="number-pad"
             maxLength={2}
           />
@@ -967,7 +943,7 @@ function DateBlock({
             onChangeText={(t) => set({ d: t.replace(/[^0-9]/g, '') })}
             accessibilityLabel={`${label} day`}
             placeholder="Day"
-            placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
+            placeholderTextColor={Colors.textMuted}
             keyboardType="number-pad"
             maxLength={2}
           />
@@ -978,47 +954,20 @@ function DateBlock({
 }
 
 // ════════════════════════════════════════════════════════════════════
-// Styles. The two reading modes share one architecture (see photos.tsx).
+// Styles. One palette, driven by the skin engine; `scale` multiplies
+// the Type.* reading sizes.
 // ════════════════════════════════════════════════════════════════════
 
-function makeStyles(elder: boolean) {
-  const chromeBorder = Colors.border;
-  const chromeSecondary = Colors.textSecondary;
-
-  const pageInk = elder ? '#2A1F18' : Colors.textPrimary;
-  const pageInkSecondary = elder ? '#5A4A38' : Colors.textSecondary;
-  const pageInkMuted = elder ? '#8C7E60' : Colors.textMuted;
-  const pageAccent = elder ? '#8A5B1A' : Colors.primary;
-  const pageBorder = elder ? '#CFC0A0' : Colors.border;
-  const pageSurface = elder ? '#FBF4DE' : Colors.surface;
-  const cardBg = elder ? '#F2E8CC' : Colors.surface;
-  const onAccent = elder ? '#FBF4DE' : '#0A0A0F';
-  const serif = Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {};
-  const display = Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {};
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 120, gap: Spacing.md },
-
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: pageAccent, letterSpacing: 2,
-      textTransform: 'uppercase', ...display,
-    },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: chromeBorder,
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: chromeSecondary },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 120, paddingTop: Spacing.sm, gap: Spacing.md },
 
     addRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-    chromeBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      paddingHorizontal: 12, paddingVertical: 8,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
-      backgroundColor: elder ? pageSurface : 'transparent',
-    },
-    chromeBtnText: { fontSize: 12, fontWeight: '700', color: pageAccent, letterSpacing: 0.4 },
 
     // Spine
     spine: { marginTop: Spacing.sm },
@@ -1027,73 +976,69 @@ function makeStyles(elder: boolean) {
     gutter: { width: 40, alignItems: 'center', position: 'relative' },
     line: {
       position: 'absolute', top: 0, bottom: 0, width: 2,
-      backgroundColor: pageBorder, left: 19,
+      backgroundColor: Colors.border, left: 19,
     },
     lineFirst: { top: 18 },
     lineLast: { bottom: undefined, height: 18 },
     node: {
       marginTop: 4, width: 30, height: 30, borderRadius: 15,
-      backgroundColor: pageAccent, alignItems: 'center', justifyContent: 'center',
-      borderWidth: 2, borderColor: elder ? '#F2E8CC' : Colors.background,
+      backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2, borderColor: Colors.background,
     },
 
     body: {
       flex: 1, marginLeft: 8, marginBottom: 14,
-      backgroundColor: cardBg, borderRadius: Radius.md,
-      borderWidth: 1, borderColor: pageBorder,
+      backgroundColor: Colors.surface, borderRadius: Radius.card,
+      borderWidth: 1, borderColor: Colors.border,
     },
     bodyHead: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 14 },
     eventDate: {
-      fontSize: 11, fontWeight: '700', color: pageInkMuted,
-      letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2, ...display,
+      fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.textMuted,
+      letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2, ...displayFont,
     },
-    eventTitle: { fontSize: 17, fontWeight: '600', color: pageInk, ...serif },
-    eventSub: { fontSize: 13, color: pageInkSecondary, marginTop: 2, ...serif },
+    eventTitle: { fontSize: fs(Type.cardTitle.size), fontWeight: '600', color: Colors.textPrimary, ...bodyFont },
+    eventSub: { fontSize: fs(Type.caption.size), color: Colors.textSecondary, marginTop: 2, ...bodyFont },
 
     expand: {
       paddingHorizontal: 14, paddingBottom: 14, gap: Spacing.sm,
-      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: pageBorder,
+      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
       paddingTop: Spacing.sm,
     },
-    notesText: { fontSize: 15, lineHeight: 24, color: pageInk, ...serif },
+    notesText: { fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 5), color: Colors.textPrimary, ...bodyFont },
 
     section: { gap: 8, marginTop: 4 },
-    sectionLabel: {
-      fontSize: 11, fontWeight: '700', color: pageAccent,
-      letterSpacing: 1.6, textTransform: 'uppercase', ...display,
-    },
 
     respRow: {
       gap: 3, paddingVertical: 8,
-      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: pageBorder,
+      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
     },
-    respQ: { fontSize: 13, color: pageAccent, fontStyle: 'italic', fontWeight: '600', ...serif },
-    respBody: { fontSize: 15, lineHeight: 24, color: pageInk, ...serif },
+    respQ: { fontSize: fs(Type.caption.size), color: Colors.primary, fontStyle: 'italic', fontWeight: '600', ...bodyFont },
+    respBody: { fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 5), color: Colors.textPrimary, ...bodyFont },
 
     photoStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     photoTile: {
       width: 150, gap: 6, padding: 8,
-      borderRadius: 10, backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Radius.sm, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
     },
     photoFrame: {
-      width: '100%', aspectRatio: 1.2, borderRadius: 6, overflow: 'hidden',
-      backgroundColor: elder ? '#EAE0C6' : Colors.surfaceLight,
+      width: '100%', aspectRatio: 1.2, borderRadius: Radius.xs, overflow: 'hidden',
+      backgroundColor: Colors.surfaceLight,
       alignItems: 'center', justifyContent: 'center',
     },
     photoImg: { width: '100%', height: '100%' },
     photoDateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    photoDate: { fontSize: 11, fontWeight: '700', color: pageAccent, letterSpacing: 0.4 },
+    photoDate: { fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.primary, letterSpacing: 0.4 },
     photoDateEditor: { gap: 8, marginTop: 4 },
 
     // Answer composer
     answerPanel: {
       gap: Spacing.sm, marginTop: 4, padding: 12,
-      borderRadius: Radius.md, backgroundColor: pageSurface,
-      borderLeftWidth: 3, borderLeftColor: pageAccent,
-      borderWidth: StyleSheet.hairlineWidth, borderColor: pageBorder,
+      borderRadius: Radius.card, backgroundColor: Colors.surface,
+      borderLeftWidth: 3, borderLeftColor: Colors.primary,
+      borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
     },
-    answerQuestion: { fontSize: 17, lineHeight: 26, color: pageInk, fontStyle: 'italic', ...serif },
+    answerQuestion: { fontSize: fs(Type.cardTitle.size), lineHeight: fs(Type.cardTitle.lineHeight + 2), color: Colors.textPrimary, fontStyle: 'italic', ...bodyFont },
     answerInput: { minHeight: 120 },
     answerActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
 
@@ -1102,17 +1047,13 @@ function makeStyles(elder: boolean) {
     actionBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 12, paddingVertical: 7,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
     },
-    actionBtnText: { fontSize: 12, fontWeight: '700', color: pageAccent },
+    actionBtnText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
 
     undatedDivider: {
       flexDirection: 'row', alignItems: 'center', marginLeft: 48,
       marginTop: 8, marginBottom: 8,
-    },
-    undatedLabel: {
-      fontSize: 11, fontWeight: '700', color: pageInkMuted,
-      letterSpacing: 1.6, textTransform: 'uppercase', ...display,
     },
 
     // Modal
@@ -1122,24 +1063,24 @@ function makeStyles(elder: boolean) {
     },
     modalCard: {
       width: '100%', maxWidth: 460, maxHeight: '92%',
-      backgroundColor: cardBg,
+      backgroundColor: Colors.surface,
       borderTopLeftRadius: Radius.lg, borderTopRightRadius: Radius.lg,
-      borderWidth: 1, borderColor: pageBorder,
+      borderWidth: 1, borderColor: Colors.border,
     },
     modalScroll: { padding: Spacing.lg, paddingBottom: Spacing.xl, gap: Spacing.sm },
     modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-    modalTitle: { fontSize: 20, fontWeight: '700', color: pageInk, ...display },
+    modalTitle: { fontSize: fs(Type.title.size), fontWeight: '700', color: Colors.textPrimary, ...displayFont },
 
     field: { gap: 6 },
     formLabel: {
-      fontSize: 11, fontWeight: '700', color: pageInkMuted,
-      letterSpacing: 1.2, textTransform: 'uppercase', ...display,
+      fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.textMuted,
+      letterSpacing: 1.2, textTransform: 'uppercase', ...displayFont,
     },
     input: {
       minHeight: 44, paddingHorizontal: 12, paddingVertical: 10,
-      borderRadius: Radius.sm, backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
-      fontSize: 15, color: pageInk, ...serif,
+      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
+      fontSize: fs(Type.ui.size), color: Colors.textPrimary, ...bodyFont,
     },
     inputMultiline: { minHeight: 96 },
     numInput: { textAlign: 'center' },
@@ -1148,26 +1089,26 @@ function makeStyles(elder: boolean) {
     kindChip: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 10, paddingVertical: 7,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
     },
-    kindChipActive: { backgroundColor: pageAccent },
-    kindChipText: { fontSize: 12, fontWeight: '700', color: pageAccent },
-    kindChipTextActive: { color: onAccent },
+    kindChipActive: { backgroundColor: Colors.primary },
+    kindChipText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
+    kindChipTextActive: { color: Colors.onPrimary },
 
     presetWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     presetChip: {
       paddingHorizontal: 10, paddingVertical: 7,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageBorder,
-      backgroundColor: pageSurface,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.border,
+      backgroundColor: Colors.surface,
     },
-    presetChipText: { fontSize: 12, fontWeight: '600', color: pageInk, ...serif },
+    presetChipText: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textPrimary, ...bodyFont },
 
     precisionWrap: { flexDirection: 'row', gap: 6 },
     precisionChip: {
       paddingHorizontal: 12, paddingVertical: 6,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
     },
-    precisionChipText: { fontSize: 12, fontWeight: '700', color: pageAccent },
+    precisionChipText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
     dateWrap: { flexDirection: 'row', gap: 8 },
 
     switchRow: {
@@ -1176,20 +1117,7 @@ function makeStyles(elder: boolean) {
     },
 
     modalActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: Spacing.sm },
-    primaryBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-      paddingHorizontal: 20, paddingVertical: 11,
-      borderRadius: Radius.full, backgroundColor: pageAccent, minWidth: 96,
-    },
-    primaryBtnText: { fontSize: 14, fontWeight: '700', color: onAccent },
-    ghostBtn: { paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 4 },
-    ghostBtnText: { fontSize: 13, fontWeight: '600', color: pageInkSecondary },
-    dangerBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      paddingHorizontal: 14, paddingVertical: 10,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageBorder,
-    },
     linkBtn: { paddingHorizontal: 8, paddingVertical: 8 },
-    linkText: { fontSize: 12, fontWeight: '600', color: pageInkSecondary, textDecorationLine: 'underline' },
+    linkText: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textSecondary, textDecorationLine: 'underline' },
   });
 }

@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
+  View, Text, StyleSheet, ScrollView, TextInput,
   Platform, ActivityIndicator, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,26 +25,17 @@ import {
 } from '../../hooks/useMemoir';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
+import { Button } from '../../components/shared/Button';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 export default function MemoirBookScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  // Two contexts: chrome icons sit on the dark wallpaper (header
-  // chevron, "Aa" toggle) — keep them light. Page icons sit on the
-  // vellum card (the Make button's bronze button text) — keep them
-  // cream against the bronze.
-  const ic = elder ? {
-    chrome: { primary: Colors.brandIvory, secondary: Colors.textSecondary },
-    page:   { primary: '#2A1F18', accent: '#8A5B1A' },
-    onAccent: '#FBF4DE',
-  } : {
-    chrome: { primary: Colors.textPrimary, secondary: Colors.textSecondary },
-    page:   { primary: Colors.textPrimary, accent: Colors.primary },
-    onAccent: '#0A0A0F',
-  };
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
   const { data: projectId } = useEnsureMemoirProject();
   const { data: project } = useMemoirProject(projectId);
   const { data: progress } = useMemoirProgress(projectId);
@@ -92,18 +83,12 @@ export default function MemoirBookScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title="Make the book"
+        showBack
+        right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome.primary} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>Make the book</Text>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
-        </View>
-
         <View style={s.page}>
         {/* Title + dedication */}
         <View style={s.field}>
@@ -114,7 +99,7 @@ export default function MemoirBookScreen() {
             onChangeText={setTitle}
             onBlur={saveMeta}
             placeholder="My Life, So Far"
-            placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
+            placeholderTextColor={Colors.textMuted}
             maxLength={120}
           />
         </View>
@@ -134,72 +119,57 @@ export default function MemoirBookScreen() {
 
         {/* Estimate */}
         <View style={s.estimateRow}>
-          <Stat label="Answers" value={String(progress?.answered_count ?? 0)} elder={elder} />
-          <Stat label="Words" value={String(progress?.word_count ?? 0)} elder={elder} />
-          <Stat label="Est. pages" value={`~${estPages}`} elder={elder} />
+          <Stat label="Answers" value={String(progress?.answered_count ?? 0)} scale={scale} />
+          <Stat label="Words" value={String(progress?.word_count ?? 0)} scale={scale} />
+          <Stat label="Est. pages" value={`~${estPages}`} scale={scale} />
         </View>
 
         {/* Side links — preview, photos manager, and print guide. */}
         <View style={s.sideLinks}>
-          <TouchableOpacity
-            style={s.photosLink}
+          <Button
+            title="Read it through"
+            variant="outline"
+            size="sm"
             onPress={() => router.push('/memoir/preview')}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="book-outline" size={16} color={ic.page.accent} />
-            <Text style={s.photosLinkText}>Read it through →</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.photosLink}
+            icon={<Ionicons name="book-outline" size={16} color={Colors.primary} />}
+          />
+          <Button
+            title="Arrange chapters"
+            variant="outline"
+            size="sm"
             onPress={() => router.push('/memoir/arrange')}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="swap-vertical-outline" size={16} color={ic.page.accent} />
-            <Text style={s.photosLinkText}>Arrange chapters →</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.photosLink}
+            icon={<Ionicons name="swap-vertical-outline" size={16} color={Colors.primary} />}
+          />
+          <Button
+            title="Add photographs"
+            variant="outline"
+            size="sm"
             onPress={() => router.push('/memoir/photos')}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="images-outline" size={16} color={ic.page.accent} />
-            <Text style={s.photosLinkText}>Add photographs →</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.photosLink}
+            icon={<Ionicons name="images-outline" size={16} color={Colors.primary} />}
+          />
+          <Button
+            title="Where to print"
+            variant="outline"
+            size="sm"
             onPress={() => router.push('/memoir/print')}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="print-outline" size={16} color={ic.page.accent} />
-            <Text style={s.photosLinkText}>Where to print →</Text>
-          </TouchableOpacity>
+            icon={<Ionicons name="print-outline" size={16} color={Colors.primary} />}
+          />
         </View>
 
         {/* Render button */}
-        <TouchableOpacity
-          style={[s.makeBtn, (busy || render.isPending) && { opacity: 0.6 }]}
+        <Button
+          title={busy || render.isPending ? 'Making your book…' : 'Make the book'}
           onPress={onRender}
-          disabled={busy || render.isPending}
-          activeOpacity={0.85}
-        >
-          {busy || render.isPending ? (
-            <>
-              <ActivityIndicator color={ic.onAccent} />
-              <Text style={s.makeBtnText}>Making your book…</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="book" size={18} color={ic.onAccent} />
-              <Text style={s.makeBtnText}>Make the book</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          loading={busy || render.isPending}
+          size="lg"
+          icon={!(busy || render.isPending) ? <Ionicons name="book" size={18} color={Colors.onPrimary} /> : undefined}
+        />
 
         {/* Renders */}
         {(renders ?? []).length > 0 && (
           <View style={s.renders}>
             <Text style={s.rendersTitle}>Your books</Text>
-            {(renders ?? []).map((r) => <RenderRow key={r.id} render={r} elder={elder} />)}
+            {(renders ?? []).map((r) => <RenderRow key={r.id} render={r} scale={scale} />)}
           </View>
         )}
         </View>
@@ -208,8 +178,8 @@ export default function MemoirBookScreen() {
   );
 }
 
-function Stat({ label, value, elder }: { label: string; value: string; elder: boolean }) {
-  const s = makeStyles(elder);
+function Stat({ label, value, scale }: { label: string; value: string; scale: number }) {
+  const s = makeStyles(scale);
   return (
     <View style={s.stat}>
       <Text style={s.statValue}>{value}</Text>
@@ -218,10 +188,8 @@ function Stat({ label, value, elder }: { label: string; value: string; elder: bo
   );
 }
 
-function RenderRow({ render, elder }: { render: MemoirBookRender; elder: boolean }) {
-  const s = makeStyles(elder);
-  const accent = elder ? '#7E5F22' : Colors.primary;
-  const onAccent = elder ? '#FFFFFF' : '#0A0A0F';
+function RenderRow({ render, scale }: { render: MemoirBookRender; scale: number }) {
+  const s = makeStyles(scale);
 
   const openArtifact = async (path: string | null) => {
     if (!path) return;
@@ -237,7 +205,7 @@ function RenderRow({ render, elder }: { render: MemoirBookRender; elder: boolean
   return (
     <View style={s.renderRow}>
       <View style={s.renderHead}>
-        <StatusPill status={render.status} elder={elder} />
+        <StatusPill status={render.status} />
         <Text style={s.renderDate}>{date}</Text>
         {render.status === 'done' && render.page_count != null && (
           <Text style={s.renderPages}>{render.page_count} pages</Text>
@@ -251,14 +219,14 @@ function RenderRow({ render, elder }: { render: MemoirBookRender; elder: boolean
       {render.status === 'done' && (
         <View style={s.downloads}>
           <DownloadChip label="Interior PDF" icon="document-text-outline"
-            onPress={() => openArtifact(render.interior_pdf_path)} primary elder={elder} />
+            onPress={() => openArtifact(render.interior_pdf_path)} primary />
           {render.cover_pdf_path && (
             <DownloadChip label="Cover PDF" icon="image-outline"
-              onPress={() => openArtifact(render.cover_pdf_path)} elder={elder} />
+              onPress={() => openArtifact(render.cover_pdf_path)} />
           )}
           {render.epub_path && (
             <DownloadChip label="EPUB" icon="phone-portrait-outline"
-              onPress={() => openArtifact(render.epub_path)} elder={elder} />
+              onPress={() => openArtifact(render.epub_path)} />
           )}
         </View>
       )}
@@ -267,15 +235,13 @@ function RenderRow({ render, elder }: { render: MemoirBookRender; elder: boolean
   );
 }
 
-function StatusPill({ status, elder }: { status: MemoirBookRender['status']; elder: boolean }) {
-  const s = makeStyles(elder);
-  const accent = elder ? '#7E5F22' : Colors.primary;
-  const muted = elder ? '#6B6B5F' : Colors.textMuted;
+function StatusPill({ status }: { status: MemoirBookRender['status'] }) {
+  const s = makeStyles();
   const map: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Queued', color: muted },
-    rendering: { label: 'Making…', color: accent },
-    done: { label: 'Ready', color: elder ? '#2F6B3D' : '#5BA86B' },
-    failed: { label: 'Failed', color: elder ? '#7A2F1F' : '#C2604F' },
+    pending: { label: 'Queued', color: Colors.textMuted },
+    rendering: { label: 'Making…', color: Colors.primary },
+    done: { label: 'Ready', color: Colors.success },
+    failed: { label: 'Failed', color: Colors.error },
   };
   const m = map[status] ?? map.pending;
   return (
@@ -285,156 +251,84 @@ function StatusPill({ status, elder }: { status: MemoirBookRender['status']; eld
   );
 }
 
-function DownloadChip({ label, icon, onPress, primary, elder }: {
-  label: string; icon: any; onPress: () => void; primary?: boolean; elder: boolean;
+function DownloadChip({ label, icon, onPress, primary }: {
+  label: string; icon: any; onPress: () => void; primary?: boolean;
 }) {
-  const s = makeStyles(elder);
-  const accent = elder ? '#7E5F22' : Colors.primary;
-  const onAccent = elder ? '#FFFFFF' : '#0A0A0F';
   return (
-    <TouchableOpacity
-      style={[s.dlChip, primary && s.dlChipPrimary]}
+    <Button
+      title={label}
+      variant={primary ? 'primary' : 'outline'}
+      size="sm"
       onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <Ionicons name={icon} size={14} color={primary ? onAccent : accent} />
-      <Text style={[s.dlChipText, primary && { color: onAccent }]}>{label}</Text>
-    </TouchableOpacity>
+      icon={<Ionicons name={icon} size={14} color={primary ? Colors.onPrimary : Colors.primary} />}
+    />
   );
 }
 
-// The book screen mirrors the interview surface — when elder mode is
-// on, we paint the page on cream with near-black upright type and
-// solid surfaces (no translucent dark cards). The accent button text
-// flips to white because the elder accent is darker.
-function makeStyles(elder: boolean = false) {
-  // Manuscript mode for the book page: chrome (header bar) stays on
-  // the dark brand wallpaper; the body lives in a vellum page card so
-  // the deliverable feels like the artifact it makes.
-  const chromeText = Colors.brandIvory;
-  const chromeSecondary = Colors.textSecondary;
-  const chromeMuted = Colors.textMuted;
-  const chromeBorder = Colors.border;
-
-  const pageCardBg = elder ? '#F2E8CC' : 'transparent';
-  const pageInk = elder ? '#2A1F18' : Colors.textPrimary;
-  const pageInkSecondary = elder ? '#5A4A38' : Colors.textSecondary;
-  const pageInkMuted = elder ? '#8C7E60' : Colors.textMuted;
-  const pageAccent = elder ? '#8A5B1A' : Colors.primary;
-  const pageBorder = elder ? '#CFC0A0' : Colors.border;
-  const pageSurface = elder ? '#FBF4DE' : Colors.surface;
-  const display = elder ? pageInk : Colors.brandIvory;
-  const onAccent = elder ? '#FBF4DE' : '#0A0A0F';
-
-  const pageCardWeb = (elder && Platform.OS === 'web') ? ({
-    backgroundImage:
-      'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(95,70,40,0.07) 31px, rgba(95,70,40,0.07) 32px)',
-    boxShadow:
-      '0 24px 50px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(95,70,40,0.08)',
-  } as any) : {};
+// One palette, driven by the skin engine. `scale` multiplies the Type.*
+// reading sizes; color, font, and corner come from Colors / Gen so
+// setGeneration reskins the whole surface.
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.lg },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 100, paddingTop: Spacing.sm, gap: Spacing.lg },
 
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2,
-      textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: chromeBorder,
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: chromeSecondary, letterSpacing: 0.4 },
-
-    // The vellum page wrapper for the whole working surface.
-    page: elder ? {
-      marginTop: 24,
-      padding: 32,
-      borderRadius: 14,
-      backgroundColor: pageCardBg,
-      borderWidth: 1, borderColor: pageBorder,
-      gap: Spacing.lg,
-      ...pageCardWeb,
-    } : { gap: Spacing.lg, marginTop: 8 },
+    page: { gap: Spacing.lg, marginTop: Spacing.xs },
 
     field: { gap: 6 },
     fieldLabel: {
-      fontSize: 11, fontWeight: '700', color: pageInkMuted,
-      textTransform: 'uppercase', letterSpacing: 1.6,
+      fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.textMuted,
+      textTransform: 'uppercase', letterSpacing: Type.eyebrow.letterSpacing,
     },
     input: {
       padding: Spacing.md,
-      borderRadius: elder ? 6 : Radius.lg,
-      backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
-      fontSize: 18, lineHeight: 28, color: pageInk,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      borderRadius: Gen.radius,
+      backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight), color: Colors.textPrimary,
+      ...bodyFont,
     },
 
     estimateRow: { flexDirection: 'row', gap: 10 },
     stat: {
-      flex: 1, padding: Spacing.md, borderRadius: Radius.lg,
-      backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
+      flex: 1, padding: Spacing.md, borderRadius: Radius.card,
+      backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
       alignItems: 'center', gap: 4,
     },
     statValue: {
-      fontSize: 22, fontWeight: '800', color: pageInk,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+      fontSize: fs(Type.title.size), lineHeight: fs(Type.title.lineHeight), fontWeight: '800', color: Colors.textPrimary,
+      ...displayFont,
     },
-    statLabel: { fontSize: 11, color: pageInkMuted, letterSpacing: 1, textTransform: 'uppercase' },
+    statLabel: { fontSize: Type.eyebrow.size, color: Colors.textMuted, letterSpacing: 1, textTransform: 'uppercase' },
 
-    makeBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-      paddingVertical: 14, borderRadius: Radius.full,
-      backgroundColor: pageAccent,
-    },
-    makeBtnText: {
-      color: onAccent,
-      fontSize: 15, fontWeight: '700', letterSpacing: 0.2,
-    },
     sideLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    photosLink: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      paddingVertical: 10, paddingHorizontal: 14,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: pageAccent,
-    },
-    photosLinkText: { fontSize: 13, fontWeight: '700', color: pageAccent },
 
     renders: { gap: 10, marginTop: 8 },
     rendersTitle: {
-      fontSize: 18, fontWeight: '800', color: display,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+      fontSize: fs(Type.title.size), lineHeight: fs(Type.title.lineHeight), fontWeight: '700', color: Colors.textPrimary,
+      ...displayFont,
     },
     renderRow: {
       padding: Spacing.md, gap: 8,
-      borderRadius: Radius.lg,
-      backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Radius.card,
+      backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
     },
     renderHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    renderDate: { fontSize: 13, color: pageInkSecondary },
-    renderPages: { fontSize: 13, color: pageInkMuted, marginLeft: 'auto' },
-    renderError: { fontSize: 14, color: elder ? '#9C3D2C' : '#C2604F', lineHeight: 20 },
+    renderDate: { fontSize: fs(Type.caption.size), color: Colors.textSecondary },
+    renderPages: { fontSize: fs(Type.caption.size), color: Colors.textMuted, marginLeft: 'auto' },
+    renderError: { fontSize: fs(Type.ui.size), color: Colors.error, lineHeight: fs(Type.ui.lineHeight + 1) },
     pill: {
       paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.full,
       borderWidth: 1,
     },
-    pillText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' },
+    pillText: { fontSize: Type.eyebrow.size, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' },
 
     downloads: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
-    dlChip: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      paddingHorizontal: 14, paddingVertical: 10,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: pageAccent,
-    },
-    dlChipPrimary: { backgroundColor: pageAccent },
-    dlChipText: { fontSize: 13, fontWeight: '700', color: pageAccent },
   });
 }

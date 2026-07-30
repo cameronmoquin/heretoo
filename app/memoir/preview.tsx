@@ -14,7 +14,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView,
   Platform, Image as RNImage, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,15 +30,17 @@ import { assembleBook, type BookChapter, type BookEntry } from '../../lib/memoir
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 export default function MemoirPreviewScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  const ic = elder
-    ? { chrome: Colors.brandIvory, accent: '#8A5B1A' }
-    : { chrome: Colors.textPrimary, accent: Colors.primary };
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
 
   const { data: projectId } = useEnsureMemoirProject();
   const { data: project } = useMemoirProject(projectId);
@@ -61,30 +63,21 @@ export default function MemoirPreviewScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title="Read it through"
+        showBack
+        right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {/* Chrome — back, label, reading-size toggle. */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>Read it through</Text>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
-        </View>
-
         {isEmpty ? (
           <View style={s.page}>
             <Text style={s.empty}>The book is empty so far.</Text>
-            <TouchableOpacity
-              style={s.emptyBtn}
+            <Button
+              title="Start writing"
               onPress={() => router.replace('/memoir')}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="create-outline" size={16} color={elder ? '#FBF4DE' : '#0A0A0F'} />
-              <Text style={s.emptyBtnText}>Start writing</Text>
-            </TouchableOpacity>
+              style={s.emptyBtn}
+              icon={<Ionicons name="create-outline" size={16} color={Colors.onPrimary} />}
+            />
           </View>
         ) : (
           <View style={s.page}>
@@ -101,7 +94,7 @@ export default function MemoirPreviewScreen() {
             {/* ── Table of contents ────────────────────────────────── */}
             {book.chapters.length > 1 && (
               <View style={s.toc}>
-                <Text style={s.tocTitle}>Contents</Text>
+                <Eyebrow accentColor={Colors.primary} style={s.centered}>Contents</Eyebrow>
                 {book.chapters.map((c, i) => (
                   <View key={c.key} style={s.tocRow}>
                     <Text style={s.tocNum}>{romanish(i + 1)}</Text>
@@ -117,7 +110,7 @@ export default function MemoirPreviewScreen() {
 
             {/* ── Chapters ─────────────────────────────────────────── */}
             {book.chapters.map((chapter) => (
-              <ChapterBlock key={chapter.key} chapter={chapter} elder={elder} />
+              <ChapterBlock key={chapter.key} chapter={chapter} scale={scale} />
             ))}
 
             <Text style={s.colophon}>
@@ -129,22 +122,20 @@ export default function MemoirPreviewScreen() {
             </Text>
 
             <View style={s.closingLinks}>
-              <TouchableOpacity
-                style={s.makeLink}
+              <Button
+                title="Arrange the order"
+                variant="outline"
+                size="sm"
                 onPress={() => router.push('/memoir/arrange')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="swap-vertical-outline" size={16} color={ic.accent} />
-                <Text style={s.makeLinkText}>Arrange the order →</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.makeLink}
+                icon={<Ionicons name="swap-vertical-outline" size={16} color={Colors.primary} />}
+              />
+              <Button
+                title="Make the book"
+                variant="outline"
+                size="sm"
                 onPress={() => router.replace('/memoir/book')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="book-outline" size={16} color={ic.accent} />
-                <Text style={s.makeLinkText}>Make the book →</Text>
-              </TouchableOpacity>
+                icon={<Ionicons name="book-outline" size={16} color={Colors.primary} />}
+              />
             </View>
           </View>
         )}
@@ -155,27 +146,27 @@ export default function MemoirPreviewScreen() {
 
 // ── Chapter ──────────────────────────────────────────────────────────
 
-function ChapterBlock({ chapter, elder }: { chapter: BookChapter; elder: boolean }) {
-  const s = makeStyles(elder);
+function ChapterBlock({ chapter, scale }: { chapter: BookChapter; scale: number }) {
+  const s = makeStyles(scale);
   return (
     <View style={s.chapter}>
-      <Text style={s.chapterEyebrow}>Chapter</Text>
+      <Eyebrow style={s.centered}>Chapter</Eyebrow>
       <Text style={s.chapterTitle}>{chapter.title}</Text>
       <View style={s.chapterRule} />
 
       {chapter.entries.map((entry) => (
-        <EntryBlock key={entry.id} entry={entry} elder={elder} />
+        <EntryBlock key={entry.id} entry={entry} scale={scale} />
       ))}
 
       {chapter.photos.map((photo) => (
-        <PhotoPlate key={photo.id} asset={photo} elder={elder} />
+        <PhotoPlate key={photo.id} asset={photo} scale={scale} />
       ))}
     </View>
   );
 }
 
-function EntryBlock({ entry, elder }: { entry: BookEntry; elder: boolean }) {
-  const s = makeStyles(elder);
+function EntryBlock({ entry, scale }: { entry: BookEntry; scale: number }) {
+  const s = makeStyles(scale);
   return (
     <View style={s.entry}>
       {!!entry.question && <Text style={s.entryQuestion}>{entry.question}</Text>}
@@ -188,8 +179,8 @@ function EntryBlock({ entry, elder }: { entry: BookEntry; elder: boolean }) {
 
 // A photo as it sits on the page: framed image with the writer's
 // caption set in italics beneath, like a plate in a printed book.
-function PhotoPlate({ asset, elder }: { asset: MemoirAsset; elder: boolean }) {
-  const s = makeStyles(elder);
+function PhotoPlate({ asset, scale }: { asset: MemoirAsset; scale: number }) {
+  const s = makeStyles(scale);
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -204,7 +195,7 @@ function PhotoPlate({ asset, elder }: { asset: MemoirAsset; elder: boolean }) {
         {url ? (
           <RNImage source={{ uri: url }} style={s.plateImg} resizeMode="contain" />
         ) : (
-          <ActivityIndicator color={elder ? '#8A5B1A' : Colors.primary} />
+          <ActivityIndicator color={Colors.primary} />
         )}
       </View>
       {!!asset.caption?.trim() && (
@@ -232,138 +223,81 @@ function chapterMeta(c: BookChapter): string {
 
 // ── Styles ───────────────────────────────────────────────────────────
 //
-// Same manuscript/vellum architecture as the interview and book pages:
-// chrome rides the dark brand wallpaper; the book itself sits in a warm
-// vellum page card with sepia ink and a faint ruled-line texture on web.
+// The manuscript keeps its layout; only the palette, font, and corner
+// route to the token engine. On the Boomer skin Gen.bodyFont is serif,
+// so the letterpress reading voice returns there and only there.
 
-function makeStyles(elder: boolean) {
-  const chromeSecondary = Colors.textSecondary;
-  const chromeBorder = Colors.border;
-
-  const pageCardBg = elder ? '#F2E8CC' : 'transparent';
-  const pageInk = elder ? '#2A1F18' : Colors.textPrimary;
-  const pageInkSecondary = elder ? '#5A4A38' : Colors.textSecondary;
-  const pageInkMuted = elder ? '#8C7E60' : Colors.textMuted;
-  const pageAccent = elder ? '#8A5B1A' : Colors.primary;
-  const pageBorder = elder ? '#CFC0A0' : Colors.border;
-  const pageSurface = elder ? '#FBF4DE' : Colors.surface;
-  const onAccent = elder ? '#FBF4DE' : '#0A0A0F';
-
-  const serif = Platform.OS === 'web'
-    ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any)
-    : {};
-  const display = Platform.OS === 'web'
-    ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any)
-    : {};
-
-  const pageCardWeb = (elder && Platform.OS === 'web') ? ({
-    backgroundImage:
-      'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(95,70,40,0.07) 31px, rgba(95,70,40,0.07) 32px)',
-    boxShadow:
-      '0 24px 50px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(95,70,40,0.08)',
-  } as any) : {};
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 120, gap: Spacing.lg },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 120, paddingTop: Spacing.sm, gap: Spacing.lg },
 
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2,
-      textTransform: 'uppercase', ...display,
-    },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: chromeBorder,
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: chromeSecondary, letterSpacing: 0.4 },
+    centered: { textAlign: 'center' },
 
-    // The vellum page that holds the whole book.
-    page: elder ? {
-      marginTop: 24, padding: 40, borderRadius: 14,
-      backgroundColor: pageCardBg, borderWidth: 1, borderColor: pageBorder,
-      gap: Spacing.xl, ...pageCardWeb,
-    } : { gap: Spacing.xl, marginTop: 8 },
+    // The manuscript sits on the canvas now, no vellum card.
+    page: { gap: Spacing.xl, marginTop: Spacing.xs },
 
     // ── Empty state ─────────────────────────────────────────────────
     empty: {
-      fontSize: 18, lineHeight: 28, color: pageInkSecondary, fontStyle: 'italic',
-      textAlign: 'center', ...serif,
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
+      color: Colors.textSecondary, fontStyle: 'italic', textAlign: 'center', ...bodyFont,
     },
-    emptyBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      alignSelf: 'center',
-      paddingHorizontal: 22, paddingVertical: 12,
-      borderRadius: Radius.full, backgroundColor: pageAccent,
-    },
-    emptyBtnText: { color: onAccent, fontSize: 14, fontWeight: '700' },
+    emptyBtn: { alignSelf: 'center' },
 
     // ── Title page ──────────────────────────────────────────────────
-    titlePage: {
-      alignItems: 'center', gap: 18,
-      paddingVertical: elder ? 40 : 28,
-    },
+    titlePage: { alignItems: 'center', gap: 18, paddingVertical: Spacing.xl },
     bookTitle: {
-      fontSize: 34, lineHeight: 42, color: pageInk,
-      textAlign: 'center', fontWeight: '600', ...serif,
+      fontSize: fs(Type.hero.size), lineHeight: fs(Type.hero.lineHeight), color: Colors.textPrimary,
+      textAlign: 'center', fontWeight: '600', ...bodyFont,
     },
-    titleRule: { width: 56, height: 2, backgroundColor: pageAccent, borderRadius: 1 },
+    titleRule: { width: 56, height: 2, backgroundColor: Colors.primary, borderRadius: 1 },
     byline: {
-      fontSize: 17, color: pageInkSecondary, fontStyle: 'italic',
-      textAlign: 'center', ...serif,
+      fontSize: fs(Type.body.size), color: Colors.textSecondary, fontStyle: 'italic',
+      textAlign: 'center', ...bodyFont,
     },
     dedication: {
-      fontSize: 16, lineHeight: 26, color: pageInkMuted, fontStyle: 'italic',
-      textAlign: 'center', marginTop: 12, maxWidth: 420, ...serif,
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight), color: Colors.textMuted, fontStyle: 'italic',
+      textAlign: 'center', marginTop: 12, maxWidth: 420, ...bodyFont,
     },
 
     // ── Table of contents ───────────────────────────────────────────
     toc: {
-      gap: 10,
-      paddingTop: 8, paddingBottom: 8,
-      borderTopWidth: 1, borderTopColor: elder ? 'rgba(95,70,40,0.18)' : pageBorder,
-      borderBottomWidth: 1, borderBottomColor: elder ? 'rgba(95,70,40,0.18)' : pageBorder,
-    },
-    tocTitle: {
-      fontSize: 12, fontWeight: '700', color: pageAccent,
-      letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', ...display,
+      gap: 10, paddingTop: 8, paddingBottom: 8,
+      borderTopWidth: 1, borderTopColor: Colors.borderLight,
+      borderBottomWidth: 1, borderBottomColor: Colors.borderLight,
     },
     tocRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-    tocNum: {
-      fontSize: 13, color: pageInkMuted, width: 22, ...serif,
-    },
-    tocChapter: { fontSize: 15, color: pageInk, ...serif },
+    tocNum: { fontSize: fs(Type.ui.size), color: Colors.textMuted, width: 22, ...bodyFont },
+    tocChapter: { fontSize: fs(Type.ui.size), color: Colors.textPrimary, ...bodyFont },
     tocDots: {
       flex: 1, height: 1, marginBottom: 4,
-      borderBottomWidth: 1, borderBottomColor: pageBorder,
+      borderBottomWidth: 1, borderBottomColor: Colors.border,
       borderStyle: 'dotted' as any,
     },
-    tocCount: { fontSize: 12, color: pageInkMuted, ...serif },
+    tocCount: { fontSize: fs(Type.caption.size), color: Colors.textMuted, ...bodyFont },
 
     // ── Chapter ─────────────────────────────────────────────────────
     chapter: { gap: 14 },
-    chapterEyebrow: {
-      fontSize: 11, fontWeight: '700', color: pageInkMuted,
-      letterSpacing: 2.4, textTransform: 'uppercase', textAlign: 'center', ...display,
-    },
     chapterTitle: {
-      fontSize: 26, lineHeight: 34, color: pageInk,
-      textAlign: 'center', fontWeight: '600', ...serif,
+      fontSize: fs(Type.display.size), lineHeight: fs(Type.display.lineHeight), color: Colors.textPrimary,
+      textAlign: 'center', fontWeight: '600', ...bodyFont,
     },
     chapterRule: {
-      width: 40, height: 2, backgroundColor: pageAccent,
+      width: 40, height: 2, backgroundColor: Colors.primary,
       borderRadius: 1, alignSelf: 'center', marginTop: 2,
     },
 
     // ── Entry ───────────────────────────────────────────────────────
     entry: { gap: 10, marginTop: 8 },
     entryQuestion: {
-      fontSize: 15, lineHeight: 22, color: pageAccent, fontStyle: 'italic',
-      fontWeight: '600', ...serif,
+      fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 3), color: Colors.primary, fontStyle: 'italic',
+      fontWeight: '600', ...bodyFont,
     },
     prose: {
-      fontSize: elder ? 18 : 17, lineHeight: elder ? 30 : 28, color: pageInk,
-      ...serif,
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight + 4), color: Colors.textPrimary, ...bodyFont,
     },
     proseFirst: { marginTop: 0 },
 
@@ -371,31 +305,25 @@ function makeStyles(elder: boolean) {
     plate: { gap: 8, marginTop: 8, alignItems: 'center' },
     plateFrame: {
       width: '100%', aspectRatio: 1.4,
-      backgroundColor: elder ? '#EAE0C6' : Colors.surface,
-      borderRadius: 8, overflow: 'hidden',
-      borderWidth: 1, borderColor: pageBorder,
+      backgroundColor: Colors.surface,
+      borderRadius: Radius.sm, overflow: 'hidden',
+      borderWidth: 1, borderColor: Colors.border,
       alignItems: 'center', justifyContent: 'center',
     },
     plateImg: { width: '100%', height: '100%' },
     plateCaption: {
-      fontSize: 14, lineHeight: 22, color: pageInkSecondary, fontStyle: 'italic',
-      textAlign: 'center', maxWidth: 460, ...serif,
+      fontSize: fs(Type.caption.size + 2), lineHeight: fs(Type.caption.lineHeight + 6), color: Colors.textSecondary, fontStyle: 'italic',
+      textAlign: 'center', maxWidth: 460, ...bodyFont,
     },
 
     // ── Closing ─────────────────────────────────────────────────────
     colophon: {
-      fontSize: 13, color: pageInkMuted, textAlign: 'center',
-      letterSpacing: 0.4, marginTop: 8, ...serif,
+      fontSize: fs(Type.caption.size), color: Colors.textMuted, textAlign: 'center',
+      letterSpacing: 0.4, marginTop: 8, ...bodyFont,
     },
     closingLinks: {
       flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
       gap: 10, marginTop: 4,
     },
-    makeLink: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      paddingHorizontal: 18, paddingVertical: 10,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: pageAccent,
-    },
-    makeLinkText: { fontSize: 14, fontWeight: '700', color: pageAccent },
   });
 }

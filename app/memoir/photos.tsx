@@ -16,7 +16,6 @@ import {
   Platform, ActivityIndicator, Image as RNImage,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useEnsureMemoirProject,
@@ -28,7 +27,11 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 const CHAPTERS: Array<{ key: string; label: string }> = [
   { key: 'before_me', label: 'Before Me' },
@@ -46,11 +49,8 @@ const CHAPTERS: Array<{ key: string; label: string }> = [
 
 export default function MemoirPhotosScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  const ic = elder
-    ? { chrome: Colors.brandIvory, page: '#2A1F18', accent: '#8A5B1A', onAccent: '#FBF4DE' }
-    : { chrome: Colors.textPrimary, page: Colors.textPrimary, accent: Colors.primary, onAccent: '#0A0A0F' };
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
 
   const { data: projectId } = useEnsureMemoirProject();
   const { data: assets } = useMemoirAssets(projectId);
@@ -80,28 +80,22 @@ export default function MemoirPhotosScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title="Photographs"
+        showBack
+        right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>Photographs</Text>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
-        </View>
-
         <View style={s.page}>
           {/* Upload zone — web file picker. Phone camera capture flow lands later. */}
           {Platform.OS === 'web' ? (
             <View style={s.uploadZone}>
-              <Ionicons name="cloud-upload-outline" size={24} color={ic.accent} />
+              <Ionicons name="cloud-upload-outline" size={24} color={Colors.primary} />
               <label style={({
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '10px 16px',
-                background: ic.accent, color: ic.onAccent,
-                borderRadius: 999, cursor: 'pointer',
+                background: Colors.primary, color: Colors.onPrimary,
+                borderRadius: Gen.radius, cursor: 'pointer',
                 fontWeight: 700, fontSize: 14,
               } as any)}>
                 {upload.isPending ? 'Uploading…' : 'Choose photos'}
@@ -130,10 +124,10 @@ export default function MemoirPhotosScreen() {
               const list = byChapter.get(key) ?? [];
               return (
                 <View key={String(key)} style={s.chapterBlock}>
-                  <Text style={s.chapterTitle}>{label}</Text>
+                  <Eyebrow accentColor={Colors.primary}>{label}</Eyebrow>
                   <View style={s.grid}>
                     {list.map((a) => (
-                      <PhotoCard key={a.id} asset={a} projectId={projectId!} elder={elder} ic={ic} />
+                      <PhotoCard key={a.id} asset={a} projectId={projectId!} scale={scale} />
                     ))}
                   </View>
                 </View>
@@ -147,12 +141,11 @@ export default function MemoirPhotosScreen() {
 }
 
 function PhotoCard({
-  asset, projectId, elder, ic,
+  asset, projectId, scale,
 }: {
-  asset: MemoirAsset; projectId: string; elder: boolean;
-  ic: { chrome: string; page: string; accent: string; onAccent: string };
+  asset: MemoirAsset; projectId: string; scale: number;
 }) {
-  const s = makeStyles(elder);
+  const s = makeStyles(scale);
   const update = useUpdateMemoirAsset();
   const remove = useDeleteMemoirAsset();
   const [caption, setCaption] = useState(asset.caption ?? '');
@@ -197,7 +190,7 @@ function PhotoCard({
         {url ? (
           <RNImage source={{ uri: url }} style={s.photoImg} resizeMode="cover" />
         ) : (
-          <ActivityIndicator color={ic.accent} />
+          <ActivityIndicator color={Colors.primary} />
         )}
       </View>
       <TextInput
@@ -207,7 +200,7 @@ function PhotoCard({
         onBlur={saveCaption}
         accessibilityLabel="Caption"
         placeholder="Caption"
-        placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
+        placeholderTextColor={Colors.textMuted}
         multiline
         maxLength={400}
       />
@@ -216,13 +209,14 @@ function PhotoCard({
           style={s.chapterBtn}
           onPress={() => setChapterOpen((v) => !v)}
           activeOpacity={0.85}
+          accessibilityLabel="Place in a chapter"
         >
-          <Ionicons name="bookmark-outline" size={12} color={ic.accent} />
+          <Ionicons name="bookmark-outline" size={12} color={Colors.primary} />
           <Text style={s.chapterBtnText}>{chapterLabel}</Text>
-          <Ionicons name="chevron-down" size={12} color={ic.accent} />
+          <Ionicons name="chevron-down" size={12} color={Colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={onDelete} style={s.delBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="trash-outline" size={14} color={elder ? '#9C3D2C' : '#C2604F'} />
+        <TouchableOpacity onPress={onDelete} style={s.delBtn} accessibilityLabel="Delete photo" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="trash-outline" size={14} color={Colors.error} />
         </TouchableOpacity>
       </View>
       {chapterOpen && (
@@ -234,7 +228,7 @@ function PhotoCard({
             <TouchableOpacity key={c.key} style={s.chapterItem} onPress={() => setChapter(c.key)}>
               <Text style={[
                 s.chapterItemText,
-                asset.chapter_assignment === c.key && { color: ic.accent, fontWeight: '700' },
+                asset.chapter_assignment === c.key && { color: Colors.primary, fontWeight: '700' },
               ]}>{c.label}</Text>
             </TouchableOpacity>
           ))}
@@ -244,110 +238,72 @@ function PhotoCard({
   );
 }
 
-function makeStyles(elder: boolean) {
-  const chromeText = Colors.brandIvory;
-  const chromeMuted = Colors.textMuted;
-  const chromeBorder = Colors.border;
-  const chromeSecondary = Colors.textSecondary;
-
-  const pageCardBg = elder ? '#F2E8CC' : 'transparent';
-  const pageInk = elder ? '#2A1F18' : Colors.textPrimary;
-  const pageInkSecondary = elder ? '#5A4A38' : Colors.textSecondary;
-  const pageInkMuted = elder ? '#8C7E60' : Colors.textMuted;
-  const pageAccent = elder ? '#8A5B1A' : Colors.primary;
-  const pageBorder = elder ? '#CFC0A0' : Colors.border;
-  const pageSurface = elder ? '#FBF4DE' : Colors.surface;
-
-  const pageCardWeb = (elder && Platform.OS === 'web') ? ({
-    backgroundImage:
-      'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(95,70,40,0.07) 31px, rgba(95,70,40,0.07) 32px)',
-    boxShadow:
-      '0 24px 50px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(95,70,40,0.08)',
-  } as any) : {};
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 760, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.lg },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 100, paddingTop: Spacing.sm, gap: Spacing.lg },
 
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2,
-      textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: chromeBorder,
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: chromeSecondary },
-
-    page: elder ? {
-      marginTop: 24, padding: 32, borderRadius: 14,
-      backgroundColor: pageCardBg, borderWidth: 1, borderColor: pageBorder,
-      gap: Spacing.lg, ...pageCardWeb,
-    } : { gap: Spacing.lg, marginTop: 8 },
+    page: { gap: Spacing.lg, marginTop: Spacing.xs },
 
     lede: {
-      fontSize: 17, lineHeight: 28, color: pageInk, fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight), color: Colors.textPrimary, fontStyle: 'italic',
+      ...bodyFont,
     },
 
     uploadZone: {
       padding: Spacing.lg, gap: 10,
-      borderRadius: Radius.lg, borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.border,
       borderStyle: 'dashed' as any, alignItems: 'center',
-      backgroundColor: pageSurface,
+      backgroundColor: Colors.surface,
     },
-    uploadFootnote: { fontSize: 11, color: pageInkMuted, fontStyle: 'italic', textAlign: 'center' },
+    uploadFootnote: { fontSize: Type.eyebrow.size, color: Colors.textMuted, fontStyle: 'italic', textAlign: 'center' },
 
     empty: {
-      fontSize: 16, color: pageInkSecondary, fontStyle: 'italic', textAlign: 'center', marginTop: 24,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.body.size), color: Colors.textSecondary, fontStyle: 'italic', textAlign: 'center', marginTop: 24,
+      ...bodyFont,
     },
 
     chapterBlock: { gap: 10 },
-    chapterTitle: {
-      fontSize: 12, fontWeight: '700', color: pageAccent,
-      letterSpacing: 1.8, textTransform: 'uppercase', marginTop: 8,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
 
     photoCard: {
       width: 220, gap: 6, padding: 10,
-      borderRadius: 10, backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
+      borderRadius: Radius.card, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
     },
     photoFrame: {
       width: '100%', aspectRatio: 1.2,
-      backgroundColor: '#EAE0C6', borderRadius: 6, overflow: 'hidden',
+      backgroundColor: Colors.surfaceLight, borderRadius: Radius.xs, overflow: 'hidden',
       alignItems: 'center', justifyContent: 'center',
     },
     photoImg: { width: '100%', height: '100%' },
     captionInput: {
       minHeight: 44, padding: 8,
-      fontSize: 13, lineHeight: 20, color: pageInk,
-      borderRadius: 6, backgroundColor: '#FFFCF1',
-      borderWidth: 1, borderColor: pageBorder,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.caption.size + 1), lineHeight: fs(Type.caption.lineHeight + 4), color: Colors.textPrimary,
+      borderRadius: Radius.xs, backgroundColor: Colors.background,
+      borderWidth: 1, borderColor: Colors.border,
+      ...bodyFont,
     },
     cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     chapterBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 8, paddingVertical: 6,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: pageAccent,
+      borderRadius: Gen.radius,
+      borderWidth: 1, borderColor: Colors.primary,
       flex: 1,
     },
-    chapterBtnText: { fontSize: 11, fontWeight: '700', color: pageAccent, flex: 1 },
+    chapterBtnText: { fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.primary, flex: 1 },
     delBtn: { padding: 6 },
 
     chapterMenu: {
-      padding: 6, borderRadius: 8,
-      backgroundColor: '#FFFCF1', borderWidth: 1, borderColor: pageBorder,
+      padding: 6, borderRadius: Radius.sm,
+      backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border,
       maxHeight: 240,
     },
     chapterItem: { paddingVertical: 6, paddingHorizontal: 8 },
-    chapterItemText: { fontSize: 13, color: pageInk },
+    chapterItemText: { fontSize: fs(Type.caption.size + 1), color: Colors.textPrimary, ...bodyFont },
   });
 }

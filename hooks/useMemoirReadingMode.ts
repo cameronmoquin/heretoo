@@ -1,32 +1,30 @@
 /**
- * useMemoirReadingMode — per-user reading style for the memoir surface.
+ * useMemoirReadingMode. Reading-size scalar for the memoir surface.
  *
- * Two modes:
- *   - 'large_light'  cream background, near-black upright type, bigger
- *                    sizes, solid surfaces. The default — built for the
- *                    65+ writer the memoir is actually for.
- *   - 'standard'     the rest-of-app dark ivory/gold aesthetic. Useful
- *                    when a younger user (the granddaughter helping
- *                    set it up, or interviewer mode) prefers the
- *                    brand styling.
+ * One knob: text size. 'large' scales the Type.* sizes up for the 65+
+ * writer the memoir is built for; 'standard' reads at the app scale.
+ * No palette here. The skin engine owns color; this owns size only.
  *
  * Stored in localStorage so the choice survives reloads without a
- * Supabase round-trip. Web-only is fine: the memoir is a web-first PWA
- * surface.
+ * Supabase round-trip. Web-first PWA surface, so window-only is fine.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 
-export type MemoirReadingMode = 'large_light' | 'standard';
+export type MemoirReadingMode = 'large' | 'standard';
 const STORAGE_KEY = 'heretoo:memoir-reading-mode';
 
+/** Multiplier the 'large' mode applies over every Type.* size. */
+export const READING_SCALE_LARGE = 1.2;
+
 function readInitial(): MemoirReadingMode {
-  if (typeof window === 'undefined') return 'large_light';
+  if (typeof window === 'undefined') return 'large';
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === 'standard' ? 'standard' : 'large_light';
+    // 'large_light' is the pre-reskin value. Read it as large.
+    return v === 'standard' ? 'standard' : 'large';
   } catch {
-    return 'large_light';
+    return 'large';
   }
 }
 
@@ -44,8 +42,14 @@ export function useMemoirReadingMode() {
   }, []);
 
   const toggle = useCallback(() => {
-    setMode(mode === 'large_light' ? 'standard' : 'large_light');
+    setMode(mode === 'large' ? 'standard' : 'large');
   }, [mode, setMode]);
 
-  return { mode, setMode, toggle, elder: mode === 'large_light' };
+  const large = mode === 'large';
+  const scale = large ? READING_SCALE_LARGE : 1;
+
+  // `elder` is the pre-reskin alias for the large-text mode. Kept so
+  // consumers still reading it keep working; the memoir screens use
+  // `scale` and `large`.
+  return { mode, setMode, toggle, large, scale, elder: large };
 }

@@ -1,7 +1,7 @@
 /**
  * /memoir — the single-prompt interview surface (Milestone 13).
  *
- * One prompt at a time. Source Serif 4, centered, large. The user
+ * One prompt at a time. Centered, large, serif on serif skins. The user
  * answers, the answer commits, and Claude (Socratic mode) picks the
  * next follow-up. The page deliberately has no progress bar and no
  * "47 of 300" counter; the interview is a conversation, not a quest.
@@ -9,12 +9,11 @@
  * "Save and step away" ends the session and returns to the Room.
  * "Past entries" flips the page to the library view.
  *
- * Voice capture is planned for a follow-up commit; for now the
- * composer is keyboard-first, which is also the path that grandmothers
- * who already type prefer.
+ * Skin lives in the token engine now: color from Colors, size from
+ * Type (scaled by the reading-size knob), font and corner from Gen.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
   Platform, ActivityIndicator, Animated,
@@ -43,7 +42,13 @@ import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { useTTS } from '../../stores/ttsStore';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Button } from '../../components/shared/Button';
+import { RailCard } from '../../components/shared/RailCard';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 /** A prompt-and-its-tree the interview is currently sitting on.
  *  Either a library prompt (the user just landed on it) or a
@@ -70,21 +75,8 @@ function fromLibrary(p: MemoirPrompt): ActivePrompt {
 
 export default function MemoirScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  // Two icon colour contexts in manuscript mode: chrome icons sit on
-  // the dark brand wallpaper (header bar, "Aa" toggle, library/book
-  // buttons) and stay light; page icons sit inside the vellum card
-  // and use sepia/bronze ink. In standard mode they collapse.
-  const ic = elder ? {
-    chrome: { primary: Colors.brandIvory, accent: Colors.primary, secondary: Colors.textSecondary },
-    page:   { primary: '#2A1F18', accent: '#8A5B1A', secondary: '#5A4A38' },
-    onAccent: '#FBF4DE',
-  } : {
-    chrome: { primary: Colors.textPrimary, accent: Colors.primary, secondary: Colors.textSecondary },
-    page:   { primary: Colors.textPrimary, accent: Colors.primary, secondary: Colors.textSecondary },
-    onAccent: '#0A0A0F',
-  };
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
   const { data: projectId } = useEnsureMemoirProject();
   const { data: project } = useMemoirProject(projectId);
   const { data: nextPrompt, refetch: refetchNext, isFetching: isPicking } =
@@ -302,22 +294,19 @@ export default function MemoirScreen() {
   if (view === 'library') {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
+        <ScreenHeader
+          title="Past entries"
+          showBack
+          onBack={() => setView('interview')}
+          backLabel="Back to writing"
+          right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+        />
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-          <View style={s.libHeader}>
-            <TouchableOpacity onPress={() => setView('interview')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-              <Ionicons name="chevron-back" size={20} color={ic.chrome.primary} />
-            </TouchableOpacity>
-            <Text style={s.kicker}>Past entries</Text>
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={s.libPage}>
+          <View style={s.list}>
             {(responses ?? []).length === 0 ? (
-              <Text style={s.libEmpty}>Nothing saved yet.</Text>
+              <Text style={s.empty}>Nothing saved yet.</Text>
             ) : (
-              (responses ?? []).map((r) => <LibraryRow key={r.id} response={r} />)
+              (responses ?? []).map((r) => <LibraryRow key={r.id} response={r} scale={scale} />)
             )}
           </View>
         </ScrollView>
@@ -327,107 +316,95 @@ export default function MemoirScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title={project?.title ?? 'Memoir'}
+        showBack
+        onBack={onSaveAndStepAway}
+        backLabel="Save and step away"
+        right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {/* Minimal chrome — back, project title, library toggle. */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={onSaveAndStepAway} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome.primary} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>{project?.title ?? 'Memoir'}</Text>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity
-            style={s.libBtn}
+        {/* Room nav. */}
+        <View style={s.nav}>
+          <Button
+            title="Timeline"
+            variant="outline"
+            size="sm"
             onPress={() => router.push('/memoir/timeline')}
-            activeOpacity={0.85}
-            accessibilityLabel="Timeline"
-          >
-            <Ionicons name="git-commit-outline" size={14} color={ic.chrome.secondary} />
-            <Text style={s.libBtnText}>Timeline</Text>
-          </TouchableOpacity>
+            icon={<Ionicons name="git-commit-outline" size={14} color={Colors.primary} />}
+          />
           {(responses ?? []).length > 0 && (
             <>
-              <TouchableOpacity
-                style={s.libBtn}
+              <Button
+                title="Past entries"
+                variant="outline"
+                size="sm"
                 onPress={() => setView('library')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="library-outline" size={14} color={ic.chrome.secondary} />
-                <Text style={s.libBtnText}>Past entries</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.libBtn, { borderColor: ic.chrome.accent }]}
+                icon={<Ionicons name="library-outline" size={14} color={Colors.primary} />}
+              />
+              <Button
+                title="Make the book"
+                variant="outline"
+                size="sm"
                 onPress={() => router.push('/memoir/book')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="book-outline" size={14} color={ic.chrome.accent} />
-                <Text style={[s.libBtnText, { color: ic.chrome.accent }]}>Make the book</Text>
-              </TouchableOpacity>
+                icon={<Ionicons name="book-outline" size={14} color={Colors.primary} />}
+              />
             </>
           )}
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Terminal state — the session wound down. Read the recap,
             then step away or begin again. No composer here. */}
         {ended ? (
-          <View style={s.endCard}>
-            <Text style={s.endKicker}>That&apos;s a good place to stop</Text>
+          <RailCard eyebrow="That's a good place to stop" style={s.stageCard}>
             <Text style={s.endSummary}>{ended}</Text>
-            <View style={s.endActions}>
-              <TouchableOpacity style={s.saveBtn} onPress={onStartAnother} activeOpacity={0.85}>
-                <Ionicons name="arrow-forward" size={16} color={ic.onAccent} />
-                <Text style={s.saveBtnText}>Keep going</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.back()} style={s.stepAwayBtn} activeOpacity={0.85}>
-                <Text style={s.stepAwayText}>Step away</Text>
-              </TouchableOpacity>
+            <View style={s.actions}>
+              <Button
+                title="Keep going"
+                onPress={onStartAnother}
+                icon={<Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />}
+              />
+              <Button title="Step away" variant="ghost" onPress={() => router.back()} />
             </View>
-          </View>
+          </RailCard>
         ) : !active ? (
           isPicking
-            ? <ActivityIndicator color={ic.page.accent} style={{ marginTop: 80 }} />
+            ? <ActivityIndicator color={Colors.primary} style={{ marginTop: 80 }} />
             : <Text style={s.allDone}>You&apos;ve answered every prompt.</Text>
         ) : (
-          <Animated.View style={[s.stage, { opacity: fade }]}>
-            {/* Content-warning chip */}
+          <Animated.View style={{ opacity: fade }}>
+            {/* Content-warning card */}
             {showWarning && (
-              <View style={s.warnCard}>
-                <Text style={s.warnKicker}>This one may be tender</Text>
+              <RailCard accentColor={Colors.error} eyebrow="This one may be tender" style={s.stageCard}>
                 <Text style={s.warnBody}>
                   The next question touches a hard subject. Answer it if you want, skip if you&apos;d
                   rather. Both are right.
                 </Text>
-                <View style={s.warnActions}>
-                  <TouchableOpacity
-                    style={s.warnContinue}
+                <View style={s.actions}>
+                  <Button
+                    title="Show the question"
                     onPress={() => setWarningAck((prev) => ({ ...prev, [active.question]: true }))}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={s.warnContinueText}>Show the question</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.warnSkip} onPress={onSkipPrompt} activeOpacity={0.85}>
-                    <Text style={s.warnSkipText}>Skip this one</Text>
-                  </TouchableOpacity>
+                  />
+                  <Button title="Skip this one" variant="outline" onPress={onSkipPrompt} />
                 </View>
-              </View>
+              </RailCard>
             )}
 
             {!showWarning && (
-              <>
+              <View style={s.stage}>
+                <View style={s.stageRule} pointerEvents="none" />
                 <Text style={s.question}>{active.question}</Text>
                 <View style={s.questionActions}>
-                  <TouchableOpacity onPress={onReadAloud} style={s.readBtn} activeOpacity={0.85}>
+                  <TouchableOpacity onPress={onReadAloud} style={s.readBtn} activeOpacity={0.85} accessibilityLabel={ttsActive ? 'Pause' : 'Hear it read'}>
                     <Ionicons
                       name={ttsActive ? 'pause' : 'volume-medium-outline'}
                       size={14}
-                      color={ic.page.accent}
+                      color={Colors.primary}
                     />
                     <Text style={s.readBtnText}>{ttsActive ? 'Pause' : 'Hear it read'}</Text>
                   </TouchableOpacity>
                   {active.promptId && (
-                    <TouchableOpacity onPress={onSkipPrompt} style={s.skipBtn} activeOpacity={0.85}>
+                    <TouchableOpacity onPress={onSkipPrompt} style={s.skipBtn} activeOpacity={0.85} accessibilityLabel="Skip this one">
                       <Text style={s.skipBtnText}>Skip this one</Text>
                     </TouchableOpacity>
                   )}
@@ -444,12 +421,12 @@ export default function MemoirScreen() {
                       accessibilityLabel={voice.recording ? 'Stop recording' : 'Speak your answer'}
                     >
                       {transcribe.isPending ? (
-                        <ActivityIndicator color={ic.page.accent} size="small" />
+                        <ActivityIndicator color={Colors.primary} size="small" />
                       ) : (
                         <Ionicons
                           name={voice.recording ? 'stop' : 'mic-outline'}
                           size={18}
-                          color={voice.recording ? '#fff' : ic.page.accent}
+                          color={voice.recording ? '#fff' : Colors.primary}
                         />
                       )}
                     </TouchableOpacity>
@@ -473,27 +450,16 @@ export default function MemoirScreen() {
                 />
 
                 <View style={s.actions}>
-                  <TouchableOpacity
-                    style={[s.saveBtn, (save.isPending || interview.isPending || answer.trim().length < 4) && { opacity: 0.5 }]}
+                  <Button
+                    title="Save and continue"
                     onPress={onSubmitAnswer}
-                    disabled={save.isPending || interview.isPending || answer.trim().length < 4}
-                    activeOpacity={0.85}
-                  >
-                    {(save.isPending || interview.isPending) ? (
-                      <ActivityIndicator color={ic.onAccent} />
-                    ) : (
-                      <>
-                        <Ionicons name="arrow-forward" size={16} color={ic.onAccent} />
-                        <Text style={s.saveBtnText}>Save and continue</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={onSaveAndStepAway} style={s.stepAwayBtn} activeOpacity={0.85}>
-                    <Text style={s.stepAwayText}>Save and step away</Text>
-                  </TouchableOpacity>
+                    loading={save.isPending || interview.isPending}
+                    disabled={answer.trim().length < 4}
+                    icon={<Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />}
+                  />
+                  <Button title="Save and step away" variant="ghost" onPress={onSaveAndStepAway} />
                 </View>
-              </>
+              </View>
             )}
           </Animated.View>
         )}
@@ -504,13 +470,9 @@ export default function MemoirScreen() {
 
 // ── Library row (past entries) ─────────────────────────────────────
 
-function LibraryRow({ response }: { response: MemoirResponse }) {
-  const { elder } = useMemoirReadingMode();
-  const s = makeStyles(elder);
-  // Library rows live inside the vellum page card in elder mode, so
-  // their icon ink is sepia rather than the brand grey.
-  const iconColor = elder ? '#5A4A38' : Colors.textSecondary;
-  const onAccent = elder ? '#FBF4DE' : '#0A0A0F';
+function LibraryRow({ response, scale }: { response: MemoirResponse; scale: number }) {
+  const s = makeStyles(scale);
+  const iconColor = Colors.textSecondary;
   const tts = useTTS();
   const cleanup = useMemoirGrammarCheck();
   const resolve = useResolveCowriterDraft();
@@ -598,8 +560,7 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
   };
 
   return (
-    <View style={s.libRow}>
-      <Text style={s.libDate}>{date}</Text>
+    <RailCard eyebrow={date}>
       {!!q && <Text style={s.libQuestion}>{q}</Text>}
       {editing ? (
         <>
@@ -613,25 +574,8 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
             textAlignVertical="top"
           />
           <View style={s.draftActions}>
-            <TouchableOpacity
-              style={[s.draftAccept, update.isPending && { opacity: 0.5 }]}
-              onPress={onSaveEdit}
-              disabled={update.isPending}
-              activeOpacity={0.85}
-              accessibilityLabel="Save changes"
-            >
-              {update.isPending
-                ? <ActivityIndicator size="small" color={onAccent} />
-                : <Text style={s.draftAcceptText}>Save</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={s.draftReject}
-              onPress={() => setEditing(false)}
-              activeOpacity={0.85}
-              accessibilityLabel="Cancel edit"
-            >
-              <Text style={s.draftRejectText}>Cancel</Text>
-            </TouchableOpacity>
+            <Button title="Save" onPress={onSaveEdit} loading={update.isPending} />
+            <Button title="Cancel" variant="ghost" onPress={() => setEditing(false)} />
           </View>
         </>
       ) : (
@@ -640,17 +584,17 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
           <View style={s.libActions}>
             <TouchableOpacity
               onPress={() => tts.toggle(id, response.final_text)}
-              style={s.libRead}
+              style={s.libAction}
               accessibilityLabel="Read this entry aloud"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name={ttsActive ? 'pause' : 'volume-medium-outline'} size={14} color={iconColor} />
-              <Text style={s.libReadText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
+              <Text style={s.libActionText}>{ttsActive ? 'Pause' : 'Read aloud'}</Text>
             </TouchableOpacity>
             {!result && (
               <TouchableOpacity
                 onPress={onCleanUp}
-                style={s.libPolish}
+                style={s.libAction}
                 disabled={cleanup.isPending}
                 accessibilityLabel="Check this entry for typos"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -660,28 +604,28 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
                 ) : (
                   <>
                     <Ionicons name="sparkles-outline" size={14} color={iconColor} />
-                    <Text style={s.libReadText}>Clean up</Text>
+                    <Text style={s.libActionText}>Clean up</Text>
                   </>
                 )}
               </TouchableOpacity>
             )}
             <TouchableOpacity
               onPress={() => { setDraft(response.final_text); setEditing(true); }}
-              style={s.libPolish}
+              style={s.libAction}
               accessibilityLabel="Edit this entry"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="pencil-outline" size={14} color={iconColor} />
-              <Text style={s.libReadText}>Edit</Text>
+              <Text style={s.libActionText}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onDelete}
-              style={s.libPolish}
+              style={s.libAction}
               accessibilityLabel="Delete this entry"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="trash-outline" size={14} color={iconColor} />
-              <Text style={s.libReadText}>Delete</Text>
+              <Text style={s.libActionText}>Delete</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -693,7 +637,7 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
         <View style={s.draftCard}>
           {result.edits.length > 0 ? (
             <>
-              <Text style={s.draftKicker}>Fixes ({result.edits.length})</Text>
+              <Eyebrow accentColor={Colors.primary}>Fixes ({result.edits.length})</Eyebrow>
               {result.edits.map((e, i) => (
                 <Text key={`f${i}`} style={s.fixLine}>
                   “{e.original}” → “{e.suggested}”{e.reason ? `  (${e.reason})` : ''}
@@ -701,12 +645,12 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
               ))}
             </>
           ) : (
-            <Text style={s.draftKicker}>No grammar fixes needed</Text>
+            <Eyebrow accentColor={Colors.primary}>No grammar fixes needed</Eyebrow>
           )}
 
           {result.suggestions.length > 0 && (
             <>
-              <Text style={[s.draftKicker, { marginTop: 10 }]}>Ideas to consider</Text>
+              <Eyebrow accentColor={Colors.primary} style={{ marginTop: 10 }}>Ideas to consider</Eyebrow>
               {result.suggestions.map((sug, i) => (
                 <Text key={`s${i}`} style={s.suggestLine}>• {sug}</Text>
               ))}
@@ -715,202 +659,60 @@ function LibraryRow({ response }: { response: MemoirResponse }) {
 
           <View style={s.draftActions}>
             {result.edits.length > 0 && (
-              <TouchableOpacity style={s.draftAccept} onPress={applyFixes} activeOpacity={0.85}>
-                <Text style={s.draftAcceptText}>Apply fixes</Text>
-              </TouchableOpacity>
+              <Button title="Apply fixes" size="sm" onPress={applyFixes} />
             )}
-            <TouchableOpacity style={s.draftReject} onPress={() => setResult(null)} activeOpacity={0.85}>
-              <Text style={s.draftRejectText}>Done</Text>
-            </TouchableOpacity>
+            <Button title="Done" variant="ghost" size="sm" onPress={() => setResult(null)} />
           </View>
         </View>
       )}
-    </View>
+    </RailCard>
   );
 }
 
 // ── Styles ──────────────────────────────────────────────────────────
 //
-// Two visual modes that share one architecture:
-//
-//   "manuscript" (elder=true, the default):
-//     The brand wallpaper stays visible. The interview content sits in
-//     a warm vellum page card on top of it — like a letter on a desk
-//     lit by lamp. Dark sepia ink, real serif italic for the question,
-//     book-sized type (not large-print-hospice), faint ruled lines on
-//     web so the page actually feels like paper. Header chrome stays
-//     light against the wallpaper so the *brand* still reads as cool.
-//
-//   "standard" (elder=false):
-//     The existing dark ivory/gold styling, unchanged.
-//
-// Two colour contexts in manuscript mode:
-//   chrome.*  — header bar, "Aa" toggle. On dark wallpaper.
-//   page.*    — everything inside the vellum card. On parchment.
+// One palette, driven by the skin engine. `scale` multiplies the Type.*
+// sizes for the larger-reading knob; color, font, and corner come from
+// Colors / Gen so setGeneration reskins the whole surface.
 
-interface MemoirTokens {
-  // Chrome (header, toggles) — always on the dark wallpaper.
-  chromeText: string;
-  chromeSecondary: string;
-  chromeMuted: string;
-  chromeAccent: string;
-  chromeBorder: string;
-
-  // Page (manuscript card) — on vellum in elder, same as chrome in std.
-  pageCardBg: string;
-  pageInk: string;
-  pageInkSecondary: string;
-  pageInkMuted: string;
-  pageAccent: string;
-  pageBorder: string;
-  pageSurface: string;     // input field background within the page
-  onAccent: string;        // text colour on the accent button
-
-  // Optional web-only styling for the page card (shadow + ruled lines).
-  pageCardWebExtras: object;
-
-  // Sizes & flags.
-  questionSize: number;
-  questionLine: number;
-  questionItalic: boolean;
-  inputSize: number;
-  inputLine: number;
-  controlPadV: number;
-  micSize: number;
-  metaSize: number;
-  rootBg: string;
-}
-
-function tokens(elder: boolean): MemoirTokens {
-  if (elder) {
-    return {
-      // Chrome: same as the existing brand colours. The wallpaper is
-      // visible behind the header so we don't change these.
-      chromeText: Colors.brandIvory,
-      chromeSecondary: Colors.textSecondary,
-      chromeMuted: Colors.textMuted,
-      chromeAccent: Colors.primary,
-      chromeBorder: Colors.border,
-
-      // The manuscript page — warm vellum, dark sepia ink, bronze
-      // accent, ivory-cream button text.
-      pageCardBg: '#F2E8CC',
-      pageInk: '#2A1F18',
-      pageInkSecondary: '#5A4A38',
-      pageInkMuted: '#8C7E60',
-      pageAccent: '#8A5B1A',
-      pageBorder: '#CFC0A0',
-      pageSurface: '#FBF4DE',
-      onAccent: '#FBF4DE',
-
-      // Web-only: a faint horizontal ruled-line pattern + a warm
-      // shadow lift the card off the dark wallpaper. The pattern is
-      // intentionally subtle (~6% opacity) — adds texture, not noise.
-      pageCardWebExtras: Platform.OS === 'web' ? ({
-        backgroundImage:
-          'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(95,70,40,0.07) 31px, rgba(95,70,40,0.07) 32px)',
-        boxShadow:
-          '0 24px 50px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(95,70,40,0.08)',
-      } as any) : {},
-
-      // Real book sizes, not large-print-hospice.
-      questionSize: 26, questionLine: 38,
-      questionItalic: true,
-      inputSize: 18, inputLine: 30,
-      controlPadV: 14,
-      micSize: 44,
-      metaSize: 12,
-      rootBg: 'transparent',
-    };
-  }
-
-  // Standard mode: chrome and page collapse to the same dark palette
-  // and there's no page card.
-  return {
-    chromeText: Colors.brandIvory,
-    chromeSecondary: Colors.textSecondary,
-    chromeMuted: Colors.textMuted,
-    chromeAccent: Colors.primary,
-    chromeBorder: Colors.border,
-
-    pageCardBg: 'transparent',
-    pageInk: Colors.textPrimary,
-    pageInkSecondary: Colors.textSecondary,
-    pageInkMuted: Colors.textMuted,
-    pageAccent: Colors.primary,
-    pageBorder: Colors.border,
-    pageSurface: Colors.surface,
-    onAccent: '#0A0A0F',
-    pageCardWebExtras: {},
-
-    questionSize: 26, questionLine: 38,
-    questionItalic: true,
-    inputSize: 17, inputLine: 28,
-    controlPadV: 14,
-    micSize: 48,
-    metaSize: 11,
-    rootBg: 'transparent',
-  };
-}
-
-function makeStyles(elder: boolean = false) {
-  const t = tokens(elder);
-  // Page card (vellum) — only renders as a real card in elder/manuscript
-  // mode. In standard mode `stage` is just a vertical stack and these
-  // values collapse to harmless defaults.
-  const pageCard = elder ? {
-    backgroundColor: t.pageCardBg,
-    borderRadius: 14,
-    padding: 36,
-    borderWidth: 1, borderColor: t.pageBorder,
-    ...t.pageCardWebExtras,
-  } : {};
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
 
   return StyleSheet.create({
-    root: { flex: 1, backgroundColor: t.rootBg, maxWidth: 720, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.lg },
+    root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 100, paddingTop: Spacing.sm, gap: Spacing.lg },
 
-    // ── Chrome (header bar) ─ always against the dark wallpaper.
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: t.chromeAccent, letterSpacing: 2,
-      textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    nav: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+
+    list: { gap: Spacing.sm, marginTop: Spacing.sm },
+    empty: {
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
+      color: Colors.textSecondary, fontStyle: 'italic', marginTop: Spacing.lg,
+      ...bodyFont,
     },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: t.chromeBorder,
-      alignItems: 'center', justifyContent: 'center',
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: t.chromeSecondary, letterSpacing: 0.4 },
-    libBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      paddingHorizontal: 12, paddingVertical: 7,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: t.chromeBorder,
-    },
-    libBtnText: {
-      fontSize: 12, fontWeight: '700', color: t.chromeSecondary,
-      letterSpacing: 0.6, textTransform: 'uppercase',
+    allDone: {
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
+      color: Colors.textSecondary, fontStyle: 'italic',
+      textAlign: 'center', marginTop: 80, ...bodyFont,
     },
 
-    // ── The manuscript page (or vertical stack in standard) ─────────
+    // ── The composer stage. A recessed rail card. ──────────────────
     stage: {
-      gap: Spacing.md,
-      marginTop: elder ? 24 : 40,
-      alignItems: 'stretch',
-      ...pageCard,
+      position: 'relative',
+      backgroundColor: Colors.background,
+      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
+      borderRadius: Gen.radius, overflow: 'hidden',
+      paddingLeft: Spacing.lg + 3, paddingRight: Spacing.lg, paddingVertical: Spacing.lg,
+      gap: Spacing.md, marginTop: Spacing.sm, alignItems: 'stretch',
     },
+    stageRule: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: Colors.primary },
+    stageCard: { marginTop: Spacing.sm },
 
     question: {
-      fontSize: t.questionSize, lineHeight: t.questionLine,
-      color: t.pageInk,
-      fontStyle: t.questionItalic ? 'italic' : 'normal',
-      fontWeight: '500',
-      textAlign: 'center',
-      paddingHorizontal: elder ? 0 : Spacing.md,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.display.size), lineHeight: fs(Type.display.lineHeight),
+      color: Colors.textPrimary, fontStyle: 'italic', fontWeight: '500',
+      textAlign: 'center', ...bodyFont,
     },
     questionActions: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
@@ -918,226 +720,91 @@ function makeStyles(elder: boolean = false) {
     readBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 12, paddingVertical: 7,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: t.pageAccent,
+      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
     },
     readBtnText: {
-      fontSize: 12, fontWeight: '700', color: t.pageAccent,
+      fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.primary,
       letterSpacing: 0.6, textTransform: 'uppercase',
     },
     skipBtn: { paddingHorizontal: 10, paddingVertical: 6 },
     skipBtnText: {
-      fontSize: 12, fontWeight: '600', color: t.pageInkMuted,
+      fontSize: Type.eyebrow.size, fontWeight: '600', color: Colors.textMuted,
       letterSpacing: 0.6, textTransform: 'uppercase',
     },
 
     input: {
-      minHeight: 200,
-      padding: Spacing.md,
-      borderRadius: elder ? 6 : Radius.lg,
-      backgroundColor: t.pageSurface,
-      borderWidth: 1, borderColor: t.pageBorder,
-      fontSize: t.inputSize, lineHeight: t.inputLine, color: t.pageInk,
-      marginTop: Spacing.sm,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      minHeight: 200, padding: Spacing.md,
+      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight), color: Colors.textPrimary,
+      ...bodyFont,
     },
 
     micRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      marginTop: Spacing.md, justifyContent: 'center',
+      justifyContent: 'center',
     },
     micBtn: {
-      width: t.micSize, height: t.micSize, borderRadius: t.micSize / 2,
+      width: 44, height: 44, borderRadius: 22,
       alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1.5, borderColor: t.pageAccent,
-      backgroundColor: elder ? t.pageSurface : 'rgba(201,161,75,0.10)',
+      borderWidth: 1.5, borderColor: Colors.primary,
+      backgroundColor: Colors.surface,
     },
-    micBtnRec: { backgroundColor: '#A23F2E', borderColor: '#A23F2E' },
+    micBtnRec: { backgroundColor: Colors.error, borderColor: Colors.error },
     micHint: {
-      fontSize: t.metaSize + 1, color: t.pageInkSecondary,
-      fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.caption.size), color: Colors.textSecondary, fontStyle: 'italic', ...bodyFont,
     },
 
     actions: {
       flexDirection: 'row', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-      justifyContent: 'center', marginTop: Spacing.sm,
-    },
-    saveBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      paddingHorizontal: 24, paddingVertical: t.controlPadV,
-      borderRadius: Radius.full,
-      backgroundColor: t.pageAccent,
-    },
-    saveBtnText: {
-      color: t.onAccent,
-      fontSize: 14, fontWeight: '700', letterSpacing: 0.2,
-    },
-    stepAwayBtn: { paddingHorizontal: 12, paddingVertical: 10 },
-    stepAwayText: {
-      fontSize: 13, color: t.pageInkSecondary,
-      fontStyle: 'italic', textDecorationLine: 'underline',
+      justifyContent: 'center',
     },
 
-    allDone: {
-      fontSize: 18, lineHeight: 28,
-      color: t.pageInkSecondary,
-      fontStyle: 'italic',
-      textAlign: 'center', marginTop: 80,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-
-    // Session-end terminal card — vellum in elder, dark in standard
-    endCard: {
-      marginTop: 24,
-      padding: 36,
-      borderRadius: 14,
-      backgroundColor: elder ? t.pageCardBg : 'rgba(22, 22, 29, 0.78)',
-      borderWidth: 1, borderColor: elder ? t.pageBorder : t.pageAccent,
-      gap: 14,
-      ...(elder ? t.pageCardWebExtras : {}),
-    },
-    endKicker: {
-      fontSize: 12, fontWeight: '700', color: t.pageAccent, letterSpacing: 2,
-      textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    warnBody: {
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
+      color: Colors.textPrimary, fontStyle: 'italic', ...bodyFont,
     },
     endSummary: {
-      fontSize: 20, lineHeight: 32,
-      color: t.pageInk,
-      fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-    endActions: { flexDirection: 'row', alignItems: 'center', gap: 14, flexWrap: 'wrap' },
-
-    // Trigger warning — same vellum/dark switch
-    warnCard: {
-      padding: 28,
-      borderRadius: 14,
-      backgroundColor: elder ? t.pageCardBg : 'rgba(22, 22, 29, 0.78)',
-      borderLeftWidth: 4, borderLeftColor: elder ? '#9C3D2C' : t.pageAccent,
-      gap: 10,
-      ...(elder ? t.pageCardWebExtras : {}),
-    },
-    warnKicker: {
-      fontSize: 12, fontWeight: '700',
-      color: elder ? '#9C3D2C' : t.pageAccent,
-      letterSpacing: 1.6,
-      textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
-    warnBody: {
-      fontSize: 16, lineHeight: 26,
-      color: t.pageInk,
-      fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-    warnActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
-    warnContinue: {
-      paddingHorizontal: 16, paddingVertical: t.controlPadV - 4,
-      borderRadius: Radius.full,
-      backgroundColor: t.pageAccent,
-    },
-    warnContinueText: {
-      fontSize: 13, fontWeight: '700',
-      color: t.onAccent,
-    },
-    warnSkip: {
-      paddingHorizontal: 16, paddingVertical: t.controlPadV - 4,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: t.pageBorder,
-    },
-    warnSkipText: {
-      fontSize: 13, fontWeight: '700',
-      color: t.pageInkSecondary,
+      fontSize: fs(Type.cardTitle.size), lineHeight: fs(Type.cardTitle.lineHeight),
+      color: Colors.textPrimary, fontStyle: 'italic', ...bodyFont,
     },
 
-    // ── Library (past entries) — vellum index card in elder ────────
-    libHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    libPage: {
-      marginTop: 24,
-      ...pageCard,
-    },
-    libEmpty: {
-      fontSize: 17, color: t.pageInkSecondary,
-      fontStyle: 'italic',
-      marginTop: 24,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
-    libRow: {
-      paddingVertical: 18, gap: 6,
-      borderTopWidth: elder ? 1 : StyleSheet.hairlineWidth,
-      borderTopColor: elder ? 'rgba(95,70,40,0.18)' : t.pageBorder,
-    },
-    libDate: {
-      fontSize: 11, fontWeight: '700', color: t.pageInkMuted,
-      letterSpacing: 1.4, textTransform: 'uppercase',
-    },
+    // ── Library rows ───────────────────────────────────────────────
     libQuestion: {
-      fontSize: 15, color: t.pageAccent, fontWeight: '600',
-      fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.ui.size), color: Colors.primary, fontWeight: '600',
+      fontStyle: 'italic', ...bodyFont,
     },
     libBody: {
-      fontSize: 16, lineHeight: 26, color: t.pageInk,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
+      color: Colors.textPrimary, ...bodyFont,
     },
-    libActions: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 4 },
-    libRead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    libPolish: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    libReadText: { fontSize: 12, color: t.pageInkSecondary, fontWeight: '600' },
+    libActions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginTop: 4 },
+    libAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    libActionText: { fontSize: Type.caption.size, color: Colors.textSecondary, fontWeight: '600' },
 
-    // Co-writer draft drawer — sits beneath the original response with
-    // a subtle bronze border so it reads as "this is a suggestion."
+    // Clean-up drawer. A surface well beneath the entry.
     draftCard: {
-      marginTop: 10,
-      padding: 14,
-      borderRadius: 8,
-      backgroundColor: elder ? '#FBF4DE' : Colors.surface,
-      borderLeftWidth: 3, borderLeftColor: t.pageAccent,
-      borderWidth: StyleSheet.hairlineWidth, borderColor: t.pageBorder,
+      marginTop: 10, padding: 14,
+      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderLeftWidth: 3, borderLeftColor: Colors.primary,
+      borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
       gap: 8,
     },
-    draftKicker: {
-      fontSize: 11, fontWeight: '700', color: t.pageAccent,
-      letterSpacing: 1.6, textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
-    draftBody: {
-      fontSize: elder ? 17 : 15, lineHeight: elder ? 27 : 23,
-      color: t.pageInk, fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
-    },
     fixLine: {
-      fontSize: elder ? 15 : 14, lineHeight: elder ? 24 : 21, color: t.pageInk,
-      marginTop: 4,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 5), color: Colors.textPrimary,
+      marginTop: 4, ...bodyFont,
     },
     suggestLine: {
-      fontSize: elder ? 15 : 14, lineHeight: elder ? 24 : 21, color: t.pageInkSecondary,
-      marginTop: 4,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 5), color: Colors.textSecondary,
+      marginTop: 4, ...bodyFont,
     },
     draftInput: {
       minHeight: 140, padding: 10,
-      borderRadius: 6, backgroundColor: elder ? '#FFFFFF' : Colors.background,
-      borderWidth: 1, borderColor: t.pageBorder,
-      fontSize: elder ? 17 : 15, lineHeight: elder ? 27 : 23,
-      color: t.pageInk,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
+      fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
+      color: Colors.textPrimary, ...bodyFont,
     },
     draftActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-    draftAccept: {
-      paddingHorizontal: 14, paddingVertical: 8,
-      borderRadius: Radius.full,
-      backgroundColor: t.pageAccent,
-    },
-    draftAcceptText: { fontSize: 12, fontWeight: '700', color: t.onAccent },
-    draftReject: {
-      paddingHorizontal: 14, paddingVertical: 8,
-      borderRadius: Radius.full,
-      borderWidth: 1, borderColor: t.pageBorder,
-    },
-    draftRejectText: { fontSize: 12, fontWeight: '700', color: t.pageInkSecondary },
   });
 }

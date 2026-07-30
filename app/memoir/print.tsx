@@ -17,11 +17,15 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { RailCard } from '../../components/shared/RailCard';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 
 interface PrintOption {
   name: string;
@@ -110,34 +114,25 @@ const CATEGORY_ORDER: PrintOption['category'][] = ['print-on-demand', 'local', '
 
 export default function MemoirPrintScreen() {
   const reading = useMemoirReadingMode();
-  const { elder } = reading;
-  const s = makeStyles(elder);
-  const ic = elder
-    ? { chrome: Colors.brandIvory, secondary: Colors.textSecondary }
-    : { chrome: Colors.textPrimary, secondary: Colors.textSecondary };
+  const { scale, large } = reading;
+  const s = makeStyles(scale);
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title="Where to print"
+        showBack
+        right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
+      />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={ic.chrome} />
-          </TouchableOpacity>
-          <Text style={s.kicker}>Where to print</Text>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity onPress={reading.toggle} style={s.aaBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.aaText}>{elder ? 'Aa' : 'Aa+'}</Text>
-          </TouchableOpacity>
-        </View>
-
         <View style={s.page}>
           {CATEGORY_ORDER.map((cat) => {
             const items = OPTIONS.filter((o) => o.category === cat);
             if (items.length === 0) return null;
             return (
               <View key={cat} style={s.section}>
-                <Text style={s.sectionTitle}>{CATEGORY_LABEL[cat]}</Text>
-                {items.map((o) => <OptionCard key={o.name} option={o} elder={elder} />)}
+                <Eyebrow accentColor={Colors.primary}>{CATEGORY_LABEL[cat]}</Eyebrow>
+                {items.map((o) => <OptionCard key={o.name} option={o} scale={scale} />)}
               </View>
             );
           })}
@@ -151,12 +146,11 @@ export default function MemoirPrintScreen() {
   );
 }
 
-function OptionCard({ option, elder }: { option: PrintOption; elder: boolean }) {
-  const s = makeStyles(elder);
-  const accent = elder ? '#8A5B1A' : Colors.primary;
+function OptionCard({ option, scale }: { option: PrintOption; scale: number }) {
+  const s = makeStyles(scale);
   const open = () => { if (option.url) Linking.openURL(option.url); };
   return (
-    <View style={s.card}>
+    <RailCard>
       <View style={s.cardHead}>
         <Text style={s.cardName}>{option.name}</Text>
         <Text style={s.cardCost}>{option.approxCost}</Text>
@@ -168,12 +162,12 @@ function OptionCard({ option, elder }: { option: PrintOption; elder: boolean }) 
       </Text>
       <Text style={s.cardHow}>{option.how}</Text>
       {option.url && (
-        <TouchableOpacity onPress={open} style={s.cardLink} activeOpacity={0.85}>
-          <Ionicons name="open-outline" size={14} color={accent} />
+        <TouchableOpacity onPress={open} style={s.cardLink} activeOpacity={0.85} accessibilityLabel={`Open ${hostnameOf(option.url)}`}>
+          <Ionicons name="open-outline" size={14} color={Colors.primary} />
           <Text style={s.cardLinkText}>Open {hostnameOf(option.url)} →</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </RailCard>
   );
 }
 
@@ -182,94 +176,52 @@ function hostnameOf(url: string): string {
   catch { return url; }
 }
 
-function makeStyles(elder: boolean) {
-  const chromeText = Colors.brandIvory;
-  const chromeBorder = Colors.border;
-  const chromeSecondary = Colors.textSecondary;
-
-  const pageCardBg = elder ? '#F2E8CC' : 'transparent';
-  const pageInk = elder ? '#2A1F18' : Colors.textPrimary;
-  const pageInkSecondary = elder ? '#5A4A38' : Colors.textSecondary;
-  const pageInkMuted = elder ? '#8C7E60' : Colors.textMuted;
-  const pageAccent = elder ? '#8A5B1A' : Colors.primary;
-  const pageBorder = elder ? '#CFC0A0' : Colors.border;
-  const pageSurface = elder ? '#FBF4DE' : Colors.surface;
-
-  const pageCardWeb = (elder && Platform.OS === 'web') ? ({
-    backgroundImage:
-      'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(95,70,40,0.07) 31px, rgba(95,70,40,0.07) 32px)',
-    boxShadow:
-      '0 24px 50px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(95,70,40,0.08)',
-  } as any) : {};
+function makeStyles(scale: number = 1) {
+  const fs = (n: number) => Math.round(n * scale);
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 760, alignSelf: 'center', width: '100%' },
-    scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.lg },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 100, paddingTop: Spacing.sm, gap: Spacing.lg },
 
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    kicker: {
-      fontSize: 12, fontWeight: '700', color: Colors.primary, letterSpacing: 2,
-      textTransform: 'uppercase',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
-    aaBtn: {
-      paddingHorizontal: 10, paddingVertical: 6,
-      borderRadius: Radius.full, borderWidth: 1, borderColor: chromeBorder,
-    },
-    aaText: { fontSize: 14, fontWeight: '700', color: chromeSecondary },
-
-    page: elder ? {
-      marginTop: 24, padding: 32, borderRadius: 14,
-      backgroundColor: pageCardBg, borderWidth: 1, borderColor: pageBorder,
-      gap: Spacing.lg, ...pageCardWeb,
-    } : { gap: Spacing.lg, marginTop: 8 },
+    page: { gap: Spacing.lg, marginTop: Spacing.xs },
 
     section: { gap: 10 },
-    sectionTitle: {
-      fontSize: 12, fontWeight: '700', color: pageAccent,
-      letterSpacing: 1.8, textTransform: 'uppercase', marginTop: 8,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-    },
 
-    card: {
-      padding: Spacing.md, gap: 8,
-      borderRadius: Radius.lg,
-      backgroundColor: pageSurface,
-      borderWidth: 1, borderColor: pageBorder,
-    },
     cardHead: {
       flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
       flexWrap: 'wrap', gap: 8,
     },
     cardName: {
-      fontSize: 18, fontWeight: '800', color: pageInk, letterSpacing: -0.2,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+      fontSize: fs(Type.cardTitle.size), lineHeight: fs(Type.cardTitle.lineHeight), fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.2,
+      ...displayFont,
     },
-    cardCost: { fontSize: 13, color: pageInkMuted, fontStyle: 'italic' },
+    cardCost: { fontSize: fs(Type.caption.size), color: Colors.textMuted, fontStyle: 'italic' },
     cardTagline: {
-      fontSize: 15, lineHeight: 22, color: pageInk, fontStyle: 'italic',
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 3), color: Colors.textPrimary, fontStyle: 'italic',
+      ...bodyFont,
     },
     cardBestFor: {
-      fontSize: 14, lineHeight: 22, color: pageInkSecondary,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 3), color: Colors.textSecondary,
+      ...bodyFont,
     },
-    cardBestForLabel: { fontWeight: '700', color: pageAccent },
+    cardBestForLabel: { fontWeight: '700', color: Colors.primary },
     cardHow: {
-      fontSize: 14, lineHeight: 22, color: pageInk,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 3), color: Colors.textPrimary,
+      ...bodyFont,
     },
     cardLink: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       paddingVertical: 6,
       alignSelf: 'flex-start',
     },
-    cardLinkText: { fontSize: 13, fontWeight: '700', color: pageAccent },
+    cardLinkText: { fontSize: fs(Type.caption.size), fontWeight: '700', color: Colors.primary },
 
     footnote: {
-      fontSize: 13, lineHeight: 22, color: pageInkMuted,
+      fontSize: fs(Type.caption.size), lineHeight: fs(Type.caption.lineHeight + 6), color: Colors.textMuted,
       fontStyle: 'italic', textAlign: 'center', marginTop: 8,
-      ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
+      ...bodyFont,
     },
   });
 }
