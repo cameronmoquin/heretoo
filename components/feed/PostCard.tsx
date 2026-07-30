@@ -30,11 +30,6 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Shadow } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 
-// Recognizable "liked" red — same hue Twitter, Instagram, and Reddit
-// converged on. Sits adjacent to the brand primary indigo without
-// fighting it; the brand color stays meaningful for primary CTAs.
-const HEART_RED = '#E0245E';
-
 /** How many lines the picker lays out per draw. */
 const DRAW = 5;
 
@@ -176,16 +171,16 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           activeOpacity={0.7}
           accessibilityLabel={post.viewer_hearted ? `Unheart ${Vocab.post}` : `Heart ${Vocab.post}`}
         >
-          {/* Filled heart in the recognizable "social red" — Twitter /
-              Instagram convention. The outline version for "not yet
-              hearted" matches the rest of the muted action row. */}
+          {/* Filled heart in the warm brand red (Colors.heart), not the
+              Twitter/Instagram hue. Not looking like them is the point.
+              Outline for "not yet hearted" matches the muted action row. */}
           <Ionicons
             name={post.viewer_hearted ? 'heart' : 'heart-outline'}
             size={18}
-            color={post.viewer_hearted ? HEART_RED : Colors.textSecondary}
+            color={post.viewer_hearted ? Colors.heart : Colors.textSecondary}
           />
           {heartCount > 0 && (
-            <Text style={[s.actionCount, post.viewer_hearted && { color: HEART_RED }]}>
+            <Text style={[s.actionCount, post.viewer_hearted && { color: Colors.heart }]}>
               {heartCount}
             </Text>
           )}
