@@ -23,8 +23,9 @@ import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
 import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
+import { Chip } from '../../../components/shared/Chip';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Heights } from '../../../constants/design';
 
 const CHIPS: { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -70,7 +71,7 @@ export default function FeedHomeScreen() {
       {!isDesktop && (
         <View style={styles.header}>
           <HereTooLogo size={28} color={Colors.textPrimary} />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => router.push('/chat' as any)}
@@ -107,22 +108,14 @@ export default function FeedHomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipRow}
         >
-          {CHIPS.map((chip) => {
-            const active = filter === chip.key;
-            return (
-              <TouchableOpacity
-                key={chip.key}
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setFilter(chip.key)}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={chip.label}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{chip.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
+          {CHIPS.map((chip) => (
+            <Chip
+              key={chip.key}
+              label={chip.label}
+              selected={filter === chip.key}
+              onPress={() => setFilter(chip.key)}
+            />
+          ))}
         </ScrollView>
       </View>
 
@@ -161,7 +154,7 @@ function makeStyles() { return StyleSheet.create({
   safe: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingVertical: 8, height: 52,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, height: Heights.topHeader,
   },
   iconBtn: {
     width: 36, height: 36, borderRadius: Radius.full,
@@ -172,21 +165,9 @@ function makeStyles() { return StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
   chipRow: {
-    flexDirection: 'row', gap: 8, alignItems: 'center',
+    flexDirection: 'row', gap: Spacing.xs, alignItems: 'center',
     paddingHorizontal: Spacing.md, paddingVertical: 10,
   },
-  chip: {
-    paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: Radius.full,
-    borderWidth: 1, borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  chipActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryFaint,
-  },
-  chipText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, letterSpacing: 0.2 },
-  chipTextActive: { color: Colors.primary, fontWeight: '800' },
   statsBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginHorizontal: Spacing.md, marginTop: Spacing.sm,

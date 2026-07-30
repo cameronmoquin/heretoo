@@ -14,6 +14,7 @@ import { Platform } from 'react-native';
 import { mediaPathToUrl, mediaPathToThumb } from '../../hooks/useUpload';
 import { StatureAvatar } from '../shared/StatureAvatar';
 import { Lightbox } from '../shared/Lightbox';
+import { Button } from '../shared/Button';
 import { useDeletePost } from '../../hooks/useFeed';
 import { useLatestComments } from '../../hooks/useComments';
 import { useBoostPost, type BoostScope } from '../../hooks/useBoosts';
@@ -307,9 +308,12 @@ export function PostCard({ post, onHeart }: PostCardProps) {
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity style={s.modalCancel} onPress={() => setBoostOpen(false)}>
-              <Text style={s.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
+            <Button
+              title="Cancel"
+              variant="ghost"
+              onPress={() => setBoostOpen(false)}
+              style={{ marginTop: Spacing.xs }}
+            />
           </Pressable>
         </Pressable>
       </Modal>
@@ -525,28 +529,28 @@ function FlagModal({ open, onClose, postId, commentId }: {
       onRequestClose={() => { reset(); onClose(); }}
     >
       <Pressable
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: Spacing.lg }]}
         onPress={() => { reset(); onClose(); }}
       >
         <Pressable
-          style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: 18, gap: 4, width: '100%', maxWidth: 420, borderWidth: 1, borderColor: Colors.border }}
+          style={{ backgroundColor: Colors.surface, borderRadius: Radius.md, padding: 18, gap: Spacing.xxs, width: '100%', maxWidth: 420, borderWidth: 1, borderColor: Colors.border }}
           onPress={(e) => e.stopPropagation()}
         >
           {sent ? (
             <>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary }}>
+              <Text style={{ fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary }}>
                 Report sent.
               </Text>
-              <TouchableOpacity
+              <Button
+                title="Done"
+                variant="primary"
                 onPress={() => { reset(); onClose(); }}
-                style={{ marginTop: 14, alignItems: 'center', paddingVertical: 12, borderRadius: 12, backgroundColor: Colors.primary }}
-              >
-                <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 14 }}>Done</Text>
-              </TouchableOpacity>
+                style={{ marginTop: 14 }}
+              />
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 }}>
+              <Text style={{ fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.xs }}>
                 Report this {commentId ? 'comment' : Vocab.post}
               </Text>
               {FLAG_REASONS.map((r) => {
@@ -557,7 +561,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
                     onPress={() => setReason(r.id)}
                     style={{
                       flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-                      paddingVertical: 8, paddingHorizontal: 8, borderRadius: 10,
+                      paddingVertical: Spacing.xs, paddingHorizontal: Spacing.xs, borderRadius: Radius.sm,
                       backgroundColor: isPicked ? Colors.primaryFaint : 'transparent',
                     }}
                     activeOpacity={0.75}
@@ -569,7 +573,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
                     />
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.textPrimary }}>{r.label}</Text>
-                      <Text style={{ fontSize: 12, color: Colors.textMuted, marginTop: 1 }}>{r.sub}</Text>
+                      <Text style={{ fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 }}>{r.sub}</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -585,32 +589,26 @@ function FlagModal({ open, onClose, postId, commentId }: {
                   style={{
                     backgroundColor: Colors.surfaceLight,
                     borderWidth: 1, borderColor: Colors.border,
-                    borderRadius: 10, padding: 10,
+                    borderRadius: Radius.sm, padding: 10,
                     fontSize: 13, color: Colors.textPrimary,
-                    minHeight: 60, marginTop: 4,
+                    minHeight: 60, marginTop: Spacing.xxs,
                   }}
                 />
               )}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                <TouchableOpacity
+              <View style={{ flexDirection: 'row', gap: Spacing.xs, marginTop: 10 }}>
+                <Button
+                  title="Cancel"
+                  variant="outline"
                   onPress={() => { reset(); onClose(); }}
-                  style={{ flex: 1, alignItems: 'center', paddingVertical: 11, borderRadius: 10, borderWidth: 1, borderColor: Colors.border }}
-                >
-                  <Text style={{ color: Colors.textSecondary, fontWeight: '600', fontSize: 13 }}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title={flag.isPending ? 'Sending…' : 'Submit'}
+                  variant="primary"
                   onPress={submit}
                   disabled={!reason || flag.isPending || (reason === 'other' && note.trim().length < 5)}
-                  style={{
-                    flex: 1, alignItems: 'center', paddingVertical: 11, borderRadius: 10,
-                    backgroundColor: Colors.primary,
-                    opacity: !reason || flag.isPending || (reason === 'other' && note.trim().length < 5) ? 0.4 : 1,
-                  }}
-                >
-                  <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>
-                    {flag.isPending ? 'Sending…' : 'Submit'}
-                  </Text>
-                </TouchableOpacity>
+                  style={{ flex: 1 }}
+                />
               </View>
             </>
           )}
@@ -730,8 +728,8 @@ function makeStyles() { return StyleSheet.create({
   avatarImg: { width: '100%', height: '100%' },
   avatarText: { color: '#FFF', fontSize: Type.body.size, fontWeight: '700' },
   author: {
-    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
-    fontWeight: Type.uiBold.weight, color: Colors.textPrimary,
+    fontSize: Type.cardTitle.size, lineHeight: Type.cardTitle.lineHeight,
+    fontWeight: Type.cardTitle.weight, color: Colors.textPrimary,
   },
   time: {
     fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
@@ -820,10 +818,10 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: Spacing.xs,
-    gap: 4,
+    gap: Spacing.xxs,
   },
   lineQuote: {
-    fontSize: 14,
+    fontSize: Type.ui.size,
     lineHeight: 20,
     fontStyle: 'italic',
     color: Colors.textPrimary,
@@ -840,19 +838,19 @@ function makeStyles() { return StyleSheet.create({
   },
   pickerBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 10, paddingHorizontal: 8,
+    paddingVertical: 10, paddingHorizontal: Spacing.xs,
   },
   pickerBtnText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
 
   commentPreview: {
     marginTop: Spacing.xxs, paddingTop: Spacing.xxs,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
-    gap: 4,
+    gap: Spacing.xxs,
   },
   commentLine: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
-  commentName: { fontSize: 12, fontWeight: '700', color: Colors.textPrimary, flexShrink: 0 },
-  commentBody: { fontSize: 12, color: Colors.textSecondary, lineHeight: 17, flex: 1 },
-  commentMore: { fontSize: 12, color: Colors.primary, fontWeight: '600', marginTop: 2 },
+  commentName: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.textPrimary, flexShrink: 0 },
+  commentBody: { fontSize: Type.caption.size, color: Colors.textSecondary, lineHeight: 17, flex: 1 },
+  commentMore: { fontSize: Type.caption.size, color: Colors.primary, fontWeight: '600', marginTop: 2 },
 
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
@@ -860,18 +858,16 @@ function makeStyles() { return StyleSheet.create({
   },
   modalCard: {
     backgroundColor: Colors.surface,
-    borderRadius: Radius.lg, padding: Spacing.lg, gap: 4,
+    borderRadius: Radius.lg, padding: Spacing.lg, gap: Spacing.xxs,
     width: '100%', maxWidth: 420,
     borderWidth: 1, borderColor: Colors.border,
     ...(Shadow.lg as object),
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 12 },
+  modalTitle: { fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.sm },
   scopeRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: 10, paddingHorizontal: Spacing.xs, borderRadius: 8,
   },
-  scopeLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  scopeHint: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
-  modalCancel: { alignItems: 'center', paddingVertical: 10, marginTop: 6 },
-  modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
+  scopeLabel: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
+  scopeHint: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 },
 }); }

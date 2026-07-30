@@ -59,6 +59,7 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 import { MicInputButton } from '../shared/MicInputButton';
+import { Eyebrow } from '../shared/Eyebrow';
 
 interface FeedComposerProps {
   /**
@@ -321,11 +322,11 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   return (
     <View style={s.card}>
       <View style={s.headerRow}>
-        <Text style={s.title}>
+        <Eyebrow>
           {isPublic
             ? `New public ${Vocab.post}`
             : isFamilyScoped && postKind === 'update' ? 'New update' : `New ${Vocab.post}`}
-        </Text>
+        </Eyebrow>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <TouchableOpacity
             onPress={() => { setExpanded(false); setBody(''); setDestination('crew'); upload.reset(); }}
@@ -347,7 +348,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             }
           >
             {isSending
-              ? <ActivityIndicator color="#FFF" size="small" />
+              ? <ActivityIndicator color={Colors.onPrimary} size="small" />
               : (
                 <Text style={s.postBtnText}>
                   {isPublic ? `${Vocab.Post} to Public` : postKind === 'update' ? 'Send update' : Vocab.Post}
@@ -814,7 +815,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   collapseBtn: {
-    width: 28, height: 28, borderRadius: 6,
+    width: 28, height: 28, borderRadius: Radius.xs,
     alignItems: 'center', justifyContent: 'center',
   },
 
@@ -828,12 +829,8 @@ function makeStyles() { return StyleSheet.create({
   headerRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  title: {
-    fontSize: 11, fontWeight: '700',
-    color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.4,
-  },
   postBtn: {
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.full,
     backgroundColor: Colors.primary,
   },
   postBtnDisabled: { opacity: 0.4 },
@@ -844,7 +841,7 @@ function makeStyles() { return StyleSheet.create({
   },
   // White text on the new indigo primary — was '#000' which was fine on
   // the old gold-toned primary but reads as low-contrast on indigo.
-  postBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
+  postBtnText: { color: Colors.onPrimary, fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
 
   // Destination selector — Crew vs Public. Full-width, both options
   // legible at rest, so the target audience is never a guess.
@@ -893,12 +890,12 @@ function makeStyles() { return StyleSheet.create({
 
   kindRow: {
     flexDirection: 'row', gap: 6,
-    backgroundColor: Colors.surfaceLight, borderRadius: 999,
+    backgroundColor: Colors.surfaceLight, borderRadius: Radius.full,
     padding: 4, alignSelf: 'flex-start',
   },
   kindBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full,
   },
   kindBtnActive: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
   kindBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
@@ -928,7 +925,7 @@ function makeStyles() { return StyleSheet.create({
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 11, paddingVertical: 7,
-    borderRadius: 999, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.border,
     backgroundColor: Colors.surfaceLight,
   },
   actionBtnText: { color: Colors.textPrimary, fontSize: 12, fontWeight: '600' },
@@ -945,7 +942,7 @@ function makeStyles() { return StyleSheet.create({
   taggedChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999,
+    borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
     borderWidth: 1, borderColor: Colors.border,
   },
@@ -1005,10 +1002,10 @@ function makeStyles() { return StyleSheet.create({
   },
   gateRow: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' },
   gateBtn: {
-    paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999,
+    paddingHorizontal: 18, paddingVertical: 11, borderRadius: Radius.full,
     backgroundColor: Colors.primary,
   },
-  gateBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
+  gateBtnText: { color: Colors.onPrimary, fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
   gateBtnAlt: {
     backgroundColor: 'transparent',
     borderWidth: 1, borderColor: Colors.border,

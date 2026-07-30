@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NewsItem } from '../../hooks/useNews';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
+import { Eyebrow } from '../shared/Eyebrow';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -46,9 +47,9 @@ export function NewsCard({ item }: NewsCardProps) {
 
       <View style={s.body}>
         <View style={s.metaRow}>
-          <Text style={s.source} numberOfLines={1}>
-            {item.source_label.toUpperCase()}
-          </Text>
+          <Eyebrow accentColor={Colors.primary} numberOfLines={1} style={s.source}>
+            {item.source_label}
+          </Eyebrow>
           <Text style={s.dot}>·</Text>
           <Text style={s.time}>{relTime(item.published_at)}</Text>
           <View style={{ flex: 1 }} />
@@ -110,23 +111,19 @@ function makeStyles() { return StyleSheet.create({
   },
   body: { gap: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  source: {
-    fontSize: Type.eyebrow.size,
-    lineHeight: Type.eyebrow.lineHeight,
-    fontWeight: '800',
-    letterSpacing: Type.eyebrow.letterSpacing,
-    color: Colors.primary,
-    flexShrink: 1,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
+  // Layout only; type / color / display font come from the shared Eyebrow.
+  source: { flexShrink: 1 },
   dot: { fontSize: 10, color: Colors.textMuted },
   time: {
     fontSize: 10, fontWeight: '600', letterSpacing: 0.6,
     textTransform: 'uppercase', color: Colors.textMuted,
   },
   headline: {
-    fontSize: 17, lineHeight: 24, fontWeight: '700',
-    letterSpacing: -0.2, color: Colors.textPrimary,
+    fontSize: Type.cardTitle.size,
+    lineHeight: Type.cardTitle.lineHeight,
+    fontWeight: Type.cardTitle.weight,
+    letterSpacing: Type.cardTitle.letterSpacing,
+    color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   imageWrap: {

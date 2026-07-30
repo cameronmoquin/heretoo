@@ -21,6 +21,7 @@ import { router } from 'expo-router';
 import type { HuntCache } from '../../hooks/useHunt';
 import { Colors } from '../../constants/colors';
 import { Spacing, Type } from '../../constants/design';
+import { Eyebrow } from '../shared/Eyebrow';
 
 interface DropCardProps {
   cache: HuntCache;
@@ -49,7 +50,7 @@ export function DropCard({ cache }: DropCardProps) {
 
       <View style={s.body}>
         <View style={s.metaRow}>
-          <Text style={s.kicker}>DROP</Text>
+          <Eyebrow accentColor={Colors.bridge}>DROP</Eyebrow>
           <Text style={s.dot}>·</Text>
           <Text style={s.count}>{pickups}</Text>
           <View style={{ flex: 1 }} />
@@ -92,22 +93,17 @@ function makeStyles() { return StyleSheet.create({
   },
   body: { gap: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  kicker: {
-    fontSize: Type.eyebrow.size,
-    lineHeight: Type.eyebrow.lineHeight,
-    fontWeight: '800',
-    letterSpacing: Type.eyebrow.letterSpacing,
-    color: Colors.bridge,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
   dot: { fontSize: 10, color: Colors.textMuted },
   count: {
     fontSize: 10, fontWeight: '600', letterSpacing: 0.6,
     textTransform: 'uppercase', color: Colors.textMuted,
   },
   title: {
-    fontSize: 17, lineHeight: 24, fontWeight: '700',
-    letterSpacing: -0.2, color: Colors.textPrimary,
+    fontSize: Type.cardTitle.size,
+    lineHeight: Type.cardTitle.lineHeight,
+    fontWeight: Type.cardTitle.weight,
+    letterSpacing: Type.cardTitle.letterSpacing,
+    color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   hint: {
