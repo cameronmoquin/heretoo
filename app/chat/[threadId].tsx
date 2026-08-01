@@ -33,7 +33,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Button } from '../../components/shared/Button';
 import { MicInputButton } from '../../components/shared/MicInputButton';
 import { ReframerDrawer, ReframerEye } from '../../components/chat/ReframerDrawer';
 import { useReframer, type ReframerContextMessage } from '../../hooks/useReframer';
@@ -203,23 +204,25 @@ export default function ChatThread() {
               This is a message request from outside your network.
             </Text>
             <View style={s.requestRow}>
-              <TouchableOpacity
-                style={s.declineBtn}
+              <Button
+                title="Decline"
                 onPress={() => showConfirm(
                   'Decline this request?',
                   "They won't be able to send more messages.",
                   () => decline.mutate(thread.id, { onSuccess: () => router.replace('/chat' as any) }),
                   'Decline', 'Cancel',
                 )}
-              >
-                <Text style={s.declineBtnText}>Decline</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.acceptBtn}
+                variant="outline"
+                size="sm"
+                style={s.requestBtn}
+              />
+              <Button
+                title="Accept"
                 onPress={() => accept.mutate(thread.id)}
-              >
-                <Text style={s.acceptBtnText}>Accept</Text>
-              </TouchableOpacity>
+                variant="primary"
+                size="sm"
+                style={s.requestBtn}
+              />
             </View>
           </View>
         ) : (
@@ -253,7 +256,7 @@ export default function ChatThread() {
               onPress={submit}
               disabled={!draft.trim() || send.isPending}
             >
-              <Ionicons name="send" size={18} color="#FFF" />
+              <Ionicons name="send" size={18} color={Colors.onPrimary} />
             </TouchableOpacity>
           </View>
         )}
@@ -296,11 +299,11 @@ function makeStyles() { return StyleSheet.create({
   frame: ({
     flex: 1,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginVertical: 12,
-    marginHorizontal: 8,
+    marginVertical: Spacing.sm,
+    marginHorizontal: Spacing.xs,
     overflow: 'hidden',
     ...(Platform.OS === 'web' ? { boxShadow: '0 6px 24px rgba(0,0,0,0.06)' } : {}),
   } as any),
@@ -311,32 +314,34 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  backBtn: { padding: 4 },
+  backBtn: { padding: Spacing.xxs },
+  // 36 / radius 7 are avatar geometry — no size or radius token matches.
   avatar: {
     width: 36, height: 36, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
-  headerName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  headerHandle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  avatarText: { color: Colors.onPrimary, fontSize: Type.ui.size, fontWeight: '700' },
+  headerName: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
+  headerHandle: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 },
 
-  scroll: { padding: Spacing.md, gap: 6, paddingBottom: 16 },
+  scroll: { padding: Spacing.md, gap: 6, paddingBottom: Spacing.md },
   noMessages: { color: Colors.textMuted, textAlign: 'center', marginTop: 40 },
 
   bubbleWrap: { maxWidth: '78%' },
   bubbleWrapMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   bubbleWrapTheirs: { alignSelf: 'flex-start', alignItems: 'flex-start' },
-  bubble: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
+  bubble: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, borderRadius: Radius.md },
+  // The 4px tail corner is bubble geometry — no Radius token is that tight.
   bubbleMine: { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },
   bubbleTheirs: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, borderBottomLeftRadius: 4 },
-  bubbleTextMine: { color: '#FFF', fontSize: 14, lineHeight: 19 },
-  bubbleTextTheirs: { color: Colors.textPrimary, fontSize: 14, lineHeight: 19 },
-  bubbleTime: { fontSize: 10, color: Colors.textMuted, marginTop: 2, marginHorizontal: 4 },
+  bubbleTextMine: { color: Colors.onPrimary, fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight },
+  bubbleTextTheirs: { color: Colors.textPrimary, fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight },
+  bubbleTime: { fontSize: 10, color: Colors.textMuted, marginTop: 2, marginHorizontal: Spacing.xxs },
 
   composer: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: 8,
+    flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.xs,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
     backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.md, paddingVertical: 10,
@@ -344,8 +349,9 @@ function makeStyles() { return StyleSheet.create({
   composerInput: {
     flex: 1, backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: Colors.textPrimary, maxHeight: 100,
+    fontSize: Type.ui.size, color: Colors.textPrimary, maxHeight: 100,
   },
+  // 38 / radius 7 match the avatar geometry above, not a control token.
   composerSend: {
     width: 38, height: 38, borderRadius: 7,
     backgroundColor: Colors.primary,
@@ -357,26 +363,18 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surface,
     padding: Spacing.md, gap: 10,
   },
-  requestText: { fontSize: 12, color: Colors.textSecondary, textAlign: 'center' },
+  requestText: { fontSize: Type.caption.size, color: Colors.textSecondary, textAlign: 'center' },
   requestRow: { flexDirection: 'row', gap: 10 },
-  declineBtn: {
-    flex: 1, paddingVertical: 11, borderRadius: 999,
-    borderWidth: 1, borderColor: Colors.border, alignItems: 'center',
-  },
-  declineBtnText: { color: Colors.textPrimary, fontWeight: '600', fontSize: 13 },
-  acceptBtn: {
-    flex: 1, paddingVertical: 11, borderRadius: 999,
-    backgroundColor: Colors.primary, alignItems: 'center',
-  },
-  acceptBtnText: { color: '#FFF', fontWeight: '600', fontSize: 13, letterSpacing: 0.1 },
+  // Button supplies the fill, the border, the ink and the 44pt floor.
+  requestBtn: { flex: 1, borderRadius: Radius.full },
 
   awaitingBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center',
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
     backgroundColor: Colors.surfaceLight,
-    paddingVertical: 12,
+    paddingVertical: Spacing.sm,
   },
-  awaitingText: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', flexShrink: 1 },
+  awaitingText: { fontSize: Type.caption.size, color: Colors.textMuted, textAlign: 'center', flexShrink: 1 },
   awaitingHintInline: {
     position: 'absolute', top: -22, left: 0, right: 0,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4,

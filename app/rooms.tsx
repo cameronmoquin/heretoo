@@ -20,7 +20,7 @@ import { GlitchText } from '../components/shared/GlitchText';
 import { useUnreadCount } from '../hooks/useChat';
 import { useRadio, useActiveStation } from '../stores/radioStore';
 import { Colors } from '../constants/colors';
-import { Spacing, Radius } from '../constants/design';
+import { Spacing, Radius, Type, Heights } from '../constants/design';
 
 interface Door {
   icon: any;
@@ -105,23 +105,25 @@ function makeStyles() {
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
     scroll: { padding: Spacing.md, paddingBottom: 110, gap: Spacing.md },
     title: {
-      fontSize: 22, fontWeight: '800', color: Colors.primary, marginTop: 4, marginBottom: 2,
+      fontSize: 22, fontWeight: '800', color: Colors.primary,
+      marginTop: Spacing.xxs, marginBottom: 2,
     },
 
     radioRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
+      flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
       padding: Spacing.md, borderRadius: Radius.lg,
       backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
       minHeight: 64,
     },
     radioIcon: {
-      width: 44, height: 44, borderRadius: 22,
+      width: Heights.touchTarget, height: Heights.touchTarget,
+      borderRadius: Radius.full,
       alignItems: 'center', justifyContent: 'center',
       borderWidth: 1, borderColor: Colors.border,
     },
     radioIconOn: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
     radioName: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-    radioSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+    radioSub: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 2 },
 
     // Two doors per row on phones; the 720 max-width caps them on
     // bigger screens. 48%+gap keeps targets comfortably over 44pt.
@@ -134,12 +136,17 @@ function makeStyles() {
       borderWidth: 1, borderColor: Colors.border,
       justifyContent: 'center',
     },
-    doorLabel: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+    doorLabel: {
+      fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary,
+    },
     badge: {
       position: 'absolute', top: -6, left: 18,
-      minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4,
+      minWidth: 18, height: 18, borderRadius: Radius.full,
+      paddingHorizontal: Spacing.xxs,
       backgroundColor: Colors.heart, alignItems: 'center', justifyContent: 'center',
     },
-    badgeText: { fontSize: 10, fontWeight: '800', color: '#FFF' },
+    // Ivory, not #FFF. The count sits on Colors.heart and has to stay
+    // legible when the skin moves that red.
+    badgeText: { fontSize: 10, fontWeight: '800', color: Colors.brandIvory },
   });
 }

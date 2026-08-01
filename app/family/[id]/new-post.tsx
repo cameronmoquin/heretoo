@@ -8,8 +8,10 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUpload } from '../../../hooks/useUpload';
 import { showAlert } from '../../../lib/alert';
+import { Button } from '../../../components/shared/Button';
+import { Eyebrow } from '../../../components/shared/Eyebrow';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
 import { Vocab } from '../../../constants/vocab';
 
 export default function NewFamilyPost() {
@@ -73,7 +75,7 @@ export default function NewFamilyPost() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
-          <Text style={s.label}>Message</Text>
+          <Eyebrow style={s.label}>Message</Eyebrow>
           <TextInput
             style={[s.input, s.textarea]}
             value={body}
@@ -86,19 +88,17 @@ export default function NewFamilyPost() {
           />
 
           <View style={s.mediaRow}>
-            <TouchableOpacity
+            <Button
+              title={upload.selectedAssets.length > 0
+                ? `${upload.selectedAssets.length} selected`
+                : 'Add photos'}
+              variant="secondary"
+              size="sm"
+              icon={<Ionicons name="image-outline" size={18} color={Colors.primary} />}
               style={s.mediaBtn}
               onPress={async () => { await upload.pickPhotos(); }}
               disabled={upload.stage === 'uploading'}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="image-outline" size={18} color={Colors.primary} />
-              <Text style={s.mediaBtnText}>
-                {upload.selectedAssets.length > 0
-                  ? `${upload.selectedAssets.length} selected`
-                  : 'Add photos'}
-              </Text>
-            </TouchableOpacity>
+            />
             {upload.selectedAssets.length > 0 && (
               <TouchableOpacity style={s.clearBtn} onPress={() => upload.reset()} activeOpacity={0.7}>
                 <Text style={s.clearBtnText}>Clear</Text>
@@ -133,13 +133,13 @@ export default function NewFamilyPost() {
             </View>
           )}
 
-          <TouchableOpacity
-            style={[s.saveBtn, !canPost && { opacity: 0.5 }]}
+          <Button
+            title={Vocab.Post}
             onPress={handlePost}
             disabled={!canPost}
-          >
-            <Text style={s.saveBtnText}>{Vocab.Post}</Text>
-          </TouchableOpacity>
+            size="lg"
+            style={s.saveBtn}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -149,37 +149,37 @@ export default function NewFamilyPost() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.md, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
-  label: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.4, marginTop: 14, marginBottom: 6 },
+  label: { marginTop: 14, marginBottom: 6 },
   input: {
     backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12,
+    borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: Spacing.sm,
     fontSize: 15, color: Colors.textPrimary,
   },
   textarea: { minHeight: 120 },
-  mediaRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  mediaRow: { flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.sm },
   mediaBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.md,
+    borderWidth: 1, borderColor: Colors.border,
   },
-  mediaBtnText: { color: Colors.textPrimary, fontSize: 13, fontWeight: '600' },
-  clearBtn: { paddingHorizontal: 12, paddingVertical: 10 },
+  clearBtn: { paddingHorizontal: Spacing.sm, paddingVertical: 10 },
   clearBtnText: { color: Colors.textMuted, fontSize: 13 },
   thumb: { width: 80, height: 80, borderRadius: 8, marginRight: 6 },
   progressBox: {
-    marginTop: 12, padding: 10, borderRadius: 8,
+    marginTop: Spacing.sm, padding: 10, borderRadius: 8,
     backgroundColor: Colors.primaryFaint,
   },
   progressText: { fontSize: 13, color: Colors.primary, fontWeight: '500' },
   debugBox: {
-    marginTop: 12, padding: 10, borderRadius: 8,
-    backgroundColor: '#3a1410', borderWidth: 1, borderColor: '#5a2a20',
+    marginTop: Spacing.sm, padding: 10, borderRadius: 8,
+    backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.error,
   },
-  debugLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, color: '#FFA899', textTransform: 'uppercase', marginBottom: 4 },
-  debugText: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, color: '#FFD0C9' },
-  saveBtn: {
-    marginTop: 24, backgroundColor: Colors.primary, borderRadius: Radius.md,
-    paddingVertical: 14, alignItems: 'center',
+  debugLabel: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 1,
+    color: Colors.error, textTransform: 'uppercase', marginBottom: Spacing.xxs,
   },
-  saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
+  debugText: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: Type.eyebrow.size, color: Colors.textSecondary,
+  },
+  saveBtn: { marginTop: Spacing.lg },
 }); }

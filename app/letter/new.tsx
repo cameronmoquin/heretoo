@@ -13,7 +13,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView,
-  Platform, ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -25,7 +25,9 @@ import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
+import { Button } from '../../components/shared/Button';
 import { Chip } from '../../components/shared/Chip';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 interface ResolvedRecipient {
   kind: 'user';
@@ -156,7 +158,7 @@ export default function NewLetterScreen() {
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {/* TO — recipient picker */}
         <View style={s.field}>
-          <Text style={s.fieldLabel}>To</Text>
+          <Eyebrow>To</Eyebrow>
           <View style={s.recipientChips}>
             {recipients.map((r, idx) => (
               <View key={idx} style={s.chip}>
@@ -228,7 +230,7 @@ export default function NewLetterScreen() {
 
         {/* BODY — Source Serif, no toolbar */}
         <View style={s.field}>
-          <Text style={s.fieldLabel}>Body</Text>
+          <Eyebrow>Body</Eyebrow>
           <TextInput
             style={s.bodyInput}
             value={body}
@@ -242,7 +244,7 @@ export default function NewLetterScreen() {
         {/* DELIVERY DELAY. Pick how far out, no keyboard, no code-shaped
             date string. A specific day is available on web. */}
         <View style={s.field}>
-          <Text style={s.fieldLabel}>Deliver</Text>
+          <Eyebrow>Deliver</Eyebrow>
           <View style={s.presetRow}>
             {DELAY_PRESETS.map((p) => (
               <Chip
@@ -265,9 +267,9 @@ export default function NewLetterScreen() {
             },
             'aria-label': 'Pick a specific delivery date',
             style: {
-              marginTop: 10, padding: '10px 12px', borderRadius: 10,
+              marginTop: 10, padding: '10px 12px', borderRadius: Radius.sm,
               border: `1px solid ${Colors.border}`, background: Colors.surface,
-              color: Colors.textPrimary, fontSize: 14,
+              color: Colors.textPrimary, fontSize: Type.ui.size,
             },
           })}
           {!!deliverAt && (
@@ -276,21 +278,15 @@ export default function NewLetterScreen() {
         </View>
 
         {/* SAVE */}
-        <TouchableOpacity
-          style={[s.saveBtn, (saving || body.trim().length === 0 || recipients.length === 0) && { opacity: 0.4 }]}
+        <Button
+          title="Save and queue"
           onPress={onSave}
-          disabled={saving || body.trim().length === 0 || recipients.length === 0}
-          activeOpacity={0.85}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <Ionicons name="mail-outline" size={16} color="#FFF" />
-              <Text style={s.saveBtnText}>Save and queue</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          loading={saving}
+          disabled={body.trim().length === 0 || recipients.length === 0}
+          variant="primary"
+          style={s.saveBtn}
+          icon={<Ionicons name="mail-outline" size={16} color={Colors.onPrimary} />}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -331,36 +327,34 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: 8,
   },
   headerTitle: {
-    fontSize: 14, fontWeight: '600', color: Colors.textSecondary,
+    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 1.6,
   },
 
   scroll: { padding: Spacing.md, paddingBottom: 80, gap: Spacing.lg },
 
   field: { gap: 6 },
-  fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.6,
-  },
 
   recipientChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  // Not the shared Chip: this pill carries a clock glyph and its own
+  // remove button, which Chip's label-only contract cannot express.
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
     paddingHorizontal: 10, paddingVertical: 5,
     borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
   },
-  chipText: { fontSize: 12, color: Colors.primary, fontWeight: '600', maxWidth: 220 },
+  chipText: { fontSize: Type.caption.size, color: Colors.primary, fontWeight: '600', maxWidth: 220 },
 
-  careOfRow: { gap: 4, marginTop: 6 },
+  careOfRow: { gap: Spacing.xxs, marginTop: 6 },
   careOfLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '600' },
   careOfHint: { color: Colors.textMuted, fontWeight: '400' },
   recipientInput: {
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 12, paddingVertical: 10,
-    fontSize: 14, color: Colors.textPrimary,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
+    fontSize: Type.ui.size, color: Colors.textPrimary,
   },
   searchPanel: {
     backgroundColor: Colors.surface,
@@ -369,20 +363,20 @@ function makeStyles() { return StyleSheet.create({
     overflow: 'hidden',
   },
   searchRow: {
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  searchName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  searchName: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
   searchHandle: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
 
   futureCta: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 8,
+    paddingHorizontal: 10, paddingVertical: Spacing.xs,
     borderRadius: Radius.md,
     backgroundColor: Colors.primaryFaint,
     alignSelf: 'flex-start',
   },
-  futureCtaText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
+  futureCtaText: { fontSize: Type.caption.size, color: Colors.primary, fontWeight: '600' },
 
   bodyInput: {
     minHeight: 320,
@@ -402,11 +396,10 @@ function makeStyles() { return StyleSheet.create({
     marginTop: Spacing.sm, fontSize: Type.caption.size, color: Colors.textMuted,
   },
 
+  // Button supplies the fill, the ink, the spinner and the 44pt floor.
   saveBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingHorizontal: 18, paddingVertical: 14,
+    gap: Spacing.xs,
+    paddingVertical: 14,
     borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
   },
-  saveBtnText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.1 },
 }); }

@@ -26,11 +26,14 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { useOpenThread } from '../../hooks/useChat';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { PostCard } from '../../components/feed/PostCard';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { WALLPAPERS, wallpaperToDataUri, type WallpaperId } from '../../stores/wallpaperStore';
 import { STATIONS } from '../../stores/radioStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 
 export default function UserProfile() {
@@ -123,9 +126,11 @@ export default function UserProfile() {
           <Text style={s.notFoundSub}>
             @{cleanHandle} doesn't match anyone on HereToo.
           </Text>
-          <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
-            <Text style={s.ctaText}>Back to feed</Text>
-          </TouchableOpacity>
+          <Button
+            title="Back to feed"
+            style={s.cta}
+            onPress={() => router.replace('/(tabs)/feed' as any)}
+          />
         </View>
       </SafeAreaView>
     );
@@ -135,17 +140,7 @@ export default function UserProfile() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
-      <View style={s.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={s.backBtn}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle} numberOfLines={1}>@{profile.handle}</Text>
-        <View style={{ width: 28 }} />
-      </View>
+      <ScreenHeader title={`@${profile.handle}`} showBack style={s.header} />
 
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.identity}>
@@ -160,24 +155,20 @@ export default function UserProfile() {
           {!!profile.bio && <Text style={s.bio}>{profile.bio}</Text>}
 
           {!isMe && (
-            <TouchableOpacity
-              style={[s.messageBtn, openThread.isPending && { opacity: 0.5 }]}
+            <Button
+              title={openThread.isPending ? 'Opening…' : 'Send message'}
+              icon={<Ionicons name="chatbubble-outline" size={15} color={Colors.onPrimary} />}
+              style={s.messageBtn}
               onPress={onMessage}
               disabled={openThread.isPending}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="chatbubble-outline" size={15} color="#FFF" />
-              <Text style={s.messageBtnText}>
-                {openThread.isPending ? 'Opening…' : 'Send message'}
-              </Text>
-            </TouchableOpacity>
+            />
           )}
         </View>
 
         {/* Mutual crews */}
         {mutualFamilies.length > 0 && (
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Mutual crews</Text>
+            <Eyebrow>Mutual crews</Eyebrow>
             {mutualFamilies.map((f: any) => (
               <TouchableOpacity
                 key={f.id}
@@ -209,7 +200,7 @@ export default function UserProfile() {
 
         {/* Posts */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Recent {Vocab.postPlural}</Text>
+          <Eyebrow>Recent {Vocab.postPlural}</Eyebrow>
           {(posts ?? []).length === 0 ? (
             <Text style={s.emptyPosts}>Nothing public to show yet.</Text>
           ) : (
@@ -257,7 +248,7 @@ function TheirStyleCard({ profile }: { profile: any }) {
 
   return (
     <View style={s.section}>
-      <Text style={s.sectionTitle}>Their style</Text>
+      <Eyebrow>Their style</Eyebrow>
 
       {wallpaperDef && (
         <View style={s.styleRow}>
@@ -324,65 +315,60 @@ function capitalize(str: string): string {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  backBtn: { padding: 4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
 
   scroll: {
     paddingBottom: 80, gap: 14,
     maxWidth: 600, alignSelf: 'center', width: '100%',
   },
   identity: { alignItems: 'center', gap: 6, paddingVertical: 18, paddingHorizontal: Spacing.md },
-  displayName: { fontWeight: '800', fontSize: 22, color: Colors.textPrimary, marginTop: 12 },
-  handle: { fontSize: 14, color: Colors.textMuted },
-  bio: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 20, maxWidth: 360 },
-  messageBtn: {
-    marginTop: 12,
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999,
-    backgroundColor: Colors.primary,
+  displayName: { fontWeight: '800', fontSize: 22, color: Colors.textPrimary, marginTop: Spacing.sm },
+  handle: { fontSize: Type.ui.size, color: Colors.textMuted },
+  bio: {
+    fontSize: Type.ui.size, color: Colors.textSecondary, textAlign: 'center',
+    marginTop: 6, lineHeight: 20, maxWidth: 360,
   },
-  messageBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  messageBtn: { marginTop: Spacing.sm, borderRadius: Radius.full },
 
   section: {
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
-    padding: 14, gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.4,
+    padding: 14, gap: Spacing.xs,
   },
   familyRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 8,
+    paddingVertical: Spacing.xs,
   },
   familyIcon: {
-    width: 32, height: 32, borderRadius: 6,
+    width: Spacing.xl, height: Spacing.xl, borderRadius: Radius.xs,
     backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   familyIconImg: { width: '100%', height: '100%' },
-  familyName: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  familyName: {
+    flex: 1, fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,
+  },
 
-  emptyPosts: { fontSize: 13, color: Colors.textMuted, paddingVertical: 8 },
+  emptyPosts: { fontSize: 13, color: Colors.textMuted, paddingVertical: Spacing.xs },
 
   // "Their style" wallpaper preview row
   styleRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     paddingVertical: 6,
   },
   stylePreview: {
     width: 64, height: 64, borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
   },
-  styleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  styleEra: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  styleLabel: {
+    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,
+  },
+  styleEra: {
+    fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 2,
+  },
 
   stationIcon: {
     width: 64, height: 64, borderRadius: Radius.md,
@@ -390,24 +376,24 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xxs, marginTop: Spacing.xxs },
   chip: {
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+    paddingHorizontal: Spacing.xs, paddingVertical: 3, borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
     borderWidth: 1, borderColor: Colors.border,
   },
-  chipText: { fontSize: 11, fontWeight: '600', color: Colors.primary },
+  chipText: {
+    fontSize: Type.eyebrow.size, fontWeight: '600', color: Colors.primary,
+  },
   chipMore: {
     alignSelf: 'center',
-    fontSize: 11, color: Colors.textMuted, paddingHorizontal: 4,
+    fontSize: Type.eyebrow.size, color: Colors.textMuted, paddingHorizontal: Spacing.xxs,
   },
 
   notFound: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 10, marginTop: 60 },
-  notFoundTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: 8 },
-  notFoundSub: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', maxWidth: 320 },
-  cta: {
-    marginTop: 14, paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999,
-    backgroundColor: Colors.primary,
+  notFoundTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: Spacing.xs },
+  notFoundSub: {
+    fontSize: Type.ui.size, color: Colors.textSecondary, textAlign: 'center', maxWidth: 320,
   },
-  ctaText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  cta: { marginTop: 14, borderRadius: Radius.full },
 }); }

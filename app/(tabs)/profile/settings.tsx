@@ -28,8 +28,12 @@ import { useAuthStore } from '../../../stores/authStore';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { HeadshotCapture, type HeadshotResult } from '../../../components/upload/HeadshotCapture';
 import { GenerationSwitcher } from '../../../components/shared/GenerationSwitcher';
+import { Button } from '../../../components/shared/Button';
+import { Eyebrow } from '../../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../../components/shared/ScreenHeader';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
+import { Gen } from '../../../constants/generations';
 
 export default function ProfileSettings() {
   const s = makeStyles();
@@ -171,17 +175,7 @@ export default function ProfileSettings() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={s.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={s.backBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={s.title}>Edit profile</Text>
-          <View style={{ width: 28 }} />
-        </View>
+        <ScreenHeader title="Edit profile" showBack style={s.header} />
 
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity
@@ -251,14 +245,13 @@ export default function ProfileSettings() {
             </View>
           )}
 
-          <TouchableOpacity
-            style={[s.saveBtn, busy === 'save' && { opacity: 0.5 }]}
+          <Button
+            title={busy === 'save' ? 'Saving…' : 'Save changes'}
             onPress={onSave}
             disabled={busy === 'save'}
-            activeOpacity={0.85}
-          >
-            <Text style={s.saveBtnText}>{busy === 'save' ? 'Saving…' : 'Save changes'}</Text>
-          </TouchableOpacity>
+            size="lg"
+            style={s.saveBtn}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -331,7 +324,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   const s = makeStyles();
   return (
     <View style={s.field}>
-      <Text style={s.fieldLabel}>{label}</Text>
+      <Eyebrow>{label}</Eyebrow>
       {children}
     </View>
   );
@@ -352,12 +345,8 @@ async function readAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  backBtn: { padding: 4 },
-  title: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
 
   scroll: {
     padding: Spacing.lg,
@@ -366,57 +355,53 @@ function makeStyles() { return StyleSheet.create({
     paddingBottom: 80,
   },
 
-  avatarWrap: { alignSelf: 'center', position: 'relative', marginTop: 8 },
+  avatarWrap: { alignSelf: 'center', position: 'relative', marginTop: Spacing.xs },
   avatarOverlay: {
     position: 'absolute', right: -2, bottom: -2,
-    width: 30, height: 30, borderRadius: 15,
+    width: 30, height: 30, borderRadius: Radius.full,
     backgroundColor: 'rgba(0,0,0,0.7)',
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: Colors.surface,
   },
   field: { gap: 6 },
-  fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.4,
-  },
   input: {
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 14, paddingVertical: 12,
+    paddingHorizontal: 14, paddingVertical: Spacing.sm,
     fontSize: 15, color: Colors.textPrimary,
   },
   textarea: { minHeight: 90 },
 
   errorBox: {
-    backgroundColor: 'rgba(255,64,80,0.10)',
-    borderWidth: 1, borderColor: 'rgba(255,64,80,0.30)',
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.error,
     borderRadius: Radius.md, padding: 10,
   },
   errorText: { color: Colors.error, fontSize: 13 },
 
-  saveBtn: {
-    marginTop: 6, paddingVertical: 14,
-    borderRadius: 999, backgroundColor: Colors.primary,
-    alignItems: 'center',
-  },
-  saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  saveBtn: { marginTop: 6, borderRadius: Radius.full },
 
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   modalCard: {
-    backgroundColor: Colors.surface, borderRadius: 14,
-    width: '100%', maxWidth: 420, padding: 18, gap: 4,
+    backgroundColor: Colors.surface, borderRadius: Gen.radius,
+    width: '100%', maxWidth: 420, padding: 18, gap: Spacing.xxs,
     borderWidth: 1, borderColor: Colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
-  modalRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 10, paddingHorizontal: 4, borderRadius: 8,
+  modalTitle: {
+    fontSize: Type.bodyBold.size, fontWeight: Type.bodyBold.weight,
+    color: Colors.textPrimary, marginBottom: Spacing.xs,
   },
-  modalRowLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  modalRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: 10, paddingHorizontal: Spacing.xxs, borderRadius: 8,
+  },
+  modalRowLabel: {
+    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,
+  },
   modalCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
   modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }

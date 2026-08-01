@@ -30,8 +30,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type, Heights } from '../../constants/design';
+import { Gen } from '../../constants/generations';
 
 const COLS = 10;
 const ROWS = 20;
@@ -101,16 +103,25 @@ const PIECES: number[][][][] = [
   ],
 ];
 
-const COLORS_HEX = [
-  'transparent',
-  '#67BBE8', // I — pale blue
-  '#D4A04A', // O — gold
-  '#A47BC9', // T — soft violet
-  '#5BC289', // S — green
-  '#C73E3A', // Z — heart red
-  '#3D7A9F', // J — deep blue
-  '#E8A052', // L — orange
-];
+/**
+ * Piece colors, indexed by piece id. Built per render: these were seven
+ * hand-copied hexes at module scope, five of them stale duplicates of
+ * dark-theme palette values, so they froze at import and drifted the
+ * moment those tokens moved. Seven distinct hues is the requirement, and
+ * the palette carries exactly seven that stay apart in every skin.
+ */
+function pieceColors(): string[] {
+  return [
+    'transparent',
+    Colors.info,                        // I — blue
+    Colors.important,                   // O — gold
+    Colors.share,                       // T — violet
+    Colors.agree,                       // S — green
+    Colors.disagree,                    // Z — red
+    Colors.clusters.pragmatic_center,   // J — warm neutral
+    Colors.clusters.tradition_minded,   // L — orange
+  ];
+}
 
 interface Piece { type: number; rot: number; row: number; col: number; }
 
@@ -294,6 +305,7 @@ function initialState(): State {
 
 export default function Tetris() {
   const s = makeStyles();
+  const pieceHex = pieceColors();
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const tickRef = useRef<any>(null);
 
@@ -346,7 +358,7 @@ export default function Tetris() {
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.replace('/games' as any)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Ionicons name="chevron-back" size={20} color={Colors.brandIvory} />
+          <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={s.title}>BLOCKS</Text>
         <View style={{ width: 20 }} />
@@ -377,7 +389,7 @@ export default function Tetris() {
                   style={[
                     s.cell,
                     cell !== 0 && {
-                      backgroundColor: COLORS_HEX[cell],
+                      backgroundColor: pieceHex[cell],
                       borderColor: Colors.brandIvory,
                     },
                   ]}
@@ -391,9 +403,7 @@ export default function Tetris() {
           {state.over && (
             <View style={s.overlay}>
               <Text style={s.overlayText}>GAME OVER</Text>
-              <TouchableOpacity onPress={() => dispatch({ type: 'reset' })} style={s.againBtn}>
-                <Text style={s.againText}>Play again</Text>
-              </TouchableOpacity>
+              <Button title="Play again" onPress={() => dispatch({ type: 'reset' })} style={s.againBtn} />
             </View>
           )}
         </View>
@@ -411,7 +421,7 @@ export default function Tetris() {
           onPress={() => dispatch({ type: 'drop' })}
           onLongPress={() => dispatch({ type: 'drop' })}
         >
-          <Ionicons name="arrow-down-circle" size={22} color="#0A0A0F" />
+          <Ionicons name="arrow-down-circle" size={22} color={Colors.onPrimary} />
         </Pressable>
       </View>
 
@@ -438,21 +448,21 @@ function ControlBtn({ icon, onPress }: { icon: any; onPress: () => void }) {
   const s = makeStyles();
   return (
     <TouchableOpacity onPress={onPress} style={s.ctrlBtn} activeOpacity={0.7}>
-      <Ionicons name={icon} size={18} color={Colors.brandIvory} />
+      <Ionicons name={icon} size={18} color={Colors.textPrimary} />
     </TouchableOpacity>
   );
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0A0F', maxWidth: 480, alignSelf: 'center', width: '100%' },
+  root: { flex: 1, backgroundColor: Colors.background, maxWidth: 480, alignSelf: 'center', width: '100%' },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
     paddingHorizontal: Spacing.md, paddingVertical: 10,
   },
   title: {
-    flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '900',
-    color: Colors.brandIvory, letterSpacing: 6,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    flex: 1, textAlign: 'center', fontSize: Type.body.size, fontWeight: '900',
+    color: Colors.textPrimary, letterSpacing: 6,
+    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
   },
 
   scorebar: {
@@ -465,14 +475,14 @@ function makeStyles() { return StyleSheet.create({
   scoreLabel: { fontSize: 10, color: Colors.textMuted, fontWeight: '700', letterSpacing: 1.4, textTransform: 'uppercase' },
   scoreNum: {
     fontSize: 22, color: Colors.primary, fontWeight: '800', letterSpacing: -0.4,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
   },
 
   boardWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.md },
   board: {
-    backgroundColor: '#16161D',
+    backgroundColor: Colors.surface,
     borderWidth: 1, borderColor: Colors.primary,
-    padding: 4, borderRadius: 4,
+    padding: Spacing.xxs, borderRadius: 4,
     aspectRatio: COLS / ROWS,
     width: '100%', maxWidth: 360,
   },
@@ -480,38 +490,38 @@ function makeStyles() { return StyleSheet.create({
   cell: {
     flex: 1, aspectRatio: 1,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(244, 241, 232, 0.04)',
+    borderColor: Colors.borderLight,
     margin: 1, borderRadius: 1,
     backgroundColor: 'transparent',
   },
   overlay: {
     ...(StyleSheet.absoluteFillObject as any),
     alignItems: 'center', justifyContent: 'center',
+    // Scrim over live media (the board). Stays a fixed dark wash so the
+    // PAUSED / GAME OVER type reads on top of any piece color.
     backgroundColor: 'rgba(10, 10, 15, 0.78)',
     gap: 14,
   },
+  // Ink for the scrim above, not for the board. The wash is fixed dark in
+  // every skin, so the type has to be the light one.
   overlayText: {
-    fontSize: 28, color: Colors.primary, letterSpacing: 4, fontWeight: '900',
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    fontSize: Type.display.size, color: Colors.brandIvory, letterSpacing: 4, fontWeight: '900',
+    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
   },
-  againBtn: {
-    paddingHorizontal: 18, paddingVertical: 11,
-    borderRadius: Radius.full, backgroundColor: Colors.primary,
-  },
-  againText: { color: '#0A0A0F', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 },
+  againBtn: { borderRadius: Radius.full },
 
   controls: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
   },
   ctrlBtn: {
-    width: 50, height: 44, borderRadius: 8,
+    width: 50, height: Heights.touchTarget, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(244, 241, 232, 0.08)',
+    backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
   },
   dropBtn: {
-    width: 60, height: 44, borderRadius: 8,
+    width: 60, height: Heights.touchTarget, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: Colors.primary,
   },
@@ -521,11 +531,11 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: 10,
   },
   metaBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
     paddingHorizontal: 10, paddingVertical: 5,
     borderRadius: Radius.full,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
-  metaBtnText: { fontSize: 11, color: Colors.textSecondary, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase' },
+  metaBtnText: { fontSize: Type.eyebrow.size, color: Colors.textSecondary, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase' },
   metaHint: { flex: 1, fontSize: 10, color: Colors.textMuted, fontStyle: 'italic', textAlign: 'right' },
 }); }

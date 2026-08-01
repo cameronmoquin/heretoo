@@ -15,16 +15,19 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView,
-  Platform, ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFamily } from '../../../hooks/useFamily';
 import { useCreateWelcomeInvitation } from '../../../hooks/useWelcomeInvitations';
 import { showAlert } from '../../../lib/alert';
+import { Button } from '../../../components/shared/Button';
+import { Eyebrow } from '../../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../../components/shared/ScreenHeader';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
 
 type CardDesign = 'pressed-flower' | 'katagami-stencil' | 'type-only';
 const DESIGNS: Array<{ id: CardDesign; label: string }> = [
@@ -93,19 +96,13 @@ export default function InviteCardScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>A welcome card</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <ScreenHeader title="A welcome card" showBack />
 
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {!savedUrl && (
           <>
             <View style={s.field}>
-              <Text style={s.fieldLabel}>Their first name</Text>
+              <Eyebrow>Their first name</Eyebrow>
               <TextInput
                 style={s.input}
                 value={recipientName}
@@ -117,7 +114,7 @@ export default function InviteCardScreen() {
             </View>
 
             <View style={s.field}>
-              <Text style={s.fieldLabel}>How they know you</Text>
+              <Eyebrow>How they know you</Eyebrow>
               <TextInput
                 style={s.input}
                 value={relationship}
@@ -129,7 +126,7 @@ export default function InviteCardScreen() {
             </View>
 
             <View style={s.field}>
-              <Text style={s.fieldLabel}>Card design</Text>
+              <Eyebrow>Card design</Eyebrow>
               <View style={{ gap: 6 }}>
                 {DESIGNS.map((d) => {
                   const on = d.id === design;
@@ -152,21 +149,15 @@ export default function InviteCardScreen() {
               </View>
             </View>
 
-            <TouchableOpacity
-              style={[s.saveBtn, (create.isPending || recipientName.trim().length < 1) && { opacity: 0.4 }]}
+            <Button
+              title="Create the welcome"
+              icon={<Ionicons name="mail-outline" size={16} color={Colors.onPrimary} />}
               onPress={onSave}
-              disabled={create.isPending || recipientName.trim().length < 1}
-              activeOpacity={0.85}
-            >
-              {create.isPending ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <>
-                  <Ionicons name="mail-outline" size={16} color="#FFF" />
-                  <Text style={s.saveBtnText}>Create the welcome</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              loading={create.isPending}
+              disabled={recipientName.trim().length < 1}
+              size="lg"
+              style={s.saveBtn}
+            />
           </>
         )}
 
@@ -178,14 +169,21 @@ export default function InviteCardScreen() {
               <Text selectable style={s.urlText} numberOfLines={2}>{savedUrl}</Text>
             </View>
             <View style={s.successActions}>
-              <TouchableOpacity style={s.urlBtn} onPress={onShare} activeOpacity={0.85}>
-                <Ionicons name="share-outline" size={14} color="#FFF" />
-                <Text style={s.urlBtnText}>Share</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.urlBtnAlt} onPress={onCopy} activeOpacity={0.85}>
-                <Ionicons name="copy-outline" size={14} color={Colors.primary} />
-                <Text style={s.urlBtnAltText}>Copy link</Text>
-              </TouchableOpacity>
+              <Button
+                title="Share"
+                size="sm"
+                icon={<Ionicons name="share-outline" size={14} color={Colors.onPrimary} />}
+                style={s.urlBtn}
+                onPress={onShare}
+              />
+              <Button
+                title="Copy link"
+                variant="ghost"
+                size="sm"
+                icon={<Ionicons name="copy-outline" size={14} color={Colors.primary} />}
+                style={s.urlBtnAlt}
+                onPress={onCopy}
+              />
             </View>
           </View>
         )}
@@ -196,48 +194,30 @@ export default function InviteCardScreen() {
 
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 14, fontWeight: '600', color: Colors.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 1.6,
-  },
   scroll: { padding: Spacing.md, paddingBottom: 80, gap: Spacing.lg },
 
   field: { gap: 6 },
-  fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.6,
-  },
   input: {
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     fontSize: 15, color: Colors.textPrimary,
   },
   designRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
   },
   designRowOn: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
   designDot: {
-    width: 8, height: 8, borderRadius: 4,
+    width: 8, height: 8, borderRadius: Radius.full,
     backgroundColor: Colors.textMuted,
   },
   designLabel: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
 
-  saveBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingHorizontal: 18, paddingVertical: 14,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-  },
-  saveBtnText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.1 },
+  saveBtn: { borderRadius: Radius.full },
 
   successWrap: {
     padding: Spacing.lg, borderRadius: Radius.lg,
@@ -253,22 +233,13 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
   urlText: {
-    fontSize: 12, color: Colors.textPrimary,
+    fontSize: Type.caption.size, color: Colors.textPrimary,
     fontFamily: Platform.OS === 'web' ? ('ui-monospace, SFMono-Regular, monospace' as any) : 'monospace',
   },
-  successActions: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  urlBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 9,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-  },
-  urlBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  successActions: { flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.xxs },
+  urlBtn: { borderRadius: Radius.full },
   urlBtnAlt: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 9,
     borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.primary,
   },
-  urlBtnAltText: { color: Colors.primary, fontSize: 13, fontWeight: '700' },
 }); }

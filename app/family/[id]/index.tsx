@@ -24,8 +24,11 @@ import { WallpaperBackground } from '../../../components/shared/WallpaperBackgro
 import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
 import { FamilyTriviaPanel } from '../../../components/trivia/FamilyTriviaPanel';
 import { useStartVideoCall } from '../../../hooks/useStartVideoCall';
+import { Button } from '../../../components/shared/Button';
+import { Eyebrow } from '../../../components/shared/Eyebrow';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
+import { Gen } from '../../../constants/generations';
 import { Vocab } from '../../../constants/vocab';
 
 type Tab = 'feed' | 'subjects' | 'chat' | 'trivia' | 'about';
@@ -80,9 +83,11 @@ export default function FamilyDetail() {
       <SafeAreaView style={s.root}>
         <View style={{ padding: 24, alignItems: 'center' }}>
           <Text style={{ color: Colors.textMuted }}>{Vocab.Group} not found.</Text>
-          <TouchableOpacity onPress={() => router.replace('/family')} style={[s.primaryBtn, { marginTop: 16 }]}>
-            <Text style={s.primaryBtnText}>Back to your {Vocab.groupPlural}</Text>
-          </TouchableOpacity>
+          <Button
+            title={`Back to your ${Vocab.groupPlural}`}
+            onPress={() => router.replace('/family')}
+            style={s.primaryBtn}
+          />
         </View>
       </SafeAreaView>
     );
@@ -249,9 +254,10 @@ export default function FamilyDetail() {
               <Text style={s.welcomeCardText}>Send a welcome card</Text>
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity
+            <Button
+              title={startCall.isPending ? 'Starting…' : 'Start a video call'}
+              icon={<Ionicons name="videocam" size={16} color={Colors.onPrimary} />}
               style={s.callBtn}
-              activeOpacity={0.85}
               onPress={async () => {
                 if (!id) return;
                 try {
@@ -262,12 +268,7 @@ export default function FamilyDetail() {
                 }
               }}
               disabled={startCall.isPending}
-            >
-              <Ionicons name="videocam" size={16} color={'#0A0A0F'} />
-              <Text style={s.callBtnText}>
-                {startCall.isPending ? 'Starting…' : 'Start a video call'}
-              </Text>
-            </TouchableOpacity>
+            />
             <FeedComposer familyId={id} />
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>
@@ -310,7 +311,7 @@ export default function FamilyDetail() {
             {/* Active rename proposal. Shown to everyone in the crew. */}
             {pendingRename?.proposal && (
               <View style={s.proposalCard}>
-                <Text style={s.sectionLabel}>Pending rename</Text>
+                <Eyebrow style={s.sectionLabel}>Pending rename</Eyebrow>
                 <Text style={s.proposalText}>
                   Someone proposed renaming this {Vocab.group} to{'\n'}
                   <Text style={{ fontWeight: '700', color: Colors.textPrimary }}>
@@ -344,8 +345,8 @@ export default function FamilyDetail() {
                       })
                     }
                   >
-                    <Ionicons name="checkmark" size={16} color={myVote?.vote === true ? '#000' : Colors.textPrimary} />
-                    <Text style={[s.voteBtnText, myVote?.vote === true && { color: '#000' }]}>Yes</Text>
+                    <Ionicons name="checkmark" size={16} color={myVote?.vote === true ? Colors.onPrimary : Colors.textPrimary} />
+                    <Text style={[s.voteBtnText, myVote?.vote === true && { color: Colors.onPrimary }]}>Yes</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -353,17 +354,21 @@ export default function FamilyDetail() {
 
             {!!family.description && (
               <View style={s.card}>
-                <Text style={s.sectionLabel}>About</Text>
+                <Eyebrow style={s.sectionLabel}>About</Eyebrow>
                 <Text style={s.description}>{family.description}</Text>
               </View>
             )}
 
             {!!(family as any).invite_code && (
               <View style={s.inviteCard}>
-                <Text style={s.sectionLabel}>Invite code</Text>
+                <Eyebrow style={s.sectionLabel}>Invite code</Eyebrow>
                 <Text style={s.inviteCode} selectable>{(family as any).invite_code}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <TouchableOpacity
+                  <Button
+                    title="Copy code"
+                    variant="ghost"
+                    size="sm"
+                    icon={<Ionicons name="copy-outline" size={14} color={Colors.primary} />}
                     style={s.copyBtn}
                     onPress={async () => {
                       if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -371,13 +376,13 @@ export default function FamilyDetail() {
                         showConfirm('Copied', 'Code on your clipboard.', () => {}, 'OK');
                       }
                     }}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name="copy-outline" size={14} color={Colors.primary} />
-                    <Text style={s.copyBtnText}>Copy code</Text>
-                  </TouchableOpacity>
+                  />
 
-                  <TouchableOpacity
+                  <Button
+                    title="Share invite link"
+                    variant="ghost"
+                    size="sm"
+                    icon={<Ionicons name="share-outline" size={14} color={Colors.primary} />}
                     style={s.copyBtn}
                     onPress={async () => {
                       const code = (family as any).invite_code;
@@ -402,17 +407,13 @@ export default function FamilyDetail() {
                         showConfirm('Link copied', `${url}`, () => {}, 'OK');
                       }
                     }}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name="share-outline" size={14} color={Colors.primary} />
-                    <Text style={s.copyBtnText}>Share invite link</Text>
-                  </TouchableOpacity>
+                  />
                 </View>
               </View>
             )}
 
             <View style={s.card}>
-              <Text style={s.sectionLabel}>Members ({members?.length ?? 0})</Text>
+              <Eyebrow style={s.sectionLabel}>Members ({members?.length ?? 0})</Eyebrow>
               {members?.map((m) => (
                 <View key={m.id} style={s.memberRow}>
                   <View style={s.memberAvatar}>
@@ -431,14 +432,14 @@ export default function FamilyDetail() {
 
             {/* Active-member actions: anyone can propose a rename */}
             {!pendingRename?.proposal && (
-              <TouchableOpacity
+              <Button
+                title="Propose new name"
+                variant="outline"
+                size="sm"
+                icon={<Ionicons name="create-outline" size={16} color={Colors.textPrimary} />}
                 style={s.secondaryBtn}
                 onPress={() => { setRenameDraft(family.name); setRenameOpen(true); }}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="create-outline" size={16} color={Colors.textPrimary} />
-                <Text style={s.secondaryBtnText}>Propose new name</Text>
-              </TouchableOpacity>
+              />
             )}
 
             {!isOwner && (
@@ -507,14 +508,17 @@ function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: Spacing.md, paddingVertical: 12,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     backgroundColor: Colors.surfaceLight,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
   name: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  metaText: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  metaText: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 2,
+  },
   newPostBtn: {
-    width: 36, height: 36, borderRadius: 7, backgroundColor: Colors.primary,
+    width: 36, height: 36, borderRadius: Radius.xs, backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   backBtn: {
@@ -522,7 +526,8 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 4, paddingVertical: 4, marginRight: 4,
   },
   backBtnText: {
-    fontSize: 14, color: Colors.textPrimary, fontWeight: '600',
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    color: Colors.textPrimary, fontWeight: '600',
   },
   tabs: {
     flexDirection: 'row',
@@ -531,61 +536,65 @@ function makeStyles() { return StyleSheet.create({
   },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 11 },
   tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.primary },
-  tabText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
+  tabText: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    color: Colors.textSecondary, fontWeight: '500',
+  },
   tabTextActive: { color: Colors.primary, fontWeight: '600' },
   tabLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   tabBadge: {
-    width: 7, height: 7, borderRadius: 4, backgroundColor: Colors.primary,
+    width: 7, height: 7, borderRadius: Radius.full, backgroundColor: Colors.primary,
   },
   scroll: { padding: Spacing.md, gap: 10, maxWidth: 600, alignSelf: 'center', width: '100%' },
-  emptyFeed: { alignItems: 'center', paddingTop: 40, gap: 12 },
+  emptyFeed: { alignItems: 'center', paddingTop: 40, gap: Spacing.sm },
   feedInviteBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
     alignSelf: 'flex-start',
-    marginTop: 6, marginBottom: 4,
+    marginTop: 6, marginBottom: Spacing.xxs,
   },
   feedInviteText: { fontSize: 13, fontWeight: '600', color: Colors.primary, flexShrink: 1 },
   welcomeCardBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: Radius.full,
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
     alignSelf: 'flex-start',
-    marginTop: 4, marginBottom: 4,
+    marginTop: Spacing.xxs, marginBottom: Spacing.xxs,
   },
   welcomeCardText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, flexShrink: 1 },
   callBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
     alignSelf: 'flex-start',
-    marginTop: 4, marginBottom: 4,
+    marginTop: Spacing.xxs, marginBottom: Spacing.xxs,
   },
-  callBtnText: { fontSize: 13, fontWeight: '700', color: '#0A0A0F', letterSpacing: 0.2 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
-  primaryBtn: { paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999, backgroundColor: Colors.primary },
-  primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
+  emptyTitle: {
+    fontSize: Type.bodyBold.size, fontWeight: '600', color: Colors.textPrimary,
+  },
+  primaryBtn: { borderRadius: Radius.full, marginTop: Spacing.md },
 
   card: {
     backgroundColor: Colors.surfaceLight, borderRadius: Radius.md, padding: 14,
-    borderWidth: 1, borderColor: Colors.border, gap: 8,
+    borderWidth: 1, borderColor: Colors.border, gap: Spacing.xs,
   },
-  description: { fontSize: 14, color: Colors.textPrimary, lineHeight: 20 },
-  sectionLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  description: {
+    fontSize: Type.ui.size, color: Colors.textPrimary, lineHeight: 20,
+  },
+  sectionLabel: { marginBottom: Spacing.xxs },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   memberAvatar: {
-    width: 28, height: 28, borderRadius: 6, backgroundColor: Colors.primaryFaint,
+    width: 28, height: 28, borderRadius: Radius.xs, backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
   },
-  memberText: { fontSize: 14, color: Colors.textPrimary, flex: 1 },
-  memberRole: { fontSize: 11, color: Colors.textMuted, textTransform: 'capitalize' },
-  leaveBtn: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 14, marginTop: 8 },
-  leaveBtnText: { color: Colors.error, fontSize: 14, fontWeight: '500' },
+  memberText: { fontSize: Type.ui.size, color: Colors.textPrimary, flex: 1 },
+  memberRole: {
+    fontSize: Type.eyebrow.size, color: Colors.textMuted, textTransform: 'capitalize',
+  },
+  leaveBtn: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 14, marginTop: Spacing.xs },
+  leaveBtnText: { color: Colors.error, fontSize: Type.ui.size, fontWeight: '500' },
 
   emptySub: {
     fontSize: 13, color: Colors.textMuted, textAlign: 'center',
@@ -599,12 +608,16 @@ function makeStyles() { return StyleSheet.create({
     borderRadius: Radius.md,
     padding: 14, gap: 8,
   },
-  proposalText: { fontSize: 14, color: Colors.textSecondary, lineHeight: 19 },
-  proposalTally: { fontSize: 12, color: Colors.textMuted },
-  voteRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  proposalText: {
+    fontSize: Type.ui.size, color: Colors.textSecondary, lineHeight: 19,
+  },
+  proposalTally: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight, color: Colors.textMuted,
+  },
+  voteRow: { flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.xxs },
   voteBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+    paddingHorizontal: 14, paddingVertical: Spacing.xs, borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
@@ -615,19 +628,16 @@ function makeStyles() { return StyleSheet.create({
   // Rename + delete buttons in About footer
   secondaryBtn: {
     alignSelf: 'center',
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
-    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.full,
     backgroundColor: Colors.surface,
-    marginTop: 8,
+    marginTop: Spacing.xs,
   },
-  secondaryBtnText: { fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },
   deleteBtn: {
     alignSelf: 'center',
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+    paddingHorizontal: Spacing.md, paddingVertical: 10, borderRadius: Radius.full,
     backgroundColor: Colors.error,
-    marginTop: 8,
+    marginTop: Spacing.xs,
   },
   deleteBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
 
@@ -637,61 +647,60 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   modalCard: {
-    backgroundColor: Colors.surface, borderRadius: 14,
-    width: '100%', maxWidth: 420, padding: 18, gap: 8,
+    backgroundColor: Colors.surface, borderRadius: Gen.radius,
+    width: '100%', maxWidth: 420, padding: 18, gap: Spacing.xs,
     borderWidth: 1, borderColor: Colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  modalTitle: {
+    fontSize: Type.bodyBold.size, fontWeight: Type.bodyBold.weight, color: Colors.textPrimary,
+  },
   modalInput: {
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 14, paddingVertical: 12,
+    paddingHorizontal: 14, paddingVertical: Spacing.sm,
     fontSize: 15, color: Colors.textPrimary,
-    marginTop: 4,
+    marginTop: Spacing.xxs,
   },
-  modalRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  modalRow: { flexDirection: 'row', gap: Spacing.xs, marginTop: 6 },
   modalBtn: {
-    flex: 1, paddingVertical: 11, borderRadius: 999,
+    flex: 1, paddingVertical: 11, borderRadius: Radius.full,
     alignItems: 'center',
   },
   modalBtnGhost: { borderWidth: 1, borderColor: Colors.border },
   modalBtnGhostText: { color: Colors.textPrimary, fontWeight: '600', fontSize: 13 },
   modalBtnPrimary: { backgroundColor: Colors.primary },
-  modalBtnPrimaryText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  modalBtnPrimaryText: { color: Colors.onPrimary, fontWeight: '700', fontSize: 13 },
 
   postCard: {
     backgroundColor: Colors.surfaceLight, borderRadius: Radius.md, padding: 14,
-    borderWidth: 1, borderColor: Colors.border, gap: 8,
+    borderWidth: 1, borderColor: Colors.border, gap: Spacing.xs,
   },
   postHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   postAvatar: {
-    width: 36, height: 36, borderRadius: 7,
+    width: 36, height: 36, borderRadius: Radius.xs,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
-  postAvatarText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
-  postAuthor: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  postTime: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
-  postBody: { fontSize: 14, color: Colors.textPrimary, lineHeight: 20 },
+  postAvatarText: { color: Colors.onPrimary, fontSize: Type.ui.size, fontWeight: '700' },
+  postAuthor: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
+  postTime: { fontSize: Type.eyebrow.size, color: Colors.textMuted, marginTop: 1 },
+  postBody: { fontSize: Type.ui.size, color: Colors.textPrimary, lineHeight: 20 },
   postImage: {
     width: 240, height: 240, borderRadius: 8,
-    marginRight: 8, backgroundColor: Colors.background,
+    marginRight: Spacing.xs, backgroundColor: Colors.background,
   },
   inviteCard: {
     backgroundColor: Colors.surfaceLight, borderRadius: Radius.md, padding: 14,
-    borderWidth: 1, borderColor: Colors.border, gap: 8, alignItems: 'center',
+    borderWidth: 1, borderColor: Colors.border, gap: Spacing.xs, alignItems: 'center',
   },
   inviteCode: {
     fontSize: 26, fontWeight: '800', color: Colors.primary, letterSpacing: 4,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    marginVertical: 4,
+    marginVertical: Spacing.xxs,
   },
   copyBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+    borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.primary,
-    backgroundColor: 'transparent',
   },
-  copyBtnText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
 }); }

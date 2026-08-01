@@ -40,7 +40,8 @@ import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { HereTooLogo } from '../../components/shared/Logo';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function WelcomeScreen() {
   const s = makeStyles();
@@ -199,12 +200,12 @@ export default function WelcomeScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           <View style={s.logoArea}>
-            <HereTooLogo size={56} color="#FFFFFF" />
+            <HereTooLogo size={56} color={Colors.textPrimary} />
             <Text style={s.logoSub}>heretoo</Text>
           </View>
 
           <View style={s.section}>
-            <Text style={s.fieldLabel}>Email</Text>
+            <Eyebrow style={s.fieldLabel}>Email</Eyebrow>
             <TextInput
               style={s.input}
               placeholder="you@example.com"
@@ -217,7 +218,7 @@ export default function WelcomeScreen() {
               autoComplete="email"
             />
 
-            <Text style={s.fieldLabel}>Password</Text>
+            <Eyebrow style={s.fieldLabel}>Password</Eyebrow>
             <TextInput
               style={s.input}
               placeholder={isSignup ? 'Choose a password (6+)' : 'Password'}
@@ -233,7 +234,7 @@ export default function WelcomeScreen() {
               <Text style={s.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <Text style={s.fieldLabel}>Invite code (optional)</Text>
+            <Eyebrow style={s.fieldLabel}>Invite code (optional)</Eyebrow>
             <TextInput
               style={s.input}
               placeholder="Leave blank to sign in"
@@ -247,7 +248,7 @@ export default function WelcomeScreen() {
 
             {isSignup && (
               <>
-                <Text style={s.fieldLabel}>Username</Text>
+                <Eyebrow style={s.fieldLabel}>Username</Eyebrow>
                 <TextInput
                   style={s.input}
                   placeholder="rosalind"
@@ -305,44 +306,44 @@ function consumePendingInviteCode(): string | null {
 }
 
 function makeStyles() { return StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0A0A0F' },
+  safe: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: Spacing.xl,
     maxWidth: 420, alignSelf: 'center', width: '100%',
   },
   logoArea: { alignItems: 'center', marginBottom: 28 },
   logoSub: {
-    fontSize: 13, fontWeight: '500', color: '#666', letterSpacing: 6,
-    textTransform: 'uppercase', marginTop: 8,
+    fontSize: 13, fontWeight: '500', color: Colors.textMuted, letterSpacing: 6,
+    textTransform: 'uppercase', marginTop: Spacing.xs,
   },
-  section: { gap: 4, marginBottom: 16 },
+  section: { gap: Spacing.xxs, marginBottom: Spacing.md },
 
-  fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: '#A8A8BD',
-    textTransform: 'uppercase', letterSpacing: 1.4,
-    marginTop: 12, marginBottom: 4,
-  },
+  // Type / color / tracking come from the shared Eyebrow.
+  fieldLabel: { marginTop: Spacing.sm, marginBottom: Spacing.xxs },
   input: {
-    backgroundColor: '#15151F', borderWidth: 1, borderColor: '#2A2A3A',
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: '#FFFFFF',
+    paddingHorizontal: 14, paddingVertical: Spacing.sm,
+    fontSize: 15, color: Colors.textPrimary,
   },
-  fieldHint: { fontSize: 11, color: '#888', marginTop: 4, lineHeight: 16 },
+  fieldHint: { fontSize: 11, color: Colors.textMuted, marginTop: Spacing.xxs, lineHeight: 16 },
 
-  forgotBtn: { alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 4 },
-  forgotText: { fontSize: 12, color: '#A8A8BD', fontWeight: '500' },
+  forgotBtn: { alignSelf: 'flex-end', paddingVertical: Spacing.xxs, paddingHorizontal: Spacing.xxs },
+  forgotText: { fontSize: Type.caption.size, color: Colors.textSecondary, fontWeight: '500' },
 
   submitBtn: { width: '100%', marginTop: 18 },
 
+  // A recessed well with the alarm colour on the edge and the copy.
+  // The palette carries no faint-error tint, so the fill uses
+  // surfaceLight rather than a frozen rgba red.
   errorBox: {
-    backgroundColor: 'rgba(255, 0, 64, 0.1)',
-    borderWidth: 1, borderColor: 'rgba(255, 0, 64, 0.4)',
-    borderRadius: Radius.md, padding: 12, marginTop: 8,
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.error,
+    borderRadius: Radius.md, padding: Spacing.sm, marginTop: Spacing.xs,
   },
-  errorText: { color: '#FF6B6B', fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  errorText: { color: Colors.error, fontSize: 13, textAlign: 'center', lineHeight: 18 },
 
   legal: {
-    fontSize: 11, color: '#444', textAlign: 'center', marginTop: 16, lineHeight: 16,
+    fontSize: 11, color: Colors.textMuted, textAlign: 'center', marginTop: Spacing.md, lineHeight: 16,
   },
 }); }

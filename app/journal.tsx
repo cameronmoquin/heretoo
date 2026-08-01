@@ -46,7 +46,7 @@ import {
 import { isWrongPassphrase, vaultAvailable } from '../lib/vault';
 import { showAlert, showConfirm } from '../lib/alert';
 import { Colors } from '../constants/colors';
-import { Spacing, Radius } from '../constants/design';
+import { Spacing, Radius, Type } from '../constants/design';
 
 const MIN_PASSPHRASE = 8;
 
@@ -56,7 +56,9 @@ type SealTarget =
   | { kind: 'existing'; id: string; title: string; body: string };
 
 export default function JournalScreen() {
-  const s = useMemo(() => makeStyles(), []);
+  // Called on every render, never memoised: makeStyles reads the mutable
+  // Colors object, so caching it would freeze the palette at mount.
+  const s = makeStyles();
   const canSeal = useMemo(() => vaultAvailable(), []);
 
   const { data: entries, isLoading } = useJournalEntries();
@@ -485,7 +487,7 @@ export default function JournalScreen() {
                 accessibilityRole="button"
               >
                 {sealing
-                  ? <ActivityIndicator size="small" color="#0A0A0F" />
+                  ? <ActivityIndicator size="small" color={Colors.onPrimary} />
                   : <Text style={s.dangerBtnText}>Seal it</Text>}
               </TouchableOpacity>
             </View>
@@ -545,7 +547,7 @@ export default function JournalScreen() {
                 accessibilityRole="button"
               >
                 {unlocking
-                  ? <ActivityIndicator size="small" color="#0A0A0F" />
+                  ? <ActivityIndicator size="small" color={Colors.onPrimary} />
                   : <Text style={s.primaryBtnText}>Open</Text>}
               </TouchableOpacity>
             </View>
@@ -707,7 +709,7 @@ function makeStyles() {
     },
     headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     headerTitle: {
-      fontSize: 17,
+      fontSize: Type.cardTitle.size,
       fontWeight: '600',
       color: Colors.textPrimary,
       letterSpacing: -0.2,
@@ -742,8 +744,8 @@ function makeStyles() {
       marginVertical: Spacing.xs,
     },
     bodyInput: {
-      fontSize: 16,
-      lineHeight: 24,
+      fontSize: Type.body.size,
+      lineHeight: Type.body.lineHeight,
       color: Colors.textPrimary,
       minHeight: 160,
       paddingVertical: Spacing.xxs,
@@ -770,7 +772,7 @@ function makeStyles() {
     dim: { opacity: 0.45 },
 
     warnLine: {
-      fontSize: 12,
+      fontSize: Type.caption.size,
       lineHeight: 17,
       color: Colors.important,
       marginTop: Spacing.xs,
@@ -788,7 +790,7 @@ function makeStyles() {
     // Holds the gap the cut section heading used to open up.
     list: { marginTop: Spacing.xl },
     empty: {
-      fontSize: 14,
+      fontSize: Type.ui.size,
       lineHeight: 21,
       color: Colors.textMuted,
       paddingVertical: Spacing.md,
@@ -856,8 +858,10 @@ function makeStyles() {
       color: Colors.textPrimary,
       letterSpacing: -0.2,
     },
+    // The palette carries no faint-alarm tint, so the fill uses
+    // surfaceLight and the alarm colour stays on the edge.
     dangerBox: {
-      backgroundColor: 'rgba(199, 62, 58, 0.12)',
+      backgroundColor: Colors.surfaceLight,
       borderLeftWidth: 3,
       borderLeftColor: Colors.disagree,
       borderRadius: Radius.xs,
@@ -886,7 +890,7 @@ function makeStyles() {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: Colors.border,
       color: Colors.textPrimary,
-      fontSize: 16,
+      fontSize: Type.body.size,
       paddingHorizontal: Spacing.sm,
       paddingVertical: Spacing.sm,
       marginBottom: Spacing.sm,
@@ -918,7 +922,7 @@ function makeStyles() {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    ghostBtnText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+    ghostBtnText: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textSecondary },
     primaryBtn: {
       flex: 1,
       paddingVertical: Spacing.sm,
@@ -927,7 +931,7 @@ function makeStyles() {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    primaryBtnText: { fontSize: 14, fontWeight: '700', color: '#0A0A0F' },
+    primaryBtnText: { fontSize: Type.ui.size, fontWeight: '700', color: Colors.onPrimary },
     dangerBtn: {
       flex: 1,
       paddingVertical: Spacing.sm,
@@ -936,7 +940,7 @@ function makeStyles() {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    dangerBtnText: { fontSize: 14, fontWeight: '700', color: '#0A0A0F' },
+    dangerBtnText: { fontSize: Type.ui.size, fontWeight: '700', color: Colors.onPrimary },
 
     // Reader
     readerBackdrop: { flex: 1, backgroundColor: Colors.background },
@@ -951,7 +955,7 @@ function makeStyles() {
     },
     readerTitle: {
       flex: 1,
-      fontSize: 17,
+      fontSize: Type.cardTitle.size,
       fontWeight: '600',
       color: Colors.textPrimary,
     },
@@ -963,7 +967,7 @@ function makeStyles() {
       alignSelf: 'center',
     },
     readerBody: {
-      fontSize: 17,
+      fontSize: Type.cardTitle.size,
       lineHeight: 27,
       color: Colors.textPrimary,
       marginBottom: Spacing.lg,

@@ -19,7 +19,8 @@ import { useOpenThread } from '../../hooks/useChat';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function NewChat() {
   const s = makeStyles();
@@ -92,7 +93,7 @@ export default function NewChat() {
 
       <ScrollView contentContainerStyle={s.list} keyboardShouldPersistTaps="handled">
         {filtered.length > 0 && (
-          <Text style={s.sectionLabel}>From your network</Text>
+          <Eyebrow style={s.sectionLabel}>From your network</Eyebrow>
         )}
         {filtered.map((c) => (
           <ContactRow
@@ -108,7 +109,7 @@ export default function NewChat() {
 
         {showOutOfNetworkSearch && (
           <>
-            <Text style={s.sectionLabel}>By @handle</Text>
+            <Eyebrow style={s.sectionLabel}>By @handle</Eyebrow>
             {searching && <ActivityIndicator color={Colors.primary} style={{ marginTop: 8 }} />}
             {!searching && (outOfNetwork ?? []).map((p: any) => (
               <ContactRow
@@ -180,48 +181,46 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  backBtn: { padding: 4 },
-  title: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  backBtn: { padding: Spacing.xxs },
+  title: { flex: 1, textAlign: 'center', fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary },
 
   searchWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
     margin: Spacing.md,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
-  searchInput: { flex: 1, fontSize: 14, color: Colors.textPrimary },
+  searchInput: { flex: 1, fontSize: Type.ui.size, color: Colors.textPrimary },
 
   list: { padding: Spacing.md, paddingTop: 0, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
-  sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.4,
-    marginTop: 8, marginBottom: 4,
-  },
+  // Type / color / tracking come from the shared Eyebrow.
+  sectionLabel: { marginTop: Spacing.xs, marginBottom: Spacing.xxs },
 
   row: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: 10, paddingHorizontal: Spacing.xs, borderRadius: 8,
   },
+  // 40 / radius 7 are avatar geometry — no size or radius token matches.
   avatar: {
     width: 40, height: 40, borderRadius: 7,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  name: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  handle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  avatarText: { color: Colors.onPrimary, fontSize: 15, fontWeight: '700' },
+  name: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
+  handle: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 },
 
   outPill: {
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999,
+    paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xxs, borderRadius: Radius.full,
   },
   outPillText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 },
 
-  empty: { color: Colors.textMuted, paddingVertical: 12, textAlign: 'center', fontSize: 13 },
-  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
+  empty: { color: Colors.textMuted, paddingVertical: Spacing.sm, textAlign: 'center', fontSize: 13 },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: Spacing.xs },
   emptyText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', maxWidth: 320, lineHeight: 19 },
 }); }

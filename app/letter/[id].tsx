@@ -24,7 +24,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { useTTS } from '../../stores/ttsStore';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function LetterScreen() {
   const s = makeStyles();
@@ -116,7 +117,7 @@ export default function LetterScreen() {
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={s.dateline}>{dateline}</Text>
+        <Eyebrow>{dateline}</Eyebrow>
 
         {!!letter.author && (
           <Text style={s.from}>From {letter.author.display_name || letter.author.handle || 'a friend'}</Text>
@@ -157,9 +158,9 @@ function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: Spacing.md, paddingVertical: 8,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
   },
-  backBtn: { padding: 4 },
+  backBtn: { padding: Spacing.xxs },
   iconBtn: {
     width: 36, height: 36, borderRadius: Radius.full,
     alignItems: 'center', justifyContent: 'center',
@@ -167,12 +168,8 @@ function makeStyles() { return StyleSheet.create({
 
   scroll: { padding: Spacing.lg, paddingBottom: 80, gap: Spacing.md },
 
-  dateline: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.6,
-  },
   from: {
-    fontSize: 14, fontWeight: '600', color: Colors.textSecondary,
+    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textSecondary,
   },
   body: {
     fontSize: 18, lineHeight: 30,
@@ -192,11 +189,13 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
-    gap: 8,
+    gap: Spacing.xs,
   },
+  // Sentence-case bold label, not an uppercase kicker — Eyebrow would
+  // recase the copy.
   claimsTitle: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
   claimRow: { gap: 2 },
-  claimLabel: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+  claimLabel: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textPrimary },
   claimUrl: {
     fontSize: 11, color: Colors.textSecondary,
     fontFamily: Platform.OS === 'web' ? ('ui-monospace, SFMono-Regular, monospace' as any) : 'monospace',

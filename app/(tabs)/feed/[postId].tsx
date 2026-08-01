@@ -30,10 +30,11 @@ import {
 } from '../../../hooks/useComments';
 import { useMyConnections } from '../../../hooks/useFamily';
 import { useAuthStore } from '../../../stores/authStore';
+import { useRevealed, useOpenDrop } from '../../../hooks/usePostViews';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
 import { MicInputButton } from '../../../components/shared/MicInputButton';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
 import { Vocab } from '../../../constants/vocab';
 
 const MAX_INDENT = 4; // visual cap — beyond 4 levels deep all replies share the same indent
@@ -109,6 +110,13 @@ export default function PostDetail() {
 
   const media = post.media ?? [];
   const isOwner = post.author_id === userId;
+  // A burning drop stays shut here too. PostCard only blocked navigation
+  // from the card, so any other way in (pasted link, boost, comment deep
+  // link) rendered the payload in full and recorded no view, which meant
+  // the drop never burned. The author always sees their own.
+  const revealed = useRevealed(post.id);
+  const openDrop = useOpenDrop();
+  const sealed = !!(post as any).destruct_on_view && !isOwner && !revealed;
   const commentsDisabled = !!post.comments_disabled;
   const totalCount: number = post.comment_count ?? countTree(comments ?? []);
 
@@ -170,6 +178,19 @@ export default function PostDetail() {
             )}
           </View>
 
+          {sealed ? (
+            <TouchableOpacity
+              style={s.sealCard}
+              onPress={() => openDrop(post.id)}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Open this drop. It does not come back."
+            >
+              <Ionicons name="flame-outline" size={22} color={Colors.heart} />
+              <Text style={s.sealText}>Opens once</Text>
+            </TouchableOpacity>
+          ) : (
+          <>
           {!!post.body && <Text style={s.body}>{post.body}</Text>}
           {!!post.slugline && (
             <Text style={s.slugline} numberOfLines={2}>{post.slugline}</Text>
@@ -212,6 +233,8 @@ export default function PostDetail() {
               </TouchableOpacity>
             )
           ))}
+          </>
+          )}
 
           <View style={s.commentsHeader}>
             <Text style={s.commentsLabel}>
@@ -477,6 +500,13 @@ function makeStyles() { return StyleSheet.create({
   avatarText: { color: '#FFF', fontSize: 18, fontWeight: '700' },
   author: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
   time: { fontSize: 12, color: Colors.textMuted },
+  sealCard: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
+    paddingVertical: Spacing.lg, paddingHorizontal: Spacing.md,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
+    borderRadius: Radius.md, alignSelf: 'flex-start',
+  },
+  sealText: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
   body: { fontSize: 16, color: Colors.textPrimary, lineHeight: 22 },
   // Optional attribution line — small italic right-aligned, used by
   // Shakespeare bot posts and any post with a slugline.

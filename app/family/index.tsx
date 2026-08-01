@@ -8,8 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMyFamilies } from '../../hooks/useFamily';
 import { goBackToFeed } from '../../lib/nav';
+import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 
 export default function FamilyList() {
@@ -45,21 +46,18 @@ export default function FamilyList() {
               <Ionicons name="people-outline" size={32} color={Colors.primary} />
             </View>
             <Text style={s.emptyTitle}>No {Vocab.group} yet.</Text>
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <TouchableOpacity
-                style={s.primaryBtn}
+            <View style={s.emptyBtnRow}>
+              <Button
+                title={`Start ${Vocab.groupWithArticle}`}
                 onPress={() => router.push('/family/new')}
-                activeOpacity={0.85}
-              >
-                <Text style={s.primaryBtnText}>Start {Vocab.groupWithArticle}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.primaryBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary }]}
+                style={s.ctaPill}
+              />
+              <Button
+                title="I have a code"
+                variant="ghost"
                 onPress={() => router.push('/family/join')}
-                activeOpacity={0.7}
-              >
-                <Text style={[s.primaryBtnText, { color: Colors.primary }]}>I have a code</Text>
-              </TouchableOpacity>
+                style={s.ctaGhost}
+              />
             </View>
           </View>
         )}
@@ -103,45 +101,61 @@ export default function FamilyList() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: {
-    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40,
-    gap: 8, maxWidth: 600, alignSelf: 'center', width: '100%',
+    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.xl + Spacing.xs,
+    gap: Spacing.xs, maxWidth: 600, alignSelf: 'center', width: '100%',
   },
   backBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 2,
     paddingVertical: 6, marginBottom: 6,
   },
-  backBtnText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
+  backBtnText: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    color: Colors.textPrimary, fontWeight: '600',
+  },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 18 },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary, marginTop: 2 },
+  title: {
+    fontSize: Type.display.size, lineHeight: Type.display.lineHeight,
+    fontWeight: Type.display.weight, letterSpacing: Type.display.letterSpacing,
+    color: Colors.textPrimary, marginTop: 2,
+  },
   row: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     backgroundColor: Colors.surfaceLight, borderRadius: Radius.md, padding: 14,
     borderWidth: 1, borderColor: Colors.border,
   },
   iconBox: {
-    width: 40, height: 40, borderRadius: 7,
+    width: 40, height: 40, borderRadius: Radius.xs,
     backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
   },
-  rowTitle: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
-  rowMeta: { fontSize: 12, color: Colors.textMuted, marginTop: 3 },
+  rowTitle: {
+    fontSize: Type.bodyBold.size, fontWeight: '600', color: Colors.textPrimary,
+  },
+  rowMeta: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 3,
+  },
   spinoffRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingVertical: 12, paddingHorizontal: 14,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
+    paddingVertical: Spacing.sm, paddingHorizontal: 14,
     borderRadius: Radius.md, borderWidth: 1, borderStyle: 'dashed',
     borderColor: Colors.border,
   },
   spinoffText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60, gap: 6, paddingHorizontal: 20 },
   emptyIcon: {
-    width: 64, height: 64, borderRadius: 32,
+    width: 64, height: 64, borderRadius: Radius.full,
     backgroundColor: Colors.primaryFaint,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+    alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.xs,
   },
-  emptyTitle: { fontSize: 20, fontWeight: '600', color: Colors.textPrimary, marginTop: 4 },
-  primaryBtn: {
-    paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999,
-    backgroundColor: Colors.primary,
+  emptyTitle: {
+    fontSize: Type.title.size, lineHeight: Type.title.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary, marginTop: Spacing.xxs,
   },
-  primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
+  emptyBtnRow: {
+    flexDirection: 'row', gap: 10, marginTop: 20,
+    flexWrap: 'wrap', justifyContent: 'center',
+  },
+  ctaPill: { borderRadius: Radius.full },
+  ctaGhost: { borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.primary },
 }); }

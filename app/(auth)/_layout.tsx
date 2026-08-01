@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Platform, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Stack } from 'expo-router';
 import { Colors } from '../../constants/colors';
+import { Radius } from '../../constants/design';
 
 export default function AuthLayout() {
   const styles = makeStyles();
@@ -61,7 +62,7 @@ function makeStyles() { return StyleSheet.create({
     maxWidth: 480,
     width: '100%',
     backgroundColor: Colors.background,
-    borderRadius: 16,
+    borderRadius: Radius.md,
     borderWidth: 0.5,
     borderColor: Colors.border,
     overflow: 'hidden',

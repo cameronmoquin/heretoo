@@ -19,7 +19,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 /**
  * Derive a default handle from an email address. Strips the @domain
@@ -128,7 +129,7 @@ export default function ProfileSetupScreen() {
             We've pre-filled some defaults so you can dive in. Tweak now or skip — you can change everything later in Settings.
           </Text>
 
-          <Text style={s.label}>Handle</Text>
+          <Eyebrow style={s.label}>Handle</Eyebrow>
           <TextInput
             style={s.input}
             value={handle}
@@ -141,7 +142,7 @@ export default function ProfileSetupScreen() {
           />
           <Text style={s.hint}>3–24 lowercase letters, numbers, underscores.</Text>
 
-          <Text style={s.label}>Display name</Text>
+          <Eyebrow style={s.label}>Display name</Eyebrow>
           <TextInput
             style={s.input}
             value={displayName}
@@ -151,7 +152,7 @@ export default function ProfileSetupScreen() {
             maxLength={80}
           />
 
-          <Text style={s.label}>Bio (optional)</Text>
+          <Eyebrow style={s.label}>Bio (optional)</Eyebrow>
           <TextInput
             style={[s.input, s.textarea]}
             value={bio}
@@ -170,7 +171,7 @@ export default function ProfileSetupScreen() {
             disabled={loading || skipping}
             variant="primary"
             size="lg"
-            style={{ marginTop: 24 }}
+            style={{ marginTop: Spacing.lg }}
           />
           <Button
             title={skipping ? 'Skipping…' : 'Skip for now'}
@@ -179,7 +180,7 @@ export default function ProfileSetupScreen() {
             disabled={loading || skipping}
             variant="ghost"
             size="md"
-            style={{ marginTop: 4 }}
+            style={{ marginTop: Spacing.xxs }}
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -190,17 +191,17 @@ export default function ProfileSetupScreen() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   scroll: { padding: Spacing.lg, gap: 6, maxWidth: 480, alignSelf: 'center', width: '100%' },
-  title: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary, marginTop: 12 },
-  sub: { fontSize: 14, color: Colors.textSecondary, marginTop: 4, marginBottom: 12 },
-  label: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1, marginTop: 18, marginBottom: 6,
-  },
+  // 24 sits between Type.title (20) and Type.display (28); snapping
+  // either way would visibly move this masthead.
+  title: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary, marginTop: Spacing.sm },
+  sub: { fontSize: Type.ui.size, color: Colors.textSecondary, marginTop: Spacing.xxs, marginBottom: Spacing.sm },
+  // Type / color / tracking come from the shared Eyebrow.
+  label: { marginTop: 18, marginBottom: 6 },
   input: {
     backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12,
+    borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: Spacing.sm,
     fontSize: 15, color: Colors.textPrimary,
   },
   textarea: { minHeight: 80 },
-  hint: { fontSize: 11, color: Colors.textMuted, marginTop: 4 },
+  hint: { fontSize: 11, color: Colors.textMuted, marginTop: Spacing.xxs },
 }); }

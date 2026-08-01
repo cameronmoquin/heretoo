@@ -9,14 +9,16 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useClaimLetterToken } from '../../../hooks/useLetters';
 import { useAuthStore } from '../../../stores/authStore';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
+import { Button } from '../../../components/shared/Button';
+import { Eyebrow } from '../../../components/shared/Eyebrow';
 
 export default function ClaimScreen() {
   const s = makeStyles();
@@ -42,20 +44,20 @@ export default function ClaimScreen() {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
         <View style={s.wrap}>
-          <Text style={s.kicker}>A letter is waiting</Text>
+          <Eyebrow>A letter is waiting</Eyebrow>
           <Text style={s.title}>Sign in to open it</Text>
           <Text style={s.body}>
             Someone wrote you a letter on HereToo and chose today as the day
             to send it. Sign in or create an account, and it will appear in
             your inbox.
           </Text>
-          <TouchableOpacity
+          <Button
+            title="Step inside"
             onPress={() => router.replace('/(auth)/welcome' as any)}
+            variant="primary"
+            size="sm"
             style={s.cta}
-            activeOpacity={0.85}
-          >
-            <Text style={s.ctaText}>Step inside</Text>
-          </TouchableOpacity>
+          />
         </View>
       </SafeAreaView>
     );
@@ -68,13 +70,13 @@ export default function ClaimScreen() {
           <Ionicons name="alert-circle-outline" size={28} color={Colors.textMuted} />
           <Text style={s.title}>This letter could not be opened</Text>
           <Text style={s.body}>{error}</Text>
-          <TouchableOpacity
+          <Button
+            title="Back to the Room"
             onPress={() => router.replace('/' as any)}
+            variant="primary"
+            size="sm"
             style={s.cta}
-            activeOpacity={0.85}
-          >
-            <Text style={s.ctaText}>Back to the Room</Text>
-          </TouchableOpacity>
+          />
         </View>
       </SafeAreaView>
     );
@@ -93,18 +95,13 @@ export default function ClaimScreen() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   wrap: { padding: Spacing.xl, gap: Spacing.md },
-  kicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.6,
-  },
-  title: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.4 },
-  body: { fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
+  title: { fontSize: Type.display.size, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.4 },
+  body: { fontSize: Type.ui.size, lineHeight: 22, color: Colors.textSecondary },
+  // Button supplies the fill, the ink and the 44pt floor.
   cta: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 16, paddingVertical: 11,
+    paddingHorizontal: Spacing.md,
     borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
     marginTop: Spacing.sm,
   },
-  ctaText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
 }); }

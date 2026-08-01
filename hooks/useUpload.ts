@@ -165,8 +165,24 @@ export function useUpload() {
   const createPost = useMutation({
     mutationFn: async (params: {
       body: string;
-      visibility: PostVisibility;
+      /**
+       * 'direct' is migration 065. PostVisibility itself is not widened
+       * here; that type is shared and other callers have no business
+       * with a DM.
+       */
+      visibility: PostVisibility | 'direct';
       familyId?: string;
+      /**
+       * visibility='direct' only: the one person this drop is for.
+       * Migration 065 pairs the two with a check constraint.
+       */
+      directRecipientId?: string;
+      /**
+       * The burn. Pass true only when the author asked for it. Omitted,
+       * the column never appears in the insert, so a drop still lands on
+       * a database that predates migration 065.
+       */
+      destructOnView?: boolean;
       /** 'post' (default) or 'update' for time-sensitive family news. */
       kind?: 'post' | 'update';
       /**
@@ -197,6 +213,14 @@ export function useUpload() {
         kind: params.kind ?? 'post',
       };
       if (params.familyId) row.family_id = params.familyId;
+      // Migration 065 columns. Written only when the author picked them.
+      // An absent key is an absent column in the request body, so a
+      // plain drop is byte-identical to what shipped before 065 and
+      // still inserts on an un-migrated database.
+      if (params.visibility === 'direct' && params.directRecipientId) {
+        row.direct_recipient_id = params.directRecipientId;
+      }
+      if (params.destructOnView) row.destruct_on_view = true;
       // Recipient-restricted updates: only set the column when there's
       // an actual list. NULL means "broadcast to whole family", which
       // matches the legacy behavior — important to preserve so the UI
@@ -217,6 +241,8 @@ export function useUpload() {
       if (error) {
         // eslint-disable-next-line no-console
         console.error('POST_INSERT_ERROR', JSON.stringify(error, null, 2));
+        const behind = schemaBehindMessage(error, params.visibility);
+        if (behind) throw new Error(behind);
         throw error;
       }
 
@@ -285,6 +311,8 @@ export function useUpload() {
         body: vars.body || null,
         visibility: vars.visibility,
         family_id: vars.familyId ?? null,
+        direct_recipient_id: vars.directRecipientId ?? null,
+        destruct_on_view: !!vars.destructOnView,
         kind: vars.kind ?? 'post',
         heart_count: 0, boost_count: 0, comment_count: 0,
         viewer_hearted: false,
@@ -354,6 +382,40 @@ export function useUpload() {
 }
 
 // ── helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Turn "the server has not run migration 065" into a sentence.
+ *
+ * The new fields ride the insert only when the author picks them, so
+ * this fires on exactly one situation: someone chose a DM or armed the
+ * burn against a database that predates 065. Everything else falls
+ * through to the raw Postgres error, unchanged.
+ *
+ * Codes seen in the wild:
+ *   PGRST204  PostgREST schema cache has no such column
+ *   42703     undefined_column
+ *   23514     check_violation, here the visibility list without 'direct'
+ */
+function schemaBehindMessage(error: any, visibility: string): string | null {
+  const code = String(error?.code ?? '');
+  const text = `${error?.message ?? ''} ${error?.details ?? ''} ${error?.hint ?? ''}`.toLowerCase();
+
+  if (code === 'PGRST204' || code === '42703') {
+    if (text.includes('destruct_on_view')) {
+      return 'Destroy after viewing is not live on this server yet. Run migration 065.';
+    }
+    if (text.includes('direct_recipient_id')) {
+      return 'Direct drops are not live on this server yet. Run migration 065.';
+    }
+    return 'This server is behind the app. Run migration 065.';
+  }
+
+  if (code === '23514' && visibility === 'direct') {
+    return 'Direct drops are not live on this server yet. Run migration 065.';
+  }
+  return null;
+}
+
 async function readAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
   if (Platform.OS === 'web') {
     const r = await fetch(uri);

@@ -1,52 +1,56 @@
 /**
- * Inline "New Post" composer pinned to the top of the feed.
+ * The drop composer. Pinned to the top of the feed.
  *
- * Layout (top → bottom):
- *   ┌──────────────────────────────────────────────┐
- *   │ New post                              [Post] │
- *   │ ┌──────────────────────────────────────────┐ │
- *   │ │ What's happening?                        │ │  ← multiline TextInput
- *   │ │                                          │ │
- *   │ └──────────────────────────────────────────┘ │
- *   │ [📷 Photo]  [🎥 Video]  [↻ Two-Way]  [@ Tag] │
- *   │ {selected media thumbs}                      │
- *   │ {tagged: @alice, @bob ✕}                     │
- *   └──────────────────────────────────────────────┘
+ * A DROP is a post. Text, photo, or video. It goes to one of three
+ * places, and the place is chosen on screen before the send:
  *
- * Behaviors:
- *   - "Tag your connections" opens a modal listing everyone in the
- *     viewer's crew network. Selecting inserts an @handle into the body
- *     and tracks the profile_id locally for future post_mentions support.
- *   - Two-Way is mobile-only (web shows the existing "use the app" stub
- *     inside the modal — the component handles its own platform branch).
- *   - Posting reuses the existing useUpload pipeline. No regression on
- *     the dedicated /upload screen; that still works for power-users.
+ *   PUBLIC  loft_posts. Pseudonymous byline, 1200 characters, 24 hour
+ *           expiry, text only. Absorbed from the deleted /loft screen,
+ *           claim flow and all. Unchanged here.
+ *   CREW    posts, visibility='family', family_id set. One crew's feed.
+ *           One crew: used automatically. Several: picked. None: the
+ *           option is off.
+ *   DM      posts, visibility='direct', direct_recipient_id set. One
+ *           person, from the author's connections.
  *
- * Destination (main-feed composer only, absent when familyId is set):
- *   Crew   → the original path. useUpload.createPost. Default, always.
- *   Public → a loft post. useCreateLoftPost. Pseudonymous byline from
- *            useLoftHandle, hard 1200-char DB constraint, 24h expiry,
- *            no attachments (loft_posts has a body column and nothing
- *            else). This absorbed the composer from the deleted
- *            /loft screen, including its pseudonym claim flow.
- *   Destination resets to Crew after every send and on collapse. The
- *   dangerous mis-send is crew-thought-into-the-public-square, so the
- *   sticky state is the safe one.
+ * A drop can also burn. "Destroy after viewing" writes
+ * posts.destruct_on_view, and the drop leaves a viewer's feed the moment
+ * that viewer has seen it. The author keeps their own drop.
+ *
+ * A DEADDROP is this same drop with a GPS lock on the payload. It lands
+ * in the feed at the chosen destination like anything else. The physical
+ * unlock lives in the hunt screens, not here.
+ *
+ * NO CREW GATE. A person with no crew drops on their own platform. Crew
+ * is a destination, not a permission. The old gate replaced the whole
+ * composer, send button included, and that was the broken send.
+ *
+ * TWO SEAMS WORTH KNOWING:
+ *   1. Migration 065 may not have run. destruct_on_view and
+ *      direct_recipient_id ride the insert only when the author picks
+ *      them, so a plain drop lands on an old schema. useUpload turns a
+ *      missing column into a sentence.
+ *   2. Public rides loft_posts, which has a body column and nothing
+ *      else. No media, no burn. Switching to Public clears both and says
+ *      so first.
+ *
+ * Destination resets to the safest reachable option after every send and
+ * on collapse. The mis-send that cannot be undone is crew-thought into
+ * the public square, so the sticky state is the narrow one.
  */
 
 /** Mirrors loft_posts: check (length(body) between 1 and 1200). */
 const LOFT_MAX = 1200;
 const CREW_MAX = 2000;
 
-type Destination = 'crew' | 'public';
+type Destination = 'public' | 'crew' | 'dm';
 
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, TouchableOpacity,
-  ScrollView, Image, Platform, Modal, ActivityIndicator,
+  ScrollView, Image, Modal, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useUpload } from '../../hooks/useUpload';
 import { useMyConnections, useMyFamilies, useFamilyMembersWithProfiles } from '../../hooks/useFamily';
 import { useLoftHandle, useCreateLoftPost, useRegenerateLoftHandle } from '../../hooks/useLoft';
@@ -63,9 +67,10 @@ import { Eyebrow } from '../shared/Eyebrow';
 
 interface FeedComposerProps {
   /**
-   * When set, the composer posts to this crew (visibility='family',
-   * family_id=<id>) and skips the "join a crew first" gate.
-   * Leave undefined for the public/main-feed composer (visibility='public').
+   * When set, the crew destination is pinned to this crew and the crew
+   * picker never opens. Public and DM stay reachable; the audiences are
+   * different enough that hiding them would be the guess, not the
+   * safeguard.
    */
   familyId?: string;
 }
@@ -76,17 +81,44 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const { data: connections } = useMyConnections();
   const { data: families } = useMyFamilies();
   const userId = useAuthStore((st) => st.user?.id);
-  const inAFamily = (families?.length ?? 0) > 0;
   const isFamilyScoped = !!familyId;
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
   const [expanded, setExpanded] = useState(false);
 
-  // Destination. Only the main-feed composer offers it; a crew-scoped
-  // composer is pinned to its crew and uses the Post/Update toggle in
-  // this slot instead.
-  const [destination, setDestination] = useState<Destination>('crew');
-  const canChooseDestination = !isFamilyScoped;
-  const isPublic = canChooseDestination && destination === 'public';
+  const myCrews = families ?? [];
+  const myConnections = connections ?? [];
+
+  // A destination the author cannot reach is never offered and never
+  // becomes the live one.
+  const crewAvailable = isFamilyScoped || myCrews.length > 0;
+  const dmAvailable = myConnections.length > 0;
+  const safestDestination: Destination = crewAvailable ? 'crew' : 'public';
+
+  const [destinationChoice, setDestinationChoice] = useState<Destination>('crew');
+  const destination: Destination =
+    destinationChoice === 'crew' && !crewAvailable ? 'public'
+      : destinationChoice === 'dm' && !dmAvailable ? 'public'
+        : destinationChoice;
+  const isPublic = destination === 'public';
+  const isCrew = destination === 'crew';
+  const isDM = destination === 'dm';
+
+  // Which crew. Pinned when the composer is crew-scoped. Automatic when
+  // the author has exactly one. Picked when they have several.
+  const [crewChoice, setCrewChoice] = useState<string | null>(null);
+  const [crewPickerOpen, setCrewPickerOpen] = useState(false);
+  const activeCrewId = isFamilyScoped
+    ? familyId!
+    : crewChoice ?? (myCrews.length === 1 ? myCrews[0].id : null);
+  const activeCrew = myCrews.find((f) => f.id === activeCrewId) ?? null;
+
+  // Which person. DM only.
+  const [dmChoice, setDmChoice] = useState<string | null>(null);
+  const [dmPickerOpen, setDmPickerOpen] = useState(false);
+  const dmRecipient = myConnections.find((c) => c.id === dmChoice) ?? null;
+
+  // The burn. Off by default, every time.
+  const [destruct, setDestruct] = useState(false);
 
   const { data: loftHandle, refetch: refetchLoftHandle } = useLoftHandle();
   const regenerateLoftHandle = useRegenerateLoftHandle();
@@ -105,18 +137,25 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const [updateRecipientIds, setUpdateRecipientIds] = useState<Set<string>>(new Set());
   const [recipientPickerOpen, setRecipientPickerOpen] = useState(false);
   const { data: familyMembers } = useFamilyMembersWithProfiles(familyId ?? null);
+  const isUpdate = isFamilyScoped && isCrew && postKind === 'update';
 
   const hasMedia = upload.selectedAssets.length > 0;
   const trimmedLen = body.trim().length;
   const overLoftLimit = isPublic && trimmedLen > LOFT_MAX;
   const isUploading = upload.stage === 'uploading' || upload.stage === 'creating_post';
-  const isSending = isUploading || createLoftPost.isPending;
+  // createPost.isPending is in here on purpose. Without it the button
+  // re-enables between stages and a second tap sends a second drop.
+  const isSending = isUploading || upload.createPost.isPending || createLoftPost.isPending;
 
   // Public needs a body inside 1..1200 and a claimed pseudonym. It can
-  // never be satisfied by media alone; loft posts carry no media.
+  // never be satisfied by media alone; loft posts carry no media. Crew
+  // and DM need a named destination.
+  const hasPayload = trimmedLen > 0 || hasMedia;
   const canPost = isPublic
     ? trimmedLen > 0 && !overLoftLimit && !!loftHandle
-    : trimmedLen > 0 || hasMedia;
+    : isCrew
+      ? hasPayload && !!activeCrewId
+      : hasPayload && !!dmChoice;
 
   /**
    * Pseudonym claim. Lifted unchanged from the /loft screen: roll a
@@ -134,16 +173,37 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     }
   };
 
-  // Switching to Public drops any attachment, so say so before it
-  // happens. loft_posts stores a body and nothing else; carrying the
-  // asset along would silently discard it at insert time.
+  // Switching to Public drops attachments and the burn, so say so before
+  // it happens. loft_posts stores a body and nothing else; carrying
+  // either along would discard it silently at insert time.
   const switchDestination = (next: Destination) => {
-    if (next === destination) return;
-    if (next === 'public' && hasMedia) {
-      showAlert('Attachments dropped', `Public ${Vocab.postPlural} are text only.`);
-      upload.reset();
+    if (next === destinationChoice) return;
+    if (next === 'public' && (hasMedia || destruct)) {
+      const lost = [hasMedia ? 'Attachments' : null, destruct ? 'Self-destruct' : null]
+        .filter(Boolean).join(' and ');
+      showAlert(`${lost} dropped`, `Public ${Vocab.postPlural} are text. 24 hours, then gone.`);
+      if (hasMedia) upload.reset();
+      setDestruct(false);
     }
-    setDestination(next);
+    setDestinationChoice(next);
+    // A destination with several candidates asks immediately rather than
+    // leaving a disabled send button with nothing to press.
+    if (next === 'crew' && !isFamilyScoped && myCrews.length > 1 && !crewChoice) {
+      setCrewPickerOpen(true);
+    }
+    if (next === 'dm' && !dmChoice) setDmPickerOpen(true);
+  };
+
+  const resetComposer = () => {
+    setBody('');
+    setTaggedIds(new Set());
+    setUpdateRecipientIds(new Set());
+    setPostKind('post');
+    setDestinationChoice(safestDestination);
+    setDmChoice(null);
+    setDestruct(false);
+    setExpanded(false);
+    upload.reset();
   };
 
   const onTwoWayCapture = (asset: CapturedAsset) => {
@@ -191,11 +251,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     }
     try {
       await createLoftPost.mutateAsync(text);
-      setBody('');
-      setTaggedIds(new Set());
-      setDestination('crew');
-      setExpanded(false);
-      upload.reset();
+      resetComposer();
     } catch (e: any) {
       showAlert(`Could not ${Vocab.postVerb}`, e?.message ?? 'Try again.');
     }
@@ -203,6 +259,14 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
 
   const handlePost = async () => {
     if (isPublic) return handlePublicPost();
+    if (isCrew && !activeCrewId) {
+      showAlert(`Pick a ${Vocab.group}`, `This ${Vocab.post} needs a destination.`);
+      return;
+    }
+    if (isDM && !dmChoice) {
+      showAlert('Pick a person', `This ${Vocab.post} needs a destination.`);
+      return;
+    }
     try {
       let photoUploads: { path: string; width?: number; height?: number }[] | undefined;
       let muxPlaybackId: string | undefined;
@@ -222,74 +286,32 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
 
       await upload.createPost.mutateAsync({
         body: body.trim(),
-        visibility: isFamilyScoped ? 'family' : 'public',
-        familyId: familyId,
-        kind: isFamilyScoped ? postKind : 'post',
+        // Crew means crew. The old main-feed path wrote 'public' under a
+        // Crew label, which promised an audience the drop never got.
+        visibility: isDM ? 'direct' : 'family',
+        familyId: isCrew ? activeCrewId! : undefined,
+        directRecipientId: isDM ? dmChoice! : undefined,
+        // Only ride the insert when the author picked it. A plain drop
+        // still lands on a schema that predates migration 065.
+        destructOnView: destruct ? true : undefined,
+        kind: isUpdate ? 'update' : 'post',
         // Only pass recipient list for genuine crew updates with a
         // non-empty selection. Author is implicit — RLS lets them read
         // their own posts unconditionally.
         updateRecipientIds:
-          isFamilyScoped && postKind === 'update' && updateRecipientIds.size > 0
-            ? [...updateRecipientIds]
-            : undefined,
+          isUpdate && updateRecipientIds.size > 0 ? [...updateRecipientIds] : undefined,
         photoUploads,
         muxPlaybackId,
         videoDurationMs,
       });
 
-      // reset
-      setBody('');
-      setTaggedIds(new Set());
-      setUpdateRecipientIds(new Set());
-      setPostKind('post');
-      setExpanded(false);
-      upload.reset();
+      resetComposer();
     } catch (e: any) {
       showAlert(`Could not ${Vocab.postVerb}`, e?.message ?? 'Try again.');
     }
   };
 
-  const taggedList = connections?.filter((c) => taggedIds.has(c.id)) ?? [];
-
-  // Public posting requires at least one active crew membership.
-  // The whole point of HereToo: crew ties are the anti-spam layer that
-  // earns the right to post in the common area.
-  // Crew-scoped composers skip this gate. If you're on the crew
-  // page, you're necessarily a member of that crew.
-  // Public is exempt: loft posts only require an authenticated user,
-  // so the gate steps aside once that destination is chosen.
-  if (!isFamilyScoped && !isPublic && families !== undefined && !inAFamily) {
-    return (
-      <View style={s.gateCard}>
-        <Ionicons name="people-outline" size={24} color={Colors.primary} />
-        <Text style={s.gateTitle}>Join {Vocab.groupWithArticle} to {Vocab.postVerb} here</Text>
-        <View style={s.gateRow}>
-          <TouchableOpacity
-            style={s.gateBtn}
-            onPress={() => router.push('/family/join' as any)}
-            activeOpacity={0.85}
-          >
-            <Text style={s.gateBtnText}>Enter invite code</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.gateBtn, s.gateBtnAlt]}
-            onPress={() => router.push('/family' as any)}
-            activeOpacity={0.85}
-          >
-            <Text style={s.gateBtnTextAlt}>Start a crew</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.gateBtn, s.gateBtnAlt]}
-            onPress={() => { setDestination('public'); setExpanded(true); }}
-            activeOpacity={0.85}
-            accessibilityLabel={`${Vocab.Post} to Public instead. Pseudonymous, vanishes after 24 hours`}
-          >
-            <Text style={s.gateBtnTextAlt}>{Vocab.Post} to Public</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+  const taggedList = myConnections.filter((c) => taggedIds.has(c.id));
 
   // Collapsed: tiny one-row entry point. The user taps it (or the
   // direct camera/photo buttons) to expand into the full composer.
@@ -323,13 +345,14 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     <View style={s.card}>
       <View style={s.headerRow}>
         <Eyebrow>
-          {isPublic
-            ? `New public ${Vocab.post}`
-            : isFamilyScoped && postKind === 'update' ? 'New update' : `New ${Vocab.post}`}
+          {isPublic ? `New public ${Vocab.post}`
+            : isDM ? `New direct ${Vocab.post}`
+              : isUpdate ? 'New update'
+                : `New ${Vocab.post}`}
         </Eyebrow>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <TouchableOpacity
-            onPress={() => { setExpanded(false); setBody(''); setDestination('crew'); upload.reset(); }}
+            onPress={resetComposer}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={s.collapseBtn}
             accessibilityLabel="Collapse composer"
@@ -343,63 +366,88 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             activeOpacity={0.85}
             accessibilityLabel={
               isPublic ? `${Vocab.Post} to Public`
-                : postKind === 'update' ? 'Send update'
-                  : isFamilyScoped ? `${Vocab.Post} to this ${Vocab.group}` : `${Vocab.Post} to the feed`
+                : isDM ? `Send to ${dmRecipient?.display_name ?? dmRecipient?.handle ?? 'one person'}`
+                  : isUpdate ? 'Send update'
+                    : `${Vocab.Post} to ${activeCrew?.name ?? `this ${Vocab.group}`}`
             }
           >
             {isSending
               ? <ActivityIndicator color={Colors.onPrimary} size="small" />
               : (
                 <Text style={s.postBtnText}>
-                  {isPublic ? `${Vocab.Post} to Public` : postKind === 'update' ? 'Send update' : Vocab.Post}
+                  {isPublic ? `${Vocab.Post} to Public` : isUpdate ? 'Send update' : Vocab.Post}
                 </Text>
               )}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Destination. Two very different audiences, so the control is
-          always on screen before the send, never behind a menu. */}
-      {canChooseDestination && (
-        <View style={s.destRow}>
-          <TouchableOpacity
-            style={[s.destBtn, !isPublic && s.destBtnActive]}
-            onPress={() => switchDestination('crew')}
-            activeOpacity={0.7}
-            accessibilityLabel={isFamilyScoped ? `${Vocab.Post} to this ${Vocab.group}` : `${Vocab.Post} to the feed`}
-            accessibilityState={{ selected: !isPublic }}
-          >
-            <Ionicons
-              name="people-outline"
-              size={14}
-              color={!isPublic ? Colors.primary : Colors.textMuted}
-            />
-            {/* Only a crew-scoped composer writes visibility 'family'. On
-                the main feed this writes 'public', so calling it Crew there
-                would promise an audience the post does not get. */}
-            <Text style={[s.destBtnText, !isPublic && s.destBtnTextActive]}>
-              {isFamilyScoped ? 'Crew' : 'Feed'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.destBtn, isPublic && s.destBtnActive]}
-            onPress={() => switchDestination('public')}
-            activeOpacity={0.7}
-            accessibilityLabel={`${Vocab.Post} to Public. Pseudonymous, vanishes after 24 hours`}
-            accessibilityState={{ selected: isPublic }}
-          >
-            <Ionicons
-              name="earth-outline"
-              size={14}
-              color={isPublic ? Colors.primary : Colors.textMuted}
-            />
-            <Text style={[s.destBtnText, isPublic && s.destBtnTextActive]}>Public</Text>
-            <Text style={[s.destTag, isPublic && s.destTagActive]}>24h</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Destination. Three audiences that do not overlap, so the control
+          sits on screen before the send, never behind a menu. */}
+      <View style={s.destRow}>
+        <DestBtn
+          icon="earth-outline"
+          label="Public"
+          tag="24h"
+          selected={isPublic}
+          onPress={() => switchDestination('public')}
+          accessibilityLabel={`${Vocab.Post} to Public. Pseudonymous, vanishes after 24 hours`}
+        />
+        <DestBtn
+          icon="people-outline"
+          label={Vocab.Group}
+          selected={isCrew}
+          disabled={!crewAvailable}
+          onPress={() => switchDestination('crew')}
+          accessibilityLabel={`${Vocab.Post} to ${activeCrew?.name ?? `one ${Vocab.group}`}`}
+        />
+        <DestBtn
+          icon="person-outline"
+          label="DM"
+          selected={isDM}
+          disabled={!dmAvailable}
+          onPress={() => switchDestination('dm')}
+          accessibilityLabel={`${Vocab.Post} to one person`}
+        />
+      </View>
+
+      {/* Which crew. Only when the author has a choice to make. */}
+      {isCrew && !isFamilyScoped && myCrews.length > 1 && (
+        <TouchableOpacity
+          style={s.toRow}
+          onPress={() => setCrewPickerOpen(true)}
+          activeOpacity={0.7}
+          accessibilityLabel={`Choose ${Vocab.groupWithArticle}`}
+        >
+          <Ionicons name="people-outline" size={14} color={Colors.textSecondary} />
+          <Text style={s.toLabel}>To:</Text>
+          <Text style={s.toValue} numberOfLines={1}>
+            {activeCrew?.name ?? `Pick a ${Vocab.group}`}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+        </TouchableOpacity>
       )}
 
-      {/* Which pseudonym carries the post. Identity disclosure, shown
+      {/* Which person. DM only. */}
+      {isDM && (
+        <TouchableOpacity
+          style={s.toRow}
+          onPress={() => setDmPickerOpen(true)}
+          activeOpacity={0.7}
+          accessibilityLabel="Choose who gets this"
+        >
+          <Ionicons name="person-outline" size={14} color={Colors.textSecondary} />
+          <Text style={s.toLabel}>To:</Text>
+          <Text style={s.toValue} numberOfLines={1}>
+            {dmRecipient
+              ? (dmRecipient.display_name ?? dmRecipient.handle ?? 'Unknown')
+              : 'Pick a person'}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+        </TouchableOpacity>
+      )}
+
+      {/* Which pseudonym carries the drop. Identity disclosure, shown
           before the send. Also the claim flow when there is no handle
           yet, same two paths the /loft sub-bar had. */}
       {isPublic && (
@@ -441,13 +489,16 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         </View>
       )}
 
-      {/* Update / Post toggle, crew-scoped composers only. */}
-      {isFamilyScoped && (
+      {/* Update / Drop toggle, crew-scoped composers on the crew
+          destination only. An update is a crew instrument. */}
+      {isFamilyScoped && isCrew && (
         <View style={s.kindRow}>
           <TouchableOpacity
             style={[s.kindBtn, postKind === 'post' && s.kindBtnActive]}
             onPress={() => setPostKind('post')}
             activeOpacity={0.7}
+            accessibilityLabel={`Send as a ${Vocab.post}`}
+            accessibilityState={{ selected: postKind === 'post' }}
           >
             <Ionicons
               name="chatbubble-outline"
@@ -460,6 +511,8 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             style={[s.kindBtn, postKind === 'update' && s.kindBtnActive]}
             onPress={() => setPostKind('update')}
             activeOpacity={0.7}
+            accessibilityLabel="Send as an update"
+            accessibilityState={{ selected: postKind === 'update' }}
           >
             <Ionicons
               name="medkit-outline"
@@ -474,17 +527,18 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       {/* Recipient row, only for crew updates. Defaults to "Everyone
           in this crew"; tap to narrow to specific members (the
           health-emergency use case from the original pitch). */}
-      {isFamilyScoped && postKind === 'update' && (
+      {isUpdate && (
         <TouchableOpacity
-          style={s.recipientRow}
+          style={s.toRow}
           onPress={() => setRecipientPickerOpen(true)}
           activeOpacity={0.7}
+          accessibilityLabel="Choose who gets this update"
         >
           <Ionicons name="people-outline" size={14} color={Colors.textSecondary} />
-          <Text style={s.recipientLabel}>To:</Text>
-          <Text style={s.recipientValue} numberOfLines={1}>
+          <Text style={s.toLabel}>To:</Text>
+          <Text style={s.toValue} numberOfLines={1}>
             {updateRecipientIds.size === 0
-              ? 'Everyone in this crew'
+              ? `Everyone in this ${Vocab.group}`
               : recipientSummary(familyMembers ?? [], updateRecipientIds, userId)}
           </Text>
           <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
@@ -502,9 +556,9 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
       />
 
       <View style={s.actionRow}>
-        {/* Media and tagging are crew-only. loft_posts has a body
+        {/* Media and tagging are off on Public. loft_posts has a body
             column and no media table, and an @handle in a pseudonymous
-            post undoes the pseudonym. */}
+            drop undoes the pseudonym. */}
         {!isPublic && (
           <>
             <ActionBtn
@@ -552,6 +606,31 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         )}
       </View>
 
+      {/* The burn. Off every time the composer opens, because a drop
+          nobody can go back to is not a default. Public rides loft_posts,
+          which has no burn column, so the control is inert there. */}
+      <TouchableOpacity
+        style={[s.burnBtn, destruct && s.burnBtnOn, isPublic && s.burnBtnOff]}
+        onPress={() => setDestruct((v) => !v)}
+        disabled={isPublic}
+        activeOpacity={0.7}
+        accessibilityRole="switch"
+        accessibilityLabel="Destroy after viewing"
+        accessibilityState={{ checked: destruct, disabled: isPublic }}
+      >
+        <Ionicons
+          name={destruct ? 'flame' : 'flame-outline'}
+          size={15}
+          color={destruct ? Colors.error : Colors.textMuted}
+        />
+        <Text style={[s.burnText, destruct && s.burnTextOn]}>Destroy after viewing</Text>
+        <Ionicons
+          name={destruct ? 'checkmark-circle' : 'ellipse-outline'}
+          size={18}
+          color={destruct ? Colors.error : Colors.textMuted}
+        />
+      </TouchableOpacity>
+
       {hasMedia && !isPublic && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbStrip}>
           {upload.selectedAssets.map((a, i) => (
@@ -568,6 +647,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
               style={s.taggedChip}
               onPress={() => toggleTag(c.id, c.handle)}
               activeOpacity={0.7}
+              accessibilityLabel={`Remove tag ${c.handle ?? c.display_name ?? 'user'}`}
             >
               <Text style={s.taggedChipText}>@{c.handle ?? c.display_name ?? 'user'}</Text>
               <Ionicons name="close" size={12} color={Colors.textSecondary} />
@@ -615,6 +695,106 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
         />
       </Modal>
 
+      {/* Crew picker. Only reachable when the author is in several. */}
+      <Modal
+        visible={crewPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCrewPickerOpen(false)}
+      >
+        <TouchableOpacity
+          style={s.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setCrewPickerOpen(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={s.modalCard}>
+            <Text style={s.modalTitle}>Which {Vocab.group}</Text>
+
+            <ScrollView style={{ maxHeight: 360 }}>
+              {myCrews.map((f) => {
+                const checked = f.id === activeCrewId;
+                return (
+                  <TouchableOpacity
+                    key={f.id}
+                    style={s.connRow}
+                    onPress={() => { setCrewChoice(f.id); setCrewPickerOpen(false); }}
+                    activeOpacity={0.7}
+                    accessibilityLabel={`${Vocab.Post} to ${f.name}`}
+                    accessibilityState={{ selected: checked }}
+                  >
+                    <View style={s.connAvatar}>
+                      <Text style={s.connAvatarText}>{f.name.slice(0, 1).toUpperCase()}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.connName}>{f.name}</Text>
+                      <Text style={s.connHandle}>{f.my_role}</Text>
+                    </View>
+                    <Ionicons
+                      name={checked ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={22}
+                      color={checked ? Colors.primary : Colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* DM picker. One person. Selecting closes it. */}
+      <Modal
+        visible={dmPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDmPickerOpen(false)}
+      >
+        <TouchableOpacity
+          style={s.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setDmPickerOpen(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={s.modalCard}>
+            <Text style={s.modalTitle}>Send to one person</Text>
+
+            <ScrollView style={{ maxHeight: 360 }}>
+              {myConnections.map((c) => {
+                const checked = c.id === dmChoice;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={s.connRow}
+                    onPress={() => { setDmChoice(c.id); setDmPickerOpen(false); }}
+                    activeOpacity={0.7}
+                    accessibilityLabel={`Send to ${c.display_name ?? c.handle ?? 'this person'}`}
+                    accessibilityState={{ selected: checked }}
+                  >
+                    <View style={s.connAvatar}>
+                      {c.avatar_path ? (
+                        <Image source={{ uri: mediaPathToUrl(c.avatar_path) }} style={s.connAvatarImg} />
+                      ) : (
+                        <Text style={s.connAvatarText}>
+                          {(c.display_name ?? c.handle ?? '?').slice(0, 1).toUpperCase()}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.connName}>{c.display_name ?? c.handle ?? 'Unknown'}</Text>
+                      {c.handle && <Text style={s.connHandle}>@{c.handle}</Text>}
+                    </View>
+                    <Ionicons
+                      name={checked ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={22}
+                      color={checked ? Colors.primary : Colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Recipient picker, for kind='update' only. Restricts the
           update to specific crew members; empty selection means
           "broadcast to everyone in the crew" (the default). */}
@@ -648,6 +828,8 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
                         setUpdateRecipientIds(next);
                       }}
                       activeOpacity={0.7}
+                      accessibilityLabel={m.profile.display_name ?? m.profile.handle ?? 'Unknown'}
+                      accessibilityState={{ selected: checked }}
                     >
                       <View style={s.connAvatar}>
                         {m.profile.avatar_path ? (
@@ -680,12 +862,14 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
               <TouchableOpacity
                 style={[s.modalDone, { flex: 1, backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.border }]}
                 onPress={() => { setUpdateRecipientIds(new Set()); setRecipientPickerOpen(false); }}
+                accessibilityLabel={`Send to everyone in this ${Vocab.group}`}
               >
                 <Text style={[s.modalDoneText, { color: Colors.textSecondary }]}>Everyone</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.modalDone, { flex: 1 }]}
                 onPress={() => setRecipientPickerOpen(false)}
+                accessibilityLabel="Done choosing recipients"
               >
                 <Text style={s.modalDoneText}>Done</Text>
               </TouchableOpacity>
@@ -710,7 +894,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             <Text style={s.modalTitle}>Tag your connections</Text>
 
             <ScrollView style={{ maxHeight: 360 }}>
-              {(connections ?? []).map((c) => {
+              {myConnections.map((c) => {
                 const checked = taggedIds.has(c.id);
                 return (
                   <TouchableOpacity
@@ -718,6 +902,8 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
                     style={s.connRow}
                     onPress={() => toggleTag(c.id, c.handle)}
                     activeOpacity={0.7}
+                    accessibilityLabel={`Tag ${c.display_name ?? c.handle ?? 'this person'}`}
+                    accessibilityState={{ selected: checked }}
                   >
                     <View style={s.connAvatar}>
                       {c.avatar_path ? (
@@ -745,6 +931,7 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
             <TouchableOpacity
               style={s.modalDone}
               onPress={() => setTagPickerOpen(false)}
+              accessibilityLabel="Done tagging"
             >
               <Text style={s.modalDoneText}>Done</Text>
             </TouchableOpacity>
@@ -755,10 +942,52 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   );
 }
 
+/**
+ * One leg of the destination radio. Disabled means the author cannot
+ * reach that audience at all. No explanation sits under it; the state
+ * is the message.
+ */
+function DestBtn({
+  icon, label, tag, selected, disabled, onPress, accessibilityLabel,
+}: {
+  icon: any;
+  label: string;
+  tag?: string;
+  selected: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
+  const s = makeStyles();
+  const ink = disabled ? Colors.textMuted : selected ? Colors.primary : Colors.textMuted;
+  return (
+    <TouchableOpacity
+      style={[s.destBtn, selected && !disabled && s.destBtnActive, disabled && s.destBtnDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.7}
+      accessibilityRole="radio"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected: selected && !disabled, disabled: !!disabled }}
+    >
+      <Ionicons name={icon} size={14} color={ink} />
+      <Text style={[s.destBtnText, selected && !disabled && s.destBtnTextActive]}>{label}</Text>
+      {tag && (
+        <Text style={[s.destTag, selected && !disabled && s.destTagActive]}>{tag}</Text>
+      )}
+    </TouchableOpacity>
+  );
+}
+
 function ActionBtn({ icon, label, onPress }: { icon: any; label: string; onPress: () => void }) {
   const s = makeStyles();
   return (
-    <TouchableOpacity style={s.actionBtn} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={s.actionBtn}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityLabel={label}
+    >
       <Ionicons name={icon} size={16} color={Colors.primary} />
       <Text style={s.actionBtnText}>{label}</Text>
     </TouchableOpacity>
@@ -843,25 +1072,26 @@ function makeStyles() { return StyleSheet.create({
   // the old gold-toned primary but reads as low-contrast on indigo.
   postBtnText: { color: Colors.onPrimary, fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
 
-  // Destination selector — Crew vs Public. Full-width, both options
-  // legible at rest, so the target audience is never a guess.
+  // Destination radio. Public, Crew, DM. Full-width, all three legible
+  // at rest, so the audience is never a guess.
   destRow: {
-    flexDirection: 'row', gap: 6,
+    flexDirection: 'row', gap: 4,
     backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.border,
     padding: 4,
   },
   destBtn: {
-    flex: 1,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8,
+    flex: 1, minHeight: 38,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+    paddingHorizontal: 8, paddingVertical: 8,
     borderRadius: Radius.full,
   },
   destBtnActive: {
     backgroundColor: Colors.primaryFaint,
     borderWidth: 1, borderColor: Colors.primary,
   },
+  destBtnDisabled: { opacity: 0.35 },
   destBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
   destBtnTextActive: { color: Colors.textPrimary },
   destTag: {
@@ -901,15 +1131,16 @@ function makeStyles() { return StyleSheet.create({
   kindBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
   kindBtnTextActive: { color: Colors.textPrimary },
 
-  // Recipient row, shown only on crew-update composers
-  recipientRow: {
+  // "To:" row. Crew choice, DM choice, and the update recipient list all
+  // wear the same shape, because they answer the same question.
+  toRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: Colors.surfaceLight,
     borderRadius: Radius.md,
     paddingHorizontal: 10, paddingVertical: 8,
   },
-  recipientLabel: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
-  recipientValue: { flex: 1, fontSize: 13, color: Colors.textPrimary, fontWeight: '500' },
+  toLabel: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
+  toValue: { flex: 1, fontSize: 13, color: Colors.textPrimary, fontWeight: '500' },
 
   input: {
     backgroundColor: Colors.surfaceLight,
@@ -931,6 +1162,20 @@ function makeStyles() { return StyleSheet.create({
   actionBtnText: { color: Colors.textPrimary, fontSize: 12, fontWeight: '600' },
   clearBtn: { paddingHorizontal: 8, paddingVertical: 6 },
   clearBtnText: { color: Colors.textMuted, fontSize: 12 },
+
+  // Self-destruct. Its own row, full width, so it never hides among the
+  // media buttons. Red only when armed.
+  burnBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44,
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderRadius: Radius.md,
+    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
+  },
+  burnBtnOn: { borderColor: Colors.error },
+  burnBtnOff: { opacity: 0.35 },
+  burnText: { flex: 1, fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+  burnTextOn: { color: Colors.error },
 
   thumbStrip: { marginTop: 2 },
   thumb: {
@@ -987,28 +1232,4 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   modalDoneText: { color: '#FFF', fontSize: 14, fontWeight: '600', letterSpacing: 0.1 },
-
-  // Gate state, shown when the viewer is in no crew yet.
-  gateCard: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    padding: Spacing.lg,
-    alignItems: 'center', gap: 8,
-  },
-  gateTitle: {
-    fontSize: 16, fontWeight: '700', color: Colors.textPrimary,
-    marginTop: 4,
-  },
-  gateRow: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' },
-  gateBtn: {
-    paddingHorizontal: 18, paddingVertical: 11, borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-  },
-  gateBtnText: { color: Colors.onPrimary, fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
-  gateBtnAlt: {
-    backgroundColor: 'transparent',
-    borderWidth: 1, borderColor: Colors.border,
-  },
-  gateBtnTextAlt: { color: Colors.textPrimary, fontSize: 13, fontWeight: '600' },
 }); }

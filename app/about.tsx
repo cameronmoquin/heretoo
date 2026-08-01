@@ -7,13 +7,15 @@
 
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform,
+  View, Text, StyleSheet, ScrollView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
-import { Spacing, Radius } from '../constants/design';
+import { Spacing, Radius, Type } from '../constants/design';
+import { Button } from '../components/shared/Button';
+import { Eyebrow } from '../components/shared/Eyebrow';
 
 export default function AboutScreen() {
   const s = makeStyles();
@@ -26,30 +28,24 @@ export default function AboutScreen() {
         </View>
 
         <View style={s.huntCard}>
-          <Text style={s.huntKicker}>Deaddrop</Text>
-          <TouchableOpacity
-            style={s.huntCta}
+          <Eyebrow accentColor={Colors.primary}>Deaddrop</Eyebrow>
+          <Button
+            title="Open Deaddrop"
             onPress={() => router.push('/hunt' as any)}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Open Deaddrop"
-          >
-            <Ionicons name="navigate" size={16} color="#FFF" />
-            <Text style={s.huntCtaText}>Open Deaddrop</Text>
-          </TouchableOpacity>
+            variant="primary"
+            style={s.pillCta}
+            icon={<Ionicons name="navigate" size={16} color={Colors.onPrimary} />}
+          />
         </View>
 
         <View style={s.actions}>
-          <TouchableOpacity
-            style={s.cta}
+          <Button
+            title="Step inside"
             onPress={() => router.replace('/(auth)/welcome' as any)}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Step inside"
-          >
-            <Ionicons name="arrow-forward" size={16} color="#FFF" />
-            <Text style={s.ctaText}>Step inside</Text>
-          </TouchableOpacity>
+            variant="primary"
+            style={s.pillCta}
+            icon={<Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />}
+          />
         </View>
 
         {/* Publisher-facing fair-use notice. It lived at the bottom of the
@@ -72,40 +68,32 @@ function makeStyles() { return StyleSheet.create({
 
   masthead: { gap: 6 },
   title: {
-    fontSize: 42,
-    fontWeight: '800',
-    letterSpacing: -0.7,
+    fontSize: Type.hero.size,
+    lineHeight: Type.hero.lineHeight,
+    fontWeight: Type.hero.weight,
+    letterSpacing: Type.hero.letterSpacing,
     color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
 
   huntCard: {
-    gap: 8, marginTop: Spacing.sm,
+    gap: Spacing.xs, marginTop: Spacing.sm,
     padding: Spacing.lg, borderRadius: Radius.lg,
     backgroundColor: Colors.surface,
     borderWidth: 1, borderColor: Colors.border,
   },
-  huntKicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.primary,
-    textTransform: 'uppercase', letterSpacing: 1.6,
+  // Pill CTA. Button supplies the fill, the ink and the 44pt floor;
+  // this only carries the shrink-wrap and the full round.
+  pillCta: {
+    alignSelf: 'flex-start',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
   },
-  huntCta: {
-    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8,
-    marginTop: 4, paddingHorizontal: 18, paddingVertical: 12,
-    borderRadius: Radius.full, backgroundColor: Colors.primary,
-  },
-  huntCtaText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.1 },
 
   actions: {
-    flexDirection: 'row', gap: 8, paddingTop: Spacing.md, flexWrap: 'wrap',
+    flexDirection: 'row', gap: Spacing.xs, paddingTop: Spacing.md, flexWrap: 'wrap',
   },
-  cta: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 18, paddingVertical: 12,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-  },
-  ctaText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.1 },
   footnote: {
     fontSize: 11, color: Colors.textMuted, fontStyle: 'italic',
     textAlign: 'center', lineHeight: 17, paddingTop: Spacing.sm,

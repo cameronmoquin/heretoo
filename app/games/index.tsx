@@ -12,9 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
 
 interface Game {
   slug: string;
@@ -37,15 +39,10 @@ export default function GamesIndex() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }} />
-        </View>
+        <ScreenHeader showBack style={s.header} />
 
         <View style={s.masthead}>
-          <Text style={s.kicker}>The Games Room</Text>
+          <Eyebrow accentColor={Colors.primary}>The Games Room</Eyebrow>
           <Text style={s.title}>Play in peace.</Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />
@@ -65,7 +62,7 @@ export default function GamesIndex() {
             >
               <Text style={s.cardGlyph}>{g.glyph}</Text>
               <Text style={s.cardName}>{g.name}</Text>
-              {!g.available && <Text style={s.cardSoonLabel}>Coming</Text>}
+              {!g.available && <Eyebrow>Coming</Eyebrow>}
             </TouchableOpacity>
           ))}
         </View>
@@ -77,20 +74,16 @@ export default function GamesIndex() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.lg, paddingBottom: 80, gap: Spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center' },
+  header: { paddingHorizontal: 0 },
 
   masthead: { gap: 14 },
-  kicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 2.4,
-    textTransform: 'uppercase',
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
   title: {
-    fontSize: 50, lineHeight: 56, fontWeight: '800', letterSpacing: -1.2,
-    color: Colors.brandIvory,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    fontSize: Type.hero.size, lineHeight: Type.hero.lineHeight,
+    fontWeight: Type.hero.weight, letterSpacing: Type.hero.letterSpacing,
+    color: Colors.textPrimary,
+    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
   },
-  flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: Spacing.xxs },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },
   flourishGlyph: { fontSize: 13, color: Colors.primary, opacity: 0.85 },
 
@@ -98,25 +91,22 @@ function makeStyles() { return StyleSheet.create({
   card: {
     padding: Spacing.lg,
     borderRadius: Radius.lg,
-    backgroundColor: 'rgba(22, 22, 29, 0.78)',
+    backgroundColor: Colors.surface,
     borderWidth: 1, borderColor: Colors.primary,
-    gap: 8,
+    gap: Spacing.xs,
     ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(4px)' } as any) : {}),
   },
+  // The unavailable card sinks back to the canvas instead of lifting.
   cardSoon: {
     borderColor: Colors.border, opacity: 0.65,
-    backgroundColor: 'rgba(22, 22, 29, 0.5)',
+    backgroundColor: Colors.background,
   },
   cardGlyph: {
     fontSize: 36, color: Colors.primary, lineHeight: 36,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   cardName: {
-    fontSize: 22, fontWeight: '800', color: Colors.brandIvory, letterSpacing: -0.4,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
-  cardSoonLabel: {
-    fontSize: 10, fontWeight: '700', color: Colors.textMuted, letterSpacing: 2,
-    textTransform: 'uppercase',
+    fontSize: 22, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.4,
+    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
   },
 }); }

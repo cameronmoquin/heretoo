@@ -16,7 +16,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useSubjectBySlug, useFollowSubject, useUnfollowSubject, useRetireSubject,
@@ -26,8 +26,11 @@ import { useSubjectsSeenStore } from '../../../../stores/subjectsSeenStore';
 import { useToggleHeart } from '../../../../hooks/useFeed';
 import { PostCard } from '../../../../components/feed/PostCard';
 import { showAlert, showConfirm } from '../../../../lib/alert';
+import { Eyebrow } from '../../../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../../../components/shared/ScreenHeader';
 import { Colors } from '../../../../constants/colors';
-import { Spacing, Radius } from '../../../../constants/design';
+import { Spacing, Radius, Type } from '../../../../constants/design';
+import { Gen } from '../../../../constants/generations';
 import { Vocab } from '../../../../constants/vocab';
 
 export default function SubjectScreen() {
@@ -59,11 +62,7 @@ export default function SubjectScreen() {
   if (!data?.subject) {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader showBack />
         <Text style={s.empty}>Subject not found.</Text>
       </SafeAreaView>
     );
@@ -98,47 +97,44 @@ export default function SubjectScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
-      <View style={s.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={s.backBtn}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }} />
-        {!isRetired && (
-          <TouchableOpacity
-            style={[s.followBtn, isFollowing && s.followBtnOn]}
-            onPress={onToggleFollow}
-            activeOpacity={0.85}
-          >
-            <Ionicons
-              name={isFollowing ? 'checkmark' : 'add'}
-              size={14}
-              color={isFollowing ? Colors.primary : Colors.textSecondary}
-            />
-            <Text style={[s.followBtnText, isFollowing && { color: Colors.primary }]}>
-              {isFollowing ? 'Following' : 'Follow'}
-            </Text>
-          </TouchableOpacity>
-        )}
-        {isCreator && !isRetired && (
-          <TouchableOpacity
-            style={s.retireBtn}
-            onPress={onRetire}
-            disabled={retiring}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="archive-outline" size={18} color={Colors.textMuted} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <ScreenHeader
+        showBack
+        right={
+          <>
+            {!isRetired && (
+              <TouchableOpacity
+                style={[s.followBtn, isFollowing && s.followBtnOn]}
+                onPress={onToggleFollow}
+                activeOpacity={0.85}
+              >
+                <Ionicons
+                  name={isFollowing ? 'checkmark' : 'add'}
+                  size={14}
+                  color={isFollowing ? Colors.primary : Colors.textSecondary}
+                />
+                <Text style={[s.followBtnText, isFollowing && { color: Colors.primary }]}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {isCreator && !isRetired && (
+              <TouchableOpacity
+                style={s.retireBtn}
+                onPress={onRetire}
+                disabled={retiring}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="archive-outline" size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </>
+        }
+      />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Title + description (the "wall plaque") */}
         <View style={s.plaque}>
-          <Text style={s.kicker}>{isRetired ? 'Retired subject' : 'Subject'}</Text>
+          <Eyebrow>{isRetired ? 'Retired subject' : 'Subject'}</Eyebrow>
           <Text style={s.title}>{subject.name}</Text>
           {!!subject.description && (
             <Text style={s.description}>{subject.description}</Text>
@@ -168,12 +164,6 @@ function makeStyles() { return StyleSheet.create({
     flex: 1, backgroundColor: 'transparent',
     maxWidth: 720, alignSelf: 'center', width: '100%',
   },
-  header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: Spacing.md, paddingVertical: 8,
-    height: 52,
-  },
-  backBtn: { padding: 4 },
   scroll: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
@@ -183,34 +173,33 @@ function makeStyles() { return StyleSheet.create({
 
   plaque: {
     paddingVertical: Spacing.lg,
-    gap: 8,
-  },
-  kicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.6,
+    gap: Spacing.xs,
   },
   title: {
     fontSize: 36,
     fontWeight: '800',
     letterSpacing: -0.6,
     color: Colors.textPrimary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
   },
   description: {
     fontSize: 15, lineHeight: 22, color: Colors.textSecondary,
   },
   meta: {
-    fontSize: 12, color: Colors.textMuted, marginTop: 4,
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: Spacing.xxs,
   },
 
   followBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 12, paddingVertical: 7,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
+    paddingHorizontal: Spacing.sm, paddingVertical: 7,
     borderRadius: Radius.full,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
   followBtnOn: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
-  followBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
+  followBtnText: {
+    fontSize: Type.caption.size, fontWeight: '600', color: Colors.textSecondary,
+  },
   retireBtn: {
     width: 36, height: 36, borderRadius: Radius.full,
     alignItems: 'center', justifyContent: 'center',
@@ -223,5 +212,7 @@ function makeStyles() { return StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
-  emptyTitle: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
+  emptyTitle: {
+    fontSize: Type.ui.size, fontWeight: '700', color: Colors.textPrimary,
+  },
 }); }

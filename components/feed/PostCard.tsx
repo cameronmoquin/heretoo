@@ -3,6 +3,22 @@
  *
  * Reads body + media (image grid or Mux video) + denormalized engagement
  * counts off the `posts` row. Heart toggle is wired through onHeart prop.
+ *
+ * Two shapes ride on top of that, both from migration 065, both optional
+ * at runtime. Before 065 is run by hand the columns are simply absent,
+ * every flag below reads undefined, and the card renders exactly as it
+ * always has.
+ *
+ *   BURNING   destruct_on_view. The card lands sealed for everyone but
+ *             the author. Body, media, actions and comments stay off it
+ *             until an explicit tap opens it, and that tap is what writes
+ *             the post_views row the RLS filter reads. A scroll past is
+ *             not a read. Once open the drop shows for the session and
+ *             the marker says it will not come back.
+ *
+ *   DIRECT    visibility='direct'. Marked on the card, with the other
+ *             party named. RLS restricts the row to the author and the
+ *             one recipient, so this only renders what it was handed.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -22,11 +38,13 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
 import { useTTS } from '../../stores/ttsStore';
 import { useFlagContent, FLAG_REASONS, type FlagReason } from '../../hooks/useFlagContent';
+import { useRevealed, useOpenDrop, type DropExtras } from '../../hooks/usePostViews';
 import {
   useLineReactions, useFireLine, useUnfireLine, type LineReactionRow,
 } from '../../hooks/useLineReactions';
 import { drawLines, resolveLineRef, attribution, type PaletteLine } from '../../lib/lineReactions';
 import { showAlert, showConfirm } from '../../lib/alert';
+import { Eyebrow } from '../shared/Eyebrow';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Shadow } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
@@ -54,6 +72,40 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const boost = useBoostPost();
   const { data: families } = useMyFamilies();
 
+  // Migration 065 fields. Optional at runtime; undefined before the
+  // migration runs, which lands every branch below on the old behavior.
+  const extra = post as typeof post & DropExtras;
+  const isDirect = (post.visibility as string) === 'direct';
+  const burns = !!extra.destruct_on_view;
+
+  // Sealed until an explicit tap. The author is never sealed out of
+  // their own drop, and the RLS filter never takes it from them either.
+  const revealed = useRevealed(post.id);
+  const openDrop = useOpenDrop();
+  const sealed = burns && !isMine && !revealed;
+
+  const recipientName =
+    extra.recipient?.display_name ?? extra.recipient?.handle ?? null;
+
+  // Who the DM went to. The author gets the name; the recipient already
+  // has the sender in the header above, so they get told it was theirs.
+  const directMark = !isDirect
+    ? null
+    : isMine
+      ? (recipientName ? `Direct to ${recipientName}` : 'Direct')
+      : extra.direct_recipient_id && extra.direct_recipient_id === userId
+        ? 'Direct to you'
+        : 'Direct';
+
+  // The burn, stated as a fact about the object in front of you.
+  const burnMark = !burns
+    ? null
+    : isMine
+      ? 'Burns on view'
+      : sealed
+        ? 'Sealed · one look'
+        : 'Burned · gone on reload';
+
   const onDelete = () => {
     showConfirm(
       `Delete ${Vocab.post}?`,
@@ -67,7 +119,13 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   return (
     <Pressable
       style={s.card}
-      onPress={() => router.push(`/(tabs)/feed/${post.id}` as any)}
+      // A sealed card does not navigate. The detail route would render
+      // the payload without recording the view, which is the whole
+      // mechanism. The seal control below is the only way in.
+      onPress={() => {
+        if (sealed) return;
+        router.push(`/(tabs)/feed/${post.id}` as any);
+      }}
     >
       <View style={s.header}>
         <Pressable
@@ -110,139 +168,176 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         )}
       </View>
 
-      {!!post.body && <Text style={s.body}>{post.body}</Text>}
-
-      {/* Optional attribution slug — used by Shakespeare bot posts
-          ("— Hamlet · Hamlet · III.i") and any future post that
-          wants a citation line. Right-aligned, italic, muted: visually
-          subordinate to the line itself, like a stage direction. */}
-      {!!post.slugline && (
-        <Text style={s.slugline} numberOfLines={2}>{post.slugline}</Text>
-      )}
-
-      {media.length > 0 && (
-        <View style={s.mediaWrap}>
-          {media[0].media_type === 'video' ? (
-            Platform.OS === 'web' ? (
-              React.createElement('video', {
-                src: mediaPathToUrl(media[0].storage_path),
-                poster: mediaPathToThumb(media[0].storage_path) ?? undefined,
-                autoPlay: true,
-                loop: true,
-                muted: true,
-                playsInline: true,
-                style: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#000', borderRadius: 8, objectFit: 'cover' },
-              })
-            ) : (
-              <View style={s.videoBox}>
-                <Image
-                  source={{ uri: mediaPathToThumb(media[0].storage_path) ?? mediaPathToUrl(media[0].storage_path) }}
-                  style={s.videoThumb}
-                />
-                <View style={s.playOverlay}>
-                  <Ionicons name="play" size={32} color="#FFF" />
-                </View>
-              </View>
-            )
-          ) : (
-            <Pressable
-              onPress={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
-              accessibilityLabel="View photo full screen"
-            >
-              <Image
-                source={{ uri: mediaPathToUrl(media[0].storage_path) }}
-                style={s.image}
-                resizeMode="cover"
-              />
-            </Pressable>
+      {/* Destination and burn state, stated on the card. Nothing here
+          explains the feature; each mark is a fact about this drop. */}
+      {(!!directMark || !!burnMark) && (
+        <View style={s.markRow}>
+          {!!directMark && (
+            <Eyebrow accentColor={Colors.share}>{directMark}</Eyebrow>
           )}
-          {media.length > 1 && (
-            <View style={s.mediaCount}>
-              <Ionicons name="copy" size={11} color="#FFF" />
-              <Text style={s.mediaCountText}>{media.length}</Text>
-            </View>
+          {!!directMark && !!burnMark && <Text style={s.markDot}>·</Text>}
+          {!!burnMark && (
+            <Eyebrow accentColor={Colors.important}>{burnMark}</Eyebrow>
           )}
         </View>
       )}
 
-      <View style={s.actions}>
-        <TouchableOpacity
-          style={s.actionBtn}
-          onPress={(e) => { e.stopPropagation(); onHeart?.(post.id); }}
-          activeOpacity={0.7}
-          accessibilityLabel={post.viewer_hearted ? `Unheart ${Vocab.post}` : `Heart ${Vocab.post}`}
-        >
-          {/* Filled heart in the warm brand red (Colors.heart), not the
-              Twitter/Instagram hue. Not looking like them is the point.
-              Outline for "not yet hearted" matches the muted action row. */}
+      {sealed ? (
+        // The seal. Same device as a deaddrop: the payload is on the row
+        // and off the screen until the reader asks for it. The tap writes
+        // the post_views row, so it has to be deliberate.
+        <View style={s.seal}>
           <Ionicons
-            name={post.viewer_hearted ? 'heart' : 'heart-outline'}
+            name="flame-outline"
             size={18}
-            color={post.viewer_hearted ? Colors.heart : Colors.textSecondary}
+            color={Colors.important}
+            importantForAccessibility="no"
+            accessibilityElementsHidden
           />
-          {heartCount > 0 && (
-            <Text style={[s.actionCount, post.viewer_hearted && { color: Colors.heart }]}>
-              {heartCount}
-            </Text>
-          )}
-        </TouchableOpacity>
+          <Button
+            title="Open once"
+            variant="outline"
+            size="sm"
+            onPress={() => openDrop(post.id)}
+          />
+        </View>
+      ) : (
+        <>
+        {!!post.body && <Text style={s.body}>{post.body}</Text>}
 
-        {/* Tapping the comment bubble navigates to the post detail page
-            using the EXACT same path string the parent Pressable uses
-            (which is known to work). The object-form router.push tried
-            previously bounced to login on some environments. Detail
-            page reads ?focus=comment from the search params and
-            auto-focuses the composer.
-            e.stopPropagation prevents double-firing the parent. */}
-        <TouchableOpacity
-          style={s.actionBtn}
-          activeOpacity={0.7}
-          onPress={(e) => {
-            e.stopPropagation();
-            router.push(`/(tabs)/feed/${post.id}?focus=comment` as any);
-          }}
-          accessibilityLabel="Add a comment"
-        >
-          <Ionicons name="chatbubble-outline" size={17} color={Colors.textSecondary} />
-          {(post.comment_count ?? 0) > 0 && (
-            <Text style={s.actionCount}>{post.comment_count}</Text>
-          )}
-        </TouchableOpacity>
+        {/* Optional attribution slug — used by Shakespeare bot posts
+            ("— Hamlet · Hamlet · III.i") and any future post that
+            wants a citation line. Right-aligned, italic, muted: visually
+            subordinate to the line itself, like a stage direction. */}
+        {!!post.slugline && (
+          <Text style={s.slugline} numberOfLines={2}>{post.slugline}</Text>
+        )}
 
-        {/* Fire a line. The reaction vocabulary here is language, not
-            glyphs: you answer a drop with a real Shakespeare line and
-            the quote lands on the card with its speaker and play. */}
-        <TouchableOpacity
-          style={s.actionBtn}
-          activeOpacity={0.7}
-          onPress={(e) => { e.stopPropagation(); setLineOpen(true); }}
-          accessibilityLabel={`Fire a Shakespeare line at this ${Vocab.post}`}
-        >
-          <Ionicons name="flame-outline" size={18} color={Colors.textSecondary} />
-        </TouchableOpacity>
+        {media.length > 0 && (
+          <View style={s.mediaWrap}>
+            {media[0].media_type === 'video' ? (
+              Platform.OS === 'web' ? (
+                React.createElement('video', {
+                  src: mediaPathToUrl(media[0].storage_path),
+                  poster: mediaPathToThumb(media[0].storage_path) ?? undefined,
+                  autoPlay: true,
+                  loop: true,
+                  muted: true,
+                  playsInline: true,
+                  style: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#000', borderRadius: 8, objectFit: 'cover' },
+                })
+              ) : (
+                <View style={s.videoBox}>
+                  <Image
+                    source={{ uri: mediaPathToThumb(media[0].storage_path) ?? mediaPathToUrl(media[0].storage_path) }}
+                    style={s.videoThumb}
+                  />
+                  <View style={s.playOverlay}>
+                    <Ionicons name="play" size={32} color="#FFF" />
+                  </View>
+                </View>
+              )
+            ) : (
+              <Pressable
+                onPress={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
+                accessibilityLabel="View photo full screen"
+              >
+                <Image
+                  source={{ uri: mediaPathToUrl(media[0].storage_path) }}
+                  style={s.image}
+                  resizeMode="cover"
+                />
+              </Pressable>
+            )}
+            {media.length > 1 && (
+              <View style={s.mediaCount}>
+                <Ionicons name="copy" size={11} color="#FFF" />
+                <Text style={s.mediaCountText}>{media.length}</Text>
+              </View>
+            )}
+          </View>
+        )}
 
-        <TouchableOpacity
-          style={s.actionBtn}
-          activeOpacity={0.7}
-          onPress={(e) => { e.stopPropagation(); setBoostOpen(true); }}
-          accessibilityLabel={`Boost this ${Vocab.post}`}
-        >
-          <Ionicons name="repeat-outline" size={18} color={Colors.textSecondary} />
-          {(post.boost_count ?? 0) > 0 && (
-            <Text style={s.actionCount}>{post.boost_count}</Text>
-          )}
-        </TouchableOpacity>
+        <View style={s.actions}>
+          <TouchableOpacity
+            style={s.actionBtn}
+            onPress={(e) => { e.stopPropagation(); onHeart?.(post.id); }}
+            activeOpacity={0.7}
+            accessibilityLabel={post.viewer_hearted ? `Unheart ${Vocab.post}` : `Heart ${Vocab.post}`}
+          >
+            {/* Filled heart in the warm brand red (Colors.heart), not the
+                Twitter/Instagram hue. Not looking like them is the point.
+                Outline for "not yet hearted" matches the muted action row. */}
+            <Ionicons
+              name={post.viewer_hearted ? 'heart' : 'heart-outline'}
+              size={18}
+              color={post.viewer_hearted ? Colors.heart : Colors.textSecondary}
+            />
+            {heartCount > 0 && (
+              <Text style={[s.actionCount, post.viewer_hearted && { color: Colors.heart }]}>
+                {heartCount}
+              </Text>
+            )}
+          </TouchableOpacity>
 
-        {/* Read-aloud — only for genuinely long posts (>200 chars).
-            Below that, reading is faster than the audio loads. */}
-        <ReadAloudButton postId={post.id} body={post.body ?? ''} />
-      </View>
+          {/* Tapping the comment bubble navigates to the post detail page
+              using the EXACT same path string the parent Pressable uses
+              (which is known to work). The object-form router.push tried
+              previously bounced to login on some environments. Detail
+              page reads ?focus=comment from the search params and
+              auto-focuses the composer.
+              e.stopPropagation prevents double-firing the parent. */}
+          <TouchableOpacity
+            style={s.actionBtn}
+            activeOpacity={0.7}
+            onPress={(e) => {
+              e.stopPropagation();
+              router.push(`/(tabs)/feed/${post.id}?focus=comment` as any);
+            }}
+            accessibilityLabel="Add a comment"
+          >
+            <Ionicons name="chatbubble-outline" size={17} color={Colors.textSecondary} />
+            {(post.comment_count ?? 0) > 0 && (
+              <Text style={s.actionCount}>{post.comment_count}</Text>
+            )}
+          </TouchableOpacity>
 
-      {/* Lines fired at this drop, quoted with attribution. */}
-      <LineReactionList postId={post.id} />
+          {/* Fire a line. The reaction vocabulary here is language, not
+              glyphs: you answer a drop with a real Shakespeare line and
+              the quote lands on the card with its speaker and play. */}
+          <TouchableOpacity
+            style={s.actionBtn}
+            activeOpacity={0.7}
+            onPress={(e) => { e.stopPropagation(); setLineOpen(true); }}
+            accessibilityLabel={`Fire a Shakespeare line at this ${Vocab.post}`}
+          >
+            <Ionicons name="flame-outline" size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
 
-      {/* Inline comment preview — latest 2 top-level comments. */}
-      <CommentPreview postId={post.id} commentCount={post.comment_count ?? 0} />
+          <TouchableOpacity
+            style={s.actionBtn}
+            activeOpacity={0.7}
+            onPress={(e) => { e.stopPropagation(); setBoostOpen(true); }}
+            accessibilityLabel={`Boost this ${Vocab.post}`}
+          >
+            <Ionicons name="repeat-outline" size={18} color={Colors.textSecondary} />
+            {(post.boost_count ?? 0) > 0 && (
+              <Text style={s.actionCount}>{post.boost_count}</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Read-aloud — only for genuinely long posts (>200 chars).
+              Below that, reading is faster than the audio loads. */}
+          <ReadAloudButton postId={post.id} body={post.body ?? ''} />
+        </View>
+
+        {/* Lines fired at this drop, quoted with attribution. */}
+        <LineReactionList postId={post.id} />
+
+        {/* Inline comment preview — latest 2 top-level comments. */}
+        <CommentPreview postId={post.id} commentCount={post.comment_count ?? 0} />
+        </>
+      )}
 
       <Modal
         visible={boostOpen}
@@ -750,6 +845,25 @@ function makeStyles() { return StyleSheet.create({
     marginTop: -2,
     letterSpacing: 0.1,
   },
+  // Destination / burn marks. One row, under the byline, above whatever
+  // the drop is carrying.
+  markRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexWrap: 'wrap', marginTop: -2,
+  },
+  markDot: { fontSize: 10, color: Colors.textMuted },
+
+  // The seal. A recessed panel where the payload would be, with the one
+  // control that opens it.
+  seal: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    marginTop: Spacing.xxs,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
+  },
+
   mediaWrap: {
     position: 'relative', marginTop: Spacing.xs,
     borderRadius: Radius.md, overflow: 'hidden',

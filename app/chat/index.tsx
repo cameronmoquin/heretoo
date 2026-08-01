@@ -23,7 +23,9 @@ import { goBackToFeed } from '../../lib/nav';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function ChatList() {
   const s = makeStyles();
@@ -73,14 +75,14 @@ export default function ChatList() {
       <ScrollView contentContainerStyle={s.list}>
         {requests.length > 0 && (
           <>
-            <Text style={s.sectionLabel}>Requests · {requests.length}</Text>
+            <Eyebrow style={s.sectionLabel}>Requests · {requests.length}</Eyebrow>
             {requests.map((t) => <ThreadRow key={t.id} t={t} pending />)}
           </>
         )}
 
         {open.length > 0 ? (
           <>
-            {requests.length > 0 && <Text style={s.sectionLabel}>Threads</Text>}
+            {requests.length > 0 && <Eyebrow style={s.sectionLabel}>Threads</Eyebrow>}
             {open.map((t) => <ThreadRow key={t.id} t={t} pending={false} />)}
           </>
         ) : (
@@ -88,12 +90,13 @@ export default function ChatList() {
             <View style={s.empty}>
               <Ionicons name="chatbubbles-outline" size={32} color={Colors.textMuted} />
               <Text style={s.emptyTitle}>No messages yet</Text>
-              <TouchableOpacity
-                style={s.emptyBtn}
+              <Button
+                title="New chat"
                 onPress={() => router.push('/chat/new' as any)}
-              >
-                <Text style={s.emptyBtnText}>New chat</Text>
-              </TouchableOpacity>
+                variant="primary"
+                size="sm"
+                style={s.emptyBtn}
+              />
             </View>
           )
         )}
@@ -165,11 +168,11 @@ function makeStyles() { return StyleSheet.create({
   frame: ({
     flex: 1,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginVertical: 12,
-    marginHorizontal: 8,
+    marginVertical: Spacing.sm,
+    marginHorizontal: Spacing.xs,
     overflow: 'hidden',
     ...(Platform.OS === 'web' ? { boxShadow: '0 6px 24px rgba(0,0,0,0.06)' } : {}),
   } as any),
@@ -178,50 +181,45 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
   },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 4 },
-  backBtnText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '600' },
-  title: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  newBtn: { padding: 4 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: Spacing.xxs },
+  backBtnText: { fontSize: Type.ui.size, color: Colors.textPrimary, fontWeight: '600' },
+  title: { flex: 1, textAlign: 'center', fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary },
+  newBtn: { padding: Spacing.xxs },
 
   list: { padding: Spacing.md, gap: 6, maxWidth: 600, alignSelf: 'center', width: '100%' },
-  sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.4,
-    marginTop: 8, marginBottom: 4,
-  },
+  // Type / color / tracking come from the shared Eyebrow.
+  sectionLabel: { marginTop: Spacing.xs, marginBottom: Spacing.xxs },
 
   row: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     backgroundColor: Colors.surface, borderRadius: Radius.md,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     borderWidth: 1, borderColor: Colors.border,
   },
+  // 44 / radius 8 are avatar geometry — no size or radius token matches.
   avatar: {
     width: 44, height: 44, borderRadius: 8,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  rowTop: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-  rowName: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  avatarText: { color: Colors.onPrimary, fontSize: Type.body.size, fontWeight: '700' },
+  rowTop: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.xs },
+  rowName: { flex: 1, fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
   rowTime: { fontSize: 11, color: Colors.textMuted },
   rowPreview: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
 
   pendingPill: {
     backgroundColor: Colors.primaryFaint,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999,
+    paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xxs, borderRadius: Radius.full,
   },
   pendingPillText: { fontSize: 10, fontWeight: '700', color: Colors.primary, textTransform: 'uppercase', letterSpacing: 1 },
 
   empty: {
     alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 60, gap: 8,
+    paddingVertical: 60, gap: Spacing.xs,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginTop: 8 },
-  emptyBtn: {
-    marginTop: 12, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999,
-    backgroundColor: Colors.primary,
-  },
-  emptyBtnText: { color: '#FFF', fontWeight: '600', fontSize: 13, letterSpacing: 0.1 },
+  emptyTitle: { fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary, marginTop: Spacing.xs },
+  // Button supplies the fill, the ink and the 44pt floor.
+  emptyBtn: { marginTop: Spacing.sm, paddingHorizontal: 18, borderRadius: Radius.full },
 }); }

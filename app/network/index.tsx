@@ -24,8 +24,9 @@ import { useOpenThread } from '../../hooks/useChat';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { goBackToFeed } from '../../lib/nav';
 import { showAlert } from '../../lib/alert';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
 
 export default function NetworkList() {
   const s = makeStyles();
@@ -41,12 +42,7 @@ export default function NetworkList() {
 
   return (
     <SafeAreaView style={s.root}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={goBackToFeed} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={20} color={Colors.textSecondary} />
-        </TouchableOpacity>
-        <Text style={s.title}>Your network</Text>
-      </View>
+      <ScreenHeader title="Your network" showBack onBack={goBackToFeed} style={s.header} />
 
       <ScrollView contentContainerStyle={s.scroll}>
         {isLoading ? (
@@ -95,8 +91,8 @@ export default function NetworkList() {
                     activeOpacity={0.75}
                     accessibilityLabel="Message"
                   >
-                    <Ionicons name="chatbubble-outline" size={14} color="#FFF" />
-                    <Text style={[s.actionText, { color: '#FFF' }]}>Message</Text>
+                    <Ionicons name="chatbubble-outline" size={14} color={Colors.onPrimary} />
+                    <Text style={[s.actionText, { color: Colors.onPrimary }]}>Message</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -111,41 +107,43 @@ export default function NetworkList() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: Spacing.md, paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.borderLight,
   },
-  backBtn: { padding: 4 },
-  title: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
 
-  scroll: { padding: Spacing.md, gap: 8 },
-  subhead: { fontSize: 12, color: Colors.textMuted, marginBottom: 8 },
+  scroll: { padding: Spacing.md, gap: Spacing.xs },
+  subhead: { fontSize: Type.caption.size, color: Colors.textMuted, marginBottom: Spacing.xs },
 
-  empty: { padding: Spacing.lg, alignItems: 'center', gap: 8 },
-  emptyTitle: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary, marginTop: 4 },
+  empty: { padding: Spacing.lg, alignItems: 'center', gap: Spacing.xs },
+  emptyTitle: {
+    fontSize: Type.bodyBold.size, lineHeight: Type.bodyBold.lineHeight,
+    fontWeight: Type.bodyBold.weight, color: Colors.textPrimary, marginTop: Spacing.xxs,
+  },
 
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 10, paddingHorizontal: 12,
+    paddingVertical: 10, paddingHorizontal: Spacing.sm,
     backgroundColor: Colors.surface, borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.borderLight,
   },
   avatar: {
-    width: 40, height: 40, borderRadius: 7,
+    width: 40, height: 40, borderRadius: Radius.xs,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: '100%', height: '100%' },
-  avatarTxt: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  avatarTxt: { color: Colors.onPrimary, fontSize: Type.body.size, fontWeight: '700' },
 
   rowText: { flex: 1 },
-  rowName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  rowHandle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  rowName: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
+  rowHandle: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 },
 
   rowActions: { flexDirection: 'row', gap: 6 },
   actionBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.border,
     backgroundColor: Colors.surfaceLight,
   },
@@ -153,5 +151,5 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
-  actionText: { fontSize: 11, fontWeight: '600', color: Colors.textPrimary },
+  actionText: { fontSize: Type.eyebrow.size, fontWeight: '600', color: Colors.textPrimary },
 }); }

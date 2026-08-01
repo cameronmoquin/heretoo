@@ -35,8 +35,10 @@ import { ArtPreferences } from '../../../components/shared/ArtPreferences';
 import { WCRBPlayer } from '../../../components/shared/WCRBPlayer';
 import { PlantTreeModal } from '../../../components/shared/PlantTreeModal';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
+import { Button } from '../../../components/shared/Button';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius } from '../../../constants/design';
+import { Spacing, Radius, Type } from '../../../constants/design';
+import { Gen } from '../../../constants/generations';
 import { Vocab } from '../../../constants/vocab';
 
 export default function OwnProfileScreen() {
@@ -92,13 +94,14 @@ export default function OwnProfileScreen() {
           <Text style={s.displayName}>{profile.display_name ?? 'Member'}</Text>
           <Text style={s.handle}>@{profile.handle}</Text>
           {!!profile.bio && <Text style={s.bio}>{profile.bio}</Text>}
-          <TouchableOpacity
+          <Button
+            title="Edit profile"
+            variant="secondary"
+            size="sm"
+            icon={<Ionicons name="pencil" size={13} color={Colors.textPrimary} />}
             style={s.editBtn}
             onPress={() => router.push('/(tabs)/profile/settings' as any)}
-          >
-            <Ionicons name="pencil" size={13} color={Colors.textPrimary} />
-            <Text style={s.editBtnText}>Edit profile</Text>
-          </TouchableOpacity>
+          />
         </View>
 
         {/* ── Network stats ── */}
@@ -176,18 +179,19 @@ export default function OwnProfileScreen() {
             <View style={s.emptyFamilies}>
               <Text style={s.emptyText}>You're not in a crew yet.</Text>
               <View style={s.emptyBtnRow}>
-                <TouchableOpacity
+                <Button
+                  title="Start a crew"
+                  size="sm"
                   style={s.primaryBtn}
                   onPress={() => router.push('/family/new' as any)}
-                >
-                  <Text style={s.primaryBtnText}>Start a crew</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.primaryBtn, s.altBtn]}
+                />
+                <Button
+                  title="Have a code"
+                  variant="ghost"
+                  size="sm"
+                  style={s.altBtn}
                   onPress={() => router.push('/family/join' as any)}
-                >
-                  <Text style={[s.primaryBtnText, { color: Colors.primary }]}>Have a code</Text>
-                </TouchableOpacity>
+                />
               </View>
             </View>
           )}
@@ -248,10 +252,14 @@ export default function OwnProfileScreen() {
         )}
 
         {/* ── Sign out ── */}
-        <TouchableOpacity style={s.signOutBtn} onPress={handleSignOut} activeOpacity={0.75}>
-          <Ionicons name="log-out-outline" size={16} color={Colors.error} />
-          <Text style={s.signOutText}>Sign out</Text>
-        </TouchableOpacity>
+        <Button
+          title="Sign out"
+          variant="outline"
+          icon={<Ionicons name="log-out-outline" size={16} color={Colors.error} />}
+          style={s.signOutBtn}
+          textStyle={s.signOutText}
+          onPress={handleSignOut}
+        />
       </ScrollView>
 
       {/* Plant-a-tree (founding seed invite) modal */}
@@ -327,16 +335,17 @@ function makeStyles() { return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.md, gap: 18, paddingBottom: 100, maxWidth: 520, alignSelf: 'center', width: '100%' },
 
-  identity: { alignItems: 'center', gap: 6, paddingVertical: 12 },
-  displayName: { fontWeight: '800', fontSize: 22, color: Colors.textPrimary, marginTop: 12 },
-  handle: { fontSize: 14, color: Colors.textMuted },
-  bio: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 20, maxWidth: 360 },
-  editBtn: {
-    marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-    borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceLight,
+  identity: { alignItems: 'center', gap: 6, paddingVertical: Spacing.sm },
+  displayName: { fontWeight: '800', fontSize: 22, color: Colors.textPrimary, marginTop: Spacing.sm },
+  handle: { fontSize: Type.ui.size, color: Colors.textMuted },
+  bio: {
+    fontSize: Type.ui.size, color: Colors.textSecondary, textAlign: 'center',
+    marginTop: 6, lineHeight: 20, maxWidth: 360,
   },
-  editBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  editBtn: {
+    marginTop: 10, borderRadius: Radius.full,
+    borderWidth: 1, borderColor: Colors.border,
+  },
 
   statsCard: {
     flexDirection: 'row', alignItems: 'center',
@@ -347,40 +356,45 @@ function makeStyles() { return StyleSheet.create({
   statBlock: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: { fontSize: 22, fontWeight: '800', color: Colors.primary },
   statLabel: { fontSize: 10, color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: '600' },
-  statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: Colors.border },
+  statDivider: { width: StyleSheet.hairlineWidth, height: Spacing.xl, backgroundColor: Colors.border },
 
   section: {
     backgroundColor: Colors.surface, borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
-    padding: 14, gap: 8,
+    padding: 14, gap: Spacing.xs,
   },
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary, textTransform: 'uppercase', letterSpacing: 1.2 },
-  sectionLink: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
+  sectionLink: {
+    fontSize: Type.caption.size, color: Colors.primary, fontWeight: '600',
+  },
 
   familyRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 8,
+    paddingVertical: Spacing.xs,
   },
   familyIcon: {
-    width: 36, height: 36, borderRadius: 7,
+    width: 36, height: 36, borderRadius: Radius.xs,
     backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
   },
   familyIconImg: { width: '100%', height: '100%' },
-  familyName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  familyRole: { fontSize: 11, color: Colors.textMuted, marginTop: 1, textTransform: 'capitalize' },
-
-  emptyFamilies: { alignItems: 'center', paddingVertical: 8, gap: 10 },
-  emptyText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center' },
-  emptyBtnRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' },
-  primaryBtn: {
-    paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999,
-    backgroundColor: Colors.primary,
+  familyName: {
+    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,
   },
-  primaryBtnText: { color: '#FFF', fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
-  altBtn: { backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary },
+  familyRole: {
+    fontSize: Type.eyebrow.size, color: Colors.textMuted, marginTop: 1, textTransform: 'capitalize',
+  },
+
+  emptyFamilies: { alignItems: 'center', paddingVertical: Spacing.xs, gap: 10 },
+  emptyText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center' },
+  emptyBtnRow: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap', justifyContent: 'center' },
+  primaryBtn: { borderRadius: Radius.full },
+  altBtn: {
+    borderRadius: Radius.full,
+    backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary,
+  },
 
   actionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -388,40 +402,46 @@ function makeStyles() { return StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
   },
   actionIcon: {
-    width: 32, height: 32, borderRadius: 6,
+    width: Spacing.xl, height: Spacing.xl, borderRadius: Radius.xs,
     backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
   },
-  actionLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  actionLabel: {
+    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,
+  },
 
   signOutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 12, borderRadius: 999,
-    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.full,
+    borderColor: Colors.border,
   },
   signOutText: { fontSize: 13, color: Colors.error, fontWeight: '600' },
 
   rolePill: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.border,
     backgroundColor: Colors.surfaceLight,
   },
-  rolePillText: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
+  rolePillText: {
+    fontSize: Type.caption.size, fontWeight: '600', color: Colors.textPrimary,
+  },
 
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   modalCard: {
-    backgroundColor: Colors.surface, borderRadius: 14,
-    width: '100%', maxWidth: 420, padding: 18, gap: 4,
+    backgroundColor: Colors.surface, borderRadius: Gen.radius,
+    width: '100%', maxWidth: 420, padding: 18, gap: Spacing.xxs,
     borderWidth: 1, borderColor: Colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
+  modalTitle: {
+    fontSize: Type.bodyBold.size, fontWeight: Type.bodyBold.weight,
+    color: Colors.textPrimary, marginBottom: Spacing.xs,
+  },
   statureRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10,
+    paddingVertical: 10, paddingHorizontal: Spacing.sm, borderRadius: Radius.sm,
   },
   statureRowActive: { backgroundColor: Colors.primaryFaint },
   statureLabel: { fontSize: 15, color: Colors.textPrimary },

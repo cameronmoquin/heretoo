@@ -15,7 +15,9 @@ import { goBack } from '../../lib/nav';
 import { Ionicons } from '@expo/vector-icons';
 import { useReceivedLetters, useMyLetters, type LetterWithMeta } from '../../hooks/useLetters';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function LettersIndex() {
   const s = makeStyles();
@@ -36,7 +38,7 @@ export default function LettersIndex() {
           style={s.composeBtn}
           activeOpacity={0.85}
         >
-          <Ionicons name="create-outline" size={14} color="#FFF" />
+          <Ionicons name="create-outline" size={14} color={Colors.onPrimary} />
           <Text style={s.composeBtnText}>New</Text>
         </TouchableOpacity>
       </View>
@@ -63,13 +65,13 @@ export default function LettersIndex() {
         {(received?.length ?? 0) === 0 && drafts.length === 0 && sent.length === 0 && (
           <View style={s.emptyWrap}>
             <Text style={s.emptyTitle}>No letters yet.</Text>
-            <TouchableOpacity
-              style={s.emptyBtn}
+            <Button
+              title="Write one"
               onPress={() => router.push('/letter/new' as any)}
-              activeOpacity={0.85}
-            >
-              <Text style={s.emptyBtnText}>Write one</Text>
-            </TouchableOpacity>
+              variant="primary"
+              size="sm"
+              style={s.emptyBtn}
+            />
           </View>
         )}
       </ScrollView>
@@ -81,7 +83,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   const s = makeStyles();
   return (
     <View style={{ gap: 4 }}>
-      <Text style={s.sectionTitle}>{title}</Text>
+      <Eyebrow style={s.sectionTitle}>{title}</Eyebrow>
       {children}
     </View>
   );
@@ -122,38 +124,42 @@ function formatDate(iso: string): string {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: Spacing.md, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
   },
-  headerTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.6 },
+  headerTitle: {
+    flex: 1, fontSize: Type.ui.size, fontWeight: '600', color: Colors.textSecondary,
+    textTransform: 'uppercase', letterSpacing: 1.6,
+  },
+  // Left as a hand-rolled pill: Button floors at a 44pt touch target,
+  // which would nearly double this header row's height.
   composeBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 12, paddingVertical: 7,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
+    paddingHorizontal: Spacing.sm, paddingVertical: 7,
     borderRadius: Radius.full, backgroundColor: Colors.primary,
   },
-  composeBtnText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
+  composeBtnText: { color: Colors.onPrimary, fontSize: Type.caption.size, fontWeight: '700' },
 
   scroll: { padding: Spacing.md, gap: Spacing.lg, paddingBottom: 80 },
 
-  sectionTitle: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.6,
-    marginBottom: 6,
-  },
+  // Type / color / tracking come from the shared Eyebrow.
+  sectionTitle: { marginBottom: 6 },
 
   row: {
-    paddingHorizontal: 12, paddingVertical: 12,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm,
     borderRadius: Radius.lg,
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    gap: 4,
+    gap: Spacing.xxs,
     marginBottom: 6,
   },
+  // 10px sits below the Type scale; Eyebrow would bump it to 11 inside a
+  // dense list row, so this stays hand-set.
   rowMeta: {
     fontSize: 10, fontWeight: '700', color: Colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
-  rowTo: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  rowTo: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
   rowPreview: {
     fontSize: 13, lineHeight: 19, color: Colors.textSecondary,
     ...(Platform.OS === 'web'
@@ -161,13 +167,8 @@ function makeStyles() { return StyleSheet.create({
       : {}),
   },
 
-  emptyWrap: { padding: Spacing.xl, gap: 8, alignItems: 'flex-start' },
+  emptyWrap: { padding: Spacing.xl, gap: Spacing.xs, alignItems: 'flex-start' },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  emptyBtn: {
-    marginTop: Spacing.md,
-    paddingHorizontal: 16, paddingVertical: 11,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-  },
-  emptyBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  // Button supplies the fill, the ink and the 44pt floor.
+  emptyBtn: { marginTop: Spacing.md, paddingHorizontal: Spacing.md, borderRadius: Radius.full },
 }); }

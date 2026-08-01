@@ -22,7 +22,8 @@ import {
   type Disbursement,
 } from '../../hooks/useDonationTransparency';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function TransparencyScreen() {
   const s = makeStyles();
@@ -54,7 +55,7 @@ export default function TransparencyScreen() {
         </View>
 
         <View style={s.masthead}>
-          <Text style={s.kicker}>Donation transparency</Text>
+          <Eyebrow accentColor={Colors.primary} style={s.kicker}>Donation transparency</Eyebrow>
           <Text style={s.title}>The math.</Text>
           <View style={s.flourishRow}>
             <View style={s.flourishRule} />
@@ -90,7 +91,7 @@ export default function TransparencyScreen() {
 
         {report?.current_beneficiary && (
           <View style={s.benefit}>
-            <Text style={s.benefitKicker}>Current beneficiary</Text>
+            <Eyebrow accentColor={Colors.primary}>Current beneficiary</Eyebrow>
             <Text style={s.benefitName}>{report.current_beneficiary}</Text>
             {report.last_disbursed_at && (
               <Text style={s.benefitSub}>
@@ -101,7 +102,7 @@ export default function TransparencyScreen() {
         )}
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Disbursement history</Text>
+          <Eyebrow style={s.sectionTitle}>Disbursement history</Eyebrow>
           {(list ?? []).length === 0 ? (
             <Text style={s.emptyBody}>No disbursements recorded yet.</Text>
           ) : (
@@ -150,8 +151,10 @@ function makeStyles() { return StyleSheet.create({
   scroll: { padding: Spacing.lg, paddingBottom: 80, gap: Spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center' },
 
+  // Left hand-rolled: an outlined pill in the accent colour, which
+  // Button's outline variant (neutral border, neutral ink) cannot express.
   adminBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
     paddingHorizontal: 10, paddingVertical: 6,
     borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.primary,
@@ -159,67 +162,61 @@ function makeStyles() { return StyleSheet.create({
   adminBtnText: { fontSize: 11, color: Colors.primary, fontWeight: '700' },
 
   masthead: { gap: 14 },
-  kicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 2,
-    textTransform: 'uppercase',
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
+  // Layout only; type / color / tracking come from the shared Eyebrow.
+  kicker: { letterSpacing: 2 },
+  // 50/56 sits well above Type.hero (44/48); snapping would drop the
+  // masthead six points.
   title: {
     fontSize: 50, lineHeight: 56, fontWeight: '800', letterSpacing: -1.2,
-    color: Colors.brandIvory,
+    color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: Spacing.xxs },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },
   flourishGlyph: { fontSize: 13, color: Colors.primary, opacity: 0.85 },
 
-  statRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  statRow: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap' },
   statCard: {
     flex: 1, minWidth: 130,
     padding: Spacing.md,
     borderRadius: Radius.lg,
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    gap: 4,
+    gap: Spacing.xxs,
   },
-  statCardAccent: { borderColor: Colors.primary, backgroundColor: 'rgba(201, 161, 75, 0.10)' },
+  statCardAccent: { borderColor: Colors.primary, backgroundColor: Colors.primaryFaint },
+  // 10px sits below the Type scale; Eyebrow would bump these to 11.
   statLabel: {
     fontSize: 10, fontWeight: '700', color: Colors.textMuted, letterSpacing: 1.6, textTransform: 'uppercase',
   },
   statValue: {
-    fontSize: 28, fontWeight: '800', color: Colors.brandIvory, letterSpacing: -0.5,
+    fontSize: Type.display.size, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   statSub: { fontSize: 11, color: Colors.textMuted, fontStyle: 'italic' },
 
   benefit: {
     padding: Spacing.md, borderRadius: Radius.lg,
-    backgroundColor: 'rgba(22, 22, 29, 0.5)',
+    backgroundColor: Colors.surface,
     borderLeftWidth: 2, borderLeftColor: Colors.primary,
-    gap: 4,
-  },
-  benefitKicker: {
-    fontSize: 10, fontWeight: '700', color: Colors.primary, letterSpacing: 1.6, textTransform: 'uppercase',
+    gap: Spacing.xxs,
   },
   benefitName: {
-    fontSize: 18, fontWeight: '700', color: Colors.brandIvory,
+    fontSize: 18, fontWeight: '700', color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  benefitSub: { fontSize: 12, color: Colors.textMuted, fontStyle: 'italic', marginTop: 4 },
+  benefitSub: { fontSize: Type.caption.size, color: Colors.textMuted, fontStyle: 'italic', marginTop: Spacing.xxs },
 
   section: { gap: 6 },
-  sectionTitle: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    letterSpacing: 1.6, textTransform: 'uppercase', marginBottom: 4,
-  },
+  sectionTitle: { marginBottom: Spacing.xxs },
   emptyBody: {
-    fontSize: 14, lineHeight: 22, color: Colors.textSecondary, fontStyle: 'italic',
+    fontSize: Type.ui.size, lineHeight: 22, color: Colors.textSecondary, fontStyle: 'italic',
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
 
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 12, paddingVertical: 12,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
@@ -229,8 +226,8 @@ function makeStyles() { return StyleSheet.create({
   rowDate: {
     fontSize: 11, color: Colors.textMuted, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '700',
   },
-  rowBeneficiary: { fontSize: 14, color: Colors.brandIvory, fontWeight: '700' },
-  rowNote: { fontSize: 12, color: Colors.textSecondary, fontStyle: 'italic' },
+  rowBeneficiary: { fontSize: Type.ui.size, color: Colors.textPrimary, fontWeight: '700' },
+  rowNote: { fontSize: Type.caption.size, color: Colors.textSecondary, fontStyle: 'italic' },
   rowRef: { fontSize: 10, color: Colors.textMuted },
   rowAmount: {
     fontSize: 22, fontWeight: '800', color: Colors.primary, letterSpacing: -0.4,

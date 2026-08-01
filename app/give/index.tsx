@@ -15,7 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
-  Platform, ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -23,7 +23,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 const PRESET_AMOUNTS = [5, 10, 25, 50];
 
@@ -118,7 +120,7 @@ export default function GiveScreen() {
         ) : (
           <>
             <View style={s.masthead}>
-              <Text style={s.kicker}>Always on</Text>
+              <Eyebrow accentColor={Colors.primary} style={s.kicker}>Always on</Eyebrow>
               <Text style={s.title}>For the unhoused.</Text>
               <View style={s.flourishRow}>
                 <View style={s.flourishRule} />
@@ -128,7 +130,7 @@ export default function GiveScreen() {
             </View>
 
             <View style={s.amountCard}>
-              <Text style={s.cardKicker}>Choose an amount</Text>
+              <Eyebrow>Choose an amount</Eyebrow>
               <View style={s.amountRow}>
                 {PRESET_AMOUNTS.map((a) => {
                   const active = !customAmount && amount === a;
@@ -160,21 +162,16 @@ export default function GiveScreen() {
                   />
                 </View>
               </View>
-              <TouchableOpacity
-                style={[s.btnPrimary, submitting && { opacity: 0.5 }]}
+              <Button
+                title="Give"
                 onPress={onDonate}
-                disabled={submitting}
-                activeOpacity={0.85}
-              >
-                {submitting ? (
-                  <ActivityIndicator color="#0A0A0F" />
-                ) : (
-                  <>
-                    <Ionicons name="heart" size={16} color="#0A0A0F" />
-                    <Text style={s.btnPrimaryText}>Give</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                loading={submitting}
+                variant="primary"
+                size="lg"
+                style={s.btnPrimary}
+                textStyle={s.btnPrimaryText}
+                icon={<Ionicons name="heart" size={16} color={Colors.onPrimary} />}
+              />
             </View>
 
             {totalCents !== null && totalCents > 0 && (
@@ -184,7 +181,7 @@ export default function GiveScreen() {
             )}
 
             <View style={s.about}>
-              <Text style={s.aboutTitle}>Where it goes</Text>
+              <Eyebrow>Where it goes</Eyebrow>
               <Text style={s.aboutBody}>
                 Stripe processes the transaction. The full balance, minus the
                 standard processing cost, is forwarded to the designated
@@ -214,32 +211,30 @@ function makeStyles() { return StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center' },
 
   masthead: { gap: 14 },
-  kicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 2.4,
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
+  // Layout only; type / color / tracking come from the shared Eyebrow.
+  kicker: { letterSpacing: 2.4 },
+  // 50/56 sits well above Type.hero (44/48); snapping would drop the
+  // masthead six points.
   title: {
     fontSize: 50, lineHeight: 56, fontWeight: '800', letterSpacing: -1.2,
-    color: Colors.brandIvory,
+    color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  flourishRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: Spacing.xxs },
   flourishRule: { width: 56, height: 1, backgroundColor: Colors.primary, opacity: 0.55 },
   flourishGlyph: { fontSize: 13, color: Colors.primary, opacity: 0.85 },
 
   amountCard: {
     padding: Spacing.lg,
     borderRadius: Radius.lg,
-    backgroundColor: 'rgba(22, 22, 29, 0.78)',
+    backgroundColor: Colors.surface,
     borderWidth: 1, borderColor: Colors.primary,
     gap: Spacing.md,
     ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(4px)' } as any) : {}),
   },
-  cardKicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    letterSpacing: 1.6, textTransform: 'uppercase',
-  },
-  amountRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  amountRow: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap' },
+  // Not the shared Chip: these flex across a grid and carry a 16px
+  // amount, which Chip's shrink-wrapped 14px label cannot express.
   amountBtn: {
     flex: 1, minWidth: 70,
     paddingVertical: 14,
@@ -248,16 +243,16 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   amountBtnActive: {
-    borderColor: Colors.primary, backgroundColor: 'rgba(201, 161, 75, 0.12)',
+    borderColor: Colors.primary, backgroundColor: Colors.primaryFaint,
   },
   amountBtnText: {
-    fontSize: 16, fontWeight: '700', color: Colors.textSecondary,
+    fontSize: Type.body.size, fontWeight: '700', color: Colors.textSecondary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   amountBtnTextActive: { color: Colors.primary },
 
   customRow: { gap: 6 },
-  customLabel: { fontSize: 12, color: Colors.textMuted },
+  customLabel: { fontSize: Type.caption.size, color: Colors.textMuted },
   customField: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 10,
@@ -265,46 +260,42 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
-  customDollar: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
+  customDollar: { fontSize: Type.body.size, color: Colors.textSecondary, fontWeight: '600' },
   customInput: {
-    flex: 1, fontSize: 16, color: Colors.textPrimary, fontWeight: '600',
+    flex: 1, fontSize: Type.body.size, color: Colors.textPrimary, fontWeight: '600',
   },
 
+  // Button supplies the fill, the ink, the spinner and the 44pt floor.
   btnPrimary: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingHorizontal: 18, paddingVertical: 14,
+    gap: Spacing.xs,
+    paddingVertical: 14,
     borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-    marginTop: 4,
+    marginTop: Spacing.xxs,
   },
-  btnPrimaryText: {
-    color: '#0A0A0F', fontSize: 15, fontWeight: '700', letterSpacing: 0.3,
-  },
+  btnPrimaryText: { fontWeight: '700', letterSpacing: 0.3 },
 
   total: {
     fontSize: 13, color: Colors.textMuted, fontStyle: 'italic',
-    textAlign: 'center', marginTop: 4,
+    textAlign: 'center', marginTop: Spacing.xxs,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
 
   about: {
     padding: Spacing.md,
     borderRadius: Radius.lg,
-    backgroundColor: 'rgba(22, 22, 29, 0.5)',
+    backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    gap: 8,
-  },
-  aboutTitle: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    letterSpacing: 1.6, textTransform: 'uppercase',
+    gap: Spacing.xs,
   },
   aboutBody: {
-    fontSize: 14, lineHeight: 22, color: Colors.textSecondary,
+    fontSize: Type.ui.size, lineHeight: 22, color: Colors.textSecondary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
+  // Left hand-rolled: an outlined pill in the accent colour, which
+  // Button's outline variant (neutral border, neutral ink) cannot express.
   transparencyLink: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.primary,
     alignSelf: 'flex-start',
@@ -313,16 +304,18 @@ function makeStyles() { return StyleSheet.create({
   transparencyLinkText: { fontSize: 13, fontWeight: '700', color: Colors.primary },
 
   thanksWrap: { padding: Spacing.xl, gap: Spacing.md, alignItems: 'flex-start' },
+  // 38 falls between Type.display (28) and Type.hero (44).
   thanksTitle: {
-    fontSize: 38, fontWeight: '800', letterSpacing: -0.6, color: Colors.brandIvory,
+    fontSize: 38, fontWeight: '800', letterSpacing: -0.6, color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   thanksBody: {
-    fontSize: 16, lineHeight: 26, color: Colors.textSecondary,
+    fontSize: Type.body.size, lineHeight: 26, color: Colors.textSecondary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
+  // Same accent-outline shape as transparencyLink above.
   btnGhost: {
-    paddingHorizontal: 16, paddingVertical: 11,
+    paddingHorizontal: Spacing.md, paddingVertical: 11,
     borderRadius: Radius.full,
     borderWidth: 1, borderColor: Colors.primary,
     marginTop: Spacing.sm,

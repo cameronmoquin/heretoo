@@ -24,7 +24,9 @@ import {
 } from '../../hooks/useDonationTransparency';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Button } from '../../components/shared/Button';
+import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function AdminScreen() {
   const s = makeStyles();
@@ -97,7 +99,7 @@ export default function AdminScreen() {
         </View>
 
         <View style={s.masthead}>
-          <Text style={s.kicker}>Donation admin</Text>
+          <Eyebrow accentColor={Colors.primary} style={s.kicker}>Donation admin</Eyebrow>
           <Text style={s.title}>Record a transfer.</Text>
         </View>
 
@@ -108,24 +110,21 @@ export default function AdminScreen() {
           <Field label="Reference (optional)" value={reference} onChange={setReference} />
           <Field label="Public note (optional)" value={note} onChange={setNote} multiline />
 
-          <TouchableOpacity
-            style={[s.saveBtn, (record.isPending || !beneficiary.trim() || !amount) && { opacity: 0.5 }]}
+          <Button
+            title="Record disbursement"
             onPress={onSave}
-            disabled={record.isPending || !beneficiary.trim() || !amount}
-            activeOpacity={0.85}
-          >
-            {record.isPending ? <ActivityIndicator color="#0A0A0F" /> : (
-              <>
-                <Ionicons name="checkmark" size={16} color="#0A0A0F" />
-                <Text style={s.saveBtnText}>Record disbursement</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            loading={record.isPending}
+            disabled={!beneficiary.trim() || !amount}
+            variant="primary"
+            style={s.saveBtn}
+            textStyle={s.saveBtnText}
+            icon={<Ionicons name="checkmark" size={16} color={Colors.onPrimary} />}
+          />
         </View>
 
         {(list ?? []).length > 0 && (
           <View style={s.history}>
-            <Text style={s.historyTitle}>Recent disbursements</Text>
+            <Eyebrow style={s.historyTitle}>Recent disbursements</Eyebrow>
             {(list ?? []).slice(0, 12).map((d) => (
               <View key={d.id} style={s.histRow}>
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -163,7 +162,7 @@ function Field({
   const s = makeStyles();
   return (
     <View style={s.field}>
-      <Text style={s.fieldLabel}>{label}</Text>
+      <Eyebrow>{label}</Eyebrow>
       <TextInput
         style={[s.input, multiline && { minHeight: 64 }]}
         value={value}
@@ -184,61 +183,56 @@ function makeStyles() { return StyleSheet.create({
   scroll: { padding: Spacing.lg, paddingBottom: 80, gap: Spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center' },
 
-  masthead: { gap: 8 },
-  kicker: {
-    fontSize: 11, fontWeight: '700', color: Colors.primary, letterSpacing: 2, textTransform: 'uppercase',
-    ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
-  },
+  masthead: { gap: Spacing.xs },
+  // Layout only; type / color / tracking come from the shared Eyebrow.
+  kicker: { letterSpacing: 2 },
+  // 36 falls between Type.display (28) and Type.hero (44).
   title: {
-    fontSize: 36, fontWeight: '800', letterSpacing: -0.6, color: Colors.brandIvory,
+    fontSize: 36, fontWeight: '800', letterSpacing: -0.6, color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  form: { gap: 12 },
-  field: { gap: 4 },
-  fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    letterSpacing: 1.6, textTransform: 'uppercase',
-  },
+  form: { gap: Spacing.sm },
+  field: { gap: Spacing.xxs },
   input: {
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     fontSize: 15, color: Colors.textPrimary,
   },
 
+  // Button supplies the fill, the ink, the spinner and the 44pt floor.
   saveBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingHorizontal: 18, paddingVertical: 14,
-    borderRadius: Radius.full, backgroundColor: Colors.primary,
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: Radius.full,
     marginTop: 6,
   },
-  saveBtnText: { color: '#0A0A0F', fontSize: 14, fontWeight: '700', letterSpacing: 0.2 },
+  saveBtnText: { fontWeight: '700', letterSpacing: 0.2 },
 
   history: { gap: 6, paddingTop: Spacing.md },
-  historyTitle: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    letterSpacing: 1.6, textTransform: 'uppercase', marginBottom: 4,
-  },
+  historyTitle: { marginBottom: Spacing.xxs },
   histRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: Spacing.sm, paddingVertical: 10,
     borderRadius: Radius.md,
     backgroundColor: Colors.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
   histAmount: {
-    fontSize: 16, fontWeight: '700', color: Colors.brandIvory,
+    fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  histMeta: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  histMeta: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 2 },
 
   deniedWrap: { padding: Spacing.xl, gap: 10, alignItems: 'flex-start' },
   deniedTitle: {
-    fontSize: 28, fontWeight: '800', color: Colors.brandIvory, letterSpacing: -0.4,
+    fontSize: Type.display.size, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.4,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  deniedBody: { fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
+  deniedBody: { fontSize: Type.ui.size, lineHeight: 22, color: Colors.textSecondary },
+  // Left hand-rolled: an outlined pill in the accent colour, which
+  // Button's outline variant (neutral border, neutral ink) cannot express.
   deniedBtn: {
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.primary,

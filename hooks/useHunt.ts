@@ -1,11 +1,19 @@
 /**
- * useHunt — data layer for the photo geocache hunt (migration 052).
+ * useHunt — data layer for the deaddrop (migrations 052-054, 065).
  *
- * A cache is a photo at a GPS coordinate. Hiders create caches; seekers
- * navigate to them and log a find through the server-side gate. Photos
- * live in the public `hunt-photos` bucket; the gate (within radius, 25m
- * forgiveness) is enforced by the claim_hunt_find RPC, never trusted
- * from the client.
+ * A deaddrop is a drop with a GPS lock. Same three destinations any
+ * drop has, and one extra rule: the payload stays sealed until the
+ * finder physically stands on the coordinates.
+ *
+ *   PUBLIC  hunt_caches.scope='public'   post visibility='public'
+ *   CREW    hunt_caches.scope='family'   post visibility='family'
+ *   DM      hunt_caches.scope='link'     post visibility='direct'
+ *
+ * The cache row holds the coordinates, the sealed photo, the radius,
+ * the burn flag and the chain. The announcement post is what lands in
+ * the feed; it carries the share code so the card opens /hunt/{code}.
+ * The gate (within radius, 25m forgiveness) is enforced by the
+ * claim_hunt_find RPC, never trusted from the client.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -64,6 +72,56 @@ export interface ClaimResult {
   ok: boolean;
   error?: 'not_signed_in' | 'not_found' | 'too_far' | 'locked';
   distance_m?: number;
+}
+
+/** Where a deaddrop lands. The same three a drop has. */
+export type HuntDestination = 'public' | 'crew' | 'dm';
+
+/**
+ * hunt_caches.scope for a destination. The cache schema is untouched:
+ * public keeps 'public', crew rides the existing 'family' scope with a
+ * family_id, and a DM stays unlisted on 'link' while the post carries
+ * it to the one person.
+ */
+export function huntScopeFor(dest: HuntDestination): 'public' | 'family' | 'link' {
+  if (dest === 'public') return 'public';
+  if (dest === 'crew') return 'family';
+  return 'link';
+}
+
+/** posts.visibility for a destination. */
+function huntVisibilityFor(dest: HuntDestination): 'public' | 'family' | 'direct' {
+  if (dest === 'public') return 'public';
+  if (dest === 'crew') return 'family';
+  return 'direct';
+}
+
+/** Absolute courier link for a share code. */
+export function huntUrl(code: string): string {
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'https://heretoo.social';
+  return `${origin}/hunt/${code}`;
+}
+
+/**
+ * The announcement body. Carries the share code and the courier link so
+ * the card in the feed opens the run. Never the coordinates, never the
+ * photo: those stay sealed behind the physical gate.
+ */
+export function huntDropBody(input: {
+  shareCode: string;
+  title?: string | null;
+  hint?: string | null;
+}): string {
+  const lines: string[] = [`DEADDROP · ${input.shareCode}`];
+  const title = input.title?.trim();
+  if (title) lines.push(title);
+  const hint = input.hint?.trim();
+  if (hint) lines.push(`“${hint}”`);
+  lines.push(`Sealed until you stand on it. ${huntUrl(input.shareCode)}`);
+  return lines.join('\n');
 }
 
 function genId(): string {
@@ -230,6 +288,57 @@ export function useCreateHuntCache() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['hunt-caches-mine'] });
       qc.invalidateQueries({ queryKey: ['hunt-caches-public'] });
+    },
+  });
+}
+
+/**
+ * Put the deaddrop in the feed.
+ *
+ * Runs after the cache row is written, so the share code exists. Writes
+ * one row into `posts` at the chosen destination (migration 065 opened
+ * visibility='direct' and direct_recipient_id). Deliberately separate
+ * from useCreateHuntCache: a failed post must not cost the author the
+ * cache they already uploaded a photo for.
+ */
+export function useAnnounceHuntDrop() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      shareCode: string;
+      title?: string | null;
+      hint?: string | null;
+      destination: HuntDestination;
+      familyId?: string | null;
+      recipientId?: string | null;
+    }): Promise<void> => {
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId) throw new Error('Sign in to drop.');
+      if (!input.shareCode) throw new Error('The drop has no share code.');
+      if (input.destination === 'crew' && !input.familyId) {
+        throw new Error('Pick a crew first.');
+      }
+      if (input.destination === 'dm' && !input.recipientId) {
+        throw new Error('Pick who gets it.');
+      }
+
+      const row: Record<string, unknown> = {
+        author_id: userId,
+        body: huntDropBody(input),
+        visibility: huntVisibilityFor(input.destination),
+        kind: 'post',
+      };
+      if (input.destination === 'crew') row.family_id = input.familyId;
+      if (input.destination === 'dm') row.direct_recipient_id = input.recipientId;
+
+      const { error } = await supabase.from('posts').insert(row as any);
+      if (error) throw error;
+    },
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ['feed'] });
+      if (vars.familyId) {
+        qc.invalidateQueries({ queryKey: ['family-feed', vars.familyId] });
+      }
     },
   });
 }

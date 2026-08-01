@@ -14,12 +14,13 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import {
   useNotificationPrefs, useUpdateNotificationPrefs, type NotificationPrefs,
 } from '../../../hooks/useNotificationPrefs';
 import { useAuth } from '../../../hooks/useAuth';
+import { Button } from '../../../components/shared/Button';
+import { Eyebrow } from '../../../components/shared/Eyebrow';
+import { ScreenHeader } from '../../../components/shared/ScreenHeader';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type } from '../../../constants/design';
 import { Vocab } from '../../../constants/vocab';
@@ -72,22 +73,12 @@ export default function NotificationSettings() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={s.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={s.backBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={s.title}>Notifications</Text>
-          <View style={{ width: 28 }} />
-        </View>
+        <ScreenHeader title="Notifications" showBack style={s.header} />
 
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           {/* ── EMAIL ADDRESS ────────────────────────────────────────── */}
-          <Text style={s.sectionLabel}>Email address</Text>
+          <Eyebrow style={s.sectionLabel}>Email address</Eyebrow>
           <View style={s.field}>
             <TextInput
               style={s.input}
@@ -100,20 +91,17 @@ export default function NotificationSettings() {
               autoCorrect={false}
             />
             {emailErr && <Text style={s.error}>{emailErr}</Text>}
-            <TouchableOpacity
-              style={[s.saveBtn, !emailDirty && { opacity: 0.5 }]}
+            <Button
+              title={update.isPending ? 'Saving…' : (emailDraft.trim() ? 'Save email' : 'Use account email')}
               onPress={saveEmail}
               disabled={!emailDirty || update.isPending}
-              activeOpacity={0.85}
-            >
-              <Text style={s.saveBtnText}>
-                {update.isPending ? 'Saving…' : (emailDraft.trim() ? 'Save email' : 'Use account email')}
-              </Text>
-            </TouchableOpacity>
+              size="sm"
+              style={s.saveBtn}
+            />
           </View>
 
           {/* ── EMAIL TOGGLES ────────────────────────────────────────── */}
-          <Text style={s.sectionLabel}>Email notifications</Text>
+          <Eyebrow style={s.sectionLabel}>Email notifications</Eyebrow>
           <View style={s.card}>
             <ToggleRow
               label="Email notifications"
@@ -233,32 +221,22 @@ function TimezoneRow() {
       <View>
         <Text style={s.toggleLabel}>Timezone</Text>
       </View>
-      <View style={{ flexDirection: 'row', gap: 6 }}>
+      <View style={s.tzRow}>
         <TextInput
           value={value}
           onChangeText={setValue}
           placeholder="America/Los_Angeles"
-          placeholderTextColor="#888"
-          style={{
-            flex: 1,
-            backgroundColor: '#F1F1F5',
-            borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8,
-            fontSize: 13, color: '#1A1A24',
-            borderWidth: 1, borderColor: '#E4E4EB',
-          }}
+          placeholderTextColor={Colors.textMuted}
+          style={s.tzInput}
           autoCapitalize="none"
           autoCorrect={false}
         />
         <TouchableOpacity
           onPress={save}
           disabled={!dirty || saving}
-          style={{
-            paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-            backgroundColor: dirty ? '#4A6CF0' : '#E4E4EB',
-            alignItems: 'center', justifyContent: 'center',
-          }}
+          style={[s.tzSaveBtn, dirty ? s.tzSaveBtnOn : s.tzSaveBtnOff]}
         >
-          <Text style={{ color: dirty ? '#FFF' : '#888', fontSize: 12, fontWeight: '600' }}>
+          <Text style={[s.tzSaveText, dirty ? s.tzSaveTextOn : s.tzSaveTextOff]}>
             {saving ? 'Saving…' : 'Save'}
           </Text>
         </TouchableOpacity>
@@ -270,14 +248,7 @@ function TimezoneRow() {
 function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
-  },
-  backBtn: { padding: 4 },
-  title: {
-    flex: 1, textAlign: 'center',
-    fontSize: 16, fontWeight: '700', color: Colors.textPrimary,
   },
 
   scroll: {
@@ -285,10 +256,7 @@ function makeStyles() { return StyleSheet.create({
     maxWidth: 560, alignSelf: 'center', width: '100%',
   },
   sectionLabel: {
-    fontSize: Type.eyebrow.size, lineHeight: Type.eyebrow.lineHeight,
-    fontWeight: Type.eyebrow.weight, letterSpacing: Type.eyebrow.letterSpacing,
-    color: Colors.textMuted, textTransform: 'uppercase',
-    marginTop: Spacing.sm, marginBottom: 4, paddingHorizontal: 4,
+    marginTop: Spacing.sm, marginBottom: Spacing.xxs, paddingHorizontal: Spacing.xxs,
   },
   field: {
     backgroundColor: Colors.surface,
@@ -300,17 +268,33 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.border,
     borderRadius: Radius.md,
-    paddingHorizontal: 14, paddingVertical: 12,
+    paddingHorizontal: 14, paddingVertical: Spacing.sm,
     fontSize: 15, color: Colors.textPrimary,
   },
-  error: { fontSize: 12, color: Colors.error },
-  saveBtn: {
-    paddingVertical: 11, borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-    alignItems: 'center', alignSelf: 'flex-start',
-    paddingHorizontal: 18,
+  error: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight, color: Colors.error,
   },
-  saveBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  saveBtn: { borderRadius: Radius.full, alignSelf: 'flex-start' },
+
+  // Timezone row — was a hand-rolled off-palette control (#F1F1F5 /
+  // #4A6CF0 / #E4E4EB). Now on tokens like everything else.
+  tzRow: { flexDirection: 'row', gap: 6 },
+  tzInput: {
+    flex: 1,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.sm, paddingHorizontal: 10, paddingVertical: Spacing.xs,
+    fontSize: 13, color: Colors.textPrimary,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  tzSaveBtn: {
+    paddingHorizontal: 14, paddingVertical: Spacing.xs, borderRadius: Radius.sm,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  tzSaveBtnOn: { backgroundColor: Colors.primary },
+  tzSaveBtnOff: { backgroundColor: Colors.surfaceLight },
+  tzSaveText: { fontSize: Type.caption.size, fontWeight: '600' },
+  tzSaveTextOn: { color: Colors.onPrimary },
+  tzSaveTextOff: { color: Colors.textMuted },
 
   card: {
     backgroundColor: Colors.surface,
@@ -319,11 +303,14 @@ function makeStyles() { return StyleSheet.create({
   },
   toggleRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, paddingHorizontal: 14,
+    paddingVertical: Spacing.sm, paddingHorizontal: 14,
   },
   toggleRowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
-  toggleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  toggleLabel: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
 }); }
