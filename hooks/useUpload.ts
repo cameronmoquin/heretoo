@@ -491,16 +491,19 @@ async function uploadPhotoWithRetry(prep: PreparedPhoto): Promise<string> {
  * Resolve a post_media.storage_path to a renderable URL.
  *
  * Storage path conventions:
- *   - "mux:{playback_id}"      → Mux video. Returns MP4 rendition (works in
- *                                every modern browser; Mux's mp4_support:
- *                                'standard' guarantees it).
+ *   - "mux:{playback_id}"      → Mux video. Returns the MP4 static
+ *                                rendition, which plays in every modern
+ *                                browser without an HLS player.
  *   - starts with "http"       → already a URL
  *   - otherwise                → Supabase Storage path under bucket 'posts'
  */
 export function mediaPathToUrl(storagePath: string): string {
   if (storagePath.startsWith('mux:')) {
     const playbackId = storagePath.slice(4);
-    return `https://stream.mux.com/${playbackId}/medium.mp4`;
+    // static_renditions [{resolution:'highest'}] produces a file named
+    // highest.mp4. The old medium.mp4 belonged to the deprecated
+    // mp4_support:'standard' path Mux now rejects.
+    return `https://stream.mux.com/${playbackId}/highest.mp4`;
   }
   if (storagePath.startsWith('http')) return storagePath;
   const { data } = supabase.storage.from('posts').getPublicUrl(storagePath);

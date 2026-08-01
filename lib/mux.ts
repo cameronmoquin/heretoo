@@ -69,8 +69,13 @@ async function pollAssetReady(uploadId: string, maxAttempts = 60, intervalMs = 3
   for (let i = 0; i < maxAttempts; i++) {
     const r = await authedPost({ action: 'check', uploadId });
     if (r.ok) {
-      const data = (await r.json()) as { asset?: MuxAsset | null };
+      const data = (await r.json()) as { asset?: MuxAsset | null; status?: string };
       if (data.asset?.status === 'ready') return data.asset;
+      // A failed encode never becomes ready. Stop instead of spinning
+      // out the full poll window.
+      if (data.status === 'errored') {
+        throw new Error('That video could not be processed. Try another clip.');
+      }
     }
     await new Promise((res) => setTimeout(res, intervalMs));
   }

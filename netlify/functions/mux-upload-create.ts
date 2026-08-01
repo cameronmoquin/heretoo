@@ -84,7 +84,17 @@ export const handler: Handler = async (event) => {
         headers: { Authorization: `Basic ${muxAuth}` },
       });
       if (!ar.ok) return json(502, { error: 'Failed to fetch Mux asset' });
-      const ad = (await ar.json()) as { data?: unknown };
+      const ad = (await ar.json()) as { data?: { status?: string } };
+      // Only hand back a READY asset. An asset gets its id and playback
+      // id while it is still preparing, and the MP4 rendition does not
+      // exist yet at that point, so returning early posts a video that
+      // 404s on play. Keep the client polling until Mux is done.
+      if (ad.data?.status && ad.data.status !== 'ready') {
+        if (ad.data.status === 'errored') {
+          return json(200, { asset: null, status: 'errored' });
+        }
+        return json(200, { asset: null, status: ad.data.status });
+      }
       return json(200, { asset: ad.data });
     }
     return json(200, { asset: null, status: d.data?.status ?? 'pending' });
@@ -102,11 +112,17 @@ export const handler: Handler = async (event) => {
         playback_policy: ['public'],
         // Generate an MP4 rendition so browsers without HLS support
         // (Chrome, most non-Safari) can <video src> the file directly.
-        // mp4_support requires the default (smart) encoding tier. The
-        // baseline tier rejects mp4_support, which 422'd every create
-        // call and blocked all video uploads, so encoding_tier stays
-        // unset here.
-        mp4_support: 'standard',
+        //
+        // This is static_renditions, NOT the old mp4_support. Mux
+        // deprecated mp4_support and now rejects it outright:
+        // "Deprecated 'standard' mp4_support is not allowed on basic
+        // assets". That 400 killed the create call before a single byte
+        // uploaded, so no video ever landed. Verified against the live
+        // Mux API: mp4_support 400s, static_renditions 201s.
+        //
+        // The resulting file is named highest.mp4, so playback reads
+        // stream.mux.com/<playbackId>/highest.mp4 (see mediaPathToUrl).
+        static_renditions: [{ resolution: 'highest' }],
       },
       cors_origin: '*',
     }),
