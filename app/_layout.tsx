@@ -148,6 +148,8 @@ function RootLayoutInner() {
         <Stack.Screen name="memoir/preview" options={{ headerShown: false, title: 'Read it through' }} />
         <Stack.Screen name="memoir/arrange" options={{ headerShown: false, title: 'Arrange' }} />
         <Stack.Screen name="memoir/print" options={{ headerShown: false, title: 'Where to print' }} />
+        <Stack.Screen name="babybook" options={{ headerShown: false, title: 'Babybook' }} />
+        <Stack.Screen name="babybook/[id]" options={{ headerShown: false, title: 'Babybook' }} />
         <Stack.Screen name="hunt" options={{ headerShown: false, title: 'Photo Hunt' }} />
         <Stack.Screen name="rooms" options={{ headerShown: false, title: 'Rooms' }} />
         <Stack.Screen name="shakespearean-insults" options={{ headerShown: false, title: 'Shakespearean Insults' }} />

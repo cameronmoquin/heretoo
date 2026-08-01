@@ -333,6 +333,13 @@ export default function MemoirScreen() {
             onPress={() => router.push('/memoir/timeline')}
             icon={<Ionicons name="git-commit-outline" size={14} color={Colors.primary} />}
           />
+          <Button
+            title="Import a resume or transcript"
+            variant="outline"
+            size="sm"
+            onPress={() => router.push('/memoir/import')}
+            icon={<Ionicons name="document-attach-outline" size={14} color={Colors.primary} />}
+          />
           {(responses ?? []).length > 0 && (
             <>
               <Button

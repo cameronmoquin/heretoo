@@ -1,0 +1,581 @@
+/**
+ * /babybook/[id]. One child's book.
+ *
+ * A milestone spine down the page: entries by event_date, undated last,
+ * each a rail card. Add a milestone from the preset list (first smile,
+ * first word, first steps), still editable after a tap. Answer a baby
+ * prompt and the answer lands as a note that carries the prompt's id.
+ * Pin dated photos to the book.
+ *
+ * The house card (RailCard), the house header (ScreenHeader), the house
+ * date field (FuzzyDateField), preset chips on the house Chip. Photos ride
+ * the shared assets bucket through useUploadBabybookPhoto.
+ */
+
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
+  Modal, Image as RNImage, ActivityIndicator, Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  useBabybooks,
+  useBabybookEntries,
+  useCreateEntry,
+  useUpdateEntry,
+  useDeleteEntry,
+  useBabybookPhotos,
+  useUploadBabybookPhoto,
+  useSetEntryFromPrompt,
+  useUpdateBabybook,
+  useBabyPrompts,
+  type BabybookEntry,
+  type BabybookAsset,
+} from '../../hooks/useBabybook';
+import { getAssetDisplayUrl } from '../../hooks/useMemoir';
+import { formatFuzzyDate } from '../../hooks/useMemoirTimeline';
+import { goBack } from '../../lib/nav';
+import { showAlert, showConfirm } from '../../lib/alert';
+import { Colors } from '../../constants/colors';
+import { Spacing, Radius, Type } from '../../constants/design';
+import { Gen } from '../../constants/generations';
+import { Button } from '../../components/shared/Button';
+import { Chip } from '../../components/shared/Chip';
+import { Eyebrow } from '../../components/shared/Eyebrow';
+import { RailCard } from '../../components/shared/RailCard';
+import { ScreenHeader } from '../../components/shared/ScreenHeader';
+import {
+  DateField, composeDate, emptyParts, partsOf, type DateParts,
+} from '../../components/shared/FuzzyDateField';
+
+// The milestone presets. First-year moments the parent picks from, still
+// fully editable after a tap. Moved here from the memoir timeline; baby
+// lives in this room now.
+const BABY_PRESETS = [
+  'First smile', 'First laugh', 'Rolled over', 'First tooth', 'Sat up',
+  'Crawled', 'First word', 'First steps', 'First birthday', 'First haircut',
+  'First day of school', 'Lost first tooth',
+];
+
+// A photo date reads back at the precision it was entered, stored
+// alongside the date so Jan and first-of-month dates keep their meaning.
+function photoDateLabel(capturedAt: string | null, precision: 'year' | 'month' | 'day' | null): string {
+  if (!capturedAt) return 'Undated';
+  return formatFuzzyDate(capturedAt.slice(0, 10), precision ?? 'day') || 'Undated';
+}
+
+export default function BabybookScreen() {
+  const s = makeStyles();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const bookId = typeof id === 'string' ? id : null;
+
+  const booksQ = useBabybooks();
+  const book = (booksQ.data ?? []).find((b) => b.id === bookId) ?? null;
+
+  const entriesQ = useBabybookEntries(bookId);
+  const photosQ = useBabybookPhotos(bookId);
+  const promptsQ = useBabyPrompts();
+
+  const createEntry = useCreateEntry();
+  const updateEntry = useUpdateEntry();
+  const deleteEntry = useDeleteEntry();
+  const setFromPrompt = useSetEntryFromPrompt();
+  const upload = useUploadBabybookPhoto();
+  const updateBook = useUpdateBabybook();
+
+  // ── Milestone add / edit form ─────────────────────────────────────
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<BabybookEntry | null>(null);
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [when, setWhen] = useState<DateParts>(emptyParts());
+
+  const openAdd = () => {
+    setEditing(null);
+    setTitle('');
+    setBody('');
+    setWhen(emptyParts());
+    setFormOpen(true);
+  };
+
+  const openEdit = (e: BabybookEntry) => {
+    setEditing(e);
+    setTitle(e.title ?? '');
+    setBody(e.body ?? '');
+    setWhen(partsOf(e.event_date, e.event_precision));
+    setFormOpen(true);
+  };
+
+  const onSaveEntry = async () => {
+    if (!bookId) return;
+    const t = title.trim();
+    if (!t) {
+      showAlert('Add a title', 'Every milestone needs a title.');
+      return;
+    }
+    const eventDate = composeDate(when);
+    try {
+      if (editing) {
+        await updateEntry.mutateAsync({
+          id: editing.id,
+          bookId,
+          patch: {
+            title: t,
+            body: body.trim() || null,
+            event_date: eventDate,
+            event_precision: eventDate ? when.precision : null,
+          },
+        });
+      } else {
+        await createEntry.mutateAsync({
+          bookId,
+          kind: 'milestone',
+          title: t,
+          body: body.trim() || null,
+          eventDate,
+          eventPrecision: eventDate ? when.precision : null,
+        });
+      }
+      setFormOpen(false);
+    } catch (e: any) {
+      showAlert('Could not save', e?.message ?? 'Try again.');
+    }
+  };
+
+  const onDeleteEntry = (e: BabybookEntry) => {
+    if (!bookId) return;
+    showConfirm(
+      'Delete this entry?',
+      'The entry goes. Its photos stay.',
+      () => {
+        deleteEntry.mutate(
+          { id: e.id, bookId },
+          { onError: (err: any) => showAlert('Could not delete', err?.message ?? 'Try again.') },
+        );
+        if (editing?.id === e.id) setFormOpen(false);
+      },
+      'Delete',
+    );
+  };
+
+  // ── Answer a prompt ───────────────────────────────────────────────
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptIdx, setPromptIdx] = useState(0);
+  const [answer, setAnswer] = useState('');
+
+  const answeredPromptIds = useMemo(
+    () => new Set((entriesQ.data ?? []).map((e) => e.prompt_id).filter(Boolean)),
+    [entriesQ.data],
+  );
+  const openPrompts = useMemo(
+    () => (promptsQ.data ?? []).filter((p) => !answeredPromptIds.has(p.id)),
+    [promptsQ.data, answeredPromptIds],
+  );
+  const currentPrompt = openPrompts.length > 0
+    ? openPrompts[promptIdx % openPrompts.length]
+    : null;
+
+  const onSaveAnswer = async () => {
+    if (!bookId || !currentPrompt) return;
+    const a = answer.trim();
+    if (a.length < 4) {
+      showAlert('Write a little more', 'A sentence or two is enough.');
+      return;
+    }
+    try {
+      await setFromPrompt.mutateAsync({ bookId, prompt: currentPrompt, body: a });
+      setAnswer('');
+      setPromptOpen(false);
+    } catch (e: any) {
+      showAlert('Could not save', e?.message ?? 'Try again.');
+    }
+  };
+
+  // ── Photos ────────────────────────────────────────────────────────
+  const [photoDate, setPhotoDate] = useState<DateParts>(emptyParts());
+
+  const onPickPhoto = (evt: any) => {
+    const files: FileList | undefined = evt?.target?.files;
+    if (!bookId || !files || files.length === 0) return;
+    const capturedAt = composeDate(photoDate);
+    Array.from(files).forEach(async (file) => {
+      try {
+        await upload.mutateAsync({ bookId, file, capturedAt, capturedPrecision: photoDate.precision });
+      } catch (e: any) {
+        showAlert('Could not add photo', e?.message ?? 'Try again.');
+      }
+    });
+    if (evt.target) evt.target.value = '';
+  };
+
+  const onSetCover = (asset: BabybookAsset) => {
+    if (!bookId) return;
+    updateBook.mutate(
+      { id: bookId, patch: { cover_storage_path: asset.storage_path } },
+      { onError: (e: any) => showAlert('Could not set cover', e?.message ?? 'Try again.') },
+    );
+  };
+
+  // ── Sort the spine: dated ascending, undated grouped at the end ────
+  const { dated, undated } = useMemo(() => {
+    const list = entriesQ.data ?? [];
+    const withDate = list.filter((e) => !!e.event_date);
+    const noDate = list.filter((e) => !e.event_date);
+    withDate.sort((a, b) => {
+      const da = a.event_date ?? '';
+      const db = b.event_date ?? '';
+      if (da < db) return -1;
+      if (da > db) return 1;
+      return a.created_at < b.created_at ? -1 : 1;
+    });
+    noDate.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    return { dated: withDate, undated: noDate };
+  }, [entriesQ.data]);
+
+  const photos = photosQ.data ?? [];
+  const hasEntries = dated.length + undated.length > 0;
+
+  return (
+    <SafeAreaView style={s.root} edges={['top']}>
+      <ScreenHeader
+        title={book?.child_name ?? 'Babybook'}
+        showBack
+        onBack={() => goBack('/babybook')}
+        backLabel="Back"
+      />
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        {/* Add affordances */}
+        <View style={s.addRow}>
+          <Button
+            title="Add milestone"
+            variant="outline"
+            size="sm"
+            onPress={openAdd}
+            icon={<Ionicons name="flag-outline" size={14} color={Colors.primary} />}
+          />
+          {openPrompts.length > 0 && (
+            <Button
+              title="Answer a prompt"
+              variant="outline"
+              size="sm"
+              onPress={() => { setPromptOpen(true); setAnswer(''); }}
+              icon={<Ionicons name="chatbubble-ellipses-outline" size={14} color={Colors.primary} />}
+            />
+          )}
+        </View>
+
+        {/* Answer-a-prompt panel */}
+        {promptOpen && currentPrompt && (
+          <RailCard eyebrow="A question" accentColor={Colors.info}>
+            <Text style={s.promptQ}>{currentPrompt.primary_question}</Text>
+            <TextInput
+              style={[s.input, s.answerInput]}
+              value={answer}
+              onChangeText={setAnswer}
+              accessibilityLabel="Your answer"
+              multiline
+              textAlignVertical="top"
+              maxLength={8000}
+            />
+            <View style={s.formActions}>
+              <Button title="Save answer" onPress={onSaveAnswer} loading={setFromPrompt.isPending} />
+              {openPrompts.length > 1 && (
+                <TouchableOpacity
+                  style={s.linkBtn}
+                  onPress={() => setPromptIdx((i) => i + 1)}
+                  accessibilityLabel="Different question"
+                  activeOpacity={0.85}
+                >
+                  <Text style={s.linkText}>Different question</Text>
+                </TouchableOpacity>
+              )}
+              <Button title="Close" variant="ghost" onPress={() => { setPromptOpen(false); setAnswer(''); }} />
+            </View>
+          </RailCard>
+        )}
+
+        {/* Milestone spine */}
+        {hasEntries && (
+          <View style={s.list}>
+            {dated.map((e) => (
+              <EntryCard key={e.id} entry={e} onEdit={openEdit} onDelete={onDeleteEntry} />
+            ))}
+            {undated.length > 0 && (
+              <View style={s.undatedDivider}>
+                <Eyebrow>Undated</Eyebrow>
+              </View>
+            )}
+            {undated.map((e) => (
+              <EntryCard key={e.id} entry={e} onEdit={openEdit} onDelete={onDeleteEntry} />
+            ))}
+          </View>
+        )}
+
+        {/* Photos */}
+        {(photos.length > 0 || Platform.OS === 'web') && (
+          <View style={s.photoSection}>
+            <Eyebrow accentColor={Colors.primary}>Photos</Eyebrow>
+            {Platform.OS === 'web' && (
+              <View style={s.photoAdd}>
+                <DateField label="Photo date" value={photoDate} onChange={setPhotoDate} compact />
+                <label
+                  style={({
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '7px 12px', borderRadius: Gen.radius, cursor: 'pointer',
+                    border: `1px solid ${Colors.border}`, color: Colors.textPrimary,
+                    fontWeight: 700, fontSize: 13, alignSelf: 'flex-start',
+                  } as any)}
+                  aria-label="Add a photo"
+                >
+                  {upload.isPending ? 'Adding…' : 'Add a photo'}
+                  <input type="file" accept="image/*" multiple onChange={onPickPhoto} style={({ display: 'none' } as any)} />
+                </label>
+              </View>
+            )}
+            {photos.length > 0 && (
+              <View style={s.photoStrip}>
+                {photos.map((a) => (
+                  <PhotoTile
+                    key={a.id}
+                    asset={a}
+                    isCover={book?.cover_storage_path === a.storage_path}
+                    onSetCover={() => onSetCover(a)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {!hasEntries && photos.length === 0 && (
+          <Text style={s.empty}>Nothing yet.</Text>
+        )}
+      </ScrollView>
+
+      {/* Milestone add / edit form */}
+      <Modal visible={formOpen} transparent animationType="slide" onRequestClose={() => setFormOpen(false)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <ScrollView contentContainerStyle={s.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={s.modalHead}>
+                <Text style={s.modalTitle}>{editing ? 'Edit entry' : 'New milestone'}</Text>
+                <TouchableOpacity onPress={() => setFormOpen(false)} accessibilityLabel="Close" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Ionicons name="close" size={20} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Presets. Only when adding a fresh milestone */}
+              {!editing && (
+                <View style={s.presetWrap}>
+                  {BABY_PRESETS.map((p) => (
+                    <Chip key={p} label={p} selected={title === p} onPress={() => setTitle(p)} />
+                  ))}
+                </View>
+              )}
+
+              <View style={s.field}>
+                <Eyebrow>Title</Eyebrow>
+                <TextInput style={s.input} value={title} onChangeText={setTitle} accessibilityLabel="Title" placeholder="Title" placeholderTextColor={Colors.textMuted} />
+              </View>
+
+              <View style={s.field}>
+                <Eyebrow>Note</Eyebrow>
+                <TextInput style={[s.input, s.inputMultiline]} value={body} onChangeText={setBody} accessibilityLabel="Note" placeholder="Note" placeholderTextColor={Colors.textMuted} multiline textAlignVertical="top" maxLength={4000} />
+              </View>
+
+              <DateField label="When" value={when} onChange={setWhen} />
+
+              <View style={s.modalActions}>
+                <Button title="Save" onPress={onSaveEntry} loading={createEntry.isPending || updateEntry.isPending} />
+                {editing && (
+                  <Button
+                    title="Delete"
+                    variant="outline"
+                    onPress={() => onDeleteEntry(editing)}
+                    textStyle={{ color: Colors.error }}
+                    icon={<Ionicons name="trash-outline" size={15} color={Colors.error} />}
+                  />
+                )}
+                <Button title="Cancel" variant="ghost" onPress={() => setFormOpen(false)} />
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+// ── One entry on the spine ──────────────────────────────────────────
+
+function EntryCard({
+  entry, onEdit, onDelete,
+}: {
+  entry: BabybookEntry;
+  onEdit: (e: BabybookEntry) => void;
+  onDelete: (e: BabybookEntry) => void;
+}) {
+  const s = makeStyles();
+  const isNote = entry.kind === 'note';
+  const eyebrow = entry.event_date
+    ? formatFuzzyDate(entry.event_date, entry.event_precision)
+    : (isNote ? 'Note' : 'Undated');
+  const accent = isNote ? Colors.info : Colors.primary;
+
+  return (
+    <RailCard eyebrow={eyebrow || 'Undated'} accentColor={accent}>
+      <Text style={[s.entryTitle, isNote && s.entryTitleNote]}>{entry.title}</Text>
+      {!!entry.body && <Text style={s.entryBody}>{entry.body}</Text>}
+      <View style={s.entryActions}>
+        <TouchableOpacity
+          style={s.entryAction}
+          onPress={() => onEdit(entry)}
+          accessibilityLabel="Edit entry"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="create-outline" size={14} color={Colors.textSecondary} />
+          <Text style={s.entryActionText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={s.entryAction}
+          onPress={() => onDelete(entry)}
+          accessibilityLabel="Delete entry"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="trash-outline" size={14} color={Colors.error} />
+          <Text style={[s.entryActionText, { color: Colors.error }]}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </RailCard>
+  );
+}
+
+// ── A photo tile ────────────────────────────────────────────────────
+
+function PhotoTile({
+  asset, isCover, onSetCover,
+}: {
+  asset: BabybookAsset;
+  isCover: boolean;
+  onSetCover: () => void;
+}) {
+  const s = makeStyles();
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    getAssetDisplayUrl(asset.storage_path).then((u) => { if (alive) setUrl(u); });
+    return () => { alive = false; };
+  }, [asset.storage_path]);
+
+  return (
+    <View style={s.photoTile}>
+      <View style={s.photoFrame}>
+        {url ? (
+          <RNImage source={{ uri: url }} style={s.photoImg} resizeMode="cover" />
+        ) : (
+          <ActivityIndicator color={Colors.primary} />
+        )}
+      </View>
+      <Text style={s.photoDate}>{photoDateLabel(asset.captured_at, asset.captured_precision)}</Text>
+      <TouchableOpacity
+        style={s.coverBtn}
+        onPress={onSetCover}
+        disabled={isCover}
+        accessibilityLabel={isCover ? 'Cover photo' : 'Set as cover'}
+        activeOpacity={0.85}
+      >
+        <Ionicons
+          name={isCover ? 'star' : 'star-outline'}
+          size={12}
+          color={isCover ? Colors.primary : Colors.textSecondary}
+        />
+        <Text style={[s.coverBtnText, isCover && { color: Colors.primary }]}>
+          {isCover ? 'Cover' : 'Set as cover'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function makeStyles() {
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
+
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
+    scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 120, paddingTop: Spacing.sm, gap: Spacing.md },
+
+    addRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.xxs },
+
+    list: { gap: Spacing.sm },
+    undatedDivider: { marginTop: Spacing.xs, marginBottom: Spacing.xxs },
+
+    empty: {
+      fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+      color: Colors.textSecondary, fontStyle: 'italic', marginTop: Spacing.lg, ...bodyFont,
+    },
+
+    // Entry card
+    entryTitle: { fontSize: Type.cardTitle.size, fontWeight: '700', color: Colors.textPrimary, ...bodyFont },
+    entryTitleNote: { fontWeight: '600', fontStyle: 'italic', color: Colors.textPrimary },
+    entryBody: { fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight + 5, color: Colors.textPrimary, marginTop: 2, ...bodyFont },
+    entryActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.xs },
+    entryAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    entryActionText: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textSecondary },
+
+    // Prompt panel
+    promptQ: {
+      fontSize: Type.cardTitle.size, lineHeight: Type.cardTitle.lineHeight + 2,
+      color: Colors.textPrimary, fontStyle: 'italic', ...bodyFont,
+    },
+    answerInput: { minHeight: 120, marginTop: Spacing.xs },
+
+    // Photos
+    photoSection: { gap: Spacing.xs, marginTop: Spacing.xs },
+    photoAdd: { gap: Spacing.xs },
+    photoStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.xxs },
+    photoTile: {
+      width: 150, gap: 6, padding: Spacing.xs,
+      borderRadius: Radius.sm, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
+    },
+    photoFrame: {
+      width: '100%', aspectRatio: 1.2, borderRadius: Radius.xs, overflow: 'hidden',
+      backgroundColor: Colors.surfaceLight, alignItems: 'center', justifyContent: 'center',
+    },
+    photoImg: { width: '100%', height: '100%' },
+    photoDate: { fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.primary, letterSpacing: 0.4 },
+    coverBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    coverBtnText: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textSecondary },
+
+    // Shared form bits
+    field: { gap: Spacing.xs },
+    input: {
+      minHeight: 44, paddingHorizontal: Spacing.sm, paddingVertical: 10,
+      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderWidth: 1, borderColor: Colors.border,
+      fontSize: Type.ui.size, color: Colors.textPrimary, ...bodyFont,
+    },
+    inputMultiline: { minHeight: 96 },
+    formActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.xs },
+    linkBtn: { paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xs },
+    linkText: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textSecondary, textDecorationLine: 'underline' },
+
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end', alignItems: 'center' },
+    modalCard: {
+      width: '100%', maxWidth: 460, maxHeight: '92%',
+      backgroundColor: Colors.surface,
+      borderTopLeftRadius: Radius.lg, borderTopRightRadius: Radius.lg,
+      borderWidth: 1, borderColor: Colors.border,
+    },
+    modalScroll: { padding: Spacing.lg, paddingBottom: Spacing.xl, gap: Spacing.sm },
+    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.xxs },
+    modalTitle: { fontSize: Type.title.size, fontWeight: '700', color: Colors.textPrimary, ...displayFont },
+    presetWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+    modalActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.sm },
+  });
+}

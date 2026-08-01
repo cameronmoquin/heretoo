@@ -1,9 +1,15 @@
 /**
- * /api/parse-cv — extract structured life events from a resume.
+ * /api/parse-cv — extract structured life events from a document.
  *
  * The user is building the memoir timeline. They upload or paste a
- * resume. We hand Claude the plain text and ask for a strict JSON list
- * of schools and jobs, with fuzzy dates (year, or year and month).
+ * document: a resume, a CV, a college transcript, or a report card. We
+ * hand Claude the plain text and ask for a strict JSON list of schools
+ * and jobs, with fuzzy dates (year, or year and month). Transcripts and
+ * report cards come back as 'school' events carrying the institution,
+ * the period, the grade or level, and a short factual 'detail' summary
+ * of the marks or courses the text lists.
+ *
+ * The path stays /api/parse-cv. The name is the DB-stable identifier.
  *
  * This endpoint ONLY extracts. It never writes to Supabase. There is no
  * service key here and no database function to grant or revoke. The user
@@ -11,8 +17,8 @@
  * saved, so a stray or wrong row cannot reach the database from here.
  *
  * The system message forbids fabrication. Any field not present in the
- * resume comes back null. Claude is told never to invent a date or an
- * employer the text does not contain.
+ * document comes back null. Claude is told never to invent a date, a
+ * grade, or an employer the text does not contain.
  *
  * Fail-soft. When ANTHROPIC_API_KEY is missing, or Claude errors, or the
  * reply will not parse, we return { events: [], error: '...' } with a
@@ -47,19 +53,27 @@ async function isSignedIn(req: Request): Promise<boolean> {
 
 const MAX_INPUT = 60_000;
 
-const SYSTEM_RULES = `You extract life events from a resume. You are precise and literal.
+const SYSTEM_RULES = `You extract life events from a document. The document is a resume, a CV, a college transcript, or a report card. You are precise and literal.
 
 HARD RULE: NEVER FABRICATE.
-- Use only what the resume text states.
+- Use only what the document text states.
 - If a field is not in the text, it is null.
-- Never invent a date, a year, a month, an employer, a school, a title, or a location.
+- Never invent a date, a year, a month, an employer, a school, an institution, a title, a grade, a GPA, or a location.
 - Never round, guess, or fill a gap. A missing end year is null, not the current year.
-- If you cannot tell whether an entry is a school or a job, prefer the one the wording supports; if truly unclear, use 'job'.
+- If you cannot tell whether an entry is a school or a job, prefer the one the wording supports. If truly unclear, use 'job'.
 
 WHAT COUNTS:
-- kind 'school': a degree, a diploma, a certificate, a program, an enrolled course of study. The organization is the school. role_or_grade is the degree or field of study when stated.
+- kind 'school': a degree, a diploma, a certificate, a program, an enrolled course of study, or a term recorded on a transcript or report card. The organization is the school or institution. role_or_grade is the degree, the field of study, or the grade level when stated (for example "Grade 11", "Senior year", "B.A. History").
 - kind 'job': a position, a role, an internship, a fellowship, a volunteer post held at an organization. The organization is the employer. role_or_grade is the job title when stated.
 - Skip skills lists, summaries, references, and contact blocks. Those are not events.
+
+TRANSCRIPTS AND REPORT CARDS:
+- Treat each recorded institution and term as a 'school' event. The organization is the institution. role_or_grade is the grade level or year when the text names it.
+- Emit one event per institution or per term as the document presents it. Keep separate terms separate. Keep a whole term whole.
+- When the document lists courses, marks, or a GPA, put a short factual summary in 'detail'. Draw it only from the text. A course the text omits stays out. A grade the text omits stays out.
+
+DETAIL:
+- 'detail' is an optional short factual summary of the entry, drawn only from the text. A GPA, marks, honors, or listed courses belong here. Keep it to one short line (for example "GPA 3.8; Honors English, AP History"). When the text carries none of this, detail is null.
 
 DATES:
 - start_year and end_year are four-digit years taken from the text.
@@ -74,10 +88,11 @@ const OUTPUT_SPEC = `Return a JSON object of this exact shape and nothing else:
   "events": [
     {
       "kind": "school" | "job",
-      "title": "<short label for the entry, e.g. the degree name or the job title>",
-      "organization": "<school or employer, or null>",
-      "role_or_grade": "<degree, field, or job title, or null>",
+      "title": "<short label for the entry, e.g. the degree name, the grade level, or the job title>",
+      "organization": "<school, institution, or employer, or null>",
+      "role_or_grade": "<degree, field, grade level, or job title, or null>",
       "location": "<city, region, or null>",
+      "detail": "<short factual summary from the text: GPA, grades, honors, or courses, or null>",
       "start_year": <number or null>,
       "start_month": <1-12 or null>,
       "end_year": <number or null>,
@@ -87,7 +102,7 @@ const OUTPUT_SPEC = `Return a JSON object of this exact shape and nothing else:
   ]
 }
 
-title is required for every event. Order the events as they appear in the resume. If the resume has no schools or jobs, return { "events": [] }.`;
+title is required for every event. detail is optional and null when the text has nothing to summarize. Order the events as they appear in the document. If the document has no schools or jobs, return { "events": [] }.`;
 
 interface RawEvent {
   kind: unknown;
@@ -95,6 +110,7 @@ interface RawEvent {
   organization: unknown;
   role_or_grade: unknown;
   location: unknown;
+  detail: unknown;
   start_year: unknown;
   start_month: unknown;
   end_year: unknown;
@@ -108,6 +124,10 @@ interface CvEvent {
   organization: string | null;
   role_or_grade: string | null;
   location: string | null;
+  // A short factual summary drawn only from the text: a GPA, marks,
+  // honors, or listed courses on a transcript or report card. Null when
+  // the document carries nothing to summarize.
+  detail: string | null;
   start_year: number | null;
   start_month: number | null;
   end_year: number | null;
@@ -167,6 +187,7 @@ function normalize(raw: RawEvent): CvEvent | null {
     organization: cleanText(raw.organization),
     role_or_grade: cleanText(raw.role_or_grade),
     location: cleanText(raw.location),
+    detail: cleanText(raw.detail),
     start_year: startYear,
     start_month: startMonth,
     end_year: endYear,
@@ -181,7 +202,7 @@ export default async (req: Request) => {
   }
 
   if (!(await isSignedIn(req))) {
-    return jsonResponse({ events: [], error: 'Sign in to import a resume.' }, 401);
+    return jsonResponse({ events: [], error: 'Sign in to import a document.' }, 401);
   }
 
   let body: { text?: unknown };
@@ -190,17 +211,17 @@ export default async (req: Request) => {
   const text = typeof body.text === 'string' ? body.text.trim() : '';
 
   if (!text) {
-    return softError('Paste your resume text first.');
+    return softError('Paste the document text first.');
   }
   if (text.length > MAX_INPUT) {
-    return softError('Resume text is too long. Trim it and try again.');
+    return softError('The document is too long. Trim it and try again.');
   }
 
   if (!ANTHROPIC_KEY) {
-    return softError('CV import is offline right now.');
+    return softError('Import is offline right now.');
   }
 
-  const userMessage = `Resume text:
+  const userMessage = `Document text:
 """
 ${text}
 """
@@ -232,7 +253,7 @@ ${OUTPUT_SPEC}`;
       const errText = await claudeRes.text();
       // eslint-disable-next-line no-console
       console.error('[parse-cv] anthropic', claudeRes.status, errText.slice(0, 200));
-      return softError('Could not read the resume. Try again.');
+      return softError('Could not read the document. Try again.');
     }
 
     const claudeJson = (await claudeRes.json()) as any;
@@ -247,7 +268,7 @@ ${OUTPUT_SPEC}`;
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      return softError('Could not read the resume. Try again.');
+      return softError('Could not read the document. Try again.');
     }
 
     // Accept either { events: [...] } or a bare [...] array.
@@ -258,7 +279,7 @@ ${OUTPUT_SPEC}`;
         : null;
 
     if (!Array.isArray(list)) {
-      return softError('Could not read the resume. Try again.');
+      return softError('Could not read the document. Try again.');
     }
 
     const events: CvEvent[] = list
@@ -269,7 +290,7 @@ ${OUTPUT_SPEC}`;
   } catch (e: any) {
     // eslint-disable-next-line no-console
     console.error('[parse-cv] exception', e?.message ?? '');
-    return softError('Could not read the resume. Try again.');
+    return softError('Could not read the document. Try again.');
   }
 };
 

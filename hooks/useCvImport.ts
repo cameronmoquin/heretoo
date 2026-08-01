@@ -1,22 +1,31 @@
 /**
- * useCvImport — turn a resume into memoir timeline events.
+ * useCvImport — turn a document into memoir timeline events.
  *
  * The user is seeding the memoir timeline. They paste (or upload) a
- * resume. useParseCv POSTs the plain text to /api/parse-cv, which asks
- * Claude for a strict list of schools and jobs with fuzzy dates. The
- * function ONLY extracts. Nothing is written yet.
+ * document: a resume, a CV, a college transcript, or a report card.
+ * useParseCv POSTs the plain text to /api/parse-cv, which asks Claude for
+ * a strict list of schools and jobs with fuzzy dates. Transcripts and
+ * report cards arrive as 'school' events with a short factual 'detail'
+ * line (a GPA, marks, or courses the text lists). The function ONLY
+ * extracts. Nothing is written yet.
  *
  * This hook maps the function's { start_year, start_month, ... } shape
  * onto the timeline's { start_date, start_precision, ... } shape so the
  * confirm UI and useBulkCreateTimelineEvents (in hooks/useMemoirTimeline,
  * owned separately) can consume the result directly and spread it into
  * an insert. Year only becomes precision 'year'. Year and month becomes
- * precision 'month'. The CV never carries a day.
+ * precision 'month'. The document never carries a day. The 'detail' line
+ * maps into the event's notes, so it rides onto the school event and the
+ * author sees it on the card.
+ *
+ * REVIEW BEFORE WRITE. This hook only parses. The screen shows every
+ * parsed event for the author to uncheck or edit, and the write happens
+ * on confirm through useBulkCreateTimelineEvents. Nothing here persists.
  *
  * The screen is responsible for turning an uploaded file into text
- * before it calls. The simplest path ships now: accept a pasted string.
- * PDF and DOCX text extraction is a thin follow-up the screen can add
- * (a web text-extraction step) without touching this hook.
+ * before it calls. The simplest path ships now: accept a pasted string,
+ * or read an uploaded file's text on web. A PDF's text layer or pasted
+ * text is enough. Image-only scans need OCR, a thin follow-up.
  *
  * Fail-soft. The endpoint always answers 200. On its { error } field we
  * throw a readable message so React Query surfaces it and the confirm UI
@@ -34,6 +43,9 @@ export interface CvEventRaw {
   organization: string | null;
   role_or_grade: string | null;
   location: string | null;
+  /** Optional short factual summary from a transcript or report card
+   *  (a GPA, marks, honors, or listed courses). Null when absent. */
+  detail?: string | null;
   start_year: number | null;
   start_month: number | null;
   end_year: number | null;
@@ -59,6 +71,10 @@ export interface ParsedTimelineEvent {
   organization: string | null;
   role_or_grade: string | null;
   location: string | null;
+  // The parsed 'detail' line lands here, so it maps straight onto the
+  // timeline event's notes column at insert. Null when the document had
+  // nothing to summarize.
+  notes: string | null;
   start_date: string | null;      // 'YYYY-MM-DD', anchored to the first of the known unit
   start_precision: TimelinePrecision;
   end_date: string | null;
@@ -97,8 +113,11 @@ function mapEvent(e: CvEventRaw): ParsedTimelineEvent {
     organization: e.organization,
     role_or_grade: e.role_or_grade,
     location: e.location,
-    // A CV event with no year is legal. It lands as an undated event the
-    // author places by hand. Default its precision to 'year'.
+    // The detail line carries onto the event as notes. A trimmed empty
+    // string or a missing field both land as null.
+    notes: (e.detail ?? '').trim() || null,
+    // A document event with no year is legal. It lands as an undated
+    // event the author places by hand. Default its precision to 'year'.
     start_date: start.date,
     start_precision: start.precision ?? 'year',
     end_date: end.date,
@@ -109,15 +128,15 @@ function mapEvent(e: CvEventRaw): ParsedTimelineEvent {
 }
 
 /**
- * Parse already-extracted resume text into timeline-ready events.
- * The screen extracts text from a PDF/DOCX or takes a paste, then calls
+ * Parse already-extracted document text into timeline-ready events.
+ * The screen extracts text from a file or takes a paste, then calls
  * mutate({ text }). Nothing persists here. The confirm step owns the write.
  */
 export function useParseCv() {
   return useMutation({
     mutationFn: async (input: { text: string }): Promise<ParsedTimelineEvent[]> => {
       const text = (input.text ?? '').trim();
-      if (!text) throw new Error('Paste your resume text first.');
+      if (!text) throw new Error('Paste the document text first.');
 
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;

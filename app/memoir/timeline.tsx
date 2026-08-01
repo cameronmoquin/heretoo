@@ -75,25 +75,26 @@ import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
 type Kind = TimelineEvent['kind'];
 type Precision = 'year' | 'month' | 'day';
 
-const KIND_META: Record<Kind, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
+// Baby moved to its own room (/babybook). The DB kind stays a valid enum
+// value; the memoir spine no longer offers it.
+type SpineKind = Exclude<Kind, 'baby'>;
+
+const KIND_META: Record<SpineKind, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
   school:       { label: 'School',       icon: 'school-outline' },
   job:          { label: 'Job',          icon: 'briefcase-outline' },
   residence:    { label: 'Home',         icon: 'home-outline' },
   milestone:    { label: 'Milestone',    icon: 'flag-outline' },
   relationship: { label: 'Relationship', icon: 'heart-outline' },
   travel:       { label: 'Travel',       icon: 'airplane-outline' },
-  baby:         { label: 'Baby',         icon: 'happy-outline' },
   custom:       { label: 'Custom',       icon: 'ellipse-outline' },
 };
-const KIND_ORDER: Kind[] = ['school', 'job', 'residence', 'milestone', 'relationship', 'travel', 'baby', 'custom'];
+const KIND_ORDER: SpineKind[] = ['school', 'job', 'residence', 'milestone', 'relationship', 'travel', 'custom'];
 
-// Baby-book presets. First-childhood milestones the author picks from.
-// Still fully editable after a tap.
-const BABY_PRESETS = [
-  'First smile', 'First laugh', 'Rolled over', 'First tooth', 'Sat up',
-  'Crawled', 'First word', 'First steps', 'First birthday', 'First haircut',
-  'First day of school', 'Lost first tooth',
-];
+/** Meta for any stored kind. A legacy 'baby' row (none exist in
+ *  production) falls back to the custom marker rather than crashing. */
+function kindMeta(kind: Kind): { label: string; icon: keyof typeof Ionicons.glyphMap } {
+  return KIND_META[kind as SpineKind] ?? { label: 'Custom', icon: 'ellipse-outline' };
+}
 
 // K-12 grade labels for the school quick-add.
 const GRADES = [
@@ -347,13 +348,6 @@ export default function MemoirTimelineScreen() {
             onPress={() => setSeedOpen(true)}
             icon={<Ionicons name="school-outline" size={14} color={Colors.primary} />}
           />
-          <Button
-            title="Baby book"
-            variant="outline"
-            size="sm"
-            onPress={() => openAdd('baby')}
-            icon={<Ionicons name="happy-outline" size={14} color={Colors.primary} />}
-          />
         </View>
 
         {/* Spine */}
@@ -425,23 +419,6 @@ export default function MemoirTimelineScreen() {
                   );
                 })}
               </View>
-
-              {/* Baby-book presets */}
-              {kind === 'baby' && (
-                <View style={s.presetWrap}>
-                  {BABY_PRESETS.map((p) => (
-                    <TouchableOpacity
-                      key={p}
-                      style={s.presetChip}
-                      onPress={() => setTitle(p)}
-                      accessibilityLabel={p}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={s.presetChipText}>{p}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
 
               <Field label="Title" scale={scale}>
                 <TextInput style={s.input} value={title} onChangeText={setTitle} accessibilityLabel="Title" placeholder="Title" placeholderTextColor={Colors.textMuted} />
@@ -676,7 +653,7 @@ function EventCard({
       <View style={s.gutter}>
         <View style={[s.line, first && s.lineFirst, last && s.lineLast]} />
         <View style={s.node}>
-          <Ionicons name={KIND_META[event.kind].icon} size={15} color={Colors.onPrimary} />
+          <Ionicons name={kindMeta(event.kind).icon} size={15} color={Colors.onPrimary} />
         </View>
       </View>
 
@@ -1094,14 +1071,6 @@ function makeStyles(scale: number = 1) {
     kindChipActive: { backgroundColor: Colors.primary },
     kindChipText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
     kindChipTextActive: { color: Colors.onPrimary },
-
-    presetWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    presetChip: {
-      paddingHorizontal: 10, paddingVertical: 7,
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.border,
-      backgroundColor: Colors.surface,
-    },
-    presetChipText: { fontSize: Type.caption.size, fontWeight: '600', color: Colors.textPrimary, ...bodyFont },
 
     precisionWrap: { flexDirection: 'row', gap: 6 },
     precisionChip: {

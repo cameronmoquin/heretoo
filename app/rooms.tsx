@@ -44,6 +44,7 @@ export default function RoomsScreen() {
     { icon: 'game-controller', label: 'Games', route: '/games' },
     { icon: 'mail', label: 'Letters', route: '/letter' },
     { icon: 'create', label: 'Memoir', route: '/memoir' },
+    { icon: 'happy', label: 'Babybook', route: '/babybook' },
     { icon: 'lock-closed', label: 'Journal', route: '/journal' },
     { icon: 'people', label: 'Network', route: '/network' },
     { icon: 'boat', label: 'Crews', route: '/family' },
