@@ -11,12 +11,6 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import { Syne_600SemiBold, Syne_700Bold, Syne_800ExtraBold } from '@expo-google-fonts/syne';
-import {
-  SourceSerif4_400Regular,
-  SourceSerif4_400Regular_Italic,
-  SourceSerif4_600SemiBold,
-} from '@expo-google-fonts/source-serif-4';
 import { useAuth } from '../hooks/useAuth';
 import { LoadingPulse } from '../components/shared/LoadingPulse';
 import { ErrorBoundary } from '../components/shared/ErrorBoundary';
@@ -25,16 +19,13 @@ import { PWAInstallPrompt } from '../components/shared/PWAInstallPrompt';
 import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
-import { WallpaperBackground } from '../components/shared/WallpaperBackground';
-import { ScanlineOverlay } from '../components/shared/ScanlineOverlay';
+import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
 import { MobileTabBar } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
 import { Colors, setColorMode } from '../constants/colors';
-import { setGeneration, Gen } from '../constants/generations';
 import { useThemeStore } from '../stores/themeStore';
-import { useGenerationStore } from '../stores/generationStore';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 2, retry: 2 } },
@@ -42,8 +33,7 @@ const queryClient = new QueryClient({
 
 // React Navigation paints each screen's scene from its theme; the
 // default is opaque light (#F2F2F2), which would sit on top of the
-// generation canvas / wallpaper and hide it. Transparent lets the root
-// View's background (dark for glitch skins, wallpaper for light) show.
+// canvas and hide it. Transparent lets the root View's background show.
 const NAV_THEME = {
   ...DefaultTheme,
   colors: { ...DefaultTheme.colors, background: 'transparent' },
@@ -52,16 +42,12 @@ const NAV_THEME = {
 function RootLayoutInner() {
   const { isLoading } = useAuth();
   const themeMode = useThemeStore((s) => s.mode);
-  const generation = useGenerationStore((s) => s.generation);
 
   // Apply the active palette before child renders happen. useEffect
   // would render once with the wrong palette; useMemo runs sync.
-  // Order matters: the generation owns the palette, so it applies LAST
-  // (it overlays the dark/light base with the cohort's colours).
   React.useMemo(() => {
     setColorMode(themeMode);
-    setGeneration(generation);
-  }, [themeMode, generation]);
+  }, [themeMode]);
 
   // Update the document theme-color so mobile browser chrome matches.
   useEffect(() => {
@@ -82,14 +68,10 @@ function RootLayoutInner() {
       });
   }, []);
 
+  // One family. Inter, four weights. Syne and Source Serif 4 are retired
+  // with the skin engine (docs/UI_SYSTEM.md §3).
   const [fontsLoaded] = useFonts({
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
-    // Display face — Syne. Used for masthead, postcard pulled phrases,
-    // brand mark, section titles. Per the codex (Source of Truth, M10).
-    Syne_600SemiBold, Syne_700Bold, Syne_800ExtraBold,
-    // Long-form body — Source Serif 4. Used for the Letter composer,
-    // letter reader, Reframer drawer.
-    SourceSerif4_400Regular, SourceSerif4_400Regular_Italic, SourceSerif4_600SemiBold,
   });
 
   if (isLoading || !fontsLoaded) return <LoadingPulse />;
@@ -98,26 +80,20 @@ function RootLayoutInner() {
     // key={themeMode} forces a clean remount of the entire app when the user
     // toggles theme, so every component picks up new Colors values.
     //
-    // CRITICAL: this View MUST be transparent. The wallpaper paints on
-    // document.body (see WallpaperBackground); any opaque backgroundColor
-    // here covers it completely. The base canvas color is set on body
-    // via the baseline stylesheet WallpaperBackground injects. The
-    // previous opaque value (Colors.background) is the entire reason
-    // wallpapers haven't been showing.
+    // This View paints the canvas. Nothing else paints it. Flat
+    // Colors.background, light or dark, no image behind it.
     <View
-      key={`${themeMode}:${generation}`}
-      style={{ flex: 1, backgroundColor: Gen.dark ? Colors.background : 'transparent' }}
+      key={themeMode}
+      style={{ flex: 1, backgroundColor: Colors.background }}
     >
-      <WallpaperBackground />
-      <ScanlineOverlay />
+      <GlobalWebStyles />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <ThemeProvider value={NAV_THEME}>
       <Stack
         screenOptions={{
           headerShown: false,
-          // Transparent content so the WallpaperBackground sibling
-          // above renders behind every screen. The base color is
-          // painted by the outer View. Page-level wrappers are also
+          // Transparent content so the canvas painted by the outer
+          // View reaches every screen. Page-level wrappers are also
           // transparent (see app/* sweep).
           contentStyle: { backgroundColor: 'transparent' },
           animation: 'slide_from_right',

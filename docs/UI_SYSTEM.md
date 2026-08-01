@@ -46,7 +46,7 @@ An accent that appears everywhere stops meaning anything.
 | `border` | `#E5E5E5` | hairline rules and dividers |
 | `textPrimary` | `#0A0A0A` | body and headings |
 | `textSecondary` | `#6B6B6B` | timestamps, secondary labels |
-| `textMuted` | `#9A9A9A` | counts, placeholders |
+| `textMuted` | `#767676` | counts, placeholders. 4.54:1, clears AA |
 | `primary` | `#0A0A0A` | primary buttons, active nav |
 | `onPrimary` | `#FFFFFF` | ink on a primary fill |
 | `heart` | `#FF3040` | the heart, and nothing else |
@@ -62,7 +62,7 @@ An accent that appears everywhere stops meaning anything.
 | `border` | `#2A2A2A` |
 | `textPrimary` | `#F5F5F5` |
 | `textSecondary` | `#A0A0A0` |
-| `textMuted` | `#6E6E6E` |
+| `textMuted` | `#8A8A8A` |
 | `primary` | `#F5F5F5` |
 | `onPrimary` | `#0A0A0A` |
 | `heart` | `#FF3040` |
@@ -90,7 +90,7 @@ loading, along with every `fontFamily` override.
 | `ui` | 14 / 19 | 500 | buttons, labels |
 | `caption` | 13 / 18 | 400 | timestamps, counts |
 
-Tight scale on purpose. Six steps cover the product.
+Tight scale on purpose. Seven steps cover the product.
 
 ---
 

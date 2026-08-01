@@ -27,7 +27,6 @@ import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { useAuthStore } from '../../../stores/authStore';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { HeadshotCapture, type HeadshotResult } from '../../../components/upload/HeadshotCapture';
-import { GenerationSwitcher } from '../../../components/shared/GenerationSwitcher';
 import { Button } from '../../../components/shared/Button';
 import { Eyebrow } from '../../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../../components/shared/ScreenHeader';
@@ -235,8 +234,6 @@ export default function ProfileSettings() {
             />
           </Field>
 
-          <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md }} />
-          <GenerationSwitcher />
           <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md }} />
 
           {err && (

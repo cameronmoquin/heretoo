@@ -26,10 +26,6 @@ import {
   type FeedMix,
 } from '../../stores/artPrefsStore';
 import { useArtFacets, useArtFilterStatus } from '../../hooks/useArtFeed';
-import {
-  useWallpaper, WALLPAPER_LIST, wallpaperToDataUri,
-  wallpapersBySchool, WALLPAPERS,
-} from '../../stores/wallpaperStore';
 import { useTTS } from '../../stores/ttsStore';
 import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
@@ -56,10 +52,6 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
   const clear = useArtPrefs((st) => st.clear);
   const { data: facets } = useArtFacets();
   const filterStatus = useArtFilterStatus();
-  const wallpaperId = useWallpaper((st) => st.id);
-  const setWallpaper = useWallpaper((st) => st.setWallpaper);
-  const bold = useWallpaper((st) => st.bold);
-  const toggleBold = useWallpaper((st) => st.toggleBold);
 
   // Draft state — local mirror of the filter axes. Initialized from
   // the live store on first render and kept in sync with external
@@ -169,83 +161,6 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
             )}
           </View>
 
-          {/* Wallpaper picker — a small museum. Patterns grouped by
-              school. The active pattern's "About this pattern" card
-              sits at the top so the user reads the context the way
-              they'd read a wall plaque before looking at the work. */}
-          <Section label="Wallpaper">
-            {(() => {
-              const active = WALLPAPERS[wallpaperId as keyof typeof WALLPAPERS];
-              if (!active || !active.about) return null;
-              return (
-                <View style={s.museumPlaque}>
-                  <Text style={s.plaqueTitle}>{active.label}</Text>
-                  <Text style={s.plaqueEra}>{active.era}</Text>
-                  <Text style={s.plaqueAbout}>{active.about}</Text>
-                  {!!active.credit && (
-                    <Text style={s.plaqueCredit}>{active.credit}</Text>
-                  )}
-                </View>
-              );
-            })()}
-
-            {wallpapersBySchool().map((group) => (
-              <View key={group.school} style={s.schoolGroup}>
-                <Text style={s.schoolTitle}>{group.label}</Text>
-                <View style={s.swatchGrid}>
-                  {group.items.map((w) => {
-                    const on = wallpaperId === w.id;
-                    const bgImage = w.svg ? wallpaperToDataUri(w) : '';
-                    return (
-                      <TouchableOpacity
-                        key={w.id}
-                        onPress={() => setWallpaper(w.id)}
-                        style={[s.swatch, on && s.swatchActive]}
-                        activeOpacity={0.75}
-                        accessibilityLabel={`${w.label} wallpaper`}
-                      >
-                        <View
-                          style={[
-                            s.swatchTile,
-                            // Image-mode: render a small thumbnail of the
-                            // actual scan. SVG-mode: render the SVG tile.
-                            // Plain: solid bg.
-                            w.imageUrl
-                              ? ({
-                                  backgroundImage: `url("${w.imageUrl}")`,
-                                  backgroundSize: 'cover',
-                                  backgroundPosition: 'center',
-                                  backgroundColor: w.swatchBg,
-                                } as any)
-                              : swatchTileStyle(w.swatchBg, bgImage, w.tileSize),
-                          ]}
-                        />
-                        <Text style={[s.swatchLabel, on && s.swatchLabelActive]} numberOfLines={1}>
-                          {w.label}
-                        </Text>
-                        <Text style={s.swatchEra} numberOfLines={1}>{w.era}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            ))}
-
-            {wallpaperId !== 'plain' && (
-              <TouchableOpacity
-                onPress={toggleBold}
-                style={s.boldRow}
-                activeOpacity={0.75}
-              >
-                <View style={[s.checkbox, bold && s.checkboxActive]}>
-                  {bold && <Ionicons name="checkmark" size={11} color="#FFF" />}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.boldTitle}>Bold pattern</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          </Section>
 
           {/* Read-aloud pace — Source of Truth M6. Three calibrated
               speeds. Same Bike Messenger voice; different cadence. */}

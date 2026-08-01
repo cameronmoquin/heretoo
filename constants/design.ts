@@ -1,18 +1,13 @@
-import { Platform } from 'react-native';
-
 /**
  * Design system tokens.
  *
- * The whole app reaches into this file rather than picking ad-hoc
- * sizes / weights at the call site. Keeps visual rhythm consistent.
+ * Source of truth: docs/UI_SYSTEM.md §3 and §4. One family, seven type
+ * steps, three radii, no elevation. The whole app reaches into this file
+ * rather than picking sizes at the call site.
  *
- * Scale rationale (Type / Spacing / Radius all snap to similar steps):
- *   - 4 / 8 / 12 / 16 / 24 / 32 / 48      spacing
- *   - 11 / 12 / 13 / 14 / 16 / 20 / 28    type
- *   - 6 / 10 / 14 / 18 / 999              radius
- *
- * Pattern: small numbers tighten interior padding; bigger numbers
- * cut the page into clear regions.
+ * ALIAS KEYS. Retired token names are kept and pointed at their nearest
+ * new value so existing imports resolve. A later cleanup deletes them.
+ * Do not add new reads of an alias key.
  */
 
 export const Spacing = {
@@ -25,57 +20,71 @@ export const Spacing = {
   xxl: 48,
 } as const;
 
+/**
+ * The column. One centered feed, nothing wider. Screens currently
+ * hardcode 720 / 600; the screen sweep points them here.
+ */
+export const Layout = {
+  columnMaxWidth: 640,
+  columnPadding: 16,
+  rowPaddingVertical: 16,
+  rowPaddingHorizontal: 16,
+} as const;
+
+/**
+ * Three radii. Rows are square, because there are no cards.
+ *   media   12  photos, video, attachments
+ *   control  8  buttons, inputs, sheets
+ *   pill    999 avatars and chips only
+ */
 export const Radius = {
-  xs: 6,
-  sm: 10,
-  card: 12, // the canonical card corner. Screens split between 10 and 16.
-  md: 16,   // salvage-analog: worn, not glossy. Cards use Radius.card.
-  lg: 20,
+  media: 12,
+  control: 8,
+  pill: 999,
+
+  // Aliases. xs/sm collapse to control, card/md/lg collapse to media,
+  // full collapses to pill.
+  xs: 8,
+  sm: 8,
+  card: 12,
+  md: 12,
+  lg: 12,
   full: 999,
 } as const;
 
 /**
- * Typography tokens. We avoid loose numbers like "fontSize: 13.5" or
- * mid-step sizes — every label / body / caption should pick from this
- * set. Line-height is paired so vertical rhythm is automatic.
+ * Typography. One family: Inter. Syne and Source Serif 4 are gone.
+ * Line-height is paired so vertical rhythm is automatic. Seven steps
+ * cover the product; if a screen wants an eighth, it is wrong.
  */
 export const Type = {
-  // Hero — the biggest step. Auth mastheads, the loft headline, big
-  // empty states. Screens were free-typing 36-44px because the scale
-  // stopped at 28. This is the canonical top.
-  hero:     { size: 44, lineHeight: 48, weight: '800' as const, letterSpacing: -0.8 },
+  // Rare. Auth masthead.
+  hero:      { size: 28, lineHeight: 34, weight: '700' as const, letterSpacing: 0 },
+  // Page titles ("For you").
+  display:   { size: 24, lineHeight: 30, weight: '700' as const, letterSpacing: 0 },
+  // Section heads.
+  title:     { size: 20, lineHeight: 26, weight: '600' as const, letterSpacing: 0 },
+  // Author name.
+  cardTitle: { size: 15, lineHeight: 20, weight: '600' as const, letterSpacing: 0 },
+  // Post body, reading text.
+  body:      { size: 15, lineHeight: 21, weight: '400' as const, letterSpacing: 0 },
+  // Buttons, labels.
+  ui:        { size: 14, lineHeight: 19, weight: '500' as const, letterSpacing: 0 },
+  // Timestamps, counts.
+  caption:   { size: 13, lineHeight: 18, weight: '400' as const, letterSpacing: 0 },
 
-  // Display / hero — used sparingly (auth screens, big empty states).
-  // Heavy display weight + tight tracking reads as confident editorial.
-  display:  { size: 28, lineHeight: 34, weight: '700' as const, letterSpacing: -0.5 },
-
-  // Section / page titles. Dropped from 700→600 + tightened tracking
-  // so titles feel elegant rather than chunky-bold.
-  title:    { size: 20, lineHeight: 26, weight: '600' as const, letterSpacing: -0.3 },
-
-  // Card head. The 17px step screens kept hand-rolling between title (20)
-  // and body (16). Now it has a name.
-  cardTitle: { size: 17, lineHeight: 24, weight: '700' as const, letterSpacing: -0.2 },
-
-  // Card heads, post bodies, primary content. Bumped lineHeight 22→24
-  // for more comfortable long-read.
-  body:     { size: 16, lineHeight: 24, weight: '400' as const, letterSpacing: 0 },
-  bodyBold: { size: 16, lineHeight: 24, weight: '600' as const, letterSpacing: 0 },
-
-  // UI text, default for buttons / inputs / metadata
-  ui:       { size: 14, lineHeight: 19, weight: '500' as const, letterSpacing: 0 },
-  uiBold:   { size: 14, lineHeight: 19, weight: '700' as const, letterSpacing: 0 },
-
-  // Captions, helpers, microcopy
-  caption:  { size: 12, lineHeight: 16, weight: '500' as const, letterSpacing: 0 },
-
-  // Eyebrow / SECTION / pill labels — the small uppercase markers
-  eyebrow:  { size: 11, lineHeight: 14, weight: '700' as const, letterSpacing: 1.4 },
+  // Aliases. bodyBold and uiBold are the same metrics at 600.
+  bodyBold:  { size: 15, lineHeight: 21, weight: '600' as const, letterSpacing: 0 },
+  uiBold:    { size: 14, lineHeight: 19, weight: '600' as const, letterSpacing: 0 },
+  // eyebrow is retired. It maps onto caption, and the tracking is gone,
+  // so a call site that still spreads it stops looking like a kicker.
+  // Call sites keep their own textTransform until the sweep removes it.
+  eyebrow:   { size: 13, lineHeight: 18, weight: '400' as const, letterSpacing: 0 },
 } as const;
 
 /**
- * Standard interactive sizes for button & input heights, so visual
- * weight stays consistent across primary CTAs, ghost buttons, pills.
+ * Standard interactive sizes so visual weight stays consistent across
+ * primary CTAs, ghost buttons, pills.
  */
 export const Heights = {
   pill: 32,
@@ -88,48 +97,29 @@ export const Heights = {
   touchTarget: 44,
 } as const;
 
+/**
+ * Elevation: none. Separation is a hairline, never a shadow.
+ *
+ * sm / md / lg are kept as empty objects so every existing spread still
+ * resolves and quietly contributes nothing. The one exception in the
+ * system is the floating compose button, which uses `float`.
+ */
 export const Shadow = {
-  // Subtle resting card lift — flat enough for a dark theme.
-  // Two-layer web shadow gives crisp edge + soft ambient (Linear-style).
-  sm: Platform.select({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 3,
-    },
-    android: { elevation: 1 },
-    web: { boxShadow: '0 1px 2px rgba(15,15,25,0.04), 0 2px 6px rgba(15,15,25,0.05)' },
-    default: {},
-  }),
-  // Hovered / focused card.
-  md: Platform.select({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.10,
-      shadowRadius: 12,
-    },
-    android: { elevation: 4 },
-    web: { boxShadow: '0 4px 12px rgba(0,0,0,0.10)' },
-    default: {},
-  }),
-  // Modals / dropdowns / popovers.
-  lg: Platform.select({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.18,
-      shadowRadius: 24,
-    },
-    android: { elevation: 10 },
-    web: { boxShadow: '0 8px 24px rgba(0,0,0,0.18)' },
-    default: {},
-  }),
+  sm: {},
+  md: {},
+  lg: {},
+  // The only shadow in the product. Floating compose button, nothing else.
+  float: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
 } as const;
 
 /**
- * Common animation timings — same easing across the app for muscle memory.
+ * Common animation timings. Same easing across the app for muscle memory.
  */
 export const Motion = {
   fast: 120,

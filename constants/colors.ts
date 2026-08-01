@@ -1,135 +1,134 @@
 /**
- * Theme palettes — dark + light.
+ * Theme palettes. Light and dark.
  *
- * Source of Truth, Milestone 10. Aligned to the codex: warm dark
- * canvas with deep gold accent and warm ivory text. Less Silicon
- * Valley dashboard, more candlelit reading lamp.
+ * Source of truth: docs/UI_SYSTEM.md §2. Monochrome plus one red, and
+ * the red is reserved for the heart. Nothing else is colored. An accent
+ * that appears everywhere stops meaning anything.
  *
- * Components import `Colors` and use it as a static; the value gets
- * reassigned when the user toggles theme. The root layout uses
- * `key={themeMode}` to force a full re-render so every component
- * picks up the new palette values.
+ * Light and dark are a viewer preference, not a skin. `setColorMode`
+ * keeps working and keeps doing `Object.assign`.
+ *
+ * THE THEMING RULE. Components read `Colors` at render time through a
+ * `makeStyles()` factory called inside the component. Never a
+ * module-level `StyleSheet.create` that reads `Colors`, never a
+ * `useMemo` around it. A module body runs at import, before the palette
+ * is set, so it would freeze. The repo has zero frozen stylesheets.
+ * Keep it that way.
+ *
+ * ALIAS KEYS. Everything under the "aliases" heading in each palette is
+ * a retired token kept so existing imports resolve. Each maps to its
+ * nearest value in the new system. A later cleanup deletes them and
+ * rewrites the call sites. Do not add new reads of an alias key.
+ *
+ * Canonical keys, the only ones new code should use:
+ *   background surface surfaceAlt border
+ *   textPrimary textSecondary textMuted
+ *   primary onPrimary heart error
  */
 
 export type ThemeMode = 'dark' | 'light';
 
-export const dark = {
-  // Brand
-  brandIvory: '#F4F1E8',
-  brandGold: '#C9A14B',
-  brandDark: '#0A0A0F',
-
-  // Primary — deep gold per the codex. Used for hearts, primary
-  // buttons, and the active-pattern accent. Replaces the previous
-  // indigo-blue, which read like every other SaaS dashboard.
-  primary: '#C9A14B',
-  primaryDark: '#A38336',
-  primaryLight: '#DDB868',
-  primaryFaint: 'rgba(201, 161, 75, 0.14)',
-  // Ink that reads on a primary-gold fill. White on #C9A14B is ~1.9:1 and
-  // fails WCAG. Dark ink clears it. Buttons and chips use this, never #FFF.
-  onPrimary: '#16161D',
-
-  // Surfaces — warm dark, candlelit. The canvas is near-black with
-  // a slight warmth (#0A0A0F per the codex). Cards lift onto a
-  // graphite-warm surface so type sits on a discernible plane.
-  background: '#0A0A0F',          // main canvas — warm near-black
-  surface: '#16161D',              // primary cards — subtle warm lift
-  surfaceLight: '#22222B',         // raised / hovered surfaces
-  border: '#2D2D38',               // hairline that reads on dark
-  borderLight: '#1F1F28',
-  textPrimary: '#F4F1E8',          // warm ivory, not crisp white
-  textSecondary: '#B8B2A4',        // warm muted
-  textMuted: '#7A7568',            // warm gray-ochre
-
-  // Accents — kept warm and a little less saturated.
-  agree: '#5BC289',
-  disagree: '#C73E3A',
-  important: '#D4A04A',
-  bridge: '#5DA3C9',
-  share: '#A47BC9',
-
-  badgeLocal: '#3D3D45',
-  badgeReaching: '#5DA3C9',
-  badgeBridging: '#5BC289',
-  badgeCommonGround: '#D4A04A',
-
-  clusters: {
-    pragmatic_center: '#7A7568',
-    community_focused: '#5DA3C9',
-    tradition_minded: '#C4622D',
-    reform_oriented: '#5BC289',
-    liberty_focused: '#D4A04A',
-    unclassified: '#3D3D45',
-  },
-
-  // Heart red — only for the heart fill. Distinct from `error`.
-  heart: '#C73E3A',
-
-  // Alarm states — warm-tinted so they don't feel cold next to gold.
-  error: '#C73E3A',
-  warning: '#D4A04A',
-  success: '#5BC289',
-  info: '#5DA3C9',
-};
-
 export const light = {
-  // Brand (same)
-  brandIvory: '#F4F1E8',
-  brandGold: '#9A7A2E',
-  brandDark: '#1A1815',
+  // ── Canonical ──────────────────────────────────────────────────────
+  background: '#FFFFFF',      // the canvas, flat
+  surface: '#FFFFFF',         // rows sit on the canvas, no fill
+  surfaceAlt: '#F7F7F7',      // inputs, subtle wells
+  border: '#E5E5E5',          // hairline rules and dividers
+  textPrimary: '#0A0A0A',     // body and headings. 20:1 on white
+  textSecondary: '#6B6B6B',   // timestamps, secondary labels. 5.2:1
+  textMuted: '#767676',       // counts, placeholders. 4.54:1, clears AA
+  primary: '#0A0A0A',         // primary buttons, active nav
+  onPrimary: '#FFFFFF',       // ink on a primary fill. 20:1
+  heart: '#FF3040',           // the heart, and nothing else
+  error: '#D93025',           // failures only. 4.8:1 on white
 
-  // Primary — deeper gold so it carries weight on the warm parchment
-  // canvas. Same identity family as the dark theme.
-  primary: '#9A7A2E',
-  primaryDark: '#7C611F',
-  primaryLight: '#B79447',
-  primaryFaint: 'rgba(154, 122, 46, 0.10)',
-  // The light primary is a deeper brown-gold; white clears contrast on it.
-  onPrimary: '#FFFFFF',
-
-  // Light surfaces — warm parchment instead of cool near-white. The
-  // canvas is the brand ivory; cards sit on a slightly brighter
-  // surface so they read as paper on a desk.
-  background: '#F4F1E8',           // canvas — warm parchment
-  surface: '#FBF8F0',              // cards — brighter paper
-  surfaceLight: '#EDE9DE',         // recessed wells, hovered surfaces
-  border: '#D9D2C0',               // warm hairline
-  borderLight: '#E5DFCE',
-  textPrimary: '#1A1815',          // warm ink
-  textSecondary: '#5C574E',        // warm muted
-  textMuted: '#8A8377',            // warm gray-ochre
-
-  agree: '#3F8F5E',
-  disagree: '#A8302C',
-  important: '#A07429',
-  bridge: '#3D7A9F',
-  share: '#7A4FA0',
-
-  badgeLocal: '#A8A294',
-  badgeReaching: '#3D7A9F',
-  badgeBridging: '#3F8F5E',
-  badgeCommonGround: '#A07429',
-
+  // ── Aliases (retired, kept so imports resolve) ─────────────────────
+  // surfaceLight → surfaceAlt. Wells and hovered rows.
+  surfaceLight: '#F7F7F7',
+  // borderLight → border. There is one hairline weight now.
+  borderLight: '#E5E5E5',
+  // brandIvory was mode-invariant near-white ink used on dark chrome
+  // (call tiles, trivia board). It stays a light ink in BOTH modes or
+  // that chrome loses its contrast.
+  brandIvory: '#F5F5F5',
+  brandGold: '#0A0A0A',       // the gold is gone. → primary.
+  brandDark: '#0A0A0A',       // → the dark ink of the system
+  primaryDark: '#000000',     // pressed ink
+  primaryLight: '#3A3A3A',    // disabled / receded ink
+  primaryFaint: 'rgba(10, 10, 10, 0.06)', // selected chip wash
+  // Reaction + badge hues collapse to ink. Monochrome carries them.
+  agree: '#0A0A0A',
+  disagree: '#D93025',
+  important: '#0A0A0A',
+  bridge: '#6B6B6B',
+  share: '#6B6B6B',
+  badgeLocal: '#F7F7F7',
+  badgeReaching: '#6B6B6B',
+  badgeBridging: '#6B6B6B',
+  badgeCommonGround: '#6B6B6B',
   clusters: {
-    pragmatic_center: '#8A8377',
-    community_focused: '#3D7A9F',
-    tradition_minded: '#A04F1F',
-    reform_oriented: '#3F8F5E',
-    liberty_focused: '#A07429',
-    unclassified: '#8A8377',
+    pragmatic_center: '#6B6B6B',
+    community_focused: '#6B6B6B',
+    tradition_minded: '#6B6B6B',
+    reform_oriented: '#6B6B6B',
+    liberty_focused: '#6B6B6B',
+    unclassified: '#767676',
   },
-
-  // Heart red — slightly deeper so it lands on warm parchment.
-  heart: '#A8302C',
-
-  error: '#A8302C',
-  warning: '#A07429',
-  success: '#3F8F5E',
-  info: '#3D7A9F',
+  // Alarm states. `warning` guards irreversible actions, so it keeps the
+  // error red and keeps reading as alarm.
+  warning: '#D93025',
+  success: '#0A0A0A',
+  info: '#6B6B6B',
 };
 
-let _mode: ThemeMode = 'dark';
+export const dark = {
+  // ── Canonical ──────────────────────────────────────────────────────
+  background: '#101010',
+  surface: '#101010',
+  surfaceAlt: '#1C1C1C',
+  border: '#2A2A2A',
+  textPrimary: '#F5F5F5',
+  textSecondary: '#A0A0A0',   // 7.3:1 on #101010
+  textMuted: '#8A8A8A',        // 5.51:1, clears AA
+  primary: '#F5F5F5',
+  onPrimary: '#0A0A0A',
+  heart: '#FF3040',
+  error: '#F2564D',
+
+  // ── Aliases (retired, kept so imports resolve) ─────────────────────
+  surfaceLight: '#1C1C1C',
+  borderLight: '#2A2A2A',
+  brandIvory: '#F5F5F5',
+  brandGold: '#F5F5F5',
+  brandDark: '#101010',
+  primaryDark: '#D4D4D4',
+  primaryLight: '#FFFFFF',
+  primaryFaint: 'rgba(245, 245, 245, 0.10)',
+  agree: '#F5F5F5',
+  disagree: '#F2564D',
+  important: '#F5F5F5',
+  bridge: '#A0A0A0',
+  share: '#A0A0A0',
+  badgeLocal: '#1C1C1C',
+  badgeReaching: '#A0A0A0',
+  badgeBridging: '#A0A0A0',
+  badgeCommonGround: '#A0A0A0',
+  clusters: {
+    pragmatic_center: '#A0A0A0',
+    community_focused: '#A0A0A0',
+    tradition_minded: '#A0A0A0',
+    reform_oriented: '#A0A0A0',
+    liberty_focused: '#A0A0A0',
+    unclassified: '#8A8A8A',
+  },
+  warning: '#F2564D',
+  success: '#F5F5F5',
+  info: '#A0A0A0',
+};
+
+// Default light, matching stores/themeStore. Set before first render by
+// the root layout, which calls setColorMode synchronously.
+let _mode: ThemeMode = 'light';
 
 export function setColorMode(mode: ThemeMode) {
   _mode = mode;
@@ -137,7 +136,6 @@ export function setColorMode(mode: ThemeMode) {
 }
 export function getColorMode(): ThemeMode { return _mode; }
 
-// Mutable export — root layout's `key={themeMode}` forces re-render so
-// every component re-reads these values when the theme changes.
-// Default = dark. Light is opt-in (the spec calls dark the default).
-export const Colors = { ...dark } as typeof dark;
+// Mutable export. The root layout's `key={themeMode}` forces a remount
+// so every component re-reads these values when the mode changes.
+export const Colors = { ...light } as typeof light;
