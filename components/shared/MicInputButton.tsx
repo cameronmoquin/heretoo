@@ -33,6 +33,7 @@ interface Props {
 const MAX_DURATION_MS = 60_000;
 
 export function MicInputButton({ onText, size = 18, disabled }: Props) {
+  const s = makeStyles();
   const [stage, setStage] = useState<'idle' | 'recording' | 'transcribing' | 'error'>('idle');
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -165,7 +166,7 @@ export function MicInputButton({ onText, size = 18, disabled }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   btn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 4, paddingVertical: 4,
@@ -177,4 +178,4 @@ const s = StyleSheet.create({
   errText: {
     fontSize: 10, color: Colors.error, maxWidth: 140,
   },
-});
+}); }

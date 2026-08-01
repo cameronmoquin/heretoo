@@ -25,6 +25,7 @@ interface Props {
 }
 
 export function PlantTreeModal({ visible, onClose }: Props) {
+  const s = makeStyles();
   const [message, setMessage] = useState('');
   const [suggestedName, setSuggestedName] = useState('');
   const [link, setLink] = useState<string | null>(null);
@@ -152,6 +153,7 @@ export function PlantTreeModal({ visible, onClose }: Props) {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const s = makeStyles();
   return (
     <View style={{ gap: 6 }}>
       <Text style={s.fieldLabel}>{label}</Text>
@@ -160,7 +162,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   backdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center', padding: 20,
@@ -202,4 +204,4 @@ const s = StyleSheet.create({
   fineprint: { fontSize: 11, color: Colors.textMuted, lineHeight: 16 },
   doneBtn: { alignItems: 'center', paddingVertical: 8, marginTop: 4 },
   doneBtnText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
-});
+}); }

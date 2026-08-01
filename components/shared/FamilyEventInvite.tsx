@@ -99,6 +99,7 @@ function buildIcs(ev: EventForm): string | null {
 }
 
 export function FamilyEventInvite() {
+  const s = makeStyles();
   const [form, setForm] = useState<EventForm>(EMPTY);
   const [downloaded, setDownloaded] = useState(false);
 
@@ -197,7 +198,7 @@ export function FamilyEventInvite() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
@@ -226,4 +227,4 @@ const s = StyleSheet.create({
   },
   downloadBtnDisabled: { opacity: 0.4 },
   downloadBtnText: { color: '#FFF', fontSize: 12, fontWeight: '600', letterSpacing: 0.1 },
-});
+}); }

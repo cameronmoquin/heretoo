@@ -41,7 +41,6 @@ export default function RoomsScreen() {
     { icon: 'home', label: 'The Room', route: '/feed' },
     { icon: 'chatbubbles', label: 'Messages', route: '/chat', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
     { icon: 'book', label: 'Insults', route: '/shakespearean-insults' },
-    { icon: 'game-controller', label: 'Games', route: '/games' },
     { icon: 'mail', label: 'Letters', route: '/letter' },
     { icon: 'create', label: 'Memoir', route: '/memoir' },
     { icon: 'happy', label: 'Babybook', route: '/babybook' },

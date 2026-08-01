@@ -21,6 +21,8 @@ const CONFIRM_HITS = 2;             // need N consecutive mismatches before nagg
 export function UpdateNudge() {
   const [stale, setStale] = useState(false);
 
+  const styles = makeStyles();
+
   useEffect(() => {
     if (Platform.OS !== 'web') return; // native bundles update via EAS / store, not this nudge
     if (typeof window === 'undefined') return;
@@ -81,7 +83,7 @@ export function UpdateNudge() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   bar: {
     position: 'absolute',
     left: 0, right: 0, bottom: 0,
@@ -98,4 +100,4 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   btnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-});
+}); }

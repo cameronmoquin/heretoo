@@ -24,6 +24,8 @@ export function InstallAppBanner() {
   const [deferred, setDeferred] = useState<any>(null);
   const [platform, setPlatform] = useState<'android' | 'ios' | 'desktop'>('desktop');
 
+  const s = makeStyles();
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
@@ -110,7 +112,7 @@ export function InstallAppBanner() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: Colors.surface,
@@ -130,4 +132,4 @@ const s = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   installBtnText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
-});
+}); }

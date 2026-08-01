@@ -20,6 +20,7 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius } from '../../../constants/design';
 
 export default function MusicTab() {
+  const s = makeStyles();
   const active = useActiveStation();
   const playing = useRadio((s) => s.playing);
   const loading = useRadio((s) => s.loading);
@@ -118,7 +119,7 @@ export default function MusicTab() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.md, gap: 12, maxWidth: 720, alignSelf: 'center', width: '100%' },
 
@@ -175,4 +176,4 @@ const s = StyleSheet.create({
   rowNameActive: { color: Colors.primary },
   rowMeta: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
 
-});
+}); }

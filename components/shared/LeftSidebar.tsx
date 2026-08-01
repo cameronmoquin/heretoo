@@ -56,6 +56,8 @@ export function LeftSidebar() {
   const radioToggle = useRadio((s) => s.toggle);
   const station = useActiveStation();
 
+  const s = makeStyles();
+
   const visible =
     shouldShowLeftSidebar(width)
     && !!session
@@ -137,12 +139,6 @@ export function LeftSidebar() {
         onPress={() => router.push('/babybook' as any)}
       />
       <NavRow
-        icon={pathname.startsWith('/games') ? 'game-controller' : 'game-controller-outline'}
-        label="Games"
-        active={pathname.startsWith('/games')}
-        onPress={() => router.push('/games' as any)}
-      />
-      <NavRow
         icon={pathname.startsWith('/give') ? 'heart' : 'heart-outline'}
         label="Give"
         active={pathname.startsWith('/give')}
@@ -207,6 +203,7 @@ interface NavRowProps {
 }
 
 function NavRow({ icon, label, sub, active, badge, accent, onPress, onLongPress }: NavRowProps) {
+  const s = makeStyles();
   return (
     <TouchableOpacity
       style={[s.navRow, active && s.navRowActive]}
@@ -239,7 +236,7 @@ function NavRow({ icon, label, sub, active, badge, accent, onPress, onLongPress 
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   sidebar: ({
     // position: fixed pins to the viewport, completely independent of
     // any parent's padding / transform / stacking context. Avoids the
@@ -311,4 +308,4 @@ const s = StyleSheet.create({
     backgroundColor: Colors.primary, opacity: 0.75,
   },
   familyName: { flex: 1, fontSize: 13, color: Colors.textSecondary },
-});
+}); }

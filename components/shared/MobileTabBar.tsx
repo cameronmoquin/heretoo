@@ -34,6 +34,8 @@ export function MobileTabBar() {
   const { data: unread } = useUnreadCount();
   const { width } = useWindowDimensions();
 
+  const styles = makeStyles();
+
   // Skip on native (the (tabs) layout still owns native nav until we
   // ship the native build).
   if (Platform.OS !== 'web') return null;
@@ -164,7 +166,7 @@ export function MobileTabBar() {
  *  space at their bottom so the bar doesn't cover the tail content. */
 export const MOBILE_TAB_BAR_HEIGHT = 64;
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   bar: ({
     flexDirection: 'row',
     backgroundColor: Colors.surface,
@@ -195,4 +197,4 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: Colors.surface,
   },
   badgeText: { color: '#FFF', fontSize: 9, fontWeight: '700' },
-});
+}); }

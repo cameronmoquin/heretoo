@@ -44,6 +44,8 @@ export function toastInfo(message: string, ttl = 2500) {
 export function ToastHost() {
   const [items, setItems] = useState<ToastEntry[]>([]);
 
+  const styles = makeStyles();
+
   useEffect(() => {
     _push = (t) => {
       setItems((prev) => [...prev, t]);
@@ -66,6 +68,7 @@ export function ToastHost() {
 }
 
 function ToastPill({ entry, onDismiss }: { entry: ToastEntry; onDismiss: () => void }) {
+  const styles = makeStyles();
   const opacity = React.useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
@@ -89,7 +92,7 @@ function ToastPill({ entry, onDismiss }: { entry: ToastEntry; onDismiss: () => v
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   host: {
     position: 'absolute',
     top: 18,
@@ -111,4 +114,4 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   text: { flex: 1, fontSize: 13, color: Colors.textPrimary, lineHeight: 18 },
-});
+}); }

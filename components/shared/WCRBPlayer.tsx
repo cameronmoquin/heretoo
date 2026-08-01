@@ -23,6 +23,7 @@ interface Props {
 }
 
 export function WCRBPlayer({ compact = false }: Props) {
+  const s = makeStyles();
   const station = useActiveStation();
   const playing = useRadio((s) => s.playing);
   const loading = useRadio((s) => s.loading);
@@ -112,7 +113,7 @@ export function WCRBPlayer({ compact = false }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
@@ -164,4 +165,4 @@ const s = StyleSheet.create({
   },
   compactTitle: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
   compactSub: { fontSize: 11, color: Colors.textMuted, marginTop: 1 },
-});
+}); }

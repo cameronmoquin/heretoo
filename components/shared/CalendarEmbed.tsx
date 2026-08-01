@@ -78,6 +78,7 @@ function normalizeCalendarUrl(raw: string): { url: string; provider: string } | 
 }
 
 export function CalendarEmbed() {
+  const s = makeStyles();
   const userId = useAuthStore((s) => s.user?.id);
   const [url, setUrl] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -244,7 +245,7 @@ export function CalendarEmbed() {
   );
 }
 
-const s = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
@@ -282,4 +283,4 @@ const s = StyleSheet.create({
     backgroundColor: Colors.primaryFaint, borderRadius: 8,
   },
   icsLinkText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
-});
+}); }

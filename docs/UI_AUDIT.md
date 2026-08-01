@@ -163,7 +163,7 @@ Deduplicated across the four lenses, severity-ranked. Each row is a checklist it
 | # | Sev | Issue | Evidence | Fix |
 |---|---|---|---|---|
 | 1 | HIGH | Two type scales, one dead, contradicting | `design.ts:41-64` `Type` vs `typography.ts:39-87` `Typography`; `Typography.*` = 0 usages; `Type` in 6 files; `body` 16 vs 14, `title` 20/600 vs `h1` 22/700 | Delete `Typography`, keep `Weight`, make `Type` canonical |
-| 2 | HIGH | Hardcoded `rgba(22,22,29)` surfaces do not recolor | `give/index.tsx:233,293`; `give/transparency.tsx:197`; `games/index.tsx:101,108`; `memoir/index.tsx:995,1017` | Replace with `Colors.surface`; add `surfaceTranslucent` if needed |
+| 2 | HIGH | Hardcoded `rgba(22,22,29)` surfaces do not recolor | `give/index.tsx:233,293`; `give/transparency.tsx:197`; `memoir/index.tsx:995,1017` | Replace with `Colors.surface`; add `surfaceTranslucent` if needed |
 | 3 | HIGH | `brandIvory` headings near-invisible in light mode | `give/index.tsx:222-224,316-318` vs light `background` `#F4F1E8` (`colors.ts:89`) | Use `Colors.textPrimary` |
 | 4 | HIGH | Shared Button dead and mis-colored (white on gold, ~1.9:1) | `<Button>` rendered in 3 files; `Button.tsx:41,52` bg `Colors.primary` + `color:'#FFF'`; correct hand-rolls use `#0A0A0F` (`give:281`, `journal:930`) | One Button, `Colors.onPrimary`, adopt everywhere |
 | 5 | HIGH | ~22 hand-rolled primary CTAs, 4 radii, 2 foreground colors | `settings:400` (r999), `family:143` (r999), `ConfirmSheet:96` (r999), `FlagModal:610` (r10); pill vs rounded-rect split | Delete all locals, route to Button |
@@ -245,7 +245,7 @@ review. Every batch is a visible change, so each ships to the owner for approval
 - Batch A, feed: `PostCard`, `FeedComposer`, `NewsCard`, `LoftCard`, `DropCard`, `feed/index.tsx`.
   Pin all four card families to `Type.cardTitle`, keep the colored-rail system, adopt `Button`,
   `Eyebrow`, `Chip`. This is the most-seen surface; review first and carefully.
-- Batch B, rooms and discovery: `rooms.tsx`, `hunt/index.tsx`, `network/index.tsx`, `games/index.tsx`.
+- Batch B, rooms and discovery: `rooms.tsx`, `hunt/index.tsx`, `network/index.tsx`.
   Adopt `ScreenHeader`, `Screen`, `Eyebrow`, `Button`.
 - Batch C, give and memoir: `give/*`, `memoir/*`. Adopt `Screen`, `ScreenHeader`, `Button`, `Card`;
   route hero heads to `Type.hero`; replace `rgba(22,22,29)` with `Colors.surface` and `brandIvory`

@@ -42,6 +42,8 @@ export function confirm(req: ConfirmRequest) {
 export function ConfirmHost() {
   const [req, setReq] = useState<ConfirmRequest | null>(null);
 
+  const styles = makeStyles();
+
   useEffect(() => {
     _open = setReq;
     return () => { _open = null; };
@@ -78,7 +80,7 @@ export function ConfirmHost() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   backdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center', padding: 24,
@@ -100,4 +102,4 @@ const styles = StyleSheet.create({
   confirmBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   destructiveBtn: { backgroundColor: Colors.error },
   destructiveBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-});
+}); }

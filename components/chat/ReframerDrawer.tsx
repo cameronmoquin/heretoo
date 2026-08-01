@@ -160,6 +160,14 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
   },
   skipBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+
+  // ReframerEye
+  btn: {
+    width: 32, height: 32, borderRadius: Radius.full,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
+  },
 }); }
 
 
@@ -167,11 +175,12 @@ function makeStyles() { return StyleSheet.create({
  *  send button when escalation is detected. Calm shape, never
  *  sparkles or "AI" branding. */
 export function ReframerEye({ visible, onPress }: { visible: boolean; onPress: () => void }) {
+  const s = makeStyles();
   if (!visible) return null;
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={eyeStyles.btn}
+      style={s.btn}
       activeOpacity={0.7}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
@@ -179,12 +188,3 @@ export function ReframerEye({ visible, onPress }: { visible: boolean; onPress: (
     </TouchableOpacity>
   );
 }
-
-const eyeStyles = StyleSheet.create({
-  btn: {
-    width: 32, height: 32, borderRadius: Radius.full,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-  },
-});

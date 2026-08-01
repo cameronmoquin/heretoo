@@ -38,7 +38,7 @@ tree clean. Never commit `.env`, secrets, or the `.claude/*.lock` files.
 
 ## Where things stand (update this section as you ship)
 
-- **Live:** family circles, public Loft, DMs, cameras, news, games,
+- **Live:** family circles, public Loft, DMs, cameras, news,
   trivia, P2P video, the "give" donation page, subscriptions.
 - **Memoir / KDP (Milestone 13)** is the most recently active area:
   single-prompt Socratic interview with voice + co-writer, photos woven
