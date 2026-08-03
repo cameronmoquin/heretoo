@@ -3,13 +3,20 @@
  *
  * Reads from `posts` joined with `profiles` and `post_media`. RLS handles
  * visibility — the query just asks for everything it can see, ordered by
- * recency. Family-scoped posts are filtered out (those live in /family/*).
+ * recency.
+ *
+ * CREW DROPS RIDE THIS STREAM (migration 067). The ranked RPC used to be
+ * pinned to visibility='public', so a drop sent to a crew was written and
+ * then reachable only under the Crew chip. It now returns 'public' plus
+ * 'family' of kind='post', scoped by posts_read to crews the viewer is an
+ * active member of. Crew updates (kind='update') stay out; they have
+ * their own tab under /family/[id].
  *
  * Engagement (hearts) is wired through `post_reactions`.
  *
- * DM drops (visibility='direct', migration 065) ride the same stream.
- * Neither of the two post queries can reach them on its own: the ranked
- * RPC is pinned to visibility='public' and the connections query to
+ * DM drops (visibility='direct', migration 065) also ride the same
+ * stream, by a different route. Neither post query can reach them: the
+ * ranked RPC covers public and family, the connections query is pinned to
  * visibility='connections'. So page 0 asks for them separately and puts
  * them at the head. RLS returns a direct drop to its author and its one
  * recipient, nobody else.
@@ -267,11 +274,19 @@ export function useFeedRealtime(tab: FeedTab) {
           { event: 'INSERT', schema: 'public', table: 'posts' },
           (payload: any) => {
             const v = payload?.new?.visibility;
-            if (v === 'family' || v === 'private') return;
-            // 'direct' rides both tabs. It is spliced onto page 0 of
-            // each, so the connections column has to refetch for it too.
+            if (v === 'private') return;
+            // 'family' rides the for_you column now (migration 067). It
+            // used to return here, which was correct while the ranked
+            // RPC could not see a crew drop and wrong the moment it
+            // could. RLS decides whether the refetch actually returns
+            // the row; this only decides whether to ask.
             if (tab === 'connections' && v !== 'connections' && v !== 'direct') return;
-            qc.invalidateQueries({ queryKey: ['feed', tab, userId] });
+            // Prefix only. The real key carries the crew lens between
+            // the tab and the user — ['feed', tab, 'all' | 'crew',
+            // userId] — so ['feed', tab, userId] matched neither of them
+            // and no INSERT has invalidated this feed since the lens was
+            // added. Stopping at the tab matches both.
+            qc.invalidateQueries({ queryKey: ['feed', tab] });
           },
         )
         .subscribe();

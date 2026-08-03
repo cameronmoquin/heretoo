@@ -45,7 +45,7 @@ const CREW_MAX = 2000;
 
 type Destination = 'public' | 'crew' | 'dm';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, TouchableOpacity,
   ScrollView, Image, Modal, ActivityIndicator,
@@ -73,9 +73,15 @@ interface FeedComposerProps {
    * safeguard.
    */
   familyId?: string;
+  /**
+   * A counter. Every change opens the composer. The floating compose
+   * button on wide viewports bumps it; nothing else touches it. Absent,
+   * or unchanged, and the composer behaves exactly as it always has.
+   */
+  openSignal?: number;
 }
 
-export function FeedComposer({ familyId }: FeedComposerProps = {}) {
+export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const s = makeStyles();
   const upload = useUpload();
   const { data: connections } = useMyConnections();
@@ -84,6 +90,16 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
   const isFamilyScoped = !!familyId;
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
   const [expanded, setExpanded] = useState(false);
+
+  // The floating compose button. It only ever opens; it never closes,
+  // never clears a draft, and the first render is not a signal.
+  const lastSignal = useRef(openSignal);
+  useEffect(() => {
+    if (openSignal === undefined || openSignal === lastSignal.current) return;
+    lastSignal.current = openSignal;
+    setExpanded(true);
+  }, [openSignal]);
+
 
   const myCrews = families ?? [];
   const myConnections = connections ?? [];
@@ -111,6 +127,26 @@ export function FeedComposer({ familyId }: FeedComposerProps = {}) {
     ? familyId!
     : crewChoice ?? (myCrews.length === 1 ? myCrews[0].id : null);
   const activeCrew = myCrews.find((f) => f.id === activeCrewId) ?? null;
+
+  // THE DEAD SEND. switchDestination already states the rule — a
+  // destination with several candidates asks immediately rather than
+  // leaving a disabled send button with nothing to press — but it only
+  // runs on a switch, and crew is the destination the composer OPENS in.
+  // So an author in several crews never switched, was never asked, and
+  // met a Drop button that could not enable: canPost needs activeCrewId,
+  // and activeCrewId only auto-resolves for an author with exactly one
+  // crew. Nothing on screen said which of the three destinations was the
+  // broken one, so the whole composer read as broken. Same rule as the
+  // switch, applied to the opening state.
+  //
+  // Dismissing the picker without choosing does not reopen it: none of
+  // these deps change when it closes.
+  useEffect(() => {
+    if (!expanded || isFamilyScoped) return;
+    if (destination !== 'crew' || activeCrewId) return;
+    if (myCrews.length < 2) return;
+    setCrewPickerOpen(true);
+  }, [expanded, isFamilyScoped, destination, activeCrewId, myCrews.length]);
 
   // Which person. DM only.
   const [dmChoice, setDmChoice] = useState<string | null>(null);
