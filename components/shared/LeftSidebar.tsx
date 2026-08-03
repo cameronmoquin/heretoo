@@ -288,6 +288,16 @@ function makeStyles() { return StyleSheet.create({
     ...(Platform.OS === 'web' ? ({
       boxShadow: `inset -1px 0 0 ${Colors.primary}, inset -2px 0 0 ${Colors.background}, inset -3px 0 0 ${Colors.primary}`,
       backdropFilter: 'blur(8px)',
+      // The column is pinned top to bottom and had no overflow rule, so
+      // anything past the viewport was simply clipped and unreachable —
+      // no scroll, no indication there was more. On a 812px-tall window
+      // that already cut off Profile and the station row; adding Journal
+      // and Music pushed two more rows into the void.
+      //
+      // scrollbarWidth thin rather than hidden: a scrollbar that cannot
+      // be seen is how the rows got lost in the first place.
+      overflowY: 'auto',
+      scrollbarWidth: 'thin',
     } as any) : {}),
   } as any),
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, paddingHorizontal: 6 },
