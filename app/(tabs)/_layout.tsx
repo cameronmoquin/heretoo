@@ -28,7 +28,7 @@ import { useUnreadCount } from '../../hooks/useChat';
  * 4 slots: Feed | WCRB | Messages | Profile.
  * - WCRB is a play/pause button, NOT a route — toggling it doesn't
  *   navigate; it just starts/stops the global classical stream.
- * - Messages routes to /chat (which is at the root level, not in
+ * - Messages routes to /messages (which is at the root level, not in
  *   the tabs group). Carries an unread-count badge.
  *
  * Upload tab was dropped earlier — composer is inline at the top of
@@ -92,7 +92,7 @@ export default function TabLayout() {
  *   Feed (route)  ·  WCRB toggle (no route)  ·  Messages (deep-link)  ·  Profile (route)
  *
  * WCRB toggling is route-less — tapping starts/stops the global stream
- * via the wcrbStore singleton. Messages tap routes to /chat (root) and
+ * via the wcrbStore singleton. Messages tap routes to /messages (root) and
  * shows an unread-count badge.
  */
 function CustomTabBar() {
@@ -106,7 +106,7 @@ function CustomTabBar() {
 
   const onFeed = pathname.startsWith('/feed') || pathname === '/' || pathname === '/(tabs)/feed';
   const onProfile = pathname.startsWith('/profile') || pathname.startsWith('/(tabs)/profile');
-  const onChat = pathname.startsWith('/chat');
+  const onChat = pathname.startsWith('/messages');
 
   return (
     <View style={styles.customBar}>
@@ -159,7 +159,7 @@ function CustomTabBar() {
 
       <TouchableOpacity
         style={styles.barSlot}
-        onPress={() => router.push('/chat' as any)}
+        onPress={() => router.push('/messages')}
         activeOpacity={0.7}
       >
         <View>

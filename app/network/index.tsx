@@ -35,7 +35,7 @@ export default function NetworkList() {
 
   const startChat = (profileId: string) => {
     openThread.mutate(profileId, {
-      onSuccess: (thread) => router.push(`/chat/${thread.id}` as any),
+      onSuccess: (thread) => router.push(`/messages/${thread.id}`),
       onError: (e: any) => showAlert('Could not open chat', e?.message ?? 'Try again.'),
     });
   };

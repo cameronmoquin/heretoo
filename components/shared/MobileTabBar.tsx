@@ -68,7 +68,7 @@ export function MobileTabBar() {
 
   const onFeed = path.startsWith('/feed') || path === '/' || path === '/(tabs)/feed';
   const onProfile = path.startsWith('/profile') || path.startsWith('/(tabs)/profile');
-  const onChat = path.startsWith('/chat');
+  const onChat = path.startsWith('/messages');
   const onHunt = path.startsWith('/hunt');
   const onRooms = path.startsWith('/rooms');
 
@@ -126,7 +126,7 @@ export function MobileTabBar() {
 
       <TouchableOpacity
         style={styles.slot}
-        onPress={() => router.push('/chat' as any)}
+        onPress={() => router.push('/messages')}
         activeOpacity={0.7}
       >
         <View>

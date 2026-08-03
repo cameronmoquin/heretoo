@@ -79,11 +79,12 @@ export function LeftSidebar() {
   if (!visible) return null;
 
   const onFeed = pathname === '/' || pathname.startsWith('/feed') || pathname.startsWith('/(tabs)/feed');
-  const onChat = pathname.startsWith('/chat');
+  const onChat = pathname.startsWith('/messages');
   const onNetwork = pathname.startsWith('/network');
   const onFamily = pathname.startsWith('/family');
   const onProfile = pathname.startsWith('/profile') || pathname.startsWith('/(tabs)/profile');
   const onMusic = pathname.startsWith('/music') || pathname.startsWith('/(tabs)/music');
+  const onJournal = pathname.startsWith('/journal');
 
   return (
     <View style={s.sidebar}>
@@ -138,6 +139,16 @@ export function LeftSidebar() {
         active={pathname.startsWith('/babybook')}
         onPress={() => router.push('/babybook' as any)}
       />
+      {/* Journal. It sits with Memoir and Babybook because it is the
+          third of the writing rooms, and it was missing from this
+          sidebar entirely — reachable on mobile through /rooms and on
+          desktop only by typing the URL. */}
+      <NavRow
+        icon={onJournal ? 'lock-closed' : 'lock-closed-outline'}
+        label="Journal"
+        active={onJournal}
+        onPress={() => router.push('/journal' as any)}
+      />
       <NavRow
         icon={pathname.startsWith('/give') ? 'heart' : 'heart-outline'}
         label="Give"
@@ -150,7 +161,7 @@ export function LeftSidebar() {
         label="Messages"
         active={onChat}
         badge={unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined}
-        onPress={() => router.push('/chat' as any)}
+        onPress={() => router.push('/messages')}
       />
       <NavRow
         icon={onNetwork ? 'people' : 'people-outline'}
@@ -177,12 +188,25 @@ export function LeftSidebar() {
 
       <View style={s.divider} />
 
-      {/* Active station — same toggle behavior as bottom tab bar */}
+      {/* Music. The player used to be reachable only by long-pressing
+          the station row below, which on a pointer device is not a
+          gesture anyone discovers — the room may as well not have
+          existed on desktop. The long-press stays as a shortcut for
+          anyone who already knows it. */}
+      <NavRow
+        icon={onMusic ? 'disc' : 'disc-outline'}
+        label="Music"
+        active={onMusic}
+        onPress={() => router.push('/(tabs)/music' as any)}
+      />
+
+      {/* Active station — a live control, not a door. Tapping it plays
+          and pauses; it does not navigate. */}
       <NavRow
         icon={radioPlaying ? 'pause' : 'musical-notes-outline'}
         label={station.name}
         sub={radioPlaying ? 'Now playing' : station.genre}
-        active={onMusic || radioPlaying}
+        active={radioPlaying}
         onPress={() => { radioToggle().catch(() => {}); }}
         onLongPress={() => router.push('/(tabs)/music' as any)}
         accent={radioPlaying}

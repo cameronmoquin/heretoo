@@ -16,7 +16,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { GlitchText } from '../components/shared/GlitchText';
 import { useUnreadCount } from '../hooks/useChat';
 import { useRadio, useActiveStation } from '../stores/radioStore';
 import { Colors } from '../constants/colors';
@@ -39,12 +38,16 @@ export default function RoomsScreen() {
   const doors: Door[] = [
     { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
     { icon: 'home', label: 'The Room', route: '/feed' },
-    { icon: 'chatbubbles', label: 'Messages', route: '/chat', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
+    { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
     { icon: 'book', label: 'Insults', route: '/shakespearean-insults' },
     { icon: 'mail', label: 'Letters', route: '/letter' },
     { icon: 'create', label: 'Memoir', route: '/memoir' },
     { icon: 'happy', label: 'Babybook', route: '/babybook' },
     { icon: 'lock-closed', label: 'Journal', route: '/journal' },
+    // The player had no door on mobile at all. The radio row above is a
+    // play/pause control and nothing else, and the only route into
+    // /music anywhere was a long-press on the desktop sidebar.
+    { icon: 'disc', label: 'Music', route: '/music' },
     { icon: 'people', label: 'Network', route: '/network' },
     { icon: 'boat', label: 'Crews', route: '/family' },
     { icon: 'heart', label: 'Give', route: '/give' },
@@ -54,7 +57,7 @@ export default function RoomsScreen() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <GlitchText style={s.title}>ROOMS</GlitchText>
+        <Text style={s.title}>ROOMS</Text>
 
         {/* Radio: a live control, not a door. The visible row shows the
             station and its genre and says nothing about what tapping does,

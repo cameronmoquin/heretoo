@@ -203,7 +203,7 @@ export default function OwnProfileScreen() {
           <ActionRow
             icon="chatbubbles-outline"
             label="Messages"
-            onPress={() => router.push('/chat' as any)}
+            onPress={() => router.push('/messages')}
           />
           <ActionRow
             icon="add-circle-outline"

@@ -29,7 +29,6 @@ import { PostCard } from '../../components/feed/PostCard';
 import { Button } from '../../components/shared/Button';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
-import { WALLPAPERS, wallpaperToDataUri, type WallpaperId } from '../../stores/wallpaperStore';
 import { STATIONS } from '../../stores/radioStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
@@ -104,7 +103,7 @@ export default function UserProfile() {
     if (!profile?.id) return;
     if (profile.id === viewerId) return;
     openThread.mutate(profile.id, {
-      onSuccess: (thread) => router.push(`/chat/${thread.id}` as any),
+      onSuccess: (thread) => router.push(`/messages/${thread.id}`),
       onError: (e: any) => showAlert('Could not open chat', e?.message ?? 'Try again.'),
     });
   };
@@ -190,12 +189,11 @@ export default function UserProfile() {
           </View>
         )}
 
-        {/* Their style — wallpaper + radio + gallery picks. Reads from
+        {/* Their style — radio + gallery picks. Reads from
             profile.style_prefs which is synced from the user's own
-            stores (wallpaperStore, radioStore, artPrefsStore). The
-            visited person's choices appear here without changing the
-            visitor's own — a glimpse of their "room" / "soundtrack"
-            / "taste in art." */}
+            stores (radioStore, artPrefsStore). The visited person's
+            choices appear here without changing the visitor's own —
+            a glimpse of their "soundtrack" / "taste in art." */}
         <TheirStyleCard profile={profile} />
 
         {/* Posts */}
@@ -213,21 +211,16 @@ export default function UserProfile() {
 }
 
 /**
- * "Their style" — three-row card on the visited user's profile that
- * surfaces their wallpaper / radio station / art-filter picks.
+ * "Their style" — two-row card on the visited user's profile that
+ * surfaces their radio station / art-filter picks.
  *
- * Renders nothing if profile.style_prefs has none of the three set —
+ * Renders nothing if profile.style_prefs has neither set —
  * we don't want a sad empty card on profiles that haven't picked
  * anything yet (default state).
  */
 function TheirStyleCard({ profile }: { profile: any }) {
   const s = makeStyles();
   const prefs = profile?.style_prefs ?? {};
-
-  // ── Wallpaper ─────────────────────────────────────────────────────
-  const wid = prefs.wallpaper_id as WallpaperId | undefined;
-  const wallpaperDef = wid && wid !== 'plain' ? WALLPAPERS[wid] : null;
-  const wallpaperBg = wallpaperDef ? wallpaperToDataUri(wallpaperDef) : '';
 
   // ── Radio station ─────────────────────────────────────────────────
   const radioId = prefs.radio_station_id as string | undefined;
@@ -244,30 +237,11 @@ function TheirStyleCard({ profile }: { profile: any }) {
   const uniqueChips = [...new Set(filterChips)].slice(0, 6);
 
   // Don't render the section at all if there's nothing to show.
-  if (!wallpaperDef && !station && uniqueChips.length === 0) return null;
+  if (!station && uniqueChips.length === 0) return null;
 
   return (
     <View style={s.section}>
       <Eyebrow>Their style</Eyebrow>
-
-      {wallpaperDef && (
-        <View style={s.styleRow}>
-          <View
-            style={[
-              s.stylePreview,
-              { backgroundColor: wallpaperDef.swatchBg, ...({
-                backgroundImage: wallpaperBg,
-                backgroundRepeat: 'repeat',
-                backgroundSize: `${wallpaperDef.tileSize}px ${wallpaperDef.tileSize}px`,
-              } as any) },
-            ]}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={s.styleLabel}>{wallpaperDef.label}</Text>
-            <Text style={s.styleEra}>{wallpaperDef.era} wallpaper</Text>
-          </View>
-        </View>
-      )}
 
       {station && (
         <View style={s.styleRow}>
@@ -354,14 +328,10 @@ function makeStyles() { return StyleSheet.create({
 
   emptyPosts: { fontSize: 13, color: Colors.textMuted, paddingVertical: Spacing.xs },
 
-  // "Their style" wallpaper preview row
+  // "Their style" rows
   styleRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     paddingVertical: 6,
-  },
-  stylePreview: {
-    width: 64, height: 64, borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Colors.border,
   },
   styleLabel: {
     fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,

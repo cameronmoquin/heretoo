@@ -11,7 +11,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -23,9 +23,8 @@ import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
 import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
 import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
-import { Chip } from '../../../components/shared/Chip';
 import { Colors } from '../../../constants/colors';
-import { Spacing, Radius, Heights } from '../../../constants/design';
+import { Layout, Spacing, Radius, Type, Heights } from '../../../constants/design';
 
 const CHIPS: { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -74,7 +73,7 @@ export default function FeedHomeScreen() {
           <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
             <TouchableOpacity
               style={styles.iconBtn}
-              onPress={() => router.push('/chat' as any)}
+              onPress={() => router.push('/messages')}
               accessibilityLabel="Messages"
             >
               <Ionicons name="chatbubbles-outline" size={18} color={Colors.textSecondary} />
@@ -109,7 +108,7 @@ export default function FeedHomeScreen() {
           contentContainerStyle={styles.chipRow}
         >
           {CHIPS.map((chip) => (
-            <Chip
+            <FilterChip
               key={chip.key}
               label={chip.label}
               selected={filter === chip.key}
@@ -150,29 +149,77 @@ export default function FeedHomeScreen() {
   );
 }
 
+/**
+ * The filter chip. Muted well by default, solid ink when it is the live
+ * lens. Pill corners, and nothing else on it.
+ *
+ * Local to the feed rather than the shared Chip, because the shared one
+ * serves rows of options on other screens and belongs to another lane.
+ */
+function FilterChip({ label, selected, onPress }: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const s = makeStyles();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[s.chip, selected && s.chipSelected]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
+    >
+      <Text style={[s.chipLabel, selected && s.chipLabelSelected]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function makeStyles() { return StyleSheet.create({
-  safe: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
+  safe: {
+    flex: 1, backgroundColor: 'transparent',
+    maxWidth: Layout.columnMaxWidth, alignSelf: 'center', width: '100%',
+  },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, height: Heights.topHeader,
+    paddingHorizontal: Layout.columnPadding, paddingVertical: Spacing.xs,
+    height: Heights.topHeader,
   },
   iconBtn: {
-    width: 36, height: 36, borderRadius: Radius.full,
-    backgroundColor: Colors.surface,
+    width: 36, height: 36, borderRadius: Radius.pill,
     alignItems: 'center', justifyContent: 'center',
   },
   chipRowWrap: {
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.border,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
   chipRow: {
     flexDirection: 'row', gap: Spacing.xs, alignItems: 'center',
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
+    paddingHorizontal: Layout.columnPadding, paddingVertical: 10,
   },
+  chip: {
+    minHeight: Heights.pill,
+    alignSelf: 'flex-start',
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  chipSelected: { backgroundColor: Colors.primary },
+  chipLabel: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: Type.ui.weight, color: Colors.textSecondary,
+  },
+  chipLabelSelected: { color: Colors.onPrimary },
   statsBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginHorizontal: Spacing.md, marginTop: Spacing.sm,
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radius.full,
-    backgroundColor: Colors.primaryFaint, alignSelf: 'flex-start',
+    marginHorizontal: Layout.columnPadding, marginTop: Spacing.sm,
+    paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceAlt, alignSelf: 'flex-start',
   },
-  statsText: { fontSize: 12, lineHeight: 16, color: Colors.textSecondary },
+  statsText: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary,
+  },
 }); }
