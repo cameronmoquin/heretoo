@@ -29,8 +29,7 @@ import { showAlert, showConfirm } from '../../../../lib/alert';
 import { Eyebrow } from '../../../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../../../components/shared/ScreenHeader';
 import { Colors } from '../../../../constants/colors';
-import { Spacing, Radius, Type } from '../../../../constants/design';
-import { Gen } from '../../../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../../../constants/design';
 import { Vocab } from '../../../../constants/vocab';
 
 export default function SubjectScreen() {
@@ -180,7 +179,7 @@ function makeStyles() { return StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.6,
     color: Colors.textPrimary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
   },
   description: {
     fontSize: 15, lineHeight: 22, color: Colors.textSecondary,

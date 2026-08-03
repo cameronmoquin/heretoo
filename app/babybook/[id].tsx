@@ -39,8 +39,7 @@ import { formatFuzzyDate } from '../../hooks/useMemoirTimeline';
 import { goBack } from '../../lib/nav';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { Chip } from '../../components/shared/Chip';
 import { Eyebrow } from '../../components/shared/Eyebrow';
@@ -323,7 +322,7 @@ export default function BabybookScreen() {
                 <label
                   style={({
                     display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '7px 12px', borderRadius: Gen.radius, cursor: 'pointer',
+                    padding: '7px 12px', borderRadius: Radius.control, cursor: 'pointer',
                     border: `1px solid ${Colors.border}`, color: Colors.textPrimary,
                     fontWeight: 700, fontSize: 13, alignSelf: 'flex-start',
                   } as any)}
@@ -501,8 +500,8 @@ function PhotoTile({
 }
 
 function makeStyles() {
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
-  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
@@ -555,7 +554,7 @@ function makeStyles() {
     field: { gap: Spacing.xs },
     input: {
       minHeight: 44, paddingHorizontal: Spacing.sm, paddingVertical: 10,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: Type.ui.size, color: Colors.textPrimary, ...bodyFont,
     },

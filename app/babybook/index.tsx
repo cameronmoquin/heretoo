@@ -26,8 +26,7 @@ import { formatFuzzyDate } from '../../hooks/useMemoirTimeline';
 import { goBack } from '../../lib/nav';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, FontFamily, Radius } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { RailCard } from '../../components/shared/RailCard';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
@@ -184,7 +183,7 @@ function ChildCard({ book }: { book: Babybook }) {
 }
 
 function makeStyles() {
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
     scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 120, paddingTop: Spacing.sm, gap: Spacing.md },
@@ -194,7 +193,7 @@ function makeStyles() {
     form: { gap: Spacing.sm },
     input: {
       minHeight: 44, paddingHorizontal: Spacing.sm, paddingVertical: 10,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: Type.ui.size, color: Colors.textPrimary, ...bodyFont,
     },
@@ -208,7 +207,7 @@ function makeStyles() {
 
     childRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
     cover: {
-      width: 52, height: 52, borderRadius: Gen.radius, overflow: 'hidden',
+      width: 52, height: 52, borderRadius: Radius.control, overflow: 'hidden',
       backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border,
       alignItems: 'center', justifyContent: 'center',
     },

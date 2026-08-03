@@ -13,8 +13,7 @@
 import React from 'react';
 import { Text, StyleSheet, Platform, type TextStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Type, FontFamily } from '../../constants/design';
 
 interface EyebrowProps {
   children: React.ReactNode;
@@ -42,6 +41,6 @@ function makeStyles(color: string) { return StyleSheet.create({
     letterSpacing: Type.eyebrow.letterSpacing,
     textTransform: 'uppercase',
     color,
-    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
   },
 }); }

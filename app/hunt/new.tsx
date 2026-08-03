@@ -35,7 +35,6 @@ import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { Colors } from '../../constants/colors';
 import { Spacing, Type, Heights, Radius } from '../../constants/design';
-import { Gen } from '../../constants/generations';
 import { Vocab } from '../../constants/vocab';
 import type { LatLng } from '../../lib/geo';
 
@@ -258,7 +257,7 @@ export default function HuntNew() {
             display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
             minHeight: Heights.touchTarget, boxSizing: 'border-box',
             padding: '10px 16px', background: Colors.surface, color: Colors.textPrimary,
-            border: `1px solid ${Colors.border}`, borderRadius: Gen.radius, cursor: 'pointer',
+            border: `1px solid ${Colors.border}`, borderRadius: Radius.control, cursor: 'pointer',
             fontWeight: 600, fontSize: Type.ui.size,
           } as any)}>
             {file ? 'Swap the photo' : 'Take or pick the photo'}
@@ -464,16 +463,16 @@ function makeStyles() {
     scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.sm },
     header: { paddingHorizontal: 0 },
     selfStart: { alignSelf: 'flex-start' },
-    preview: { width: '100%', height: 200, borderRadius: Gen.radius, backgroundColor: Colors.surface },
+    preview: { width: '100%', height: 200, borderRadius: Radius.control, backgroundColor: Colors.surface },
     previewEmpty: {
-      width: '100%', height: 200, borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      width: '100%', height: 200, borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center',
     },
     note: { fontSize: Type.ui.size, color: Colors.textSecondary, fontStyle: 'italic' },
     coordLine: { fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight, color: Colors.textSecondary },
     input: {
       minHeight: Heights.input,
-      padding: Spacing.sm, borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      padding: Spacing.sm, borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: Type.body.size, color: Colors.textPrimary,
     },
@@ -482,7 +481,7 @@ function makeStyles() {
     chainChip: { maxWidth: 200 },
     destructRow: {
       flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.xs,
-      padding: Spacing.sm, borderRadius: Gen.radius,
+      padding: Spacing.sm, borderRadius: Radius.control,
       backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
     },
     // The burn accent was a module-level '#FF5A52' that froze at import.

@@ -14,8 +14,7 @@
 import React from 'react';
 import { View, Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Spacing } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius } from '../../constants/design';
 import { Eyebrow } from './Eyebrow';
 
 interface RailCardProps {
@@ -73,7 +72,7 @@ function makeStyles(accent: string) { return StyleSheet.create({
     backgroundColor: Colors.background,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
-    borderRadius: Gen.radius,
+    borderRadius: Radius.control,
     overflow: 'hidden',
     // Extra left padding clears the 3px edge.
     paddingLeft: Spacing.md + 3,

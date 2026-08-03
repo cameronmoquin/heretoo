@@ -15,8 +15,7 @@ import { View, Text, Pressable, StyleSheet, Platform, type ViewStyle } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type, Heights } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, Heights, FontFamily } from '../../constants/design';
 
 interface ScreenHeaderProps {
   title?: string;
@@ -81,7 +80,7 @@ function makeStyles() { return StyleSheet.create({
     fontWeight: Type.title.weight,
     letterSpacing: Type.title.letterSpacing,
     color: Colors.textPrimary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
   },
   spacer: { flex: 1 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },

@@ -63,8 +63,7 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
@@ -740,7 +739,7 @@ function EventCard({
               {Platform.OS === 'web' ? (
                 <label style={({
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  padding: '7px 12px', borderRadius: Gen.radius, cursor: 'pointer',
+                  padding: '7px 12px', borderRadius: Radius.control, cursor: 'pointer',
                   border: `1px solid ${Colors.primary}`,
                   color: Colors.primary, fontWeight: 700, fontSize: 12,
                 } as any)} aria-label="Add a photo">
@@ -937,8 +936,8 @@ function DateBlock({
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
-  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
@@ -1024,7 +1023,7 @@ function makeStyles(scale: number = 1) {
     actionBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 12, paddingVertical: 7,
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.primary,
     },
     actionBtnText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
 
@@ -1055,7 +1054,7 @@ function makeStyles(scale: number = 1) {
     },
     input: {
       minHeight: 44, paddingHorizontal: 12, paddingVertical: 10,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: fs(Type.ui.size), color: Colors.textPrimary, ...bodyFont,
     },
@@ -1066,7 +1065,7 @@ function makeStyles(scale: number = 1) {
     kindChip: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 10, paddingVertical: 7,
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.primary,
     },
     kindChipActive: { backgroundColor: Colors.primary },
     kindChipText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
@@ -1075,7 +1074,7 @@ function makeStyles(scale: number = 1) {
     precisionWrap: { flexDirection: 'row', gap: 6 },
     precisionChip: {
       paddingHorizontal: 12, paddingVertical: 6,
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.primary,
     },
     precisionChipText: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.primary },
     dateWrap: { flexDirection: 'row', gap: 8 },

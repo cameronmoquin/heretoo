@@ -32,7 +32,6 @@ import { Eyebrow } from '../../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../../components/shared/ScreenHeader';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type } from '../../../constants/design';
-import { Gen } from '../../../constants/generations';
 
 export default function ProfileSettings() {
   const s = makeStyles();
@@ -384,7 +383,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   modalCard: {
-    backgroundColor: Colors.surface, borderRadius: Gen.radius,
+    backgroundColor: Colors.surface, borderRadius: Radius.control,
     width: '100%', maxWidth: 420, padding: 18, gap: Spacing.xxs,
     borderWidth: 1, borderColor: Colors.border,
   },

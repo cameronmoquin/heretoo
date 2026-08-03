@@ -131,7 +131,38 @@ adb install -r heretoo-kiosk.apk
 adb shell dpm set-device-owner social.heretoo.app/social.heretoo.kiosk.KioskAdminReceiver
 ```
 
-### 6. First launch
+### 6. Sideload the other allowed apps
+
+Do this **before** first launch of HereToo. `provision()` applies
+`DISALLOW_INSTALL_APPS`, and the wiped phone has no Google account to reach the
+Play Store with anyway — so this is the only window.
+
+Every allowed app was saved off the device before the wipe, into
+`D:\Photos from Samsung s22\_apks\<package>\`. They ship as split APKs, so each
+must go in with `install-multiple` — installing `base.apk` alone fails with
+`INSTALL_FAILED_MISSING_SPLIT`.
+
+One folder per package means this is a loop, not six commands. From PowerShell:
+
+```powershell
+Get-ChildItem "D:\Photos from Samsung s22\_apks" -Directory | ForEach-Object { $apks = (Get-ChildItem $_.FullName -Filter *.apk).FullName; Write-Host "installing $($_.Name)"; & adb install-multiple @apks }
+```
+
+Then **open each one and confirm it actually runs**. They all came from the
+Play Store, and a sideloaded Play app can fail if it hard-requires Play
+Services sign-in or Play licensing — `com.chess` in particular ships as a
+`-googleplay` build variant. None of this can be tested before the wipe.
+
+Note that Spotify and Kindle need account sign-ins, and Duolingo and Chess keep
+per-account progress. Decide whether Jude gets his own accounts or uses yours
+before you hand the phone over.
+
+If one refuses to run, the fallback is to add a Google account *after* device
+owner is established — clear `DISALLOW_MODIFY_ACCOUNTS` from the parent panel,
+sign in, install from Play, then re-apply the restriction. That leaves an
+account on Jude's phone, which is worth avoiding if you can.
+
+### 7. First launch
 
 Open HereToo. On mount it calls `provision()` then `lock()`, which:
 
@@ -145,7 +176,7 @@ Do the six-tap corner gesture and **set the parent PIN now**, while you are
 holding the phone. Until it is set, the first person to find the gesture owns
 the hatch.
 
-### 7. Sign Jude in, then verify
+### 8. Sign Jude in, then verify
 
 Sign into his HereToo account, then reboot and confirm the phone comes back up
 into HereToo with no launcher flash. Check the status panel reads:

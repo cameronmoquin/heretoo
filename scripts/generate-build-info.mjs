@@ -28,9 +28,13 @@ const dirty = safeExec('git status --porcelain')
   .filter((l) => l.trim())
   .some((l) => /\.(ts|tsx|js|jsx|json|md|sql|toml)$/.test(l));
 const buildTime = new Date().toISOString();
-const env = process.env.NETLIFY === 'true' ? 'production' :
-            process.env.NODE_ENV === 'production' ? 'production' :
-            'development';
+// This script only ever runs from `npm run build`, and that is always a
+// production export — `expo export` does not emit a dev bundle. It used
+// to require NETLIFY=true or NODE_ENV=production, neither of which is
+// set when you deploy from your own machine with the Netlify CLI, so
+// every local `npm run deploy` stamped the marker "development" and the
+// one field people check to confirm a prod deploy lied to them.
+const env = process.env.NODE_ENV === 'development' ? 'development' : 'production';
 
 const content = `// AUTO-GENERATED — do not edit. Regenerated on every build.
 // See scripts/generate-build-info.mjs

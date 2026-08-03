@@ -8,7 +8,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 import android.os.Build
+import android.util.Base64
+import java.io.ByteArrayOutputStream
 import android.os.UserManager
 import android.provider.Settings
 import expo.modules.kotlin.Promise
@@ -195,6 +200,55 @@ class HereTooKioskModule : Module() {
     }
 
     /**
+     * Resolve display metadata for the app shelf. Skips anything not
+     * installed rather than erroring, so a whitelist entry for an app that
+     * failed to sideload simply does not appear as a tile.
+     *
+     * Requires QUERY_ALL_PACKAGES (injected by plugins/withKiosk.js) — without
+     * it Android 11+ package visibility filtering makes every lookup here
+     * throw NameNotFound and the shelf comes back empty.
+     */
+    Function("getAppInfo") { packages: List<String> ->
+      val pm = context.packageManager
+      packages.mapNotNull { pkg ->
+        try {
+          val info = pm.getApplicationInfo(pkg, 0)
+          // An app with no launch intent (a service, a provider) cannot be a
+          // tile even though it is installed.
+          if (pm.getLaunchIntentForPackage(pkg) == null) return@mapNotNull null
+          mapOf(
+            "packageName" to pkg,
+            "label" to pm.getApplicationLabel(info).toString(),
+            "icon" to encodeIcon(pm.getApplicationIcon(info))
+          )
+        } catch (e: PackageManager.NameNotFoundException) {
+          null
+        }
+      }
+    }
+
+    /**
+     * Launch a whitelisted app. Staying inside lock task depends on the
+     * package being in setLockTaskPackages — launching something outside that
+     * list drops the lock, which is why the shelf only ever calls this with
+     * entries from KIOSK_ALLOWED_PACKAGES (constants/kioskApps.ts).
+     */
+    AsyncFunction("launchApp") { packageName: String, promise: Promise ->
+      val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+      if (intent == null) {
+        promise.reject(
+          "ERR_NOT_INSTALLED",
+          "$packageName is not installed, or exposes no launcher activity.",
+          null
+        )
+        return@AsyncFunction
+      }
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      context.startActivity(intent)
+      promise.resolve(true)
+    }.runOnQueue(Queues.MAIN)
+
+    /**
      * Escape hatch for the most common real-world failure: the phone is on a
      * new network and cannot reach Supabase, so the app shows nothing.
      * Must leave lock task first or the settings activity is blocked.
@@ -231,6 +285,33 @@ class HereTooKioskModule : Module() {
       dpm.clearDeviceOwnerApp(context.packageName)
       promise.resolve(true)
     }.runOnQueue(Queues.MAIN)
+  }
+
+  /**
+   * Render an app icon to a base64 PNG data URI so JS can put it straight in
+   * an <Image source={{uri}}>. Adaptive icons are Drawables with no single
+   * backing bitmap, so this draws onto a canvas rather than casting to
+   * BitmapDrawable — that cast is the usual reason launcher icons come back
+   * null on modern Android.
+   *
+   * 144px covers a tile at xxhdpi without bloating the bridge payload; eight
+   * icons at this size is roughly 100 KB of base64 total.
+   */
+  private fun encodeIcon(drawable: Drawable): String? = try {
+    val size = 144
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    drawable.setBounds(0, 0, size, size)
+    drawable.draw(Canvas(bitmap))
+
+    ByteArrayOutputStream().use { out ->
+      bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+      bitmap.recycle()
+      "data:image/png;base64," +
+        Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+    }
+  } catch (e: Exception) {
+    // A missing icon is a cosmetic problem; the tile falls back to its label.
+    null
   }
 
   /** Are we the activity the system would launch for HOME right now? */

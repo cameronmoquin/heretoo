@@ -46,23 +46,7 @@ import {
   isKioskBuild,
   type KioskStatus,
 } from '../../modules/heretoo-kiosk';
-
-/**
- * Packages allowed to foreground alongside HereToo inside lock task.
- *
- * Verified against the target device (SM-S901U, Android 16) with
- * `adb shell pm list packages`. Do not add speculative fallbacks here — a
- * package that does not exist on the device makes setLockTaskPackages
- * silently less useful, and there is no error to tell you.
- *
- * 911 works from the lock screen regardless of this list. This is only about
- * reaching a specific person.
- */
-const ALLOWED_PACKAGES: string[] = [
-  'com.samsung.android.dialer',
-  'com.android.server.telecom', // in-call UI for an active call
-  'org.pbskids.gamesapp', // PBS KIDS Games — confirmed present on the device
-];
+import { KIOSK_ALLOWED_PACKAGES } from '../../constants/kioskApps';
 
 const PIN_KEY = 'heretoo.kiosk.parentPin';
 const TAPS_REQUIRED = 6;
@@ -84,7 +68,7 @@ export function KioskGate() {
   /** Re-assert the lock. Safe to call repeatedly. */
   const enforce = useCallback(async () => {
     if (!isKioskBuild) return;
-    await provision(ALLOWED_PACKAGES);
+    await provision(KIOSK_ALLOWED_PACKAGES);
     await lock();
     refresh();
   }, [refresh]);

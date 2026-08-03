@@ -42,8 +42,7 @@ import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { useTTS } from '../../stores/ttsStore';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, FontFamily, Radius } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { RailCard } from '../../components/shared/RailCard';
 import { Eyebrow } from '../../components/shared/Eyebrow';
@@ -684,7 +683,7 @@ function LibraryRow({ response, scale }: { response: MemoirResponse; scale: numb
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
@@ -709,7 +708,7 @@ function makeStyles(scale: number = 1) {
       position: 'relative',
       backgroundColor: Colors.background,
       borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
-      borderRadius: Gen.radius, overflow: 'hidden',
+      borderRadius: Radius.control, overflow: 'hidden',
       paddingLeft: Spacing.lg + 3, paddingRight: Spacing.lg, paddingVertical: Spacing.lg,
       gap: Spacing.md, marginTop: Spacing.sm, alignItems: 'stretch',
     },
@@ -727,7 +726,7 @@ function makeStyles(scale: number = 1) {
     readBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 12, paddingVertical: 7,
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.primary,
     },
     readBtnText: {
       fontSize: Type.eyebrow.size, fontWeight: '700', color: Colors.primary,
@@ -741,7 +740,7 @@ function makeStyles(scale: number = 1) {
 
     input: {
       minHeight: 200, padding: Spacing.md,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight), color: Colors.textPrimary,
       ...bodyFont,
@@ -792,7 +791,7 @@ function makeStyles(scale: number = 1) {
     // Clean-up drawer. A surface well beneath the entry.
     draftCard: {
       marginTop: 10, padding: 14,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderLeftWidth: 3, borderLeftColor: Colors.primary,
       borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
       gap: 8,
@@ -807,7 +806,7 @@ function makeStyles(scale: number = 1) {
     },
     draftInput: {
       minHeight: 140, padding: 10,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
       color: Colors.textPrimary, ...bodyFont,

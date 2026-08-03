@@ -20,8 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, FontFamily } from '../../constants/design';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { RailCard } from '../../components/shared/RailCard';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
@@ -178,8 +177,8 @@ function hostnameOf(url: string): string {
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
-  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 760, alignSelf: 'center', width: '100%' },

@@ -17,12 +17,23 @@ export type KioskStatus = {
   sdkInt: number;
 };
 
+/** One installed, launchable app, resolved for the shelf. */
+export type KioskAppInfo = {
+  packageName: string;
+  /** The app's own display name, e.g. "PBS KIDS Games". */
+  label: string;
+  /** base64 PNG data URI, or null if the icon could not be rendered. */
+  icon: string | null;
+};
+
 type KioskNative = {
   getStatus(): KioskStatus;
   provision(allowedPackages: string[] | null): Promise<{ allowedPackages: string[] }>;
   lock(): Promise<boolean>;
   unlock(): Promise<boolean>;
   setRestrictions(keys: string[], enabled: boolean): Promise<boolean>;
+  getAppInfo(packages: string[]): KioskAppInfo[];
+  launchApp(packageName: string): Promise<boolean>;
   openWifiSettings(): Promise<boolean>;
   releaseDeviceOwner(): Promise<boolean>;
 };
@@ -98,6 +109,33 @@ export async function setRestrictions(
   if (!native) return false;
   try {
     return await native.setRestrictions(keys, enabled);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve label + icon for shelf tiles. Anything not installed is omitted, so
+ * an app that failed to sideload just doesn't get a tile rather than showing a
+ * dead one.
+ */
+export function getAppInfo(packages: string[]): KioskAppInfo[] {
+  if (!native) return [];
+  try {
+    return native.getAppInfo(packages);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Launch a whitelisted app. Only ever call this with a package that was passed
+ * to provision() — launching anything else drops out of lock task.
+ */
+export async function launchApp(packageName: string): Promise<boolean> {
+  if (!native) return false;
+  try {
+    return await native.launchApp(packageName);
   } catch {
     return false;
   }

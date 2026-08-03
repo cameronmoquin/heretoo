@@ -36,8 +36,7 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { RailCard } from '../../components/shared/RailCard';
 import { Eyebrow } from '../../components/shared/Eyebrow';
@@ -224,7 +223,7 @@ export default function MemoirImportScreen() {
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '10px 16px',
                   border: `1px solid ${Colors.primary}`,
-                  color: Colors.primary, borderRadius: Gen.radius, cursor: 'pointer',
+                  color: Colors.primary, borderRadius: Radius.control, cursor: 'pointer',
                   fontWeight: 700, fontSize: 14,
                 } as any)} aria-label="Upload a file">
                   Upload a file
@@ -388,8 +387,8 @@ function Field({ label, scale, children }: { label: string; scale: number; child
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
-  const displayFont = Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
+  const displayFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
@@ -405,7 +404,7 @@ function makeStyles(scale: number = 1) {
     footnote: { fontSize: Type.eyebrow.size, color: Colors.textMuted, fontStyle: 'italic' },
     paste: {
       minHeight: 240, padding: Spacing.md,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: fs(Type.body.size), lineHeight: fs(Type.body.lineHeight),
       color: Colors.textPrimary, ...bodyFont,
@@ -434,7 +433,7 @@ function makeStyles(scale: number = 1) {
     },
     input: {
       minHeight: 44, paddingHorizontal: 12, paddingVertical: 10,
-      borderRadius: Gen.radius, backgroundColor: Colors.surface,
+      borderRadius: Radius.control, backgroundColor: Colors.surface,
       borderWidth: 1, borderColor: Colors.border,
       fontSize: fs(Type.ui.size), color: Colors.textPrimary, ...bodyFont,
     },

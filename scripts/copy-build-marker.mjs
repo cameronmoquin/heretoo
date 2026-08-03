@@ -74,13 +74,16 @@ if (existsSync(indexPath)) {
     '<link rel="apple-touch-icon" sizes="512x512" href="/favicon-512.png" />',
     '<link rel="mask-icon" href="/mask-icon.svg" color="#0A0A0F" />',
     '<link rel="manifest" href="/manifest.webmanifest" />',
-    // Fonts — Source of Truth, M10. Syne for display, Inter for body,
-    // Source Serif 4 for long-form. Loaded from Google Fonts CDN with
-    // preconnect for performance. The clean font-family names ('Syne',
-    // 'Source Serif 4') match the inline styles throughout the app.
+    // Fonts. Inter alone — docs/UI_SYSTEM.md §3, one family.
+    //
+    // This line still asked Google for Syne and Source Serif 4 long after
+    // phase 1 deleted their expo-font loading, so every visitor paid for
+    // two font families the design had retired. The web-only fontFamily
+    // overrides that still name them fall back to Inter and Georgia
+    // respectively; those overrides are the next thing to go.
     '<link rel="preconnect" href="https://fonts.googleapis.com" />',
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
-    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" />',
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />',
     // Theme + PWA hints
     '<meta name="theme-color" content="#0A0A0F" />',
     '<meta name="apple-mobile-web-app-capable" content="yes" />',

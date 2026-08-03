@@ -10,8 +10,7 @@
 import React from 'react';
 import { Text, Pressable, StyleSheet, Platform, type ViewStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type, Heights } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, Heights, FontFamily, Radius } from '../../constants/design';
 
 interface ChipProps {
   label: string;
@@ -49,7 +48,7 @@ function makeStyles(accent: string) { return StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: Gen.radius,
+    borderRadius: Radius.control,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
@@ -63,7 +62,7 @@ function makeStyles(accent: string) { return StyleSheet.create({
     lineHeight: Type.ui.lineHeight,
     fontWeight: '600',
     color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
   },
   labelSelected: { color: accent },
 }); }

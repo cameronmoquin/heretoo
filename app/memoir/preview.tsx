@@ -30,8 +30,7 @@ import { assembleBook, type BookChapter, type BookEntry } from '../../lib/memoir
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
@@ -224,12 +223,12 @@ function chapterMeta(c: BookChapter): string {
 // ── Styles ───────────────────────────────────────────────────────────
 //
 // The manuscript keeps its layout; only the palette, font, and corner
-// route to the token engine. On the Boomer skin Gen.bodyFont is serif,
+// route to the token engine. On the Boomer skin FontFamily is serif,
 // so the letterpress reading voice returns there and only there.
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },

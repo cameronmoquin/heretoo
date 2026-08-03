@@ -53,6 +53,17 @@ export const Radius = {
 } as const;
 
 /**
+ * The one family, as a CSS stack for the web-only fontFamily overrides
+ * that need to name it explicitly.
+ *
+ * This used to be read off `Gen.bodyFont` / `Gen.displayFont`, which by
+ * the end of the skin retirement both returned this exact string from a
+ * shim that existed only to keep those call sites compiling. Naming it
+ * here is what let the shim go.
+ */
+export const FontFamily = '"Inter", system-ui, sans-serif';
+
+/**
  * Typography. One family: Inter. Syne and Source Serif 4 are gone.
  * Line-height is paired so vertical rhythm is automatic. Seven steps
  * cover the product; if a screen wants an eighth, it is wrong.

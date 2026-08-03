@@ -7,8 +7,7 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, Platform } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, FontFamily, Radius } from '../../constants/design';
 
 interface ReadingSizeActionProps {
   large: boolean;
@@ -35,7 +34,7 @@ function makeStyles() { return StyleSheet.create({
   btn: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
-    borderRadius: Gen.radius,
+    borderRadius: Radius.control,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
@@ -49,7 +48,7 @@ function makeStyles() { return StyleSheet.create({
     fontSize: Type.ui.size,
     fontWeight: '700',
     color: Colors.textSecondary,
-    ...(Platform.OS === 'web' ? ({ fontFamily: Gen.displayFont } as any) : {}),
+    ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
   },
   labelOn: { color: Colors.primary },
 }); }

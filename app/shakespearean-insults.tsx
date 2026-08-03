@@ -1,29 +1,18 @@
 /**
- * /shakespearean-insults. The insults room.
+ * /shakespearean-insults
  *
- * One cross-platform screen on the house standard. The room renders on
- * web and phone from components/ShakespeareanInsults. The frame is the
- * shared ScreenHeader over the app's own canvas.
+ * The insults room is retired. The forge — tier, meter, ending, strict,
+ * Strike / Summon / Cascade — was a workbench for a thing that only ever
+ * needed one gesture, and the gesture already exists: every drop carries
+ * "fire a Shakespeare line at this", which is the thumbs-down. The engine
+ * (lib/insultEngine.ts) is untouched and still drives it through
+ * lib/lineReactions.ts.
+ *
+ * This route stays so old links and bookmarks land somewhere correct.
  */
 
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShakespeareanInsults } from '../components/ShakespeareanInsults';
-import { ScreenHeader } from '../components/shared/ScreenHeader';
-import { Colors } from '../constants/colors';
-import { Spacing } from '../constants/design';
+import { Redirect } from 'expo-router';
 
 export default function ShakespeareanInsultsScreen() {
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }} edges={['top']}>
-      <ScreenHeader showBack title="Shakespearean Insults" />
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: Spacing.xxl }}
-        showsVerticalScrollIndicator={false}
-      >
-        <ShakespeareanInsults />
-      </ScrollView>
-    </SafeAreaView>
-  );
+  return <Redirect href="/feed" />;
 }

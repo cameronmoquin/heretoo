@@ -25,6 +25,7 @@ import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
 import { KioskGate } from '../components/shared/KioskGate';
+import { KioskHomeButton } from '../components/shared/KioskHomeButton';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -137,6 +138,9 @@ function RootLayoutInner() {
         <Stack.Screen name="u" options={{ headerShown: false }} />
         <Stack.Screen name="sow" options={{ headerShown: false }} />
         <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
+        {/* Launcher home on kiosk devices. Inert elsewhere — the route
+            redirects to the feed on any non-kiosk build. */}
+        <Stack.Screen name="shelf" options={{ headerShown: false, animation: 'none' }} />
       </Stack>
       </ThemeProvider>
       {/* Global navigation — same hide rules across all three:
@@ -148,6 +152,10 @@ function RootLayoutInner() {
       <MobileTabBar />
       <LeftSidebar />
       <RightSidebar />
+      {/* Kiosk-only: back to the app shelf from any screen. Lives here rather
+          than in the (tabs) layout because /chat, /family and the rest sit
+          outside the tabs group on native and would have no way home. */}
+      <KioskHomeButton />
       <ToastHost />
       <ConfirmHost />
       <UpdateNudge />

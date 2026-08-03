@@ -13,8 +13,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, Platform, type ViewStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
-import { Spacing, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Type, FontFamily, Radius } from '../../constants/design';
 import { Chip } from './Chip';
 import { Eyebrow } from './Eyebrow';
 
@@ -116,7 +115,7 @@ export function DateField({ label, value, onChange, compact, style }: DateFieldP
 }
 
 function makeStyles() {
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
   return StyleSheet.create({
     field: { gap: Spacing.xs },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
@@ -125,7 +124,7 @@ function makeStyles() {
       minHeight: 44,
       paddingHorizontal: Spacing.sm,
       paddingVertical: 10,
-      borderRadius: Gen.radius,
+      borderRadius: Radius.control,
       backgroundColor: Colors.surface,
       borderWidth: 1,
       borderColor: Colors.border,

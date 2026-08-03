@@ -27,8 +27,7 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
@@ -95,7 +94,7 @@ export default function MemoirPhotosScreen() {
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '10px 16px',
                 background: Colors.primary, color: Colors.onPrimary,
-                borderRadius: Gen.radius, cursor: 'pointer',
+                borderRadius: Radius.control, cursor: 'pointer',
                 fontWeight: 700, fontSize: 14,
               } as any)}>
                 {upload.isPending ? 'Uploading…' : 'Choose photos'}
@@ -240,7 +239,7 @@ function PhotoCard({
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 760, alignSelf: 'center', width: '100%' },
@@ -255,7 +254,7 @@ function makeStyles(scale: number = 1) {
 
     uploadZone: {
       padding: Spacing.lg, gap: 10,
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.border,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.border,
       borderStyle: 'dashed' as any, alignItems: 'center',
       backgroundColor: Colors.surface,
     },
@@ -291,7 +290,7 @@ function makeStyles(scale: number = 1) {
     chapterBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       paddingHorizontal: 8, paddingVertical: 6,
-      borderRadius: Gen.radius,
+      borderRadius: Radius.control,
       borderWidth: 1, borderColor: Colors.primary,
       flex: 1,
     },

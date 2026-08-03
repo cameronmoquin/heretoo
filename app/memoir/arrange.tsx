@@ -32,8 +32,7 @@ import {
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type } from '../../constants/design';
-import { Gen } from '../../constants/generations';
+import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
@@ -251,7 +250,7 @@ function EntryRow({
 
 function makeStyles(scale: number = 1) {
   const fs = (n: number) => Math.round(n * scale);
-  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: Gen.bodyFont } as any) : {};
+  const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
@@ -291,12 +290,12 @@ function makeStyles(scale: number = 1) {
 
     moveBtn: {
       width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.primary,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.primary,
     },
 
     deleteBtn: {
       width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
-      borderRadius: Gen.radius, borderWidth: 1, borderColor: Colors.border,
+      borderRadius: Radius.control, borderWidth: 1, borderColor: Colors.border,
     },
 
     menu: {

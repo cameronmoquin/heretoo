@@ -82,7 +82,10 @@ function renderEmail(
   const crew = escapeHtml(p.family_name || 'your crew');
   const author = escapeHtml(p.author_name || p.author_handle || 'Someone');
   const body = escapeHtml((p.body ?? '').slice(0, 600));
-  const link = `https://heretoo.social/subjects/${p.subject_id}`;
+  // /subjects/{id} has never existed. The route is
+  // /family/{id}/subject/{slug}, and the payload already carries both —
+  // this link 404'd in every Subject email ever sent.
+  const link = `https://heretoo.social/family/${p.family_id}/subject/${p.subject_slug}`;
   const postLink = `https://heretoo.social/feed/${p.post_id}`;
 
   const subject = `${p.author_name || p.author_handle || 'Someone'} posted to "${p.subject_name}"`;
