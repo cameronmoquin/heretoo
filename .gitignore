@@ -54,3 +54,4 @@ muxAPI.txt
 # and overwritten on every build. This way TypeScript always compiles
 # even on a fresh clone before running build-info.
 brain/
+.claude/scheduled_tasks.lock

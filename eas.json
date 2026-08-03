@@ -26,6 +26,12 @@
       "autoIncrement": true,
       "ios": { "resourceClass": "m-medium" },
       "android": { "buildType": "app-bundle" }
+    },
+    "kiosk": {
+      "distribution": "internal",
+      "channel": "kiosk",
+      "env": { "HERETOO_KIOSK": "1" },
+      "android": { "buildType": "apk" }
     }
   },
   "submit": {
