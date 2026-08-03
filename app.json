@@ -65,8 +65,12 @@
           "enableMicrophonePermission": false,
           "enableLocation": false
         }
-      ]
+      ],
+      "./plugins/withKiosk"
     ],
+    "experiments": {
+      "typedRoutes": true
+    },
     "extra": {
       "router": {},
       "eas": {

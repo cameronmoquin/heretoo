@@ -155,7 +155,7 @@ export default function ChatThread() {
         <View style={[s.frame, { marginBottom: 12 + tabBarOffset }]}>
         <View style={s.header}>
           <TouchableOpacity
-            onPress={() => router.replace('/chat' as any)}
+            onPress={() => router.replace('/messages')}
             style={s.backBtn}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
@@ -209,7 +209,7 @@ export default function ChatThread() {
                 onPress={() => showConfirm(
                   'Decline this request?',
                   "They won't be able to send more messages.",
-                  () => decline.mutate(thread.id, { onSuccess: () => router.replace('/chat' as any) }),
+                  () => decline.mutate(thread.id, { onSuccess: () => router.replace('/messages') }),
                   'Decline', 'Cancel',
                 )}
                 variant="outline"

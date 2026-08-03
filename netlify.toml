@@ -48,6 +48,33 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
+# ── Retired URLs ─────────────────────────────────────────────────────
+# These MUST sit above the SPA fallback. Netlify takes the first rule
+# that matches, and "/*" matches everything.
+#
+# Each retired path also keeps an in-app <Redirect> stub under app/, and
+# both layers are needed. Netlify catches the cold hit — a bookmark, a
+# pasted link, an unfurl, a crawler — and corrects the address bar before
+# the bundle loads. The stub catches the warm one, because client-side
+# routing resolves in the browser and never reaches this file.
+#
+# STATUS 302, DELIBERATELY. A 301 is cached by browsers indefinitely and
+# ignores Cache-Control, so a wrong one strands every visitor who hit it
+# until they clear state by hand. These go out as temporary, get verified
+# against real links, and are promoted to 301 in a later change once
+# they have proven themselves. Promotion is the last step, not the first.
+#
+# chat → messages. The room is called Messages; the URL now says so.
+[[redirects]]
+  from = "/chat"
+  to = "/messages"
+  status = 302
+
+[[redirects]]
+  from = "/chat/*"
+  to = "/messages/:splat"
+  status = 302
+
 # SPA fallback
 [[redirects]]
   from = "/*"

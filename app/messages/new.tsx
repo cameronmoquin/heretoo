@@ -59,7 +59,7 @@ export default function NewChat() {
 
   const startWith = (profileId: string) => {
     open.mutate(profileId, {
-      onSuccess: (thread) => router.replace(`/chat/${thread.id}` as any),
+      onSuccess: (thread) => router.replace(`/messages/${thread.id}`),
       onError: (e: any) => showAlert('Could not open chat', e?.message ?? 'Try again.'),
     });
   };
@@ -68,7 +68,7 @@ export default function NewChat() {
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
         <TouchableOpacity
-          onPress={() => router.replace('/chat' as any)}
+          onPress={() => router.replace('/messages')}
           style={s.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >

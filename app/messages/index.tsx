@@ -8,7 +8,7 @@
  *     are unsolicited messages from people more than 3 hops away in the
  *     crew graph; the viewer chooses to accept or decline before
  *     they can reply.
- *   - Tapping any row enters /chat/[threadId].
+ *   - Tapping any row enters /messages/[threadId].
  */
 
 import React, { useMemo } from 'react';
@@ -64,7 +64,7 @@ export default function ChatList() {
         </TouchableOpacity>
         <Text style={s.title}>Messages</Text>
         <TouchableOpacity
-          onPress={() => router.push('/chat/new' as any)}
+          onPress={() => router.push('/messages/new')}
           style={s.newBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -92,7 +92,7 @@ export default function ChatList() {
               <Text style={s.emptyTitle}>No messages yet</Text>
               <Button
                 title="New chat"
-                onPress={() => router.push('/chat/new' as any)}
+                onPress={() => router.push('/messages/new')}
                 variant="primary"
                 size="sm"
                 style={s.emptyBtn}
@@ -115,7 +115,7 @@ function ThreadRow({ t, pending }: { t: MessageThread; pending: boolean }) {
   return (
     <TouchableOpacity
       style={s.row}
-      onPress={() => router.push(`/chat/${t.id}` as any)}
+      onPress={() => router.push(`/messages/${t.id}`)}
       activeOpacity={0.75}
     >
       <View style={s.avatar}>

@@ -24,6 +24,7 @@ import { MobileTabBar } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
+import { KioskGate } from '../components/shared/KioskGate';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 
@@ -103,6 +104,9 @@ function RootLayoutInner() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="family" options={{ headerShown: false }} />
         <Stack.Screen name="join" options={{ headerShown: false }} />
+        <Stack.Screen name="messages" options={{ headerShown: false }} />
+        {/* Retired. app/chat/* holds redirect stubs to /messages; the
+            screen stays declared so those stubs still mount. */}
         <Stack.Screen name="chat" options={{ headerShown: false }} />
         {/* Single-file route — Expo Router exposes it as 'network/index'
             (the folder name + filename) since there's no _layout.tsx
@@ -156,10 +160,17 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <RootLayoutInner />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <RootLayoutInner />
+        </QueryClientProvider>
+      </ErrorBoundary>
+      {/* Deliberately outside ErrorBoundary and outside the auth/font
+          loading gate. On a kiosk device this corner tap is the only way
+          back in, so it has to survive a render crash and a hung sign-in —
+          the two states where you most need it. Inert on web and iOS. */}
+      <KioskGate />
+    </>
   );
 }
