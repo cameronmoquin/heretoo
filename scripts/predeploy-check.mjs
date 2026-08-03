@@ -81,13 +81,22 @@ try {
 }
 
 // ── 5. Required env vars present ─────────────────────────────────────────
-// Source from .env.local if present so we can validate without exporting.
-const envFile = join(ROOT, '.env.local');
+// Source from a dotenv file if present so we can validate without exporting.
+//
+// Both names, .env.local first. This checked only .env.local while the
+// project actually keeps its vars in .env — the file Expo itself loads —
+// so `npm run deploy` failed the gate on a repo that was correctly
+// configured and would have built fine. Later entries do not clobber
+// earlier ones, so .env.local still wins where both define a key.
 const envFromFile = {};
-if (existsSync(envFile)) {
+for (const name of ['.env.local', '.env']) {
+  const envFile = join(ROOT, name);
+  if (!existsSync(envFile)) continue;
   for (const line of readFileSync(envFile, 'utf8').split('\n')) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
-    if (m) envFromFile[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    if (m && envFromFile[m[1]] === undefined) {
+      envFromFile[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
   }
 }
 const REQUIRED_ENV = ['EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_ANON_KEY'];
