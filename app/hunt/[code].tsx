@@ -17,7 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useHuntByCode, useClaimFind, useBurnCache, getHuntPhotoUrl } from '../../hooks/useHunt';
-import { GlitchText } from '../../components/shared/GlitchText';
 import { Button } from '../../components/shared/Button';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { useGeolocation } from '../../hooks/useGeolocation';
@@ -28,7 +27,6 @@ import { useAuthStore } from '../../stores/authStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Type, Heights, Radius } from '../../constants/design';
-import { Gen } from '../../constants/generations';
 
 const SCOPE_SIZE = 220;
 
@@ -159,7 +157,7 @@ export default function HuntSeek() {
             {cache.self_destruct ? (
               <>
                 {photoUrl && <RNImage source={{ uri: photoUrl }} style={[s.clue, s.burning]} resizeMode="cover" />}
-                <GlitchText style={s.goneTitle}>GONE</GlitchText>
+                <Text style={s.goneTitle}>GONE</Text>
                 <Text style={s.foundSub}>It burned on delivery. One look. That was the price.</Text>
               </>
             ) : (
@@ -310,7 +308,7 @@ function makeStyles() {
     compassBtn: { alignSelf: 'center' },
 
     clue: {
-      width: '100%', height: 240, borderRadius: Gen.radius,
+      width: '100%', height: 240, borderRadius: Radius.control,
       backgroundColor: Colors.surface, marginTop: Spacing.xxs,
     },
     hint: {
@@ -319,7 +317,7 @@ function makeStyles() {
     },
     sealed: {
       flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
-      padding: Spacing.sm, borderRadius: Gen.radius,
+      padding: Spacing.sm, borderRadius: Radius.control,
       backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
       borderStyle: 'dashed' as any,
     },

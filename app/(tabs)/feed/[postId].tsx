@@ -34,7 +34,7 @@ import { useRevealed, useOpenDrop } from '../../../hooks/usePostViews';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
 import { MicInputButton } from '../../../components/shared/MicInputButton';
-import { Spacing, Radius, Type } from '../../../constants/design';
+import { Layout, Spacing, Radius, Type } from '../../../constants/design';
 import { Vocab } from '../../../constants/vocab';
 
 const MAX_INDENT = 4; // visual cap — beyond 4 levels deep all replies share the same indent
@@ -186,7 +186,7 @@ export default function PostDetail() {
               accessibilityRole="button"
               accessibilityLabel="Open this drop. It does not come back."
             >
-              <Ionicons name="flame-outline" size={22} color={Colors.heart} />
+              <Ionicons name="flame-outline" size={22} color={Colors.textSecondary} />
               <Text style={s.sealText}>Opens once</Text>
             </TouchableOpacity>
           ) : (
@@ -210,7 +210,7 @@ export default function PostDetail() {
                     controls: true,
                     style: {
                       width: '100%', aspectRatio: 9 / 16,
-                      backgroundColor: '#000', borderRadius: 12,
+                      backgroundColor: '#000', borderRadius: Radius.media,
                       objectFit: 'cover',
                     },
                   })
@@ -330,8 +330,8 @@ export default function PostDetail() {
                 disabled={!draft.trim() || addComment.isPending}
               >
                 {addComment.isPending
-                  ? <ActivityIndicator size="small" color="#FFF" />
-                  : <Ionicons name="send" size={18} color="#FFF" />}
+                  ? <ActivityIndicator size="small" color={Colors.onPrimary} />
+                  : <Ionicons name="send" size={18} color={Colors.onPrimary} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -435,11 +435,11 @@ function CommentRow({
             >
               <Ionicons
                 name={hearted ? 'heart' : 'heart-outline'}
-                size={14}
-                color={hearted ? Colors.primary : Colors.textMuted}
+                size={16}
+                color={hearted ? Colors.heart : Colors.textSecondary}
               />
               {heartCount > 0 && (
-                <Text style={[s.commentHeartCount, hearted && { color: Colors.primary }]}>
+                <Text style={[s.commentHeartCount, hearted && { color: Colors.heart }]}>
                   {heartCount}
                 </Text>
               )}
@@ -489,98 +489,149 @@ function relTime(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
-  scroll: { padding: Spacing.md, gap: 12, maxWidth: 600, alignSelf: 'center', width: '100%', paddingBottom: 80 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  avatar: {
-    width: 44, height: 44, borderRadius: 8,
-    backgroundColor: Colors.primary,
-    alignItems: 'center', justifyContent: 'center',
+  root: {
+    flex: 1, backgroundColor: 'transparent',
+    maxWidth: Layout.columnMaxWidth, alignSelf: 'center', width: '100%',
   },
-  avatarText: { color: '#FFF', fontSize: 18, fontWeight: '700' },
-  author: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-  time: { fontSize: 12, color: Colors.textMuted },
+  scroll: {
+    padding: Layout.columnPadding, gap: Spacing.sm,
+    width: '100%', paddingBottom: 80,
+  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  author: {
+    fontSize: Type.cardTitle.size, lineHeight: Type.cardTitle.lineHeight,
+    fontWeight: Type.cardTitle.weight, color: Colors.textPrimary,
+  },
+  time: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary,
+  },
+  // The seal. A well where the payload would be, with the one control
+  // that opens it. Same device as the row in the column.
   sealCard: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
     paddingVertical: Spacing.lg, paddingHorizontal: Spacing.md,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    borderRadius: Radius.md, alignSelf: 'flex-start',
+    borderRadius: Radius.control,
+    backgroundColor: Colors.surfaceAlt,
+    alignSelf: 'flex-start',
   },
-  sealText: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
-  body: { fontSize: 16, color: Colors.textPrimary, lineHeight: 22 },
+  sealText: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
+  body: {
+    fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+    color: Colors.textPrimary,
+  },
   // Optional attribution line — small italic right-aligned, used by
   // Shakespeare bot posts and any post with a slugline.
   slugline: {
-    fontSize: 12, fontStyle: 'italic', color: Colors.textMuted,
-    textAlign: 'right', marginTop: 2, letterSpacing: 0.1,
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    fontStyle: 'italic', color: Colors.textMuted,
+    textAlign: 'right', marginTop: 2,
   },
   image: {
     width: '100%', aspectRatio: 4 / 3,
-    borderRadius: Radius.md, backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.media, backgroundColor: Colors.surfaceAlt,
   },
   empty: { padding: 40, textAlign: 'center', color: Colors.textMuted },
 
   muteBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999,
-    borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: 8, paddingVertical: 5, borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceAlt,
   },
-  muteBtnText: { fontSize: 11, color: Colors.textPrimary, fontWeight: '600' },
+  muteBtnText: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textPrimary, fontWeight: '600',
+  },
 
-  commentsHeader: { marginTop: 16, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border },
-  commentsLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.4 },
-  noComments: { fontSize: 13, color: Colors.textMuted, fontStyle: 'italic', marginTop: 4 },
+  commentsHeader: {
+    marginTop: Spacing.md, paddingTop: Spacing.sm,
+    borderTopWidth: 1, borderTopColor: Colors.border,
+  },
+  commentsLabel: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    fontWeight: '600', color: Colors.textSecondary,
+  },
+  noComments: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 4,
+  },
 
   commentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8 },
   commentAvatar: {
-    width: 28, height: 28, borderRadius: 6,
-    backgroundColor: Colors.surfaceLight,
+    width: 28, height: 28, borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceAlt,
     alignItems: 'center', justifyContent: 'center',
   },
-  commentAvatarText: { color: Colors.textPrimary, fontSize: 12, fontWeight: '700' },
+  commentAvatarText: {
+    color: Colors.textPrimary, fontSize: Type.caption.size, fontWeight: '700',
+  },
   commentMeta: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-  commentAuthor: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
-  commentTime: { fontSize: 11, color: Colors.textMuted },
-  commentBody: { fontSize: 14, color: Colors.textPrimary, marginTop: 2, lineHeight: 19 },
+  commentAuthor: {
+    fontSize: Type.cardTitle.size, lineHeight: Type.cardTitle.lineHeight,
+    fontWeight: Type.cardTitle.weight, color: Colors.textPrimary,
+  },
+  commentTime: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary,
+  },
+  commentBody: {
+    fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+    color: Colors.textPrimary, marginTop: 2,
+  },
   commentActions: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
-  commentActionLink: { fontSize: 12, fontWeight: '600', color: Colors.primary },
+  commentActionLink: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
   commentHeartBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  commentHeartCount: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
+  commentHeartCount: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary,
+  },
 
   composer: {
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: Colors.border,
+    backgroundColor: Colors.background,
+    paddingHorizontal: Layout.columnPadding, paddingVertical: 10,
     gap: 6,
   },
   replyPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
-    backgroundColor: Colors.primaryFaint, alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceAlt, alignSelf: 'flex-start',
   },
-  replyPillText: { fontSize: 12, color: Colors.textPrimary },
+  replyPillText: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textPrimary,
+  },
   composerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   composerInput: {
-    flex: 1, backgroundColor: Colors.surfaceLight,
-    borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: Colors.textPrimary, maxHeight: 100,
+    flex: 1, backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.control, paddingHorizontal: 14, paddingVertical: 10,
+    fontSize: Type.body.size, color: Colors.textPrimary, maxHeight: 100,
   },
   composerSend: {
-    width: 38, height: 38, borderRadius: 7,
+    width: 38, height: 38, borderRadius: Radius.control,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   errorBox: {
     backgroundColor: 'rgba(255,64,80,0.10)',
     borderWidth: 1, borderColor: 'rgba(255,64,80,0.30)',
-    borderRadius: 8,
+    borderRadius: Radius.control,
     paddingHorizontal: 10, paddingVertical: 8,
   },
-  errorText: { fontSize: 12, color: Colors.error },
+  errorText: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.error,
+  },
 
   composerTagBtn: {
-    width: 38, height: 38, borderRadius: 7,
-    backgroundColor: Colors.surfaceLight,
+    width: 38, height: 38, borderRadius: Radius.control,
+    backgroundColor: Colors.surfaceAlt,
     alignItems: 'center', justifyContent: 'center',
   },
 
@@ -589,24 +640,38 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   tagCard: {
-    backgroundColor: Colors.surface, borderRadius: 14,
+    backgroundColor: Colors.surface, borderRadius: Radius.media,
     width: '100%', maxWidth: 420, padding: 18, gap: 4,
     borderWidth: 1, borderColor: Colors.border,
   },
-  tagTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
+  tagTitle: {
+    fontSize: Type.title.size, lineHeight: Type.title.lineHeight,
+    fontWeight: Type.title.weight, color: Colors.textPrimary, marginBottom: 8,
+  },
   tagRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingVertical: 8, paddingHorizontal: 4,
   },
   tagAvatar: {
-    width: 36, height: 36, borderRadius: 7,
+    width: 36, height: 36, borderRadius: Radius.pill,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   tagAvatarImg: { width: '100%', height: '100%' },
-  tagAvatarText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
-  tagName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  tagHandle: { fontSize: 12, color: Colors.textMuted, marginTop: 1 },
+  tagAvatarText: {
+    color: Colors.onPrimary, fontSize: Type.ui.size, fontWeight: '700',
+  },
+  tagName: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
+  tagHandle: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 1,
+  },
   tagCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
-  tagCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
+  tagCancelText: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: Type.ui.weight, color: Colors.textSecondary,
+  },
 }); }

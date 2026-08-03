@@ -110,10 +110,9 @@ function persist(state: Persisted) {
 
 /**
  * Mirror art-filter prefs to profiles.style_prefs.art_filter so OTHER
- * viewers see this user's gallery taste on /u/<handle>. Mirrors the
- * pattern in wallpaperStore — best-effort write, RLS-gated to the
- * user's own row, swallows errors so localStorage stays the source
- * of truth on the user's own device.
+ * viewers see this user's gallery taste on /u/<handle>. Best-effort
+ * write, RLS-gated to the user's own row, swallows errors so
+ * localStorage stays the source of truth on the user's own device.
  */
 async function syncToProfile(state: Persisted) {
   try {

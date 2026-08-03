@@ -11,7 +11,7 @@ import { View, Text, StyleSheet, Image, Pressable, Linking, Platform } from 'rea
 import type { ArtWork } from '../../hooks/useArtFeed';
 import { useBrokenArt } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Layout, Spacing, Radius, Type } from '../../constants/design';
 
 interface ArtSlotProps {
   art: ArtWork;
@@ -38,7 +38,7 @@ export function ArtSlot({ art }: ArtSlotProps) {
   };
 
   return (
-    <Pressable style={s.card} onPress={onOpen} disabled={!art.source_url}>
+    <Pressable style={s.row} onPress={onOpen} disabled={!art.source_url}>
       <View style={s.tagRow}>
         <Text style={[s.tag, isAd ? s.tagAd : s.tagArt]}>
           {isAd ? 'Sponsored' : 'From the gallery'}
@@ -65,30 +65,44 @@ export function ArtSlot({ art }: ArtSlotProps) {
 }
 
 function makeStyles() { return StyleSheet.create({
-  card: {
-    backgroundColor: Colors.surfaceLight,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  row: {
+    paddingHorizontal: Layout.rowPaddingHorizontal,
+    paddingVertical: Layout.rowPaddingVertical,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-    padding: Spacing.md,
-    gap: 8,
+    gap: Spacing.xs,
   },
   tagRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tag: {
-    fontSize: 10, fontWeight: '700', letterSpacing: 1.4,
-    textTransform: 'uppercase',
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4,
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
     overflow: 'hidden',
   },
-  tagAd: { color: '#FFF', backgroundColor: Colors.primary },
-  tagArt: { color: Colors.textMuted, backgroundColor: 'transparent', paddingHorizontal: 0 },
-  license: { fontSize: 10, color: Colors.textMuted, fontWeight: '600' },
+  // Sponsored keeps a real fill. FTC native-ad clarity, not decoration.
+  tagAd: {
+    color: Colors.onPrimary, backgroundColor: Colors.primary,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.control,
+  },
+  tagArt: { color: Colors.textMuted, backgroundColor: 'transparent' },
+  license: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted,
+  },
   image: {
     width: '100%', aspectRatio: 4 / 3,
-    backgroundColor: Colors.background,
-    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.media,
   },
   meta: { gap: 2 },
-  title: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-  artist: { fontSize: 13, color: Colors.textSecondary },
-  year: { fontSize: 11, color: Colors.textMuted },
+  title: {
+    fontSize: Type.cardTitle.size, lineHeight: Type.cardTitle.lineHeight,
+    fontWeight: Type.cardTitle.weight, color: Colors.textPrimary,
+  },
+  artist: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary,
+  },
+  year: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted,
+  },
 }); }

@@ -18,7 +18,7 @@ import { View, Text, Image, StyleSheet, Pressable, Linking, Platform } from 'rea
 import { useArtFeed } from '../../hooks/useArtFeed';
 import { useBrokenArt, pickArtAroundAnchor } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius } from '../../constants/design';
+import { Layout, Radius, Type } from '../../constants/design';
 
 interface ArtBannerProps {
   slot?: 'top' | 'bottom';
@@ -87,15 +87,14 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
 
 function makeStyles() { return StyleSheet.create({
   banner: {
-    width: '100%',
-    height: 88,                       // slimmer — was 140; was eating the feed
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: Radius.md,
+    height: 88,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.media,
     overflow: 'hidden',
     marginVertical: 6,
+    // Sits inside the column, inset to the same gutter the rows use.
+    marginHorizontal: Layout.rowPaddingHorizontal,
     position: 'relative',
-    alignSelf: 'center',
-    maxWidth: 600,
   },
   bg: {
     ...StyleSheet.absoluteFillObject,
@@ -109,9 +108,9 @@ function makeStyles() { return StyleSheet.create({
   },
   credit: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: Type.caption.size,
+    lineHeight: Type.caption.lineHeight,
     fontWeight: '600',
-    letterSpacing: 0.1,
     // Strong layered shadow makes it read against light AND dark
     // crops of the image without a separate background band.
     textShadowColor: 'rgba(0,0,0,0.85)',
@@ -124,8 +123,9 @@ function makeStyles() { return StyleSheet.create({
     top: 8, right: 10,
   },
   tag: {
-    fontSize: 9, fontWeight: '600', letterSpacing: 1.2,
-    textTransform: 'uppercase',
+    fontSize: Type.caption.size,
+    lineHeight: Type.caption.lineHeight,
+    fontWeight: '600',
     // Same strong-shadow legibility as the credit, no background band.
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1 },
@@ -134,9 +134,9 @@ function makeStyles() { return StyleSheet.create({
   // Sponsored stays a real pill — distinguishes it visually from
   // organic gallery items per FTC native-ad clarity.
   tagAd: {
-    color: '#FFF',
+    color: Colors.onPrimary,
     backgroundColor: Colors.primary,
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: Radius.control,
     overflow: 'hidden',
   },
   tagArt: {

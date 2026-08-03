@@ -1,5 +1,9 @@
 /**
- * Single feed post card. Clean rewrite for the new schema (migrations 001 + 002).
+ * One drop in the feed. A ROW, not a card. Full column width, 16 of
+ * padding, one hairline along the bottom. No fill, no outline, no
+ * radius, no rail, no kicker. The hairline is the whole separation.
+ *
+ * Reads the new schema (migrations 001 + 002).
  *
  * Reads body + media (image grid or Mux video) + denormalized engagement
  * counts off the `posts` row. Heart toggle is wired through onHeart prop.
@@ -44,10 +48,12 @@ import {
 } from '../../hooks/useLineReactions';
 import { drawLines, resolveLineRef, attribution, type PaletteLine } from '../../lib/lineReactions';
 import { showAlert, showConfirm } from '../../lib/alert';
-import { Eyebrow } from '../shared/Eyebrow';
 import { Colors } from '../../constants/colors';
-import { Spacing, Radius, Type, Shadow } from '../../constants/design';
+import { Layout, Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
+
+/** Action row icons. One size, outline, muted. */
+const ACTION_ICON = 22;
 
 /** How many lines the picker lays out per draw. */
 const DRAW = 5;
@@ -118,7 +124,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
 
   return (
     <Pressable
-      style={s.card}
+      style={s.row}
       // A sealed card does not navigate. The detail route would render
       // the payload without recording the view, which is the whole
       // mechanism. The seal control below is the only way in.
@@ -168,17 +174,14 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         )}
       </View>
 
-      {/* Destination and burn state, stated on the card. Nothing here
-          explains the feature; each mark is a fact about this drop. */}
+      {/* Destination and burn state, stated on the row. Nothing here
+          explains the feature; each mark is a fact about this drop.
+          Muted caption, no kicker. */}
       {(!!directMark || !!burnMark) && (
         <View style={s.markRow}>
-          {!!directMark && (
-            <Eyebrow accentColor={Colors.share}>{directMark}</Eyebrow>
-          )}
+          {!!directMark && <Text style={s.mark}>{directMark}</Text>}
           {!!directMark && !!burnMark && <Text style={s.markDot}>·</Text>}
-          {!!burnMark && (
-            <Eyebrow accentColor={Colors.important}>{burnMark}</Eyebrow>
-          )}
+          {!!burnMark && <Text style={s.mark}>{burnMark}</Text>}
         </View>
       )}
 
@@ -190,7 +193,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
           <Ionicons
             name="flame-outline"
             size={18}
-            color={Colors.important}
+            color={Colors.textSecondary}
             importantForAccessibility="no"
             accessibilityElementsHidden
           />
@@ -224,7 +227,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
                   loop: true,
                   muted: true,
                   playsInline: true,
-                  style: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#000', borderRadius: 8, objectFit: 'cover' },
+                  style: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#000', borderRadius: Radius.media, objectFit: 'cover' },
                 })
               ) : (
                 <View style={s.videoBox}>
@@ -265,12 +268,11 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             activeOpacity={0.7}
             accessibilityLabel={post.viewer_hearted ? `Unheart ${Vocab.post}` : `Heart ${Vocab.post}`}
           >
-            {/* Filled heart in the warm brand red (Colors.heart), not the
-                Twitter/Instagram hue. Not looking like them is the point.
-                Outline for "not yet hearted" matches the muted action row. */}
+            {/* The one color in the row. Colors.heart is reserved for this
+                and nothing else. Outline and muted until it is earned. */}
             <Ionicons
               name={post.viewer_hearted ? 'heart' : 'heart-outline'}
-              size={18}
+              size={ACTION_ICON}
               color={post.viewer_hearted ? Colors.heart : Colors.textSecondary}
             />
             {heartCount > 0 && (
@@ -296,7 +298,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             }}
             accessibilityLabel="Add a comment"
           >
-            <Ionicons name="chatbubble-outline" size={17} color={Colors.textSecondary} />
+            <Ionicons name="chatbubble-outline" size={ACTION_ICON} color={Colors.textSecondary} />
             {(post.comment_count ?? 0) > 0 && (
               <Text style={s.actionCount}>{post.comment_count}</Text>
             )}
@@ -311,7 +313,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             onPress={(e) => { e.stopPropagation(); setLineOpen(true); }}
             accessibilityLabel={`Fire a Shakespeare line at this ${Vocab.post}`}
           >
-            <Ionicons name="flame-outline" size={18} color={Colors.textSecondary} />
+            <Ionicons name="flame-outline" size={ACTION_ICON} color={Colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -320,7 +322,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             onPress={(e) => { e.stopPropagation(); setBoostOpen(true); }}
             accessibilityLabel={`Boost this ${Vocab.post}`}
           >
-            <Ionicons name="repeat-outline" size={18} color={Colors.textSecondary} />
+            <Ionicons name="repeat-outline" size={ACTION_ICON} color={Colors.textSecondary} />
             {(post.boost_count ?? 0) > 0 && (
               <Text style={s.actionCount}>{post.boost_count}</Text>
             )}
@@ -628,7 +630,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
         onPress={() => { reset(); onClose(); }}
       >
         <Pressable
-          style={{ backgroundColor: Colors.surface, borderRadius: Radius.md, padding: 18, gap: Spacing.xxs, width: '100%', maxWidth: 420, borderWidth: 1, borderColor: Colors.border }}
+          style={{ backgroundColor: Colors.surface, borderRadius: Radius.media, padding: 18, gap: Spacing.xxs, width: '100%', maxWidth: 420, borderWidth: 1, borderColor: Colors.border }}
           onPress={(e) => e.stopPropagation()}
         >
           {sent ? (
@@ -656,8 +658,8 @@ function FlagModal({ open, onClose, postId, commentId }: {
                     onPress={() => setReason(r.id)}
                     style={{
                       flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-                      paddingVertical: Spacing.xs, paddingHorizontal: Spacing.xs, borderRadius: Radius.sm,
-                      backgroundColor: isPicked ? Colors.primaryFaint : 'transparent',
+                      paddingVertical: Spacing.xs, paddingHorizontal: Spacing.xs, borderRadius: Radius.control,
+                      backgroundColor: isPicked ? Colors.surfaceAlt : 'transparent',
                     }}
                     activeOpacity={0.75}
                   >
@@ -667,7 +669,7 @@ function FlagModal({ open, onClose, postId, commentId }: {
                       color={isPicked ? Colors.primary : Colors.textMuted}
                     />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: Colors.textPrimary }}>{r.label}</Text>
+                      <Text style={{ fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary }}>{r.label}</Text>
                       <Text style={{ fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 }}>{r.sub}</Text>
                     </View>
                   </TouchableOpacity>
@@ -682,10 +684,10 @@ function FlagModal({ open, onClose, postId, commentId }: {
                   multiline
                   maxLength={500}
                   style={{
-                    backgroundColor: Colors.surfaceLight,
+                    backgroundColor: Colors.surfaceAlt,
                     borderWidth: 1, borderColor: Colors.border,
-                    borderRadius: Radius.sm, padding: 10,
-                    fontSize: 13, color: Colors.textPrimary,
+                    borderRadius: Radius.control, padding: 10,
+                    fontSize: Type.body.size, color: Colors.textPrimary,
                     minHeight: 60, marginTop: Spacing.xxs,
                   }}
                 />
@@ -745,8 +747,8 @@ function ReadAloudButton({ postId, body }: { postId: string; body: string }) {
     >
       <Ionicons
         name={myLoading ? 'hourglass-outline' : myPlaying ? 'stop-circle-outline' : 'volume-high-outline'}
-        size={18}
-        color={isMine ? Colors.primary : Colors.textSecondary}
+        size={ACTION_ICON}
+        color={isMine ? Colors.textPrimary : Colors.textSecondary}
       />
     </TouchableOpacity>
   );
@@ -802,75 +804,66 @@ function timeAgo(iso: string): string {
 }
 
 function makeStyles() { return StyleSheet.create({
-  // Cleaner card: thin top border, no bottom hairline (next card supplies
-  // its own), tighter vertical rhythm.
-  card: {
-    backgroundColor: Colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.borderLight,
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,     // was Spacing.sm — more breathing room
-    paddingBottom: Spacing.md,
+  // THE ROW. No fill, no outline, no radius, no shadow, no left rail.
+  // It sits on the canvas and a single hairline separates it from the
+  // next one.
+  row: {
+    paddingHorizontal: Layout.rowPaddingHorizontal,
+    paddingVertical: Layout.rowPaddingVertical,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
     gap: Spacing.xs,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  avatar: {
-    width: 40, height: 40, borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-    alignItems: 'center', justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  avatarImg: { width: '100%', height: '100%' },
-  avatarText: { color: '#FFF', fontSize: Type.body.size, fontWeight: '700' },
   author: {
     fontSize: Type.cardTitle.size, lineHeight: Type.cardTitle.lineHeight,
     fontWeight: Type.cardTitle.weight, color: Colors.textPrimary,
   },
   time: {
     fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
-    color: Colors.textMuted, marginTop: 1,
+    color: Colors.textSecondary, marginTop: 1,
   },
   body: {
     fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
     color: Colors.textPrimary,
   },
-  // Bottom-right attribution. Italic + small + muted so it reads as
-  // a citation, not a competing voice. The Em-dash prefix is part of
-  // the stored string so editors can stylize the slug as needed.
+  // Right-aligned attribution. Italic and muted so it reads as a
+  // citation, not a competing voice.
   slugline: {
-    fontSize: 11.5,
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
     fontStyle: 'italic',
     color: Colors.textMuted,
     textAlign: 'right',
     marginTop: -2,
-    letterSpacing: 0.1,
   },
-  // Destination / burn marks. One row, under the byline, above whatever
-  // the drop is carrying.
+  // Destination / burn marks. One line, under the byline.
   markRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     flexWrap: 'wrap', marginTop: -2,
   },
-  markDot: { fontSize: 10, color: Colors.textMuted },
+  mark: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary,
+  },
+  markDot: { fontSize: Type.caption.size, color: Colors.textMuted },
 
-  // The seal. A recessed panel where the payload would be, with the one
-  // control that opens it.
+  // The seal. A well where the payload would be, with the one control
+  // that opens it.
   seal: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     marginTop: Spacing.xxs,
     paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
-    borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: Colors.border,
-    backgroundColor: Colors.surfaceLight,
+    borderRadius: Radius.control,
+    backgroundColor: Colors.surfaceAlt,
   },
 
+  // Media runs the full column width.
   mediaWrap: {
     position: 'relative', marginTop: Spacing.xs,
-    borderRadius: Radius.md, overflow: 'hidden',
-    backgroundColor: Colors.surfaceLight,
-    ...(Shadow.sm as object),
+    borderRadius: Radius.media, overflow: 'hidden',
+    backgroundColor: Colors.surfaceAlt,
   },
-  image: { width: '100%', aspectRatio: 4 / 3, backgroundColor: Colors.background },
+  image: { width: '100%', aspectRatio: 4 / 3, backgroundColor: Colors.surfaceAlt },
   videoBox: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
   videoThumb: { width: '100%', height: '100%', opacity: 0.7 },
   playOverlay: {
@@ -880,7 +873,7 @@ function makeStyles() { return StyleSheet.create({
   mediaCount: {
     position: 'absolute', top: 8, right: 8,
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.sm,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.control,
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   mediaCountText: {
@@ -894,32 +887,31 @@ function makeStyles() { return StyleSheet.create({
   },
   actionCount: {
     fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
-    color: Colors.textSecondary, fontWeight: '600',
+    color: Colors.textSecondary,
   },
 
-  // Fired lines. Quoted, indented off a left rule so they read as
-  // spoken text answering the slip rather than more body copy.
+  // Fired lines. Quoted, indented off a hairline rule so they read as
+  // spoken text answering the drop rather than more body copy.
   lineReactions: {
     marginTop: Spacing.xxs,
     gap: Spacing.xs,
   },
   firedRow: {
     borderLeftWidth: 2,
-    borderLeftColor: Colors.primary,
+    borderLeftColor: Colors.border,
     paddingLeft: Spacing.xs,
     paddingVertical: 2,
     gap: 2,
   },
   firedQuote: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: Type.body.size,
+    lineHeight: Type.body.lineHeight,
     fontStyle: 'italic',
     color: Colors.textPrimary,
   },
   firedAttr: {
-    fontSize: 11.5,
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
     color: Colors.textMuted,
-    letterSpacing: 0.1,
   },
 
   // Picker.
@@ -927,23 +919,20 @@ function makeStyles() { return StyleSheet.create({
   lineCard: {
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: Radius.control,
+    backgroundColor: Colors.surfaceAlt,
     marginBottom: Spacing.xs,
     gap: Spacing.xxs,
   },
   lineQuote: {
-    fontSize: Type.ui.size,
-    lineHeight: 20,
+    fontSize: Type.body.size,
+    lineHeight: Type.body.lineHeight,
     fontStyle: 'italic',
     color: Colors.textPrimary,
   },
   lineAttr: {
-    fontSize: 11.5,
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
     color: Colors.textMuted,
-    letterSpacing: 0.1,
   },
   pickerActions: {
     flexDirection: 'row',
@@ -954,17 +943,28 @@ function makeStyles() { return StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 10, paddingHorizontal: Spacing.xs,
   },
-  pickerBtnText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
+  pickerBtnText: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: Type.ui.weight, color: Colors.textSecondary,
+  },
 
   commentPreview: {
-    marginTop: Spacing.xxs, paddingTop: Spacing.xxs,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
+    marginTop: Spacing.xxs, paddingTop: Spacing.xs,
     gap: Spacing.xxs,
   },
   commentLine: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
-  commentName: { fontSize: Type.caption.size, fontWeight: '700', color: Colors.textPrimary, flexShrink: 0 },
-  commentBody: { fontSize: Type.caption.size, color: Colors.textSecondary, lineHeight: 17, flex: 1 },
-  commentMore: { fontSize: Type.caption.size, color: Colors.primary, fontWeight: '600', marginTop: 2 },
+  commentName: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary, flexShrink: 0,
+  },
+  commentBody: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary, flex: 1,
+  },
+  commentMore: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary, marginTop: 2,
+  },
 
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
@@ -972,16 +972,26 @@ function makeStyles() { return StyleSheet.create({
   },
   modalCard: {
     backgroundColor: Colors.surface,
-    borderRadius: Radius.lg, padding: Spacing.lg, gap: Spacing.xxs,
+    borderRadius: Radius.media, padding: Spacing.lg, gap: Spacing.xxs,
     width: '100%', maxWidth: 420,
     borderWidth: 1, borderColor: Colors.border,
-    ...(Shadow.lg as object),
   },
-  modalTitle: { fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.sm },
+  modalTitle: {
+    fontSize: Type.title.size, lineHeight: Type.title.lineHeight,
+    fontWeight: Type.title.weight, color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+  },
   scopeRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    paddingVertical: 10, paddingHorizontal: Spacing.xs, borderRadius: 8,
+    paddingVertical: 10, paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.control,
   },
-  scopeLabel: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
-  scopeHint: { fontSize: Type.caption.size, color: Colors.textMuted, marginTop: 1 },
+  scopeLabel: {
+    fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
+  scopeHint: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 1,
+  },
 }); }

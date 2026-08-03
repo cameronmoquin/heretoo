@@ -1,5 +1,9 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View, Text, StyleSheet, ActivityIndicator, RefreshControl, Pressable,
+  useWindowDimensions,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { PostCard } from './PostCard';
 import { ArtSlot } from './ArtSlot';
@@ -15,8 +19,16 @@ import { usePublicHuntCaches, type HuntCache } from '../../hooks/useHunt';
 import { useArtPrefs } from '../../stores/artPrefsStore';
 import { useBrokenArt } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
-import { Spacing } from '../../constants/design';
+import { Spacing, Radius, Shadow, Type } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 import { useFeedStore, type Post } from '../../stores/feedStore';
+
+/**
+ * Above this the column has room beside it for a floating control.
+ * Below it the tab bar already carries composing, so a second control
+ * would be one too many.
+ */
+const WIDE_VIEWPORT = 768;
 
 interface FeedListProps {
   posts: Post[];
@@ -57,6 +69,21 @@ export function FeedList({
   posts, isLoading, isRefreshing, hasMore, onRefresh, onLoadMore, onHeart,
 }: FeedListProps) {
   const styles = makeStyles();
+  // Floating compose. Wide viewports only. Each tap bumps the counter and
+  // the composer at the top of the column opens on the change.
+  const { width } = useWindowDimensions();
+  const wide = width >= WIDE_VIEWPORT;
+  const [composeSignal, setComposeSignal] = useState(0);
+  const fab = wide ? (
+    <Pressable
+      style={styles.fab}
+      onPress={() => setComposeSignal((n) => n + 1)}
+      accessibilityRole="button"
+      accessibilityLabel={`New ${Vocab.post}`}
+    >
+      <Ionicons name="create-outline" size={22} color={Colors.onPrimary} />
+    </Pressable>
+  ) : null;
   const { data: artRaw } = useArtFeed();
   const broken = useBrokenArt((s) => s.broken);
   // Strip already-known-broken pieces from the pool the feed sees so
@@ -274,8 +301,9 @@ export function FeedList({
   if (gateLoading && gateEmpty) {
     return (
       <View style={styles.center}>
-        <FeedComposer />
+        <FeedComposer openSignal={composeSignal} />
         <ActivityIndicator color={Colors.primary} style={{ marginTop: 24 }} />
+        {fab}
       </View>
     );
   }
@@ -283,12 +311,13 @@ export function FeedList({
   if (!gateLoading && gateEmpty) {
     return (
       <View style={{ flex: 1 }}>
-        <FeedComposer />
+        <FeedComposer openSignal={composeSignal} />
         {/* A fragment, not an instruction. Without it a loaded-empty feed
             is indistinguishable from one that failed to load. */}
         <View style={styles.center}>
           <Text style={styles.empty}>Empty.</Text>
         </View>
+        {fab}
       </View>
     );
   }
@@ -305,7 +334,7 @@ export function FeedList({
         When feedMix === 'posts_only' we skip the banner entirely.
       */}
       {showArtChrome && <ArtBanner slot="top" />}
-      <FeedComposer />
+      <FeedComposer openSignal={composeSignal} />
       <FlashList
         data={items}
         renderItem={renderItem}
@@ -327,6 +356,7 @@ export function FeedList({
         }
         contentContainerStyle={styles.list}
       />
+      {fab}
     </View>
   );
 }
@@ -346,5 +376,17 @@ function makeStyles() { return StyleSheet.create({
   center: {
     flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg, minHeight: 200,
   },
-  empty: { fontSize: 14, color: Colors.textMuted },
+  empty: {
+    fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+    color: Colors.textMuted,
+  },
+  // The one shadow in the product.
+  fab: {
+    position: 'absolute',
+    right: Spacing.lg, bottom: Spacing.lg,
+    width: 56, height: 56, borderRadius: Radius.pill,
+    backgroundColor: Colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+    ...(Shadow.float as object),
+  },
 }); }

@@ -19,8 +19,6 @@ import { showAlert, showConfirm } from '../../../lib/alert';
 import { FeedComposer } from '../../../components/feed/FeedComposer';
 import { PostCard } from '../../../components/feed/PostCard';
 import { FamilyChatPanel } from '../../../components/family/FamilyChatPanel';
-import { FamilyWallpaperVoting } from '../../../components/family/FamilyWallpaperVoting';
-import { WallpaperBackground } from '../../../components/shared/WallpaperBackground';
 import { SubjectsPanel } from '../../../components/subjects/SubjectsPanel';
 import { FamilyTriviaPanel } from '../../../components/trivia/FamilyTriviaPanel';
 import { useStartVideoCall } from '../../../hooks/useStartVideoCall';
@@ -28,7 +26,6 @@ import { Button } from '../../../components/shared/Button';
 import { Eyebrow } from '../../../components/shared/Eyebrow';
 import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type } from '../../../constants/design';
-import { Gen } from '../../../constants/generations';
 import { Vocab } from '../../../constants/vocab';
 
 type Tab = 'feed' | 'subjects' | 'chat' | 'trivia' | 'about';
@@ -152,11 +149,6 @@ export default function FamilyDetail() {
 
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
-      {/* Crew-scoped wallpaper. Overrides the visitor's personal one
-          with whatever the crew has voted on. Falls back to the owner's
-          personal wallpaper when no votes exist. Renders absolute below
-          the page chrome. The familyId prop is a DB identifier and stays. */}
-      <WallpaperBackground familyId={id} />
       <View style={s.header}>
         <TouchableOpacity
           style={s.backBtn}
@@ -303,11 +295,6 @@ export default function FamilyDetail() {
 
         {tab === 'about' && (
           <>
-            {/* Wallpaper voting. Every active crew member can pick.
-                Plurality wins; ties break toward most recent vote.
-                Default = the crew owner's personal wallpaper. */}
-            <FamilyWallpaperVoting familyId={id} />
-
             {/* Active rename proposal. Shown to everyone in the crew. */}
             {pendingRename?.proposal && (
               <View style={s.proposalCard}>
@@ -647,7 +634,7 @@ function makeStyles() { return StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   modalCard: {
-    backgroundColor: Colors.surface, borderRadius: Gen.radius,
+    backgroundColor: Colors.surface, borderRadius: Radius.control,
     width: '100%', maxWidth: 420, padding: 18, gap: Spacing.xs,
     borderWidth: 1, borderColor: Colors.border,
   },

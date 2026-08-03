@@ -2,9 +2,7 @@
  * GlobalWebStyles — the handful of document-level rules React Native
  * Web can't express from a component style.
  *
- * This is what survived the wallpaper. The old WallpaperBackground
- * injected one stylesheet that did four unrelated jobs; three of them
- * were layout, not decoration, so they moved here:
+ * Four document-level jobs, all layout:
  *
  *   1. the Inter stack on html / body
  *   2. zero body margin

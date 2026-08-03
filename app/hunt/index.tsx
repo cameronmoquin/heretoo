@@ -17,7 +17,6 @@ import {
   useMyHuntCaches, usePublicHuntCaches, huntUrl, type HuntCache,
 } from '../../hooks/useHunt';
 import { showAlert } from '../../lib/alert';
-import { GlitchText } from '../../components/shared/GlitchText';
 import { Button } from '../../components/shared/Button';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { RailCard } from '../../components/shared/RailCard';
@@ -61,7 +60,7 @@ export default function HuntHome() {
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <ScreenHeader showBack style={s.header} />
-        <GlitchText style={s.glitchTitle}>DEADDROP</GlitchText>
+        <Text style={s.title}>DEADDROP</Text>
 
         <Text style={s.lede}>
           Leave a photo at a fixed set of coordinates. It lands in the feed.
@@ -136,7 +135,7 @@ function makeStyles() {
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
     scroll: { padding: Spacing.lg, paddingBottom: 100, gap: Spacing.lg },
     header: { paddingHorizontal: 0 },
-    glitchTitle: {
+    title: {
       fontSize: Type.display.size, lineHeight: Type.display.lineHeight,
       fontWeight: '800', color: Colors.primary, letterSpacing: 2,
     },
