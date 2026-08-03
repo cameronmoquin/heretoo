@@ -1,13 +1,19 @@
 /**
- * Eyebrow - the uppercase kicker.
+ * Eyebrow — RETIRED AS A LOOK, kept as a shim.
  *
- * One canonical tracking for every section marker in the app. Size and
- * letterSpacing come from Type.eyebrow. Color defaults muted. Pass
- * accentColor to color it (the rail kicker sits in the edge color).
- * On web the skin's display font carries through.
+ * docs/UI_SYSTEM.md §5 retires the uppercase kicker: no eyebrows, no
+ * section markers, muted caption or nothing. PostCard already did this
+ * by hand in phase 2, replacing <Eyebrow> with a plain muted caption.
  *
- * Replaces the hand-set 0.5 / 1.6 / 2 / 2.4 trackings scattered across
- * the screens.
+ * Deleting the component instead would have meant rewriting every JSX
+ * call site across 32 files and inventing a local style in each — a lot
+ * of visually-consequential surgery for a change that is, in the end,
+ * one text style. So the style moved here. Every caller conforms at
+ * once, and removing the component later is a pure refactor with no
+ * visual consequence, file by file, whenever anyone is in there.
+ *
+ * accentColor is now ignored on purpose. The system has one accent, the
+ * heart, and it is not for section markers.
  */
 
 import React from 'react';
@@ -23,8 +29,8 @@ interface EyebrowProps {
   style?: TextStyle;
 }
 
-export function Eyebrow({ children, accentColor, numberOfLines, style }: EyebrowProps) {
-  const s = makeStyles(accentColor ?? Colors.textMuted);
+export function Eyebrow({ children, numberOfLines, style }: EyebrowProps) {
+  const s = makeStyles();
   return (
     <Text style={[s.eyebrow, style]} numberOfLines={numberOfLines}>
       {children}
@@ -32,15 +38,14 @@ export function Eyebrow({ children, accentColor, numberOfLines, style }: Eyebrow
   );
 }
 
-function makeStyles(color: string) { return StyleSheet.create({
+function makeStyles() { return StyleSheet.create({
   eyebrow: {
-    fontSize: Type.eyebrow.size,
-    lineHeight: Type.eyebrow.lineHeight,
-    // The rail kickers render at 800. Match them.
-    fontWeight: '800',
-    letterSpacing: Type.eyebrow.letterSpacing,
-    textTransform: 'uppercase',
-    color,
+    // Caption, muted, sentence case. Was 800-weight uppercase on
+    // Type.eyebrow tracking, in an accent colour.
+    fontSize: Type.caption.size,
+    lineHeight: Type.caption.lineHeight,
+    fontWeight: '400',
+    color: Colors.textMuted,
     ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
   },
 }); }
