@@ -103,23 +103,32 @@ export default function WelcomeScreen() {
   const doSignup = async (e: string, pw: string, code: string, handle: string) => {
     setLoading(true);
     try {
-      // 1. Validate the invite code first — fail fast before
-      //    creating an auth user we'd have to clean up.
-      const { data: invite } = await supabase
-        .from('invites')
-        .select('id, accepted_by')
-        .eq('invite_code', code)
-        .maybeSingle();
-      if (!invite) {
+      // 1. Validate the invite code first — fail fast before creating an
+      //    auth user we would have to clean up.
+      //
+      //    THIS USED TO QUERY public.invites, WHICH DOES NOT EXIST. The
+      //    concept rewrite dropped that table and this call was never
+      //    repointed. Worse, it destructured only `data` and ignored
+      //    `error`, so the missing relation surfaced as data === null,
+      //    fell into the branch below, and told every single person
+      //    "Invite code not found. Check the code with whoever sent it."
+      //    Signup was impossible for everyone, with any code, and the
+      //    copy blamed the code.
+      //
+      //    The real source of truth is families.invite_code, reachable
+      //    through the same anon-callable RPC /join uses. Errors are
+      //    read now — a broken lookup must never again masquerade as a
+      //    bad code.
+      const { data: found, error: lookupErr } = await supabase
+        .rpc('find_family_by_invite_code', { code });
+      if (lookupErr) throw lookupErr;
+      const crew = (Array.isArray(found) ? found[0] : found) ?? null;
+      if (!crew) {
         setErrorMsg(
           code.length < 4
             ? 'Invite code is too short. Check the code or leave it blank to sign in.'
             : 'Invite code not found. Check the code with whoever sent it.',
         );
-        return;
-      }
-      if (invite.accepted_by) {
-        setErrorMsg('That invite code has already been used.');
         return;
       }
 
@@ -157,11 +166,27 @@ export default function WelcomeScreen() {
         // can change handle later in /profile/settings.
       }
 
-      // 4. Mark the invite code as used.
-      await supabase
-        .from('invites')
-        .update({ accepted_by: userId, accepted_at: new Date().toISOString() })
-        .eq('id', invite.id);
+      // 4. Join the crew the code belongs to.
+      //
+      //    Was an update against public.invites marking the code used —
+      //    same dead table, and it silently did nothing. A crew invite
+      //    code is not consumed by one person anyway; it is the crew's
+      //    standing code, which is why /family/[id] shows it with a copy
+      //    button. So the new account joins rather than burning it.
+      //
+      //    accept_family_invite is SECURITY DEFINER because a brand-new
+      //    joiner satisfies neither branch of the family_members insert
+      //    policy, and it is idempotent. Non-fatal: an account that
+      //    exists but did not join is recoverable from /join/{code},
+      //    whereas throwing here would strand a created auth user.
+      const { error: joinErr } = await supabase.rpc('accept_family_invite', {
+        invite_code_in: code,
+        relationship_label_in: 'family',
+      });
+      if (joinErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[signup] account created but crew join failed', joinErr.message);
+      }
 
       router.replace('/(tabs)/feed' as any);
     } catch (err: any) {
