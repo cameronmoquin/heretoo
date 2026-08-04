@@ -77,6 +77,23 @@ interface Persisted {
 
 const STORAGE_KEY = 'heretoo:art-prefs';
 
+/**
+ * What a first-time viewer sees: 20th century onward.
+ *
+ * The ask was "pop art, modern art, Warhol type stuff". Pop art is not
+ * reachable as a label — across 104,183 works, `school` matching 'pop'
+ * returns two, and no row carries a 'pop art' genre at all. These
+ * collections are catalogued by object, period and place, not by
+ * movement, so there is no pop-art axis to filter on and defaulting to
+ * one would show an empty gallery.
+ *
+ * Modern + Contemporary is the closest thing the data actually supports:
+ * it is the era where that work lives, and it is a bucket the gallery
+ * can populate. It stays a default, not a rule — every era is still one
+ * tap away in Art preferences.
+ */
+const DEFAULT_ERAS: ArtEra[] = ['modern', 'contemporary'];
+
 function loadInitial(): Persisted {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     try {
@@ -98,7 +115,7 @@ function loadInitial(): Persisted {
       }
     } catch {}
   }
-  return { schools: [], eras: [], genres: [], mediums: [], sources: [], feedMix: 'art_only' };
+  return { schools: [], eras: [...DEFAULT_ERAS], genres: [], mediums: [], sources: [], feedMix: 'art_only' };
 }
 
 function persist(state: Persisted) {

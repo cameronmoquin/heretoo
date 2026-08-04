@@ -64,6 +64,14 @@ Do not proceed to the real phone until that round trip works.
 
 ### 1. Build the kiosk APK
 
+**A working build already exists** at
+`D:\Photos from Samsung s22\_apks\heretoo-kiosk\heretoo-kiosk-v1.0.0-build1.apk`
+(117 MB, built 2026-08-03). Verified to contain the HOME intent filter, the
+device admin receiver, `QUERY_ALL_PACKAGES`, and the kiosk module classes. Skip
+to step 2 unless you have changed native code since — JS-only changes ship over
+the air, see "Updating the phone later".
+
+
 ```bash
 HERETOO_KIOSK=1 npx eas build --profile kiosk --platform android
 ```

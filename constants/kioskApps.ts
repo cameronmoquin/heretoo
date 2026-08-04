@@ -1,14 +1,10 @@
 /**
  * The allowlist for Jude's phone.
  *
- * One source of truth, read by two consumers that must never disagree:
- *   - KioskGate passes it to provision() → setLockTaskPackages, deciding what
- *     is *permitted* to run inside lock task.
- *   - AppShelf passes it to getAppInfo() → the tiles, deciding what is
- *     *reachable*.
- *
- * If these two lists ever drift, you get either a tile that drops the device
- * out of lock task when tapped, or a permitted app with no way to open it.
+ * This is the SEED, not the live list. Once the parent panel's picker has
+ * written an allowlist, lib/kiosk-allowlist.ts outranks this file — see there.
+ * This is what a freshly provisioned phone starts with, and what "Reset" in
+ * the picker falls back to.
  *
  * Every entry below was verified against the target device (SM-S901U,
  * Android 16) with `adb shell pm list packages`. Do not add a package you have
@@ -49,7 +45,28 @@ export const KIOSK_HIDDEN_PACKAGES: string[] = [
   'com.sec.android.app.camera',
 ];
 
-/** Packages that should appear as tiles on the shelf. */
-export const KIOSK_SHELF_PACKAGES: string[] = KIOSK_ALLOWED_PACKAGES.filter(
-  (p) => !KIOSK_HIDDEN_PACKAGES.includes(p)
-);
+/**
+ * Packages hidden outright via DevicePolicyManager.setApplicationHidden.
+ *
+ * Belt and braces. Lock task already refuses to foreground anything outside
+ * KIOSK_ALLOWED_PACKAGES, and there is no app drawer to launch them from — but
+ * that protection lasts exactly as long as lock task does. If it drops (a
+ * crash, or a parent unlock), the phone is briefly ordinary Android with a
+ * store and a browser on it. Hiding survives that window.
+ *
+ * Storefronts and browsers only. NOT com.google.android.gms — Play Services is
+ * a dependency of half these apps, and hiding it would break Duolingo, Chess,
+ * and Spotify rather than lock anything down.
+ *
+ * Names are the standard ones for a Samsung device; unverified against this
+ * handset because it was unplugged when this was written. A name that does not
+ * exist is skipped silently, so a wrong guess costs nothing but should still
+ * be corrected — check with `adb shell pm list packages` on provisioning day.
+ */
+export const KIOSK_BLOCKED_PACKAGES: string[] = [
+  'com.android.vending', // Google Play Store
+  'com.sec.android.app.samsungapps', // Galaxy Store
+  'com.android.chrome',
+  'com.sec.android.app.sbrowser', // Samsung Internet
+  'com.google.android.youtube',
+];

@@ -94,6 +94,10 @@ export default function MemoirScreen() {
   const [answer, setAnswer] = useState('');
   const [turns, setTurns] = useState(0);
   const [view, setView] = useState<'interview' | 'library'>('interview');
+  // The "More" shelf under the room nav. Collapsed by default — the
+  // point of moving Babybook here was to stop it competing for
+  // attention, so opening on it would undo the move.
+  const [moreOpen, setMoreOpen] = useState(false);
   const [warningAck, setWarningAck] = useState<Record<string, boolean>>({});
   // Terminal state: the session has wound down. Holds the closing
   // summary paragraph. The composer is hidden; the user reads the
@@ -357,7 +361,37 @@ export default function MemoirScreen() {
               />
             </>
           )}
+          {/* More. Babybook lives under here rather than in the room
+              list: it is a memoir of someone else's first years, not a
+              room of its own, and it was competing for a top-level slot
+              with the rooms people actually open. Everything filed here
+              is a memoir that is not YOUR memoir. */}
+          <Button
+            title={moreOpen ? 'Less' : 'More'}
+            variant="ghost"
+            size="sm"
+            onPress={() => setMoreOpen((v) => !v)}
+            icon={
+              <Ionicons
+                name={moreOpen ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline'}
+                size={14}
+                color={Colors.textSecondary}
+              />
+            }
+          />
         </View>
+
+        {moreOpen && (
+          <View style={s.nav}>
+            <Button
+              title="Babybook"
+              variant="outline"
+              size="sm"
+              onPress={() => router.push('/babybook')}
+              icon={<Ionicons name="happy-outline" size={14} color={Colors.primary} />}
+            />
+          </View>
+        )}
 
         {/* Terminal state — the session wound down. Read the recap,
             then step away or begin again. No composer here. */}

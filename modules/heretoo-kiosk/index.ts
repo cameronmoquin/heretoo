@@ -26,13 +26,26 @@ export type KioskAppInfo = {
   icon: string | null;
 };
 
+/** An installed, launchable app as offered in the parent panel's picker. */
+export type KioskLaunchableApp = {
+  packageName: string;
+  label: string;
+  /** Preinstalled system app rather than something you or Play installed. */
+  isSystem: boolean;
+};
+
 type KioskNative = {
   getStatus(): KioskStatus;
-  provision(allowedPackages: string[] | null): Promise<{ allowedPackages: string[] }>;
+  provision(
+    allowedPackages: string[] | null,
+    blockedPackages: string[] | null
+  ): Promise<{ allowedPackages: string[]; hiddenPackages: string[] }>;
+  setPackagesHidden(packages: string[], hidden: boolean): Promise<string[]>;
   lock(): Promise<boolean>;
   unlock(): Promise<boolean>;
   setRestrictions(keys: string[], enabled: boolean): Promise<boolean>;
   getAppInfo(packages: string[]): KioskAppInfo[];
+  getLaunchableApps(): KioskLaunchableApp[];
   launchApp(packageName: string): Promise<boolean>;
   openWifiSettings(): Promise<boolean>;
   releaseDeviceOwner(): Promise<boolean>;
@@ -71,16 +84,37 @@ export function getStatus(): KioskStatus {
  *
  * @param allowedPackages extra packages permitted inside lock task, e.g.
  *   ['com.samsung.android.dialer'] so an emergency call can foreground.
+ * @param blockedPackages packages hidden outright — storefronts and browsers.
  */
-export async function provision(allowedPackages: string[] = []): Promise<boolean> {
+export async function provision(
+  allowedPackages: string[] = [],
+  blockedPackages: string[] = []
+): Promise<boolean> {
   if (!native) return false;
   try {
-    await native.provision(allowedPackages);
+    await native.provision(allowedPackages, blockedPackages);
     return true;
   } catch {
     // Not device owner yet — expected before the adb step. Caller reads
     // getStatus() to decide what to show.
     return false;
+  }
+}
+
+/**
+ * Hide or restore packages. Returns the packages that actually changed, which
+ * may be shorter than what was asked for: names that are not installed, and
+ * system packages Android refuses to hide, are skipped.
+ */
+export async function setPackagesHidden(
+  packages: string[],
+  hidden: boolean
+): Promise<string[]> {
+  if (!native) return [];
+  try {
+    return await native.setPackagesHidden(packages, hidden);
+  } catch {
+    return [];
   }
 }
 
@@ -123,6 +157,19 @@ export function getAppInfo(packages: string[]): KioskAppInfo[] {
   if (!native) return [];
   try {
     return native.getAppInfo(packages);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Every launchable app on the device, for the parent panel's picker. Excludes
+ * HereToo itself and carries no icons — see the native side for why.
+ */
+export function getLaunchableApps(): KioskLaunchableApp[] {
+  if (!native) return [];
+  try {
+    return native.getLaunchableApps();
   } catch {
     return [];
   }

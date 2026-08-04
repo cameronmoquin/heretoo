@@ -17,7 +17,9 @@ import java.io.ByteArrayOutputStream
 import android.os.UserManager
 import android.provider.Settings
 import expo.modules.kotlin.Promise
-import expo.modules.kotlin.Queues
+// Queues lives under .functions, not the package root — see
+// expo-modules-core/.../kotlin/functions/BaseAsyncFunctionComponent.kt
+import expo.modules.kotlin.functions.Queues
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -99,7 +101,7 @@ class HereTooKioskModule : Module() {
      * allowedPackages: extra packages permitted inside lock task alongside us
      * (e.g. the dialer). Our own package is always included.
      */
-    AsyncFunction("provision") { allowedPackages: List<String>?, promise: Promise ->
+    AsyncFunction("provision") { allowedPackages: List<String>?, blockedPackages: List<String>?, promise: Promise ->
       if (!isOwner) {
         promise.reject(
           "ERR_NOT_DEVICE_OWNER",
@@ -141,7 +143,16 @@ class HereTooKioskModule : Module() {
       // Keep the screen from sleeping into a keyguard we cannot dismiss.
       dpm.setKeyguardDisabled(adminComponent, true)
 
-      promise.resolve(mapOf("allowedPackages" to packages.toList()))
+      // Storefronts and browsers off the device entirely, not merely
+      // unreachable. Lock task already blocks them, but only while it holds.
+      val hidden = hidePackages(blockedPackages ?: emptyList(), true)
+
+      promise.resolve(
+        mapOf(
+          "allowedPackages" to packages.toList(),
+          "hiddenPackages" to hidden
+        )
+      )
     }
 
     /**
@@ -200,6 +211,19 @@ class HereTooKioskModule : Module() {
     }
 
     /**
+     * Hide or restore packages. Exposed separately from provision() so the
+     * parent panel can bring the Play Store back — needed if a sideloaded app
+     * turns out to require it, or simply to install something later.
+     */
+    AsyncFunction("setPackagesHidden") { packages: List<String>, hidden: Boolean, promise: Promise ->
+      if (!isOwner) {
+        promise.reject("ERR_NOT_DEVICE_OWNER", "Not device owner.", null)
+        return@AsyncFunction
+      }
+      promise.resolve(hidePackages(packages, hidden))
+    }
+
+    /**
      * Resolve display metadata for the app shelf. Skips anything not
      * installed rather than erroring, so a whitelist entry for an app that
      * failed to sideload simply does not appear as a tile.
@@ -225,6 +249,38 @@ class HereTooKioskModule : Module() {
           null
         }
       }
+    }
+
+    /**
+     * Every launchable app on the device, for the parent panel's picker.
+     *
+     * Excludes ourselves — HereToo is the launcher and is always permitted, so
+     * offering it as a tickable choice would only invite someone to untick the
+     * one package that must never leave the list.
+     *
+     * Sorted by label so the picker is stable between openings. Icons are
+     * omitted here: this can run to 200+ apps, and 200 base64 PNGs is several
+     * megabytes across the bridge for a list that mostly scrolls past.
+     */
+    Function("getLaunchableApps") {
+      val pm = context.packageManager
+      val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+
+      pm.queryIntentActivities(home, 0)
+        .mapNotNull { resolved ->
+          val pkg = resolved.activityInfo.packageName
+          if (pkg == context.packageName) return@mapNotNull null
+          mapOf(
+            "packageName" to pkg,
+            "label" to resolved.loadLabel(pm).toString(),
+            "isSystem" to (
+              (resolved.activityInfo.applicationInfo.flags and
+                android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+              )
+          )
+        }
+        .distinctBy { it["packageName"] }
+        .sortedBy { (it["label"] as String).lowercase() }
     }
 
     /**
@@ -286,6 +342,27 @@ class HereTooKioskModule : Module() {
       promise.resolve(true)
     }.runOnQueue(Queues.MAIN)
   }
+
+  /**
+   * Apply setApplicationHidden across a list, returning only the packages that
+   * actually changed.
+   *
+   * Per-package try/catch on purpose: the list is written against a standard
+   * Samsung image, and a name that is not installed throws
+   * NameNotFoundException. One wrong guess must not abort provisioning and
+   * leave the rest of the device unconfigured. Android also refuses to hide
+   * certain critical system packages and returns false rather than throwing —
+   * those are filtered out too, so the return value is an honest record of
+   * what happened rather than an echo of what was requested.
+   */
+  private fun hidePackages(packages: List<String>, hidden: Boolean): List<String> =
+    packages.filter { pkg ->
+      try {
+        dpm.setApplicationHidden(adminComponent, pkg, hidden)
+      } catch (e: Exception) {
+        false
+      }
+    }
 
   /**
    * Render an app icon to a base64 PNG data URI so JS can put it straight in

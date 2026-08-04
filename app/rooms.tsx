@@ -41,7 +41,6 @@ export default function RoomsScreen() {
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
     { icon: 'mail', label: 'Letters', route: '/letter' },
     { icon: 'create', label: 'Memoir', route: '/memoir' },
-    { icon: 'happy', label: 'Babybook', route: '/babybook' },
     { icon: 'lock-closed', label: 'Journal', route: '/journal' },
     // The player had no door on mobile at all. The radio row above is a
     // play/pause control and nothing else, and the only route into

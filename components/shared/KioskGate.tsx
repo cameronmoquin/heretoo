@@ -43,10 +43,20 @@ import {
   lock,
   unlock,
   openWifiSettings,
+  setPackagesHidden,
+  setRestrictions,
   isKioskBuild,
   type KioskStatus,
 } from '../../modules/heretoo-kiosk';
-import { KIOSK_ALLOWED_PACKAGES } from '../../constants/kioskApps';
+import { KIOSK_BLOCKED_PACKAGES } from '../../constants/kioskApps';
+import { loadAllowlist } from '../../lib/kiosk-allowlist';
+import { KioskAppPicker } from './KioskAppPicker';
+
+/**
+ * Restrictions the install toggle lifts. Both are re-applied by the next
+ * enforce(), so "allow installs" is a window, not a setting.
+ */
+const INSTALL_RESTRICTIONS = ['no_install_apps', 'no_install_unknown_sources'];
 
 const PIN_KEY = 'heretoo.kiosk.parentPin';
 const TAPS_REQUIRED = 6;
@@ -59,16 +69,27 @@ export function KioskGate() {
   const [entry, setEntry] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
+  /** How many blocked packages the parent has temporarily restored. */
+  const [restored, setRestored] = useState<number | null>(null);
+  const [installsOpen, setInstallsOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const taps = useRef<number[]>([]);
   const styles = makeStyles();
 
   const refresh = useCallback(() => setStatus(getStatus()), []);
 
-  /** Re-assert the lock. Safe to call repeatedly. */
+  /**
+   * Re-assert the lock. Safe to call repeatedly.
+   *
+   * Reads the allowlist from storage rather than the compiled constant, so an
+   * app ticked in the picker takes effect on the next enforce() — which is
+   * every cold start, every foreground, and the Done button.
+   */
   const enforce = useCallback(async () => {
     if (!isKioskBuild) return;
-    await provision(KIOSK_ALLOWED_PACKAGES);
+    const allowed = await loadAllowlist();
+    await provision(allowed, KIOSK_BLOCKED_PACKAGES);
     await lock();
     refresh();
   }, [refresh]);
@@ -107,7 +128,11 @@ export function KioskGate() {
     setAuthed(false);
     setEntry('');
     setError(null);
-    // Whatever the parent did, end back in the kiosk.
+    setRestored(null);
+    setInstallsOpen(false);
+    // Whatever the parent did, end back in the kiosk. enforce() re-hides the
+    // stores and re-applies the install restrictions, so every temporary
+    // loosening above closes here whether or not the parent tidied up.
     enforce();
   };
 
@@ -265,9 +290,56 @@ export function KioskGate() {
                   <Text style={styles.ghostBtnText}>Open Wi-Fi settings</Text>
                 </TouchableOpacity>
 
+                {/* Storefronts and browsers are hidden at provision time.
+                    This brings them back for as long as the panel says so —
+                    needed to install something, or if a sideloaded Play app
+                    turns out to check for the Store. "Re-apply lock now" and
+                    the next cold start both hide them again. */}
+                <TouchableOpacity
+                  onPress={async () => {
+                    const changed = await setPackagesHidden(
+                      KIOSK_BLOCKED_PACKAGES,
+                      false
+                    );
+                    setRestored(changed.length);
+                  }}
+                  style={[styles.btn, styles.ghostBtn, styles.fullBtn]}
+                >
+                  <Text style={styles.ghostBtnText}>
+                    {restored === null
+                      ? 'Restore Play Store & browsers'
+                      : `Restored ${restored} — hidden again on re-lock`}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Sideloading needs these lifted; adb install is subject to
+                    the same user restrictions the UI installer is. */}
+                <TouchableOpacity
+                  onPress={async () => {
+                    await setRestrictions(INSTALL_RESTRICTIONS, false);
+                    setInstallsOpen(true);
+                  }}
+                  style={[styles.btn, styles.ghostBtn, styles.fullBtn]}
+                >
+                  <Text style={styles.ghostBtnText}>
+                    {installsOpen
+                      ? 'Installs open — blocked again on re-lock'
+                      : 'Allow installs (for ADB sideloading)'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setPickerOpen(true)}
+                  style={[styles.btn, styles.ghostBtn, styles.fullBtn]}
+                >
+                  <Text style={styles.ghostBtnText}>Choose apps…</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={async () => {
                     await enforce();
+                    setRestored(null);
+                    setInstallsOpen(false);
                     refresh();
                   }}
                   style={[styles.btn, styles.ghostBtn, styles.fullBtn]}
@@ -286,6 +358,16 @@ export function KioskGate() {
           </View>
         </View>
       </Modal>
+
+      <KioskAppPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSaved={() => {
+          // Push the new allowlist into setLockTaskPackages immediately —
+          // otherwise a freshly ticked app gets a tile it cannot launch.
+          enforce();
+        }}
+      />
     </>
   );
 }

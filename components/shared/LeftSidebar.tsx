@@ -127,12 +127,6 @@ export function LeftSidebar() {
         active={pathname.startsWith('/memoir')}
         onPress={() => router.push('/memoir' as any)}
       />
-      <NavRow
-        icon={pathname.startsWith('/babybook') ? 'happy' : 'happy-outline'}
-        label="Babybook"
-        active={pathname.startsWith('/babybook')}
-        onPress={() => router.push('/babybook' as any)}
-      />
       {/* Journal. It sits with Memoir and Babybook because it is the
           third of the writing rooms, and it was missing from this
           sidebar entirely — reachable on mobile through /rooms and on

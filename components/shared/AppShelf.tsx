@@ -34,7 +34,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Radius, Spacing, Type, Heights, Motion } from '../../constants/design';
-import { KIOSK_SHELF_PACKAGES } from '../../constants/kioskApps';
+import { KIOSK_HIDDEN_PACKAGES } from '../../constants/kioskApps';
+import { loadAllowlist } from '../../lib/kiosk-allowlist';
 import { getAppInfo, launchApp, type KioskAppInfo } from '../../modules/heretoo-kiosk';
 
 /**
@@ -69,9 +70,17 @@ export function AppShelf({ previewApps }: Props = {}) {
   const fade = useRef(new Animated.Value(0)).current;
 
   // Re-read on mount rather than caching to module scope: apps get sideloaded
-  // during provisioning and should appear on next launch without a rebuild.
+  // during provisioning and ticked in the parent picker afterwards, and both
+  // should show up on next launch without a rebuild.
   useEffect(() => {
-    if (!previewApps) setApps(getAppInfo(KIOSK_SHELF_PACKAGES));
+    if (!previewApps) {
+      loadAllowlist().then((allowed) => {
+        // Telephony and camera are permitted but tile-less — they are reached
+        // through HereToo's own calling UI and composer.
+        const shelf = allowed.filter((p) => !KIOSK_HIDDEN_PACKAGES.includes(p));
+        setApps(getAppInfo(shelf));
+      });
+    }
     Animated.timing(fade, {
       toValue: 1,
       duration: Motion.base,

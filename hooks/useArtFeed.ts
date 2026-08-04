@@ -14,7 +14,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import {
-  useArtPrefs, parseYear, yearToEra, normalizeSchool, type ArtEra,
+  useArtPrefs, parseYear, yearToEra, normalizeSchool, ERA_RANGES, type ArtEra,
 } from '../stores/artPrefsStore';
 
 export interface ArtWork {
@@ -46,6 +46,23 @@ export interface ArtWork {
 // Bumped to 5000 so the user's filter actually sees the whole gallery.
 const POOL_SIZE = 5000;
 
+/**
+ * Schema errors that mean migration 069 has not run yet: no such column
+ * (PGRST204 / 42703). Anything else is a real failure and is rethrown.
+ */
+const ART_SCHEMA_CODES = new Set(['PGRST204', '42703']);
+
+let yearStartWarned = false;
+function warnYearStartOnce(e: any) {
+  if (yearStartWarned) return;
+  yearStartWarned = true;
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[art] year_start missing; era filtering fell back to the client pool. Run migration 069.',
+    e?.message ?? e,
+  );
+}
+
 export function useArtFeed() {
   // Read prefs as primitives so the query key changes when they do.
   const schools = useArtPrefs((s) => s.schools);
@@ -74,12 +91,51 @@ export function useArtFeed() {
             .limit(20)).data ?? []
         : [];
 
-      const { data: art, error } = await supabase
-        .from('art_works')
-        .select('id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre,medium')
-        .neq('source', 'ad')
-        .limit(POOL_SIZE);
-      if (error) throw error;
+      // ERA IS FILTERED IN SQL (migration 069). It used to be bucketed
+      // in JS off parseYear(year_created), which meant an era could only
+      // ever choose from whatever POOL_SIZE rows came back — about 5% of
+      // a 104,000-work gallery — so a narrow era returned a handful of
+      // pieces while thousands sat unqueried. year_start is a real
+      // integer now, so the range goes to the database and the pool is
+      // 5000 rows OF THE CHOSEN ERAS rather than 5000 rows of anything.
+      //
+      // Works whose date string parsed to nothing have a null
+      // year_start and drop out of an era filter, exactly as they did
+      // when yearToEra returned null for them.
+      const COLS = 'id,source,source_id,title,artist,year_created,storage_path,thumb_path,license,source_url,description,width,height,school,genre,medium';
+
+      // One OR across the selected eras' [start, end] ranges.
+      const eraClauses = eras
+        .map((e) => ERA_RANGES[e])
+        .filter(Boolean)
+        .map(([lo, hi]) => `and(year_start.gte.${lo},year_start.lte.${hi})`);
+
+      const base = () => supabase.from('art_works').select(COLS).neq('source', 'ad');
+
+      let art: any[] | null = null;
+      // DEGRADE, same pattern as useFeed's direct-drop read: migration
+      // 069 is run by hand, and until it lands there is no year_start
+      // column. Rather than throw and blank every art slot in the app,
+      // a schema error falls back to the old behaviour — unfiltered
+      // pool, eras bucketed in JS. Only schema codes fall back; a
+      // timeout still surfaces as an error rather than silently
+      // downgrading the gallery for the rest of the session.
+      let eraFilteredInSql = eraClauses.length > 0;
+      if (eraFilteredInSql) {
+        const res = await base().or(eraClauses.join(',')).limit(POOL_SIZE);
+        if (res.error) {
+          if (!ART_SCHEMA_CODES.has(String((res.error as any).code))) throw res.error;
+          warnYearStartOnce(res.error);
+          eraFilteredInSql = false;
+        } else {
+          art = res.data as any[];
+        }
+      }
+      if (art === null) {
+        const res = await base().limit(POOL_SIZE);
+        if (res.error) throw res.error;
+        art = res.data as any[];
+      }
 
       const fullPool = [...ads, ...(art ?? [])] as ArtWork[];
 
@@ -93,7 +149,13 @@ export function useArtFeed() {
         erasSet.size + schoolsSet.size + genresSet.size + mediumsSet.size + sourcesSet.size > 0;
 
       let pool = fullPool.filter((w) => {
-        if (erasSet.size > 0) {
+        // Era is normally applied in SQL, and re-checking it here would
+        // be worse than redundant: the SQL parser and parseYear disagree
+        // on the awkward strings, so a work the query correctly returned
+        // could be discarded for failing a second, different opinion of
+        // its own date. This runs only on the pre-069 fallback path,
+        // where nothing filtered by era at all.
+        if (!eraFilteredInSql && erasSet.size > 0) {
           const era = yearToEra(parseYear(w.year_created));
           if (!era || !erasSet.has(era)) return false;
         }

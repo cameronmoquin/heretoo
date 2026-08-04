@@ -1,25 +1,28 @@
-apply plugin: 'com.android.library'
+/**
+ * Matches the shape every first-party Expo module in node_modules uses (see
+ * expo-secure-store/android/build.gradle). `expo-module-gradle-plugin` supplies
+ * compileSdk, minSdk, the Kotlin toolchain, and the expo-modules-core
+ * dependency.
+ *
+ * An earlier version of this file hand-rolled that config and omitted
+ * `compileSdk`, which fails configuration with:
+ *   "Android Gradle Plugin: project ':heretoo-kiosk' does not specify
+ *    compileSdk in build.gradle"
+ * Do not reintroduce a bare `apply plugin: 'com.android.library'` here.
+ */
+
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
 
 group = 'social.heretoo.kiosk'
 version = '0.1.0'
 
-def expoModulesCorePlugin = new File(
-  project(":expo-modules-core").projectDir.absolutePath,
-  "ExpoModulesCorePlugin.gradle"
-)
-apply from: expoModulesCorePlugin
-applyKotlinExpoModulesCorePlugin()
-useCoreDependencies()
-
 android {
   namespace 'social.heretoo.kiosk'
-
   defaultConfig {
     versionCode 1
     versionName '0.1.0'
-  }
-
-  lintOptions {
-    abortOnError false
   }
 }
