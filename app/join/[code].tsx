@@ -84,7 +84,7 @@ export default function JoinByCode() {
       if (!normalized) throw new Error('Invite not loaded');
       const { error: e } = await supabase.rpc('accept_family_invite', {
         invite_code_in: normalized,
-        relationship_label_in: 'family',
+        relationship_label_in: Vocab.member,
       });
       if (e) throw e;
     },

@@ -46,7 +46,11 @@ export default function WelcomeCeremony() {
   const greetingText = React.useMemo(() => {
     if (!data) return '';
     const recipient = data.recipient_first_name || 'there';
-    const relationship = data.recipient_relationship || 'family';
+    // Fallback was the literal 'family', so an invitation with no stated
+    // relationship greeted the reader with "Your family, Cameron, made
+    // you a place here" — the one word the rewrite cut, on the first
+    // screen a new person ever sees.
+    const relationship = data.recipient_relationship || 'friend';
     const inviter = data.inviter_first_name || 'someone in your crew';
     return [
       `${recipient}.`,
@@ -141,7 +145,7 @@ export default function WelcomeCeremony() {
             <Text style={s.kicker}>An invitation</Text>
             <Text style={s.title}>{data.recipient_first_name}.</Text>
             <Text style={s.body}>
-              {data.inviter_first_name ? `Your ${data.recipient_relationship || 'family'}, ${data.inviter_first_name}, ` : 'Someone '}
+              {data.inviter_first_name ? `Your ${data.recipient_relationship || 'friend'}, ${data.inviter_first_name}, ` : 'Someone '}
               made you a place here.
             </Text>
             <TouchableOpacity style={s.beginBtn} onPress={onBegin} activeOpacity={0.85}>

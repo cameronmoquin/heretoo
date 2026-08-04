@@ -41,6 +41,7 @@ import { Button } from '../../components/shared/Button';
 import { HereTooLogo } from '../../components/shared/Logo';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 
 export default function WelcomeScreen() {
@@ -181,7 +182,7 @@ export default function WelcomeScreen() {
       //    whereas throwing here would strand a created auth user.
       const { error: joinErr } = await supabase.rpc('accept_family_invite', {
         invite_code_in: code,
-        relationship_label_in: 'family',
+        relationship_label_in: Vocab.member,
       });
       if (joinErr) {
         // eslint-disable-next-line no-console

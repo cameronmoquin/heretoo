@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { Vocab } from '../constants/vocab';
 
 // ── types ─────────────────────────────────────────────────────────────
 export type FamilyMemberStatus = 'pending' | 'active' | 'declined' | 'removed';
@@ -235,7 +236,7 @@ export function useJoinFamily() {
         .insert({
           family_id: family.id,
           // profile_id defaults to auth.uid() server-side
-          relationship_label: 'family',
+          relationship_label: Vocab.member,
           status: 'active',
           joined_at: new Date().toISOString(),
         } as any);
