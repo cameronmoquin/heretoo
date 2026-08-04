@@ -101,43 +101,43 @@ function RootLayoutInner() {
           animation: 'slide_from_right',
         }}
       >
+        {/*
+          ROUTE NAMES MUST BE REAL. A folder with no _layout.tsx is not a
+          route group, so Expo Router never exposes it under the bare
+          folder name — app/memoir/index.tsx is 'memoir/index', not
+          'memoir'. Naming the folder logged "No route named X exists in
+          nested children" on every render and, more to the point, meant
+          the `title` on that line was attached to nothing and never
+          reached the document. Eight screens were silently untitled:
+          letter, welcome, loft, give, call, memoir, babybook, news.
+
+          The comment on network/index below has said this since it was
+          written. The other eight were never brought in line with it.
+
+          headerShown is already false via the Stack's screenOptions, so
+          a line that adds nothing but that has been dropped rather than
+          corrected — including 'chat', whose redirect stubs mount from
+          the filesystem without any declaration at all.
+        */}
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="family" options={{ headerShown: false }} />
-        <Stack.Screen name="join" options={{ headerShown: false }} />
-        <Stack.Screen name="messages" options={{ headerShown: false }} />
-        {/* Retired. app/chat/* holds redirect stubs to /messages; the
-            screen stays declared so those stubs still mount. */}
-        <Stack.Screen name="chat" options={{ headerShown: false }} />
-        {/* Single-file route — Expo Router exposes it as 'network/index'
-            (the folder name + filename) since there's no _layout.tsx
-            in app/network/ to make it a route group. */}
-        <Stack.Screen name="network/index" options={{ headerShown: false }} />
-        <Stack.Screen name="common/index" options={{ headerShown: false }} />
-        <Stack.Screen name="letter" options={{ headerShown: false }} />
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="about" options={{ headerShown: false, title: 'About HereToo' }} />
-        <Stack.Screen name="reset-password" options={{ headerShown: false, title: 'Reset password' }} />
-        <Stack.Screen name="loft" options={{ headerShown: false }} />
-        <Stack.Screen name="give" options={{ headerShown: false, title: 'Give' }} />
-        <Stack.Screen name="call" options={{ headerShown: false }} />
-        <Stack.Screen name="memoir" options={{ headerShown: false, title: 'Memoir' }} />
-        <Stack.Screen name="journal" options={{ headerShown: false, title: 'Journal' }} />
-        <Stack.Screen name="memoir/timeline" options={{ headerShown: false, title: 'Timeline' }} />
-        <Stack.Screen name="memoir/book" options={{ headerShown: false, title: 'Make the book' }} />
-        <Stack.Screen name="memoir/photos" options={{ headerShown: false, title: 'Photographs' }} />
-        <Stack.Screen name="memoir/preview" options={{ headerShown: false, title: 'Read it through' }} />
-        <Stack.Screen name="memoir/arrange" options={{ headerShown: false, title: 'Arrange' }} />
-        <Stack.Screen name="memoir/print" options={{ headerShown: false, title: 'Where to print' }} />
-        <Stack.Screen name="babybook" options={{ headerShown: false, title: 'Babybook' }} />
-        <Stack.Screen name="babybook/[id]" options={{ headerShown: false, title: 'Babybook' }} />
-        <Stack.Screen name="hunt" options={{ headerShown: false, title: 'Photo Hunt' }} />
-        <Stack.Screen name="rooms" options={{ headerShown: false, title: 'Rooms' }} />
-        <Stack.Screen name="shakespearean-insults" options={{ headerShown: false, title: 'Shakespearean Insults' }} />
-        <Stack.Screen name="news" options={{ headerShown: false, title: 'News' }} />
-        <Stack.Screen name="u" options={{ headerShown: false }} />
-        <Stack.Screen name="sow" options={{ headerShown: false }} />
-        <Stack.Screen name="version" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="about" options={{ title: 'About HereToo' }} />
+        <Stack.Screen name="reset-password" options={{ title: 'Reset password' }} />
+        <Stack.Screen name="give/index" options={{ title: 'Give' }} />
+        <Stack.Screen name="journal" options={{ title: 'Journal' }} />
+        <Stack.Screen name="memoir/index" options={{ title: 'Memoir' }} />
+        <Stack.Screen name="memoir/timeline" options={{ title: 'Timeline' }} />
+        <Stack.Screen name="memoir/book" options={{ title: 'Make the book' }} />
+        <Stack.Screen name="memoir/photos" options={{ title: 'Photographs' }} />
+        <Stack.Screen name="memoir/preview" options={{ title: 'Read it through' }} />
+        <Stack.Screen name="memoir/arrange" options={{ title: 'Arrange' }} />
+        <Stack.Screen name="memoir/print" options={{ title: 'Where to print' }} />
+        <Stack.Screen name="babybook/index" options={{ title: 'Babybook' }} />
+        <Stack.Screen name="babybook/[id]" options={{ title: 'Babybook' }} />
+        <Stack.Screen name="hunt" options={{ title: 'Deaddrop' }} />
+        <Stack.Screen name="rooms" options={{ title: 'Rooms' }} />
+        <Stack.Screen name="news/index" options={{ title: 'News' }} />
+        <Stack.Screen name="version" options={{ presentation: 'modal' }} />
         {/* Launcher home on kiosk devices. Inert elsewhere — the route
             redirects to the feed on any non-kiosk build. */}
         <Stack.Screen name="shelf" options={{ headerShown: false, animation: 'none' }} />

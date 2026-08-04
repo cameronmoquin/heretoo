@@ -58,22 +58,23 @@
 # the bundle loads. The stub catches the warm one, because client-side
 # routing resolves in the browser and never reaches this file.
 #
-# STATUS 302, DELIBERATELY. A 301 is cached by browsers indefinitely and
-# ignores Cache-Control, so a wrong one strands every visitor who hit it
-# until they clear state by hand. These go out as temporary, get verified
-# against real links, and are promoted to 301 in a later change once
-# they have proven themselves. Promotion is the last step, not the first.
+# STATUS 301 as of this change. They shipped as 302 and were verified
+# against production — /chat and /chat/abc123 both landed on /messages
+# with the splat intact — so they are permanent now. A 301 is cached by
+# browsers indefinitely and ignores Cache-Control, which is why the
+# verification came first: a wrong one strands every visitor who hit it
+# until they clear state by hand. New retirements still start at 302.
 #
 # chat → messages. The room is called Messages; the URL now says so.
 [[redirects]]
   from = "/chat"
   to = "/messages"
-  status = 302
+  status = 301
 
 [[redirects]]
   from = "/chat/*"
   to = "/messages/:splat"
-  status = 302
+  status = 301
 
 # SPA fallback
 [[redirects]]
