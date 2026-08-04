@@ -35,21 +35,36 @@ export default function RoomsScreen() {
   const radioToggle = useRadio((st) => st.toggle);
   const station = useActiveStation();
 
-  const doors: Door[] = [
+  /**
+   * Two shelves, split by whether the door leads to another person.
+   *
+   * APPS still end in interaction — someone reads the drop, receives the
+   * letter, finds the cache, hears the same station. ANTI-SOCIAL ends
+   * with you: the journal is encrypted so that nobody, including the
+   * platform, can read it, and the memoir is written before it is ever
+   * a book. Babybook is not here because it now lives under Memoir.
+   *
+   * The split is the product's argument made into furniture, so a door
+   * only moves shelf if what it does to a person changes.
+   */
+  const apps: Door[] = [
     { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
-    { icon: 'home', label: 'The Room', route: '/feed' },
+    { icon: 'home', label: 'Feed', route: '/feed' },
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
     { icon: 'mail', label: 'Letters', route: '/letter' },
-    { icon: 'create', label: 'Memoir', route: '/memoir' },
-    { icon: 'lock-closed', label: 'Journal', route: '/journal' },
     // The player had no door on mobile at all. The radio row above is a
     // play/pause control and nothing else, and the only route into
     // /music anywhere was a long-press on the desktop sidebar.
     { icon: 'disc', label: 'Music', route: '/music' },
     { icon: 'people', label: 'Network', route: '/network' },
-    { icon: 'boat', label: 'Crews', route: '/family' },
+    { icon: 'boat', label: 'Social', route: '/family' },
     { icon: 'heart', label: 'Give', route: '/give' },
     { icon: 'person', label: 'Profile', route: '/profile' },
+  ];
+
+  const antisocial: Door[] = [
+    { icon: 'lock-closed', label: 'Journal', route: '/journal' },
+    { icon: 'create', label: 'Memoir', route: '/memoir' },
   ];
 
   return (
@@ -77,31 +92,53 @@ export default function RoomsScreen() {
           </View>
         </TouchableOpacity>
 
-        <View style={s.grid}>
-          {doors.map((d) => (
-            <TouchableOpacity
-              key={d.route}
-              style={s.door}
-              onPress={() => router.push(d.route as any)}
-              activeOpacity={0.8}
-            >
-              <View>
-                <Ionicons name={`${d.icon}-outline` as any} size={26} color={Colors.primary} />
-                {!!d.badge && (
-                  <View style={s.badge}><Text style={s.badgeText}>{d.badge}</Text></View>
-                )}
-              </View>
-              <Text style={s.doorLabel}>{d.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={s.shelf}>Apps</Text>
+        <Grid doors={apps} s={s} />
+
+        {/* Second, and last, on purpose. The rooms that end with you are
+            not the ones you reach for on the way somewhere else. */}
+        <Text style={s.shelf}>Anti-social</Text>
+        <Grid doors={antisocial} s={s} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+/** One shelf of doors. Both shelves render identically; only the
+ *  heading above them says what kind of room is behind each. */
+function Grid({ doors, s }: { doors: Door[]; s: ReturnType<typeof makeStyles> }) {
+  return (
+    <View style={s.grid}>
+      {doors.map((d) => (
+        <TouchableOpacity
+          key={d.route}
+          style={s.door}
+          onPress={() => router.push(d.route as any)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={d.label}
+        >
+          <View>
+            <Ionicons name={`${d.icon}-outline` as any} size={26} color={Colors.primary} />
+            {!!d.badge && (
+              <View style={s.badge}><Text style={s.badgeText}>{d.badge}</Text></View>
+            )}
+          </View>
+          <Text style={s.doorLabel}>{d.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
 function makeStyles() {
   return StyleSheet.create({
+    shelf: {
+      fontSize: Type.caption.size,
+      lineHeight: Type.caption.lineHeight,
+      color: Colors.textMuted,
+      marginTop: Spacing.xs,
+    },
     root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
     scroll: { padding: Spacing.md, paddingBottom: 110, gap: Spacing.md },
     title: {

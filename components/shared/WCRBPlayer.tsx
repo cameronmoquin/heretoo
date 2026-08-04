@@ -33,7 +33,7 @@ export function WCRBPlayer({ compact = false }: Props) {
   if (Platform.OS !== 'web') return null;
 
   const onToggle = () => { toggle().catch(() => {}); };
-  const onChangeStation = () => router.push('/(tabs)/music' as any);
+  const onChangeStation = () => router.replace('/(tabs)/music' as any);
 
   if (compact) {
     return (

@@ -111,7 +111,7 @@ export function LeftSidebar() {
       />
       <NavRow
         icon={onFeed ? 'home' : 'home-outline'}
-        label="The Room"
+        label="Feed"
         active={onFeed}
         onPress={() => router.replace('/(tabs)/feed' as any)}
       />
@@ -159,7 +159,7 @@ export function LeftSidebar() {
       />
       <NavRow
         icon={onFamily ? 'leaf' : 'leaf-outline'}
-        label="Crews"
+        label="Social"
         active={onFamily}
         onPress={() => router.push('/family' as any)}
       />
@@ -185,7 +185,7 @@ export function LeftSidebar() {
         icon={onMusic ? 'disc' : 'disc-outline'}
         label="Music"
         active={onMusic}
-        onPress={() => router.push('/(tabs)/music' as any)}
+        onPress={() => router.replace('/(tabs)/music' as any)}
       />
 
       {/* Active station — a live control, not a door. Tapping it plays
@@ -196,7 +196,7 @@ export function LeftSidebar() {
         sub={radioPlaying ? 'Now playing' : station.genre}
         active={radioPlaying}
         onPress={() => { radioToggle().catch(() => {}); }}
-        onLongPress={() => router.push('/(tabs)/music' as any)}
+        onLongPress={() => router.replace('/(tabs)/music' as any)}
         accent={radioPlaying}
       />
     </View>
