@@ -20,6 +20,7 @@ import { useFeedStore, isFeedFilter, type FeedFilter } from '../../../stores/fee
 import { useThemeStore } from '../../../stores/themeStore';
 import { useMyNetworkStats } from '../../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../../lib/auth-recovery';
+import { isKioskBuild } from '../../../modules/heretoo-kiosk';
 import { HereTooLogo } from '../../../components/shared/Logo';
 import { FeedList } from '../../../components/feed/FeedList';
 import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
@@ -89,13 +90,22 @@ export default function FeedHomeScreen() {
                 color={Colors.textSecondary}
               />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => hardSignOutAndRedirect()}
-              accessibilityLabel="Sign out"
-            >
-              <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
-            </TouchableOpacity>
+            {/* Not on a kiosk device. This is an unconfirmed one-tap
+                sign-out sitting in the top bar, and the phone it would
+                sign out belongs to a kid who cannot type an email and a
+                password to get back in. On a provisioned device that
+                single icon is the difference between "always signed in"
+                and bricked until a parent notices. The device owner can
+                still sign out from the PIN panel. */}
+            {!isKioskBuild && (
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => hardSignOutAndRedirect()}
+                accessibilityLabel="Sign out"
+              >
+                <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
