@@ -245,8 +245,8 @@ In rough order of how much you lose:
 
 1. **Six taps, top-left corner, then the PIN.** Normal route. Leave kiosk, fix,
    re-lock.
-2. **`adb shell am force-stop social.heretoo.app`** — if the UI is wedged but
-   ADB is alive.
+2. **`adb reboot`** — if the UI is wedged but ADB is alive. Note this is a
+   reboot, not a force-stop: see the field note below.
 3. **`adb install -r` a new APK.** Fixes a bad JS bundle or a broken build.
    Device owner survives reinstall as long as the signing key matches.
 4. **`releaseDeviceOwner()` from the parent panel.** Clears restrictions,
@@ -256,6 +256,87 @@ In rough order of how much you lose:
    settings-menu reset and recovery-mode wipe, but it cannot block download
    mode. A Samsung phone flashed with stock firmware from Frija/SamMobile is
    always recoverable. You cannot brick this device by locking it too hard.
+
+---
+
+## Field notes
+
+Things learned provisioning the real device on 2026-08-05, each of which cost
+real time and none of which are obvious.
+
+### force-stop does not work on a device-owner app
+
+```bash
+adb shell am force-stop social.heretoo.app   # reports success, does nothing
+```
+
+Android protects device-owner packages from being force-stopped. The pid is
+unchanged afterwards. This is genuinely misleading: every "cold launch" test
+run this way is the same process, so React state, form contents, and stale
+error banners all survive and look like bugs in the app.
+
+**`adb reboot` is the only real restart.** It also means an OTA update needs
+*two* reboots — the first downloads it, the second applies it — with a minute
+or so between for the download to finish.
+
+### set-device-owner works after setup completes
+
+The step-3 warning about `device_provisioned` is milder than it reads. On this
+device `dpm set-device-owner` succeeded with `device_provisioned=1` and
+`user_setup_complete=1`. **Having no accounts is the condition that actually
+matters**; finishing the setup wizard did not block it.
+
+### Check the screen timeout before debugging anything
+
+The phone shipped with a 30-second display timeout, so most `uiautomator dump`
+and `screencap` output captured the lock screen rather than the app. Hours were
+spent chasing a rendering bug that was a sleeping display.
+
+```bash
+adb shell settings put system screen_off_timeout 600000
+```
+
+### Lock task and the HOME app fight each other
+
+HereToo is both the HOME activity and a member of `setLockTaskPackages`, so
+`stopLockTask()` alone does nothing: Android relaunches HOME, sees it
+whitelisted, and re-enters lock task immediately. Anything that needs to leave
+the kiosk must call `setLockTaskPackages(admin, arrayOf())` **first**. This is
+why the original "Open Wi-Fi settings" button silently failed.
+
+Lock task also blocks `am start` from ADB — a settings intent returns
+`Error: Activity not started, unknown error code 101`
+(`START_RETURN_LOCK_TASK_MODE_VIOLATION`). There is no shell workaround; only
+the device-owner app can release it.
+
+### Wi-Fi can be configured entirely from the shell
+
+Useful when the UI cannot reach settings. Saves without connecting:
+
+```bash
+adb shell cmd wifi add-network "SSID" wpa2 "passphrase"
+```
+
+SSIDs containing spaces must be single-quoted **for the device shell**, not
+just the host shell, or `cmd wifi` reads the second word as the security type
+and fails with `Unknown network type`.
+
+### Minecraft requires a signed-in Google account
+
+Minecraft Bedrock ships wrapped in Google's PairIP licence check
+(`com.pairip.licensecheck.LicenseActivity`). It queries `com.android.vending`
+on every launch and dies with "Check that Google Play is enabled on your
+device" if it cannot verify ownership.
+
+Two consequences: the Play Store must not be hidden via
+`setApplicationHidden` (see `KIOSK_UNHIDE_PACKAGES`), and the phone needs a
+Google account that owns the purchase. Un-hiding alone is not enough — that
+was tested. Multiplayer additionally needs a Microsoft/Xbox account per
+player.
+
+The Store being visible is not the same as reachable: it stays out of
+`KIOSK_ALLOWED_PACKAGES`, so lock task still refuses to foreground it, and it
+has no tile.
 
 ---
 
