@@ -53,7 +53,18 @@ export default function WelcomeScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const isSignup = inviteCode.trim().length > 0;
+  /**
+   * Registration is open. It used to be inferred from the invite code
+   * field — a blank code meant "sign in", so there was no way to make an
+   * account without one, and someone who left it blank got a sign-in
+   * attempt for an account that did not exist yet.
+   *
+   * The code is still accepted and still joins the crew it belongs to.
+   * It is just no longer the difference between the two things this
+   * form can do.
+   */
+  const [mode, setMode] = useState<'signin' | 'register'>('signin');
+  const isSignup = mode === 'register';
 
   /** Quick handle validity check matching the profiles table constraint. */
   const cleanHandle = (h: string) =>
@@ -76,6 +87,7 @@ export default function WelcomeScreen() {
         setErrorMsg('Username must be at least 3 characters (letters, numbers, underscore).');
         return;
       }
+      // Empty code is allowed now and means "no crew yet".
       await doSignup(e, password, inviteCode.trim().toUpperCase(), handle);
     } else {
       await doSignin(e, password);
@@ -120,17 +132,19 @@ export default function WelcomeScreen() {
       //    through the same anon-callable RPC /join uses. Errors are
       //    read now — a broken lookup must never again masquerade as a
       //    bad code.
-      const { data: found, error: lookupErr } = await supabase
-        .rpc('find_family_by_invite_code', { code });
-      if (lookupErr) throw lookupErr;
-      const crew = (Array.isArray(found) ? found[0] : found) ?? null;
-      if (!crew) {
-        setErrorMsg(
-          code.length < 4
-            ? 'Invite code is too short. Check the code or leave it blank to sign in.'
-            : 'Invite code not found. Check the code with whoever sent it.',
-        );
-        return;
+      //
+      //    A code is optional. Given one, it must be real — silently
+      //    creating an account that did not join the crew someone was
+      //    handed a code for is worse than refusing.
+      if (code) {
+        const { data: found, error: lookupErr } = await supabase
+          .rpc('find_family_by_invite_code', { code });
+        if (lookupErr) throw lookupErr;
+        const crew = (Array.isArray(found) ? found[0] : found) ?? null;
+        if (!crew) {
+          setErrorMsg('Invite code not found. Check the code with whoever sent it.');
+          return;
+        }
       }
 
       // 2. Create the auth user.
@@ -180,13 +194,15 @@ export default function WelcomeScreen() {
       //    policy, and it is idempotent. Non-fatal: an account that
       //    exists but did not join is recoverable from /join/{code},
       //    whereas throwing here would strand a created auth user.
-      const { error: joinErr } = await supabase.rpc('accept_family_invite', {
-        invite_code_in: code,
-        relationship_label_in: Vocab.member,
-      });
-      if (joinErr) {
-        // eslint-disable-next-line no-console
-        console.warn('[signup] account created but crew join failed', joinErr.message);
+      if (code) {
+        const { error: joinErr } = await supabase.rpc('accept_family_invite', {
+          invite_code_in: code,
+          relationship_label_in: Vocab.member,
+        });
+        if (joinErr) {
+          // eslint-disable-next-line no-console
+          console.warn('[signup] account created but crew join failed', joinErr.message);
+        }
       }
 
       router.replace('/(tabs)/feed' as any);
@@ -260,18 +276,6 @@ export default function WelcomeScreen() {
               <Text style={s.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <Eyebrow style={s.fieldLabel}>Invite code (optional)</Eyebrow>
-            <TextInput
-              style={s.input}
-              placeholder="Leave blank to sign in"
-              placeholderTextColor={Colors.textMuted}
-              value={inviteCode}
-              onChangeText={(t) => { setInviteCode(t.toUpperCase()); setErrorMsg(null); }}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={12}
-            />
-
             {isSignup && (
               <>
                 <Eyebrow style={s.fieldLabel}>Username</Eyebrow>
@@ -284,10 +288,20 @@ export default function WelcomeScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   maxLength={24}
+                  returnKeyType="next"
+                />
+
+                <Eyebrow style={s.fieldLabel}>Invite code</Eyebrow>
+                <TextInput
+                  style={s.input}
+                  value={inviteCode}
+                  onChangeText={(t) => { setInviteCode(t.toUpperCase()); setErrorMsg(null); }}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={12}
                   returnKeyType="go"
                   onSubmitEditing={submit}
                 />
-                <Text style={s.fieldHint}>3–24 lowercase letters, numbers, underscores. Change later in Settings.</Text>
               </>
             )}
 
@@ -305,6 +319,15 @@ export default function WelcomeScreen() {
               variant="primary"
               size="lg"
               style={s.submitBtn}
+            />
+
+            {/* The other door. Two things this form can do, both named. */}
+            <Button
+              title={isSignup ? 'Sign in' : 'Create account'}
+              onPress={() => { setMode(isSignup ? 'signin' : 'register'); setErrorMsg(null); }}
+              disabled={loading}
+              variant="ghost"
+              size="lg"
             />
           </View>
 

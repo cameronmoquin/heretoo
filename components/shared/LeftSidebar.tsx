@@ -23,6 +23,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { useUnreadCount } from '../../hooks/useChat';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { useMyFamilies } from '../../hooks/useFamily';
+import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
+import { isKioskBuild } from '../../modules/heretoo-kiosk';
 import { HereTooLogo } from './Logo';
 import { Colors } from '../../constants/colors';
 
@@ -169,6 +171,20 @@ export function LeftSidebar() {
         active={onProfile}
         onPress={() => router.replace('/(tabs)/profile' as any)}
       />
+
+      {/* The way out. This file's own header has listed a Sign out slot
+          since it was written and never had one — the only sign-out on
+          desktop sat 4,650px down the profile page, past every setting,
+          which is not a way out so much as a rumour of one. Kiosk
+          devices do not get it; that door is the PIN panel. */}
+      {!isKioskBuild && (
+        <NavRow
+          icon="log-out-outline"
+          label="Sign out"
+          active={false}
+          onPress={() => hardSignOutAndRedirect()}
+        />
+      )}
 
       {/* Crew quick-list removed. It was redundant with the Room hearth
           swatches and the /family list page. The Crews nav row above

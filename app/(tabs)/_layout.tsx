@@ -76,6 +76,20 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: { display: 'none' },        // hide default — using custom global nav
+          // EVERY VISITED TAB WAS PAINTING AT ONCE. The root layout sets
+          // the navigation theme's background to 'transparent' so the
+          // canvas View behind it shows through, and bottom-tabs keeps a
+          // visited screen mounted. With no opaque scene between them,
+          // going feed → profile left BOTH rendered on top of each
+          // other: the profile scrolling over the feed, the music list
+          // over the composer. Verified in production — on /profile the
+          // feed's chips were still in the DOM and visible.
+          //
+          // An opaque scene fixes it without undoing the canvas: it is
+          // the same colour the canvas paints, so nothing looks
+          // different, but the focused tab now occludes its siblings
+          // instead of layering over them.
+          sceneStyle: { backgroundColor: Colors.background },
         }}
       >
         <Tabs.Screen name="feed" />
