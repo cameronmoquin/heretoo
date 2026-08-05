@@ -25,6 +25,12 @@
  * is a destination, not a permission. The old gate replaced the whole
  * composer, send button included, and that was the broken send.
  *
+ * NO CREW ASSUMPTION EITHER. The composer opens on Public. Crew is the
+ * default only when the composer itself is crew-scoped (a crew room),
+ * where the room already made the choice. The main feed guessing "crew"
+ * put a picker in front of the first keystroke and sent nothing public
+ * by default on a platform whose front door is the public square.
+ *
  * TWO SEAMS WORTH KNOWING:
  *   1. Migration 065 may not have run. destruct_on_view and
  *      direct_recipient_id ride the insert only when the author picks
@@ -34,9 +40,7 @@
  *      else. No media, no burn. Switching to Public clears both and says
  *      so first.
  *
- * Destination resets to the safest reachable option after every send and
- * on collapse. The mis-send that cannot be undone is crew-thought into
- * the public square, so the sticky state is the narrow one.
+ * Destination resets to the default after every send and on collapse.
  */
 
 /** Mirrors loft_posts: check (length(body) between 1 and 1200). */
@@ -108,9 +112,9 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // becomes the live one.
   const crewAvailable = isFamilyScoped || myCrews.length > 0;
   const dmAvailable = myConnections.length > 0;
-  const safestDestination: Destination = crewAvailable ? 'crew' : 'public';
+  const defaultDestination: Destination = isFamilyScoped ? 'crew' : 'public';
 
-  const [destinationChoice, setDestinationChoice] = useState<Destination>('crew');
+  const [destinationChoice, setDestinationChoice] = useState<Destination>(defaultDestination);
   const destination: Destination =
     destinationChoice === 'crew' && !crewAvailable ? 'public'
       : destinationChoice === 'dm' && !dmAvailable ? 'public'
@@ -148,10 +152,13 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     setCrewPickerOpen(true);
   }, [expanded, isFamilyScoped, destination, activeCrewId, myCrews.length]);
 
-  // Which person. DM only.
+  // Which person. DM only. The picker carries a search because a list
+  // of connections outgrows a scroll long before it outgrows a name.
   const [dmChoice, setDmChoice] = useState<string | null>(null);
   const [dmPickerOpen, setDmPickerOpen] = useState(false);
+  const [dmSearch, setDmSearch] = useState('');
   const dmRecipient = myConnections.find((c) => c.id === dmChoice) ?? null;
+  const openDmPicker = () => { setDmSearch(''); setDmPickerOpen(true); };
 
   // The burn. Off by default, every time.
   const [destruct, setDestruct] = useState(false);
@@ -163,6 +170,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const [body, setBody] = useState('');
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
   const [twoWayOpen, setTwoWayOpen] = useState(false);
   const [oneWayOpen, setOneWayOpen] = useState(false);
 
@@ -227,7 +235,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     if (next === 'crew' && !isFamilyScoped && myCrews.length > 1 && !crewChoice) {
       setCrewPickerOpen(true);
     }
-    if (next === 'dm' && !dmChoice) setDmPickerOpen(true);
+    if (next === 'dm' && !dmChoice) openDmPicker();
   };
 
   const resetComposer = () => {
@@ -235,7 +243,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     setTaggedIds(new Set());
     setUpdateRecipientIds(new Set());
     setPostKind('post');
-    setDestinationChoice(safestDestination);
+    setDestinationChoice(defaultDestination);
     setDmChoice(null);
     setDestruct(false);
     setExpanded(false);
@@ -468,7 +476,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
       {isDM && (
         <TouchableOpacity
           style={s.toRow}
-          onPress={() => setDmPickerOpen(true)}
+          onPress={openDmPicker}
           activeOpacity={0.7}
           accessibilityLabel="Choose who gets this"
         >
@@ -620,7 +628,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
             <ActionBtn
               icon="at-outline"
               label="Tag"
-              onPress={() => setTagPickerOpen(true)}
+              onPress={() => { setTagSearch(''); setTagPickerOpen(true); }}
             />
           </>
         )}
@@ -793,8 +801,18 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           <TouchableOpacity activeOpacity={1} style={s.modalCard}>
             <Text style={s.modalTitle}>Send to one person</Text>
 
+            <TextInput
+              style={s.searchInput}
+              accessibilityLabel="Search"
+              placeholder="Search"
+              placeholderTextColor={Colors.textMuted}
+              value={dmSearch}
+              onChangeText={setDmSearch}
+              autoFocus
+            />
+
             <ScrollView style={{ maxHeight: 360 }}>
-              {myConnections.map((c) => {
+              {myConnections.filter((c) => matchesPerson(c, dmSearch)).map((c) => {
                 const checked = c.id === dmChoice;
                 return (
                   <TouchableOpacity
@@ -929,8 +947,18 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           <TouchableOpacity activeOpacity={1} style={s.modalCard}>
             <Text style={s.modalTitle}>Tag your connections</Text>
 
+            <TextInput
+              style={s.searchInput}
+              accessibilityLabel="Search"
+              placeholder="Search"
+              placeholderTextColor={Colors.textMuted}
+              value={tagSearch}
+              onChangeText={setTagSearch}
+              autoFocus
+            />
+
             <ScrollView style={{ maxHeight: 360 }}>
-              {myConnections.map((c) => {
+              {myConnections.filter((c) => matchesPerson(c, tagSearch)).map((c) => {
                 const checked = taggedIds.has(c.id);
                 return (
                   <TouchableOpacity
@@ -1032,6 +1060,19 @@ function ActionBtn({ icon, label, onPress }: { icon: any; label: string; onPress
 
 function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Name-or-handle match for the picker searches. Empty query matches all. */
+function matchesPerson(
+  c: { display_name: string | null; handle: string | null },
+  query: string,
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    (c.display_name ?? '').toLowerCase().includes(q) ||
+    (c.handle ?? '').toLowerCase().includes(q)
+  );
 }
 
 /**
@@ -1247,6 +1288,14 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
   },
   modalTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 12 },
+  searchInput: {
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: 12, paddingVertical: 8,
+    fontSize: 14, color: Colors.textPrimary,
+    marginBottom: 10,
+  },
 
   connRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

@@ -3,9 +3,9 @@ import { create } from 'zustand';
 export type FeedTab = 'for_you' | 'connections';
 
 /**
- * One feed, five lenses. The filter never changes the post query —
- * useFeed stays on 'for_you'. It changes what FeedList renders out of
- * the streams it already holds.
+ * One feed, five lenses. Four of them change what FeedList renders out
+ * of the streams it already holds; 'crew' alone also swaps the post
+ * query to the crew column (see useFeed's crewOnly).
  */
 export type FeedFilter = 'all' | 'crew' | 'public' | 'news' | 'drops';
 

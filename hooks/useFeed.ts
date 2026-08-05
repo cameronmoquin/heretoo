@@ -142,6 +142,10 @@ export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
             media:post_media(*)
           `)
           .eq('visibility', 'family')
+          // Same rule as the ranked RPC (067): updates are a crew
+          // instrument with their own tab, and the feed is not the third
+          // place they show up. Without this the two lenses disagreed.
+          .eq('kind', 'post')
           .order('created_at', { ascending: false })
           .range(pageParam, pageParam + PAGE_SIZE - 1);
         if (error) throw error;
@@ -174,7 +178,6 @@ export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
             author:profiles!author_id(id, handle, display_name, avatar_path),
             media:post_media(*)
           `)
-          .neq('visibility', 'family')   // family posts live on /family/[id]
           .eq('visibility', 'connections')
           .order('created_at', { ascending: false })
           .range(pageParam, pageParam + PAGE_SIZE - 1);
@@ -186,8 +189,10 @@ export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
 
       // DM drops sit at the head of page 0 and nowhere else, so nothing
       // repeats as the reader pages down. Deduped against the page in
-      // case a later query ever returns the same row twice.
-      if (pageParam === 0) {
+      // case a later query ever returns the same row twice. Not in the
+      // crew lens: that column answers "what did my crews drop", and a
+      // DM at its head was the mixed stream leaking through.
+      if (pageParam === 0 && !crewOnly) {
         const direct = await fetchDirectDrops();
         if (direct.length > 0) {
           const already = new Set(raw.map((p: any) => p.id));

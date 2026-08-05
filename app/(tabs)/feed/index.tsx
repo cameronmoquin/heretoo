@@ -5,9 +5,10 @@
  * useInfiniteQuery, kept current by useFeedRealtime. PostCard carries
  * hearts and comments.
  *
- * The chip row is a lens on that stream, not a second query. The query
- * stays pinned to 'for_you'; the chip sets feedStore.filter and FeedList
- * decides what to render. /loft, /news, and /common all redirect here.
+ * The chip row is a lens on that stream. The chip sets feedStore.filter
+ * and FeedList decides what to render; the crew chip alone also swaps
+ * the post query to the crew column. /loft, /news, and /common all
+ * redirect here.
  */
 
 import React from 'react';
@@ -26,13 +27,18 @@ import { FeedList } from '../../../components/feed/FeedList';
 import { InstallAppBanner } from '../../../components/shared/InstallAppBanner';
 import { Colors } from '../../../constants/colors';
 import { Layout, Spacing, Radius, Type, Heights } from '../../../constants/design';
+import { Vocab } from '../../../constants/vocab';
 
+// Labels ride Vocab where the lexicon owns the word, so a vocabulary
+// change never has to find this row. 'Dead drops' is the GPS game —
+// per the taxonomy every post is a drop, so a chip called "Drops"
+// showing only the geocaches was lying about four fifths of the feed.
 const CHIPS: { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'crew', label: 'Crew' },
+  { key: 'crew', label: Vocab.Group },
   { key: 'public', label: 'Public' },
   { key: 'news', label: 'News' },
-  { key: 'drops', label: 'Drops' },
+  { key: 'drops', label: 'Dead drops' },
 ];
 
 export default function FeedHomeScreen() {
