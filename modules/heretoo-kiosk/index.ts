@@ -47,7 +47,7 @@ type KioskNative = {
   getAppInfo(packages: string[]): KioskAppInfo[];
   getLaunchableApps(): KioskLaunchableApp[];
   launchApp(packageName: string): Promise<boolean>;
-  openWifiSettings(): Promise<boolean>;
+  openSettings(action: string | null): Promise<boolean>;
   releaseDeviceOwner(): Promise<boolean>;
 };
 
@@ -189,11 +189,26 @@ export async function launchApp(packageName: string): Promise<boolean> {
 }
 
 /** Leaves lock task and opens system Wi-Fi settings. Re-lock when done. */
-export async function openWifiSettings(): Promise<boolean> {
+export const SETTINGS_WIFI = 'android.settings.WIFI_SETTINGS';
+/** Where you sign into Google, which Minecraft's licence check requires. */
+export const SETTINGS_ADD_ACCOUNT = 'android.settings.ADD_ACCOUNT_SETTINGS';
+
+/**
+ * Leave lock task and open a system settings screen.
+ *
+ * Returns false — and logs the reason — rather than pretending. The previous
+ * version always reported success even when lock task refused to release and
+ * the settings screen never appeared.
+ */
+export async function openSettings(
+  action: string = SETTINGS_WIFI
+): Promise<boolean> {
   if (!native) return false;
   try {
-    return await native.openWifiSettings();
-  } catch {
+    return await native.openSettings(action);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[kiosk] openSettings failed:', e);
     return false;
   }
 }

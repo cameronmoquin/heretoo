@@ -42,7 +42,9 @@ import {
   provision,
   lock,
   unlock,
-  openWifiSettings,
+  openSettings,
+  SETTINGS_WIFI,
+  SETTINGS_ADD_ACCOUNT,
   setPackagesHidden,
   setRestrictions,
   isKioskBuild,
@@ -287,14 +289,33 @@ export function KioskGate() {
                   </Text>
                 </TouchableOpacity>
 
+                {/* Both of these leave lock task first and report honestly if
+                    they cannot — see openSettings in the native module. */}
                 <TouchableOpacity
                   onPress={async () => {
-                    setPanelOpen(false);
-                    await openWifiSettings();
+                    const ok = await openSettings(SETTINGS_WIFI);
+                    if (ok) setPanelOpen(false);
+                    else setError('Could not leave kiosk to open settings.');
                   }}
                   style={[styles.btn, styles.ghostBtn, styles.fullBtn]}
                 >
                   <Text style={styles.ghostBtnText}>Open Wi-Fi settings</Text>
+                </TouchableOpacity>
+
+                {/* Adding a Google account is what Minecraft's PairIP licence
+                    check needs before the game will start. DISALLOW_MODIFY_
+                    ACCOUNTS has to come off first or the Add-account screen
+                    refuses; the next enforce() puts it back. */}
+                <TouchableOpacity
+                  onPress={async () => {
+                    await setRestrictions(['no_modify_accounts'], false);
+                    const ok = await openSettings(SETTINGS_ADD_ACCOUNT);
+                    if (ok) setPanelOpen(false);
+                    else setError('Could not leave kiosk to add an account.');
+                  }}
+                  style={[styles.btn, styles.ghostBtn, styles.fullBtn]}
+                >
+                  <Text style={styles.ghostBtnText}>Add an account…</Text>
                 </TouchableOpacity>
 
                 {/* Storefronts and browsers are hidden at provision time.

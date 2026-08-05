@@ -191,8 +191,23 @@ class HereTooKioskModule : Module() {
      * device owner, so `lock()` puts us straight back.
      */
     AsyncFunction("unlock") { promise: Promise ->
+      // Emptying the whitelist FIRST is what makes this work at all.
+      //
+      // HereToo is both the HOME activity and a member of
+      // setLockTaskPackages, so the moment stopLockTask() releases the task
+      // Android relaunches HOME — which is whitelisted — and silently
+      // re-enters lock task. The earlier version of this function called only
+      // stopLockTask(), reported success, and left the device LOCKED; that is
+      // why "Open Wi-Fi settings" did nothing on the provisioned phone.
+      //
+      // provision() restores the list on the next enforce(), so this is a
+      // window rather than a permanent change.
+      if (isOwner) dpm.setLockTaskPackages(adminComponent, arrayOf())
+
       currentActivity.stopLockTask()
-      promise.resolve(true)
+
+      // Report what actually happened rather than assuming.
+      promise.resolve(lockTaskState() == ActivityManager.LOCK_TASK_MODE_NONE)
     }.runOnQueue(Queues.MAIN)
 
     /**
@@ -309,12 +324,49 @@ class HereTooKioskModule : Module() {
      * new network and cannot reach Supabase, so the app shows nothing.
      * Must leave lock task first or the settings activity is blocked.
      */
-    AsyncFunction("openWifiSettings") { promise: Promise ->
-      runCatching { currentActivity.stopLockTask() }
+    /**
+     * Open a system settings screen.
+     *
+     * @param action a Settings.ACTION_* string; defaults to Wi-Fi. Accounts
+     *   (android.settings.ADD_ACCOUNT_SETTINGS) is the other one that matters,
+     *   because signing into Google is what Minecraft's PairIP licence check
+     *   requires before the game will launch at all.
+     *
+     * Errors are surfaced instead of swallowed. The previous version wrapped
+     * stopLockTask() in runCatching and then launched the intent regardless —
+     * so when the lock did not release, startActivity was silently refused
+     * with a lock-task violation and the button reported success having done
+     * nothing.
+     */
+    AsyncFunction("openSettings") { action: String?, promise: Promise ->
+      if (isOwner) dpm.setLockTaskPackages(adminComponent, arrayOf())
 
-      context.startActivity(
-        Intent(Settings.ACTION_WIFI_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      )
+      try {
+        currentActivity.stopLockTask()
+      } catch (e: Exception) {
+        promise.reject("ERR_STOP_LOCK_TASK", "Could not leave lock task: ${e.message}", e)
+        return@AsyncFunction
+      }
+
+      if (lockTaskState() != ActivityManager.LOCK_TASK_MODE_NONE) {
+        promise.reject(
+          "ERR_STILL_LOCKED",
+          "Lock task did not release; the settings screen would be blocked.",
+          null
+        )
+        return@AsyncFunction
+      }
+
+      try {
+        context.startActivity(
+          Intent(action ?: Settings.ACTION_WIFI_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+      } catch (e: Exception) {
+        promise.reject("ERR_NO_SETTINGS", "Could not open $action: ${e.message}", e)
+        return@AsyncFunction
+      }
+
       promise.resolve(true)
     }.runOnQueue(Queues.MAIN)
 
@@ -389,6 +441,13 @@ class HereTooKioskModule : Module() {
   } catch (e: Exception) {
     // A missing icon is a cosmetic problem; the tile falls back to its label.
     null
+  }
+
+  /** Current lock task state, or NONE below the API that reports it. */
+  private fun lockTaskState(): Int {
+    val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) am.lockTaskModeState
+    else ActivityManager.LOCK_TASK_MODE_NONE
   }
 
   /** Are we the activity the system would launch for HOME right now? */
