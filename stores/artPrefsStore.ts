@@ -78,21 +78,26 @@ interface Persisted {
 const STORAGE_KEY = 'heretoo:art-prefs';
 
 /**
- * What a first-time viewer sees: 20th century onward.
+ * THE POSTER RULE. The gallery is graphic work: WPA silkscreen, vintage
+ * advertising, midcentury European poster art.
  *
- * The ask was "pop art, modern art, Warhol type stuff". Pop art is not
- * reachable as a label — across 104,183 works, `school` matching 'pop'
- * returns two, and no row carries a 'pop art' genre at all. These
- * collections are catalogued by object, period and place, not by
- * movement, so there is no pop-art axis to filter on and defaulting to
- * one would show an empty gallery.
+ * Actual pop art is not obtainable. Warhol, Lichtenstein and Rosenquist
+ * are in copyright and no museum releases them CC0 — across 104,183
+ * works, `school` matching 'pop' returns two and no row carries a 'pop
+ * art' genre. Chasing it would mean an empty gallery.
  *
- * Modern + Contemporary is the closest thing the data actually supports:
- * it is the era where that work lives, and it is a bucket the gallery
- * can populate. It stays a default, not a rule — every era is still one
- * tap away in Art preferences.
+ * WPA silkscreen is the legally clean thing that reads closest: flat
+ * colour, hard outline, commercial-graphic energy, 1936-43. 942 of them
+ * came in from the Library of Congress; scripts/ingest-art.mjs takes
+ * further poster collections as they are confirmed.
+ *
+ * No era default any more. Poster IS the rule, and the LoC date field is
+ * unreliable enough (theatre posters from the thirties dated 1990) that
+ * layering an era on top would drop good work for a bad reason. Every
+ * era and genre is still one tap away in Art preferences.
  */
-const DEFAULT_ERAS: ArtEra[] = ['modern', 'contemporary'];
+const DEFAULT_ERAS: ArtEra[] = [];
+const DEFAULT_GENRES: string[] = ['poster'];
 
 function loadInitial(): Persisted {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -115,7 +120,7 @@ function loadInitial(): Persisted {
       }
     } catch {}
   }
-  return { schools: [], eras: [...DEFAULT_ERAS], genres: [], mediums: [], sources: [], feedMix: 'art_only' };
+  return { schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES], mediums: [], sources: [], feedMix: 'art_only' };
 }
 
 function persist(state: Persisted) {

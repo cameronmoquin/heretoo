@@ -110,7 +110,16 @@ export function useArtFeed() {
         .filter(Boolean)
         .map(([lo, hi]) => `and(year_start.gte.${lo},year_start.lte.${hi})`);
 
-      const base = () => supabase.from('art_works').select(COLS).neq('source', 'ad');
+      // Genre goes to the database too (GIN index, migration 069).
+      // Client-side it was hopeless for the poster rule: 942 posters in
+      // 104,183 works means a random 5000-row pool holds about 45 of
+      // them, so the gallery would have looked broken rather than
+      // curated.
+      const base = () => {
+        let q = supabase.from('art_works').select(COLS).neq('source', 'ad');
+        if (genres.length > 0) q = q.overlaps('genre', genres);
+        return q;
+      };
 
       let art: any[] | null = null;
       // DEGRADE, same pattern as useFeed's direct-drop read: migration
@@ -163,11 +172,10 @@ export function useArtFeed() {
           const sch = normalizeSchool(w.school) ?? '';
           if (!schoolsSet.has(sch)) return false;
         }
-        if (genresSet.size > 0) {
-          const tags = (w.genre ?? []).map((x) => x.toLowerCase());
-          const hit = tags.some((t) => genresSet.has(t));
-          if (!hit) return false;
-        }
+        // Genre is applied in SQL now — see base(). Re-checking here
+        // would only re-implement `overlaps` with a case-fold the
+        // database did not do, and drop rows the query correctly
+        // returned.
         if (mediumsSet.size > 0) {
           const m = (w.medium ?? '').toLowerCase();
           // Substring-match each selected medium token so "oil on canvas"

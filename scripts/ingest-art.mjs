@@ -433,6 +433,88 @@ async function ingestSmithsonian(target) {
   console.log(`Smithsonian: ${stats.inserted} inserted, ${stats.skipped} skipped`);
 }
 
+// ── Library of Congress (public domain posters) ──────────────────────────
+// THE POSTER RULE. The gallery is meant to read modern and graphic — WPA
+// silkscreen, vintage advertising, midcentury European poster art. None
+// of the encyclopedic collections carry that: aic, cma and met between
+// them supply 103,000 works and only 122 dated after 1945, because their
+// open-access material is overwhelmingly pre-modern.
+//
+// Actual pop art cannot be sourced at all. Warhol, Lichtenstein and
+// Rosenquist are in copyright and no museum releases them CC0. WPA
+// silkscreen is the closest thing that is legally clean and it is close:
+// flat colour, hard outline, commercial-graphic energy, 1936-43.
+//
+// LoC's JSON API is the same endpoint as the website with fo=json.
+// image_url comes back as a list of sizes with the dimensions in the
+// URL fragment (#h=640&w=498), so the widest and narrowest jpg give the
+// full image and the thumbnail without a second request.
+const LOC_COLLECTIONS = [
+  // Verified: 947 items, all public domain.
+  { slug: 'works-progress-administration-posters', school: 'WPA' },
+  // Add further collections here once their slug is confirmed against
+  // the API — LoC was returning 503s for several during this work, and
+  // an unverified slug fails silently as an empty result set rather
+  // than an error.
+];
+
+async function ingestLoc(target) {
+  console.log('── Library of Congress (posters, public domain) ──');
+  for (const col of LOC_COLLECTIONS) {
+    let page = 1;
+    while (stats.inserted < target && page <= 60) {
+      let rows = [];
+      try {
+        const r = await fetchWithRetry(
+          `https://www.loc.gov/collections/${col.slug}/?fo=json&c=100&sp=${page}`,
+          { headers: { 'User-Agent': 'heretoo-art-ingest/1.0' } },
+        );
+        const j = await r.json();
+        rows = j.results ?? [];
+      } catch (e) {
+        console.warn(`  LoC ${col.slug} page ${page} failed, sleeping 30s:`, e?.code ?? e?.message);
+        await sleep(30_000);
+        continue;
+      }
+      if (rows.length === 0) break;
+
+      for (const a of rows) {
+        if (stats.inserted >= target) break;
+        // Widest jpg is the image, narrowest is the thumb. Anything
+        // without a usable jpg is skipped rather than stored broken.
+        const jpgs = (a.image_url ?? [])
+          .filter((u) => /\.jpg/i.test(u))
+          .map((u) => ({ u, w: Number((u.match(/[#&]w=(\d+)/) || [])[1] ?? 0) }))
+          .sort((x, y) => x.w - y.w);
+        if (jpgs.length === 0) continue;
+
+        const id = String(a.id ?? '').replace(/\/+$/, '').split('/').pop();
+        if (!id) continue;
+
+        await upsertWork({
+          source: 'loc',
+          source_id: id,
+          title: a.title ?? null,
+          artist: Array.isArray(a.contributor) ? a.contributor.join(', ') : (a.contributor ?? null),
+          year_created: a.date ?? null,
+          // genre is text[]; 'poster' is what the filter selects on.
+          genre: ['poster'],
+          school: col.school,
+          medium: Array.isArray(a.medium) ? a.medium[0] : (a.medium ?? null),
+          storage_path: jpgs[jpgs.length - 1].u.split('#')[0],
+          thumb_path: jpgs[0].u.split('#')[0],
+          license: 'Public Domain',
+          source_url: a.url ?? null,
+        });
+      }
+      tickLog(`LoC ${col.slug} page`, page, '∞');
+      page++;
+      await sleep(200); // LoC 503s under load; be a good guest
+    }
+  }
+  console.log(`LoC: ${stats.inserted} inserted, ${stats.skipped} skipped`);
+}
+
 // ── dispatch ─────────────────────────────────────────────────────────────
 const sources = {
   met: ingestMet,
@@ -441,6 +523,7 @@ const sources = {
   moma: ingestMoma,
   smithsonian: ingestSmithsonian,
   rijks: ingestRijks,
+  loc: ingestLoc,
   all: async (n) => {
     await ingestCma(n);
     await ingestAic(n);

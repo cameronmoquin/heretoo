@@ -34,6 +34,7 @@ import {
   TouchableOpacity, KeyboardAvoidingView, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
@@ -48,6 +49,7 @@ export default function WelcomeScreen() {
   const s = makeStyles();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
@@ -265,17 +267,35 @@ export default function WelcomeScreen() {
             />
 
             <Eyebrow style={s.fieldLabel}>Password</Eyebrow>
-            <TextInput
-              style={s.input}
-              placeholder={isSignup ? 'Choose a password (6+)' : 'Password'}
-              placeholderTextColor={Colors.textMuted}
-              value={password}
-              onChangeText={(t) => { setPassword(t); setErrorMsg(null); }}
-              secureTextEntry
-              returnKeyType={isSignup ? 'next' : 'go'}
-              onSubmitEditing={isSignup ? undefined : submit}
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-            />
+            {/* Reveal toggle. A masked field is the right default, but typing
+                a long password blind on a phone keyboard turns one fat finger
+                into "invalid credentials" with no way to see why. */}
+            <View style={s.passwordRow}>
+              <TextInput
+                style={[s.input, s.passwordInput]}
+                placeholder={isSignup ? 'Choose a password (6+)' : 'Password'}
+                placeholderTextColor={Colors.textMuted}
+                value={password}
+                onChangeText={(t) => { setPassword(t); setErrorMsg(null); }}
+                secureTextEntry={!showPassword}
+                returnKeyType={isSignup ? 'next' : 'go'}
+                onSubmitEditing={isSignup ? undefined : submit}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((v) => !v)}
+                style={s.revealBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={Colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity onPress={onForgot} style={s.forgotBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={s.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
@@ -367,6 +387,17 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 15, color: Colors.textPrimary,
   },
   fieldHint: { fontSize: 11, color: Colors.textMuted, marginTop: Spacing.xxs, lineHeight: 16 },
+
+  // The input keeps its own border; the row is only a positioning context so
+  // the eye can sit inside the field rather than beside it.
+  passwordRow: { position: 'relative', justifyContent: 'center' },
+  passwordInput: { paddingRight: 48 },
+  revealBtn: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+  },
 
   forgotBtn: { alignSelf: 'flex-end', paddingVertical: Spacing.xxs, paddingHorizontal: Spacing.xxs },
   forgotText: { fontSize: Type.caption.size, color: Colors.textSecondary, fontWeight: '500' },

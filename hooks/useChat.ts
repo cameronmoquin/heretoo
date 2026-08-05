@@ -173,7 +173,15 @@ export function useThreadMessages(threadId: string | null) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `thread_id=eq.${threadId}` },
-        () => qc.invalidateQueries({ queryKey: ['thread-messages', threadId] }),
+        () => {
+          // The open thread, plus the two things that describe it from
+          // outside. Only the first was refreshed before, so a message
+          // arriving left the inbox row and the unread badge stale until
+          // something else happened to refetch them.
+          qc.invalidateQueries({ queryKey: ['thread-messages', threadId] });
+          qc.invalidateQueries({ queryKey: ['threads'] });
+          qc.invalidateQueries({ queryKey: ['unread-count'] });
+        },
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
