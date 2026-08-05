@@ -133,6 +133,30 @@ export function useInboxRealtime() {
   }, [qc, userId]);
 }
 
+/**
+ * Ask the push endpoint to notify this message's recipient.
+ *
+ * The endpoint takes only a message id and verifies from the caller's
+ * JWT that the message is theirs, so nothing here can aim a
+ * notification at someone else or choose what it says.
+ */
+async function notifyPush(messageId: string | undefined): Promise<void> {
+  if (!messageId) return;
+  try {
+    const { data } = await supabase.auth.getSession();
+    const jwt = data?.session?.access_token;
+    if (!jwt) return;
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://heretoo.social';
+    await fetch(`${base}/.netlify/functions/push-send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+      body: JSON.stringify({ messageId }),
+    });
+  } catch {
+    // The message is sent and saved. A failed push is not a failed send.
+  }
+}
+
 export function useThreads() {
   const userId = useAuthStore((s) => s.user?.id);
   useInboxRealtime();
@@ -351,6 +375,12 @@ export function useSendMessage() {
       if (context?.undo) try { context.undo(); } catch {}
     },
     onSuccess: (msg, vars, context: any) => {
+      // Ring the recipient's phone. Fired here rather than from a poll
+      // because a notification that lands minutes late is not one.
+      // Fire-and-forget: the message is already sent and saved, and a
+      // push that fails must never surface as a failed send.
+      void notifyPush((msg as any)?.id);
+
       // Replace the temp row with the real one in-place so the bubble
       // doesn't visibly re-render and shift around.
       const key = ['thread-messages', vars.threadId];

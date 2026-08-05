@@ -5,6 +5,7 @@
 
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { registerPushToken, unregisterPushToken } from '../lib/push';
 import { DEV_MODE } from '../lib/dev-mode';
 import { MOCK_USER } from '../lib/mock-data';
 import { useAuthStore } from '../stores/authStore';
@@ -26,6 +27,8 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
+        // Best-effort, never awaited into the boot path.
+        void registerPushToken(session.user.id);
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
@@ -36,6 +39,7 @@ export function useAuth() {
       (_event, session) => {
         setSession(session);
         if (session?.user) {
+          void registerPushToken(session.user.id);
           fetchProfile(session.user.id);
         } else {
           setProfile(null);
@@ -88,6 +92,8 @@ export function useAuth() {
       useAuthStore.getState().reset();
       return;
     }
+    // Before signOut, while the session can still satisfy RLS on the delete.
+    await unregisterPushToken();
     await supabase.auth.signOut();
     useAuthStore.getState().reset();
   }
