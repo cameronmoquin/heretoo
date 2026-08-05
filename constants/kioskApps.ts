@@ -93,9 +93,30 @@ export const KIOSK_DISCLAIMER =
   'Entertainment use only. Not capable of emergency calls.';
 
 export const KIOSK_BLOCKED_PACKAGES: string[] = [
-  'com.android.vending', // Google Play Store
   'com.sec.android.app.samsungapps', // Galaxy Store
   'com.android.chrome',
   'com.sec.android.app.sbrowser', // Samsung Internet
   'com.google.android.youtube',
+];
+
+/**
+ * Packages provisioning explicitly un-hides.
+ *
+ * The Play Store used to be in KIOSK_BLOCKED_PACKAGES. Minecraft is wrapped in
+ * Google's PairIP licence check, which queries `com.android.vending` on every
+ * launch; with the Store hidden the query fails and the game dies on
+ * "Check that Google Play is enabled on your device."
+ *
+ * Dropping it from the blocked list is not enough on its own — hidePackages
+ * only ever sets the flag on packages it is given, so a package already hidden
+ * stays hidden forever once it leaves that list. This list is what actively
+ * clears the flag.
+ *
+ * Visible is not reachable. The Store is absent from KIOSK_ALLOWED_PACKAGES,
+ * so lock task still refuses to foreground it, and it has no tile. Hiding was
+ * belt-and-braces on top of the lock-task whitelist; the whitelist is the part
+ * that actually protects the device.
+ */
+export const KIOSK_UNHIDE_PACKAGES: string[] = [
+  'com.android.vending',
 ];

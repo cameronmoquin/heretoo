@@ -48,7 +48,10 @@ import {
   isKioskBuild,
   type KioskStatus,
 } from '../../modules/heretoo-kiosk';
-import { KIOSK_BLOCKED_PACKAGES } from '../../constants/kioskApps';
+import {
+  KIOSK_BLOCKED_PACKAGES,
+  KIOSK_UNHIDE_PACKAGES,
+} from '../../constants/kioskApps';
 import { loadAllowlist } from '../../lib/kiosk-allowlist';
 import { KioskAppPicker } from './KioskAppPicker';
 
@@ -90,6 +93,10 @@ export function KioskGate() {
     if (!isKioskBuild) return;
     const allowed = await loadAllowlist();
     await provision(allowed, KIOSK_BLOCKED_PACKAGES);
+    // Actively clear the hidden flag on anything that has left the blocked
+    // list. provision() only ever *sets* it, so a package dropped from
+    // KIOSK_BLOCKED_PACKAGES would otherwise stay hidden forever.
+    await setPackagesHidden(KIOSK_UNHIDE_PACKAGES, false);
     await lock();
     refresh();
   }, [refresh]);
