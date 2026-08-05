@@ -13,6 +13,7 @@ import { useArtFeed } from '../../hooks/useArtFeed';
 import { useBrokenArt, pickArtAroundAnchor } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { artAspect } from '../../lib/artAspect';
 
 export function SidebarArt() {
   const s = makeStyles();
@@ -29,7 +30,8 @@ export function SidebarArt() {
     return pickArtAroundAnchor(pool, Math.floor(pool.length / 2), broken);
   }, [art, broken]);
 
-  if (!piece) return null;
+if (!piece) return null;
+  const fit = artAspect(piece.width, piece.height, 1);
 
   const open = () => {
     if (!piece.source_url) return;
@@ -47,7 +49,7 @@ export function SidebarArt() {
       <Image
         source={{ uri: piece.thumb_path ?? piece.storage_path }}
         style={s.img}
-        resizeMode="cover"
+        resizeMode={fit.resizeMode}
         onError={() => markBroken(piece.id)}
       />
       <View style={s.meta}>
@@ -69,7 +71,6 @@ function makeStyles() { return StyleSheet.create({
   },
   img: {
     width: '100%',
-    aspectRatio: 1,
     backgroundColor: Colors.surfaceLight,
   },
   meta: { padding: 10, gap: 2 },

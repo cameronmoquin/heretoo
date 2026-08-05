@@ -12,6 +12,7 @@ import type { ArtWork } from '../../hooks/useArtFeed';
 import { useBrokenArt } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Layout, Spacing, Radius, Type } from '../../constants/design';
+import { artAspect } from '../../lib/artAspect';
 
 interface ArtSlotProps {
   art: ArtWork;
@@ -20,6 +21,7 @@ interface ArtSlotProps {
 export function ArtSlot({ art }: ArtSlotProps) {
   const s = makeStyles();
   const isAd = art.source === 'ad';
+  const fit = artAspect(art.width, art.height, 4 / 3);
   const imgUri = art.storage_path;
   const markBroken = useBrokenArt((st) => st.markBroken);
   const broken = useBrokenArt((st) => st.broken);
@@ -50,8 +52,11 @@ export function ArtSlot({ art }: ArtSlotProps) {
 
       <Image
         source={{ uri: imgUri }}
-        style={s.image}
-        resizeMode="cover"
+        // Uncropped: the frame takes the piece's own ratio (see
+        // lib/artAspect). The old fixed 4:3 cover beheaded portrait
+        // posters — most of the poster rule's own gallery.
+        style={[s.image, { aspectRatio: fit.aspectRatio }]}
+        resizeMode={fit.resizeMode}
         onError={() => markBroken(art.id)}
       />
 

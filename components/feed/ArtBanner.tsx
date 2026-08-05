@@ -19,6 +19,7 @@ import { useArtFeed } from '../../hooks/useArtFeed';
 import { useBrokenArt, pickArtAroundAnchor } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Layout, Radius, Type } from '../../constants/design';
+import { artAspect } from '../../lib/artAspect';
 
 interface ArtBannerProps {
   slot?: 'top' | 'bottom';
@@ -50,14 +51,24 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
     }
   };
 
+  const fit = artAspect(piece.width, piece.height, 640 / 88);
   const isAd = piece.source === 'ad';
 
   return (
-    <Pressable style={s.banner} onPress={open} disabled={!piece.source_url}>
+    /* The banner takes the piece's shape (lib/artAspect) instead of
+       cropping the piece to an 88px strip — which showed a portrait
+       poster as a horizontal sliver of its own middle. A tall piece
+       makes a tall banner; that is the poster rule being visible
+       rather than beheaded. */
+    <Pressable
+      style={[s.banner, { aspectRatio: fit.aspectRatio }]}
+      onPress={open}
+      disabled={!piece.source_url}
+    >
       <Image
         source={{ uri: piece.storage_path }}
         style={s.bg}
-        resizeMode="cover"
+        resizeMode={fit.resizeMode}
         onError={() => markBroken(piece.id)}
       />
 
@@ -87,7 +98,6 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
 
 function makeStyles() { return StyleSheet.create({
   banner: {
-    height: 88,
     backgroundColor: Colors.surfaceAlt,
     borderRadius: Radius.media,
     overflow: 'hidden',

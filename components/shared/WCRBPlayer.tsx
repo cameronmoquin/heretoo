@@ -97,7 +97,7 @@ export function WCRBPlayer({ compact = false }: Props) {
         <View style={{ flex: 1 }}>
           <Text style={s.title}>{station.name}</Text>
           <Text style={s.sub} numberOfLines={1}>
-            {error ?? (playing ? 'Streaming live' : station.city)}
+            {error ?? (playing ? 'Streaming live' : station.blurb)}
           </Text>
         </View>
         <TouchableOpacity
