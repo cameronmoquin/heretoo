@@ -6,6 +6,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { usePathname, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,25 +72,43 @@ export default function TabLayout() {
   // here which duplicated the LeftSidebar nav (visible as the
   // "redundant menu in the middle" the user spotted).
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    /*
+      EVERY VISITED TAB PAINTED AT ONCE. Going feed → profile left both
+      on screen — the profile scrolling over the feed, the music list
+      over the composer. Cold-loading the same URL was always clean, so
+      it was navigation state, not rendering.
+
+      What the DOM actually showed: bottom-tabs keeps a visited screen
+      mounted and layers them correctly, giving the inactive scene
+      z-index -1. But NAV_THEME sets the navigation background to
+      'transparent' app-wide so the canvas shows through, and both scenes
+      inherit that. A negative-z child paints behind its parent's content
+      and above its parent's BACKGROUND — so the inactive feed sat behind
+      profile's content but in front of everything meant to hide it, and
+      showed through profile's own transparent areas and gutters.
+
+      `sceneStyle` was tried first and never reached the DOM: both scene
+      roots still computed to rgba(0,0,0,0). This works instead because
+      `isolation: isolate` makes this View a stacking context, which
+      re-parents that -1 to sit behind this View's own background — now
+      opaque, in the same colour the canvas paints, so nothing looks
+      different. Verified against the live page before shipping:
+      hit-testing the feed chip's coordinates returns profile content.
+
+      Painting the screens' own roots instead would not have worked;
+      they are maxWidth-constrained and centred, so the gutters would
+      have stayed see-through.
+    */
+    <View
+      style={[
+        { flex: 1, backgroundColor: Colors.background },
+        Platform.OS === 'web' ? ({ isolation: 'isolate' } as any) : null,
+      ]}
+    >
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: { display: 'none' },        // hide default — using custom global nav
-          // EVERY VISITED TAB WAS PAINTING AT ONCE. The root layout sets
-          // the navigation theme's background to 'transparent' so the
-          // canvas View behind it shows through, and bottom-tabs keeps a
-          // visited screen mounted. With no opaque scene between them,
-          // going feed → profile left BOTH rendered on top of each
-          // other: the profile scrolling over the feed, the music list
-          // over the composer. Verified in production — on /profile the
-          // feed's chips were still in the DOM and visible.
-          //
-          // An opaque scene fixes it without undoing the canvas: it is
-          // the same colour the canvas paints, so nothing looks
-          // different, but the focused tab now occludes its siblings
-          // instead of layering over them.
-          sceneStyle: { backgroundColor: Colors.background },
         }}
       >
         <Tabs.Screen name="feed" />
