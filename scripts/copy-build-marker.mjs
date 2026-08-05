@@ -41,16 +41,19 @@ if (existsSync(PUB)) {
 const indexPath = join(DIST, 'index.html');
 if (existsSync(indexPath)) {
   let html = readFileSync(indexPath, 'utf8');
-  // The unfurl is the mark and the link. Nothing else.
+  // THE SIGN WENT UP (Aug 2026). The bare unfurl — mark and link, no
+  // description — was the bar-with-no-sign posture, and it lasted until
+  // Myspace announced an anti-algorithm relaunch. Being indexable means
+  // having words, so these are the words. One slogan, one grounding
+  // line, nothing else. Search snippets and link unfurls read the same
+  // meta, so the preview carries this line too; that is the cost of
+  // being findable and it was accepted knowingly.
   //
-  // THIS FILE WAS THE LEAK. It runs after the export and overwrote the
-  // meta tags on every deploy, so anyone who shared heretoo.social got
-  // "HereToo — Family-first social media" and "Invite-only via family"
-  // long after both stopped being true.
-  //
-  // There is no description any more, here or in app/+html.tsx. A link
-  // preview does not get to explain the place either.
-  const TITLE = 'HereToo';
+  // This file runs AFTER the export and overwrites app/+html.tsx's
+  // tags. The two must stay identical; the one that wins is this one.
+  const TITLE = 'HereToo — the anti-social media';
+  const DESCRIPTION =
+    'Are you intelligent enough to be HereToo? Built on art, music, and Shakespeare.';
   const OG_IMAGE = 'https://heretoo.social/og-cover.png';
   const URL = 'https://heretoo.social';
 
@@ -86,8 +89,10 @@ if (existsSync(indexPath)) {
     // SEO
     // Open Graph (Facebook, iMessage, Slack, Discord, LinkedIn)
     '<meta property="og:type" content="website" />',
+    `<meta name="description" content="${DESCRIPTION}" />`,
     '<meta property="og:site_name" content="HereToo" />',
     `<meta property="og:title" content="${TITLE}" />`,
+    `<meta property="og:description" content="${DESCRIPTION}" />`,
     `<meta property="og:url" content="${URL}" />`,
     `<meta property="og:image" content="${OG_IMAGE}" />`,
     '<meta property="og:image:width" content="1200" />',
@@ -95,6 +100,7 @@ if (existsSync(indexPath)) {
     // Twitter Card — same data, separate namespace
     '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:title" content="${TITLE}" />`,
+    `<meta name="twitter:description" content="${DESCRIPTION}" />`,
     `<meta name="twitter:image" content="${OG_IMAGE}" />`,
   ].join('\n    ');
 

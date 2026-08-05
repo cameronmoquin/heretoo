@@ -25,6 +25,13 @@ export default function AboutScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.masthead}>
           <Text style={s.title}>HereToo</Text>
+          {/* The sign. This page is the indexable surface — the sitemap
+              points here and robots allows it — and until now it carried
+              no words at all for a crawler to read. The slogan and the
+              grounding line ARE the marketing; nothing below explains
+              anything. */}
+          <Text style={s.slogan}>Are you intelligent enough to be HereToo?</Text>
+          <Text style={s.ground}>The anti-social media. Art, music, and Shakespeare.</Text>
         </View>
 
         <View style={s.huntCard}>
@@ -67,6 +74,14 @@ function makeStyles() { return StyleSheet.create({
   scroll: { padding: Spacing.lg, paddingBottom: 80, gap: Spacing.lg },
 
   masthead: { gap: 6 },
+  slogan: {
+    fontSize: Type.title.size, lineHeight: Type.title.lineHeight,
+    fontWeight: '600', color: Colors.textPrimary,
+  },
+  ground: {
+    fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+    color: Colors.textSecondary,
+  },
   title: {
     fontSize: Type.hero.size,
     lineHeight: Type.hero.lineHeight,
