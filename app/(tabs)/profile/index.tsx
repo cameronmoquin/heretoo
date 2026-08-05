@@ -80,6 +80,10 @@ export default function OwnProfileScreen() {
   if (!profile) return null;
 
   return (
+    /* Opaque and full-bleed — see app/(tabs)/feed/index.tsx. The tab you
+       are not on stays mounted at z-index -1, and every root here is a
+       centred column, so it used to show in the gutters. */
+    <View style={s.screen}>
     <SafeAreaView style={s.container} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll}>
         {/* ── Identity ── */}
@@ -310,6 +314,7 @@ export default function OwnProfileScreen() {
         </Pressable>
       </Modal>
     </SafeAreaView>
+    </View>
   );
 }
 
@@ -331,6 +336,7 @@ function ActionRow({
 }
 
 function makeStyles() { return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
   scroll: { padding: Spacing.md, gap: 18, paddingBottom: 100, maxWidth: 520, alignSelf: 'center', width: '100%' },
 

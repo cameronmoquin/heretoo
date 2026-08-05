@@ -79,21 +79,12 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
     <text x="430" y="285" fill="url(#gold)">Too</text>
   </g>
 
-  <!-- Tagline -->
-  <text x="100" y="370" fill="#A8A8BD"
-        font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-        font-weight="500" font-size="34" letter-spacing="-0.4">
-    Family-first social.
-  </text>
-
-  <!-- Pitch — three-line description. Generous line-height for
-       readability when this image is shrunk to a Slack thumbnail. -->
-  <g font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-     font-weight="400" font-size="22" fill="#C8C8D6" letter-spacing="-0.1">
-    <text x="100" y="450">Join only by being invited into a family.</text>
-    <text x="100" y="486">The feed rewards what unites — not what divides.</text>
-    <text x="100" y="522">Hate stays out by design.</text>
-  </g>
+  <!-- No tagline, no pitch. The mark and the URL.
+       What used to sit here: "Family-first social", then three bullets
+       about being invited into a family, the feed rewarding what
+       unites, and hate staying out by design. All of it described a
+       product that no longer exists, and all of it was still being
+       drawn into every shared link. -->
 
   <!-- Footer URL -->
   <text x="100" y="580" fill="#787890"

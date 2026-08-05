@@ -87,8 +87,12 @@ export default function WelcomeScreen() {
         setErrorMsg('Username must be at least 3 characters (letters, numbers, underscore).');
         return;
       }
-      // Empty code is allowed now and means "no crew yet".
-      await doSignup(e, password, inviteCode.trim().toUpperCase(), handle);
+      // The code field is gone from the form. A code now only ever
+      // arrives from a /join/CODE link, which parks it in localStorage —
+      // so someone who follows an invite still lands in that crew, and
+      // everyone else just gets an account. Empty means "no crew yet".
+      const pending = consumePendingInviteCode();
+      await doSignup(e, password, (pending ?? '').trim().toUpperCase(), handle);
     } else {
       await doSignin(e, password);
     }
@@ -281,24 +285,11 @@ export default function WelcomeScreen() {
                 <Eyebrow style={s.fieldLabel}>Username</Eyebrow>
                 <TextInput
                   style={s.input}
-                  placeholder="rosalind"
-                  placeholderTextColor={Colors.textMuted}
                   value={username}
                   onChangeText={(t) => { setUsername(t.toLowerCase()); setErrorMsg(null); }}
                   autoCapitalize="none"
                   autoCorrect={false}
                   maxLength={24}
-                  returnKeyType="next"
-                />
-
-                <Eyebrow style={s.fieldLabel}>Invite code</Eyebrow>
-                <TextInput
-                  style={s.input}
-                  value={inviteCode}
-                  onChangeText={(t) => { setInviteCode(t.toUpperCase()); setErrorMsg(null); }}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  maxLength={12}
                   returnKeyType="go"
                   onSubmitEditing={submit}
                 />

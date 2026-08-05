@@ -65,6 +65,15 @@ export default function FeedHomeScreen() {
   const posts = React.useMemo(() => feed.data?.pages.flat() ?? [], [feed.data]);
 
   return (
+    /* Opaque and full-bleed. The tab you are NOT on stays mounted at
+       z-index -1, and every screen root here is a centred 640 column, so
+       an inactive feed used to show in the gutters either side of
+       whichever tab you were actually on. Two attempts to fix that from
+       the navigator (sceneStyle, then isolation on the tabs wrapper)
+       never reached the DOM — both computed to rgba(0,0,0,0) in
+       production. A plain backgroundColor on a plain View cannot be
+       stripped, so the screen hides its neighbours itself. */
+    <View style={styles.screen}>
     <SafeAreaView style={styles.safe} edges={isDesktop ? [] : ['top']}>
       {/* Mobile-only header with brand + utility icons. Desktop uses
           the LeftSidebar so this row is redundant there. */}
@@ -156,6 +165,7 @@ export default function FeedHomeScreen() {
         onHeart={(postId) => toggleHeart.mutate(postId)}
       />
     </SafeAreaView>
+    </View>
   );
 }
 
@@ -188,6 +198,7 @@ function FilterChip({ label, selected, onPress }: {
 }
 
 function makeStyles() { return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: Colors.background },
   safe: {
     flex: 1, backgroundColor: 'transparent',
     maxWidth: Layout.columnMaxWidth, alignSelf: 'center', width: '100%',

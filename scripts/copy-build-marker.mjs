@@ -41,23 +41,16 @@ if (existsSync(PUB)) {
 const indexPath = join(DIST, 'index.html');
 if (existsSync(indexPath)) {
   let html = readFileSync(indexPath, 'utf8');
-  // Description used for SEO + OG + Twitter Card. Same copy everywhere
-  // so Slack / Discord / iMessage / Twitter all show the same preview.
-  // The pitch in plain English: this is family-first media — you only
-  // get in by being invited into a family, the common feed only rewards
-  // posts that bring people together, and there's a private family-only
-  // layer underneath for actual life stuff (origin: health emergency
-  // updates between extended family). The algorithm penalizes division
-  // and won't promote hate. Conflict-resolution help when families spat.
-  const TITLE = 'HereToo — Family-first social media';
-  // Honest copy: state principles + invite-only gating (both true today),
-  // skip the algorithm + moderation claims (still under construction).
-  // Phrased as "built so..." rather than "the feed does..." so we're
-  // describing intent, not promising current behavior.
-  const DESCRIPTION =
-    'Family-first social. Invite-only via family. Built so what unites '
-    + 'you matters more than what divides — and so the people who '
-    + 'matter most get a feed that earns their attention.';
+  // The unfurl is the mark and the link. Nothing else.
+  //
+  // THIS FILE WAS THE LEAK. It runs after the export and overwrote the
+  // meta tags on every deploy, so anyone who shared heretoo.social got
+  // "HereToo — Family-first social media" and "Invite-only via family"
+  // long after both stopped being true.
+  //
+  // There is no description any more, here or in app/+html.tsx. A link
+  // preview does not get to explain the place either.
+  const TITLE = 'HereToo';
   const OG_IMAGE = 'https://heretoo.social/og-cover.png';
   const URL = 'https://heretoo.social';
 
@@ -91,12 +84,10 @@ if (existsSync(indexPath)) {
     '<meta name="apple-mobile-web-app-title" content="HereToo" />',
     '<meta name="mobile-web-app-capable" content="yes" />',
     // SEO
-    `<meta name="description" content="${DESCRIPTION}" />`,
     // Open Graph (Facebook, iMessage, Slack, Discord, LinkedIn)
     '<meta property="og:type" content="website" />',
     '<meta property="og:site_name" content="HereToo" />',
     `<meta property="og:title" content="${TITLE}" />`,
-    `<meta property="og:description" content="${DESCRIPTION}" />`,
     `<meta property="og:url" content="${URL}" />`,
     `<meta property="og:image" content="${OG_IMAGE}" />`,
     '<meta property="og:image:width" content="1200" />',
@@ -104,7 +95,6 @@ if (existsSync(indexPath)) {
     // Twitter Card — same data, separate namespace
     '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:title" content="${TITLE}" />`,
-    `<meta name="twitter:description" content="${DESCRIPTION}" />`,
     `<meta name="twitter:image" content="${OG_IMAGE}" />`,
   ].join('\n    ');
 
