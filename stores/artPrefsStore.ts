@@ -73,9 +73,15 @@ interface Persisted {
   mediums: string[];
   sources: string[];          // museum origins: 'met', 'aic', 'rijks', etc.
   feedMix: FeedMix;
+  /** Which default rule this blob was last reconciled against. */
+  ruleVersion?: number;
 }
 
 const STORAGE_KEY = 'heretoo:art-prefs';
+
+/** Bump when the default selection changes and should reach devices
+ *  that already have prefs saved. 1 = the poster rule. */
+const RULE_VERSION = 1;
 
 /**
  * THE POSTER RULE. The gallery is graphic work: WPA silkscreen, vintage
@@ -105,6 +111,21 @@ function loadInitial(): Persisted {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        // THE RULE HAS TO REACH EXISTING DEVICES. Anyone who had already
+        // opened the app carries a saved blob with genres: [], so the
+        // poster default only ever applied to a browser that had never
+        // seen HereToo — which is nobody who would notice it. A stored
+        // ruleVersion lets the default land exactly once on a device
+        // that predates it, without overriding what someone picks later.
+        if ((parsed.ruleVersion ?? 0) < RULE_VERSION) {
+          return {
+            schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES],
+            mediums: [], sources: [],
+            feedMix: parsed.feedMix === 'art_and_ads' || parsed.feedMix === 'posts_only'
+              ? parsed.feedMix : 'art_only',
+            ruleVersion: RULE_VERSION,
+          };
+        }
         const mix: FeedMix =
           parsed.feedMix === 'art_and_ads' || parsed.feedMix === 'posts_only'
             ? parsed.feedMix
@@ -116,11 +137,12 @@ function loadInitial(): Persisted {
           mediums: Array.isArray(parsed.mediums) ? parsed.mediums : [],
           sources: Array.isArray(parsed.sources) ? parsed.sources : [],
           feedMix: mix,
+          ruleVersion: RULE_VERSION,
         };
       }
     } catch {}
   }
-  return { schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES], mediums: [], sources: [], feedMix: 'art_only' };
+  return { schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES], mediums: [], sources: [], feedMix: 'art_only', ruleVersion: RULE_VERSION };
 }
 
 function persist(state: Persisted) {
@@ -180,7 +202,7 @@ interface ArtPrefsState extends Persisted {
 
 function snapshot(get: () => ArtPrefsState): Persisted {
   const st = get();
-  return { schools: st.schools, eras: st.eras, genres: st.genres, mediums: st.mediums, sources: st.sources, feedMix: st.feedMix };
+  return { schools: st.schools, eras: st.eras, genres: st.genres, mediums: st.mediums, sources: st.sources, feedMix: st.feedMix, ruleVersion: RULE_VERSION };
 }
 
 /** Combined persist (localStorage) + sync (profile.style_prefs).
