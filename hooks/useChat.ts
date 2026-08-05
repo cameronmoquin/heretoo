@@ -369,7 +369,17 @@ export function useSendMessage() {
         created_at: new Date().toISOString(),
       };
       qc.setQueryData<ChatMessage[]>(key, [...prev, optimistic]);
-      return { undo: () => qc.setQueryData(key, prev), tempId };
+      // Undo removes ONLY the failed bubble. Restoring the pre-send
+      // snapshot rolled the whole thread back in time — anything that
+      // arrived while the send was in flight vanished with it, which is
+      // exactly "messages randomly disappear."
+      return {
+        undo: () =>
+          qc.setQueryData<ChatMessage[]>(key, (cur) =>
+            (cur ?? []).filter((m) => m.id !== tempId),
+          ),
+        tempId,
+      };
     },
     onError: (_err, vars, context: any) => {
       if (context?.undo) try { context.undo(); } catch {}
