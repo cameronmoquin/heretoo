@@ -64,6 +64,10 @@ export interface ChatMessage {
  */
 export function useUnreadCount() {
   const userId = useAuthStore((s) => s.user?.id);
+  // The badge is mounted globally (sidebar, mobile tab bar), so hooking
+  // the inbox subscription here is what makes a message land wherever
+  // you happen to be standing rather than only on the messages screen.
+  useInboxRealtime();
   return useQuery({
     queryKey: ['unread-count', userId],
     queryFn: async (): Promise<number> => {
@@ -92,8 +96,46 @@ export function useUnreadCount() {
   });
 }
 
+/**
+ * Realtime for the INBOX, not for one thread.
+ *
+ * The only channel in this file lived inside useThreadMessages, gated on
+ * a threadId — so it existed only while a conversation was open. Sitting
+ * on the message list, or anywhere else in the app, nothing was
+ * listening at all: a message could not reach the inbox row or the
+ * unread badge until something happened to refetch them.
+ *
+ * No thread_id filter here on purpose. RLS already limits `messages` to
+ * threads the viewer is in, so an unfiltered subscription still only
+ * delivers their own. Self-sent inserts are ignored — the sender's own
+ * cache is already correct from the optimistic write, and refetching on
+ * it would fight the optimism this hook exists to preserve.
+ */
+export function useInboxRealtime() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`inbox:${userId}:${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload: any) => {
+          if (payload?.new?.sender_id === userId) return;
+          qc.invalidateQueries({ queryKey: ['threads'] });
+          qc.invalidateQueries({ queryKey: ['unread-count'] });
+          qc.invalidateQueries({ queryKey: ['thread-messages', payload?.new?.thread_id] });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc, userId]);
+}
+
 export function useThreads() {
   const userId = useAuthStore((s) => s.user?.id);
+  useInboxRealtime();
   return useQuery({
     queryKey: ['threads', userId],
     queryFn: async (): Promise<MessageThread[]> => {
