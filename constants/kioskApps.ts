@@ -29,6 +29,11 @@ export const KIOSK_ALLOWED_PACKAGES: string[] = [
   'com.amazon.kindle',
   'com.duolingo',
   'com.chess',
+  // Minecraft: Bedrock Edition 1.26.40.5. Ships as five splits totalling
+  // ~1.1 GB, nearly all of it split_install_pack.apk — the game assets. All
+  // five must go in on one `install-multiple` or the install fails.
+  'com.mojang.minecraftpe',
+  'com.lego.common.legoplay',
 ];
 
 /**
@@ -63,6 +68,23 @@ export const KIOSK_HIDDEN_PACKAGES: string[] = [
  * exist is skipped silently, so a wrong guess costs nothing but should still
  * be corrected — check with `adb shell pm list packages` on provisioning day.
  */
+/** What the device calls itself on its own home screen. */
+export const KIOSK_DEVICE_NAME = 'Jude-a-phone';
+
+/**
+ * Shown on the shelf, always.
+ *
+ * This device has no active cellular service — the SIM reports no registered
+ * carrier. A SIM-less handset on a US network can often still reach 911, but
+ * "often" is not a basis for a child's safety, and nothing here verifies it.
+ * The label exists so nobody — Jude, a sitter, a friend's parent — mistakes
+ * this for a phone you can call for help on.
+ *
+ * Do not soften or hide this without adding real emergency capability first.
+ */
+export const KIOSK_DISCLAIMER =
+  'Entertainment use only. Not capable of emergency calls.';
+
 export const KIOSK_BLOCKED_PACKAGES: string[] = [
   'com.android.vending', // Google Play Store
   'com.sec.android.app.samsungapps', // Galaxy Store

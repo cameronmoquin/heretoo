@@ -64,12 +64,23 @@ Do not proceed to the real phone until that round trip works.
 
 ### 1. Build the kiosk APK
 
-**A working build already exists** at
-`D:\Photos from Samsung s22\_apks\heretoo-kiosk\heretoo-kiosk-v1.0.0-build1.apk`
-(117 MB, built 2026-08-03). Verified to contain the HOME intent filter, the
-device admin receiver, `QUERY_ALL_PACKAGES`, and the kiosk module classes. Skip
-to step 2 unless you have changed native code since — JS-only changes ship over
-the air, see "Updating the phone later".
+**A verified build exists** at
+`D:\Photos from Samsung s22\_apks\heretoo-kiosk\heretoo-kiosk-v1.0.0-build2.apk`
+(117 MB, built 2026-08-04). Confirmed to contain the HOME intent filter, the
+device admin receiver, `QUERY_ALL_PACKAGES`, and every native entry point —
+`getLaunchableApps`, `setPackagesHidden`, `launchApp`, `encodeIcon`.
+
+**Build once more before wipe day anyway.** Everything changed since build2 is
+JavaScript, which normally ships over the air — but not usefully *during*
+provisioning. The phone has no Wi-Fi configured until partway through setup, so
+a build relying on an OTA to fetch its own shelf would show a stale UI at the
+exact moment you are testing it. Bake it in instead:
+
+```bash
+npx eas build --profile kiosk --platform android --non-interactive
+```
+
+Budget ~30 minutes; the queue has run 15 minutes on top of a 17-minute build.
 
 
 ```bash

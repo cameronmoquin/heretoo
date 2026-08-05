@@ -10,13 +10,15 @@
  * emoji in chrome. A launcher for a kid is not a licence to decorate — the
  * restraint is what makes it feel like a real device rather than a toy.
  *
- * HereToo gets a primary-filled block rather than a tile in the grid.
- * Messaging is the reason the phone exists; the rest is what he is allowed to
- * do with it, which is not the same weight.
+ * Two ways into HereToo, on purpose. Messaging is why the phone exists, so it
+ * gets the primary block and lands straight in /messages; the rest of the app
+ * is a tile like any other. Going through a feed to reach a conversation would
+ * put the main thing behind the side thing.
  *
- * Tiles come from the device itself — real labels, real icons via
+ * App tiles come from the device itself — real labels, real icons via
  * PackageManager — so an app that failed to sideload has no tile rather than a
- * dead one. See constants/kioskApps.ts.
+ * dead one. The allowlist is the runtime one (lib/kiosk-allowlist.ts), not the
+ * compiled seed, so the parent picker takes effect on next launch.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -32,11 +34,26 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Radius, Spacing, Type, Heights, Motion } from '../../constants/design';
-import { KIOSK_HIDDEN_PACKAGES } from '../../constants/kioskApps';
+import {
+  KIOSK_HIDDEN_PACKAGES,
+  KIOSK_DEVICE_NAME,
+  KIOSK_DISCLAIMER,
+} from '../../constants/kioskApps';
 import { loadAllowlist } from '../../lib/kiosk-allowlist';
 import { getAppInfo, launchApp, type KioskAppInfo } from '../../modules/heretoo-kiosk';
+
+/**
+ * Tiles that route inside HereToo rather than launching another package.
+ * Rendered before the installed apps so the app's own surfaces lead.
+ */
+const ROUTE_TILES = [
+  { key: 'heretoo', label: 'HereToo', href: '/(tabs)/feed', icon: 'people-outline' },
+  { key: 'deaddrop', label: 'Deaddrop', href: '/hunt', icon: 'location-outline' },
+  { key: 'cipher', label: 'Cipher', href: '/cipher', icon: 'key-outline' },
+] as const;
 
 /**
  * Plain observation, never an exclamation — the tone rules in
@@ -104,6 +121,8 @@ export function AppShelf({ previewApps }: Props = {}) {
   const tileWidth = (available - gutter * (columns - 1)) / columns;
   const iconSize = Math.min(tileWidth * 0.68, 72);
 
+  const wellStyle = [styles.iconWell, { width: iconSize, height: iconSize }];
+
   return (
     <ScrollView
       style={styles.root}
@@ -111,21 +130,49 @@ export function AppShelf({ previewApps }: Props = {}) {
       showsVerticalScrollIndicator={false}
     >
       <Animated.View style={{ opacity: fade, gap: Spacing.lg }}>
-        <Text style={styles.greeting}>{greeting(new Date().getHours())}</Text>
+        <View style={styles.header}>
+          <Text style={styles.deviceName}>{KIOSK_DEVICE_NAME}</Text>
+          <Text style={styles.greeting}>{greeting(new Date().getHours())}</Text>
+        </View>
 
         <Pressable
           style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
-          onPress={() => router.push('/(tabs)/feed')}
+          onPress={() => router.push('/messages')}
           accessibilityRole="button"
-          accessibilityLabel="Open HereToo"
+          accessibilityLabel="Open messages"
         >
-          <Text style={styles.primaryTitle}>HereToo</Text>
-          <Text style={styles.primarySubtitle}>Messages and family</Text>
+          <Text style={styles.primaryTitle}>Messages</Text>
+          <Text style={styles.primarySubtitle}>Family and friends</Text>
         </Pressable>
 
         <View style={styles.rule} />
 
         <View style={[styles.grid, { gap: gutter }]}>
+          {ROUTE_TILES.map((tile) => (
+            <Pressable
+              key={tile.key}
+              style={({ pressed }) => [
+                styles.tile,
+                { width: tileWidth },
+                pressed && styles.pressed,
+              ]}
+              onPress={() => router.push(tile.href)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${tile.label}`}
+            >
+              <View style={wellStyle}>
+                <Ionicons
+                  name={tile.icon}
+                  size={Math.round(iconSize * 0.42)}
+                  color={Colors.textPrimary}
+                />
+              </View>
+              <Text style={styles.tileLabel} numberOfLines={2}>
+                {tile.label}
+              </Text>
+            </Pressable>
+          ))}
+
           {apps.map((app) => (
             <Pressable
               key={app.packageName}
@@ -138,9 +185,7 @@ export function AppShelf({ previewApps }: Props = {}) {
               accessibilityRole="button"
               accessibilityLabel={`Open ${app.label}`}
             >
-              <View
-                style={[styles.iconWell, { width: iconSize, height: iconSize }]}
-              >
+              <View style={wellStyle}>
                 {app.icon ? (
                   <Image
                     source={{ uri: app.icon }}
@@ -162,6 +207,12 @@ export function AppShelf({ previewApps }: Props = {}) {
         </View>
 
         {apps.length === 0 && <Text style={styles.empty}>No apps yet.</Text>}
+
+        {/* Always visible, never behind a scroll the user might not take.
+            See KIOSK_DISCLAIMER for why this is not decoration. */}
+        <View style={styles.disclaimerWrap}>
+          <Text style={styles.disclaimer}>{KIOSK_DISCLAIMER}</Text>
+        </View>
       </Animated.View>
     </ScrollView>
   );
@@ -177,9 +228,16 @@ function makeStyles() { return StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
+  header: { gap: Spacing.xxs },
   // Type tokens are { size, lineHeight, weight }, not RN style keys — they
   // must be mapped explicitly. Spreading them silently yields default 14/400,
   // because React Native ignores `size` and `weight`.
+  deviceName: {
+    fontSize: Type.title.size,
+    lineHeight: Type.title.lineHeight,
+    fontWeight: Type.title.weight,
+    color: Colors.textPrimary,
+  },
   greeting: {
     fontSize: Type.caption.size,
     lineHeight: Type.caption.lineHeight,
@@ -246,6 +304,19 @@ function makeStyles() { return StyleSheet.create({
     fontSize: Type.body.size,
     lineHeight: Type.body.lineHeight,
     fontWeight: Type.body.weight,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  disclaimerWrap: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    paddingTop: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  disclaimer: {
+    fontSize: Type.caption.size,
+    lineHeight: Type.caption.lineHeight,
+    fontWeight: Type.caption.weight,
     color: Colors.textMuted,
     textAlign: 'center',
   },
