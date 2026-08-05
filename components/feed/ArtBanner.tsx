@@ -19,7 +19,6 @@ import { useArtFeed } from '../../hooks/useArtFeed';
 import { useBrokenArt, pickArtAroundAnchor } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
 import { Layout, Radius, Type } from '../../constants/design';
-import { artAspect } from '../../lib/artAspect';
 
 interface ArtBannerProps {
   slot?: 'top' | 'bottom';
@@ -51,24 +50,19 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
     }
   };
 
-  const fit = artAspect(piece.width, piece.height, 640 / 88);
   const isAd = piece.source === 'ad';
 
   return (
-    /* The banner takes the piece's shape (lib/artAspect) instead of
-       cropping the piece to an 88px strip — which showed a portrait
-       poster as a horizontal sliver of its own middle. A tall piece
-       makes a tall banner; that is the poster rule being visible
-       rather than beheaded. */
-    <Pressable
-      style={[s.banner, { aspectRatio: fit.aspectRatio }]}
-      onPress={open}
-      disabled={!piece.source_url}
-    >
+    /* Cropped ON PURPOSE, unlike ArtSlot and SidebarArt. The banner is
+       the ad template — banner-shaped by definition — and running art
+       through it cropped is what teases the format before inventory
+       exists. Cameron: if art fits neatly into ad banners it can be
+       cropped; hold the line at 50/50 art and ads. */
+    <Pressable style={s.banner} onPress={open} disabled={!piece.source_url}>
       <Image
         source={{ uri: piece.storage_path }}
         style={s.bg}
-        resizeMode={fit.resizeMode}
+        resizeMode="cover"
         onError={() => markBroken(piece.id)}
       />
 
@@ -98,6 +92,7 @@ export function ArtBanner({ slot = 'top' }: ArtBannerProps) {
 
 function makeStyles() { return StyleSheet.create({
   banner: {
+    height: 88,
     backgroundColor: Colors.surfaceAlt,
     borderRadius: Radius.media,
     overflow: 'hidden',
