@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 72" width="600" height="72">
+  <!--
+    "Jude-a-phone" logotype, Syne ExtraBold.
+
+    Syne was retired from the UI type scale (docs/UI_SYSTEM.md §3 — one family,
+    Inter). This does not reintroduce it: the build script rasterises this to a
+    PNG, so nothing loads a second font at runtime and no UI text changes
+    family. It is artwork, the same category as HereTooLogo's hand-drawn
+    geometry.
+
+    Syne ships under the SIL Open Font License and is already vendored in
+    node_modules/@expo-google-fonts/syne, so rasterising it is licensed.
+    Impact and Segoe UI Black were the other chunky options on this machine and
+    are Microsoft fonts — redistributing their glyphs inside a shipped asset is
+    a licensing question worth not having.
+
+    Black on transparent; the app tints it at render time so it inverts with
+    the palette.
+  -->
+  <text
+    x="0" y="52"
+    font-family="Syne"
+    font-weight="800"
+    font-size="52"
+    letter-spacing="-1.5"
+    fill="#000000"
+  >Jude-a-phone</text>
+</svg>

@@ -17,11 +17,6 @@ export const KIOSK_ALLOWED_PACKAGES: string[] = [
   'com.samsung.android.dialer',
   'com.android.server.telecom', // in-call UI for an active call
 
-  // Camera. Confirmed as the IMAGE_CAPTURE handler, so this is also what
-  // expo-image-picker's launchCameraAsync fires an intent at — without it,
-  // taking a photo from inside HereToo fails while locked.
-  'com.sec.android.app.camera',
-
   // The curated set.
   'org.pbskids.gamesapp',
   'com.Peasoup.Outtatown', // capital P is load-bearing
@@ -34,20 +29,32 @@ export const KIOSK_ALLOWED_PACKAGES: string[] = [
   // five must go in on one `install-multiple` or the install fails.
   'com.mojang.minecraftpe',
   'com.lego.common.legoplay',
+
+  // Camera, last on the shelf by request. Also the IMAGE_CAPTURE handler, so
+  // it must stay permitted regardless — expo-image-picker's
+  // launchCameraAsync fires an intent at this package, and without it in the
+  // lock-task list, taking a photo from inside HereToo fails.
+  //
+  // Surfacing it as a tile does hand Jude the full Samsung camera app, with
+  // its own settings and share sheet, rather than only the composer's capture
+  // flow. That is the tradeoff; it was tile-less before for that reason.
+  'com.sec.android.app.camera',
 ];
 
 /**
  * Packages that are permitted inside lock task but deliberately get no tile.
  *
- * The dialer is reachable through HereToo's own calling UI, and the camera is
- * launched by the composer via intent — surfacing either as its own icon would
- * invite Jude to wander into a stock Samsung app with its own settings,
- * account prompts, and share sheet.
+ * Telephony only. The dialer is reachable through HereToo's own calling UI,
+ * and on a device with no cellular service it cannot place a call anyway —
+ * an icon for it would be a button that does nothing.
+ *
+ * The camera used to live here for the same reason, and was surfaced by
+ * request: being able to take a photo is worth more than keeping the stock
+ * app's settings out of reach.
  */
 export const KIOSK_HIDDEN_PACKAGES: string[] = [
   'com.samsung.android.dialer',
   'com.android.server.telecom',
-  'com.sec.android.app.camera',
 ];
 
 /**

@@ -86,6 +86,35 @@ export function AppShelf({ previewApps }: Props = {}) {
   // Codex easing. Never bouncy, never spring.
   const fade = useRef(new Animated.Value(0)).current;
 
+  /**
+   * The monster's idle float. 3px over 2.2s each way — enough to read as alive
+   * when glanced at, not enough to pull the eye off whatever Jude is doing.
+   * docs/aesthetic.md refuses spring and bounce, so this is a plain timing
+   * curve on the codex bezier.
+   */
+  const bob = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, {
+          toValue: -3,
+          duration: 2200,
+          easing: Easing.bezier(0.2, 0, 0, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bob, {
+          toValue: 0,
+          duration: 2200,
+          easing: Easing.bezier(0.2, 0, 0, 1),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [bob]);
+
   // Re-read on mount rather than caching to module scope: apps get sideloaded
   // during provisioning and ticked in the parent picker afterwards, and both
   // should show up on next launch without a rebuild.
@@ -131,8 +160,28 @@ export function AppShelf({ previewApps }: Props = {}) {
     >
       <Animated.View style={{ opacity: fade, gap: Spacing.lg }}>
         <View style={styles.header}>
-          <Text style={styles.deviceName}>{KIOSK_DEVICE_NAME}</Text>
-          <Text style={styles.greeting}>{greeting(new Date().getHours())}</Text>
+          {/* Both marks are black-on-transparent PNGs rasterised from
+              assets/brand/*.svg; tintColor is what makes one asset work on
+              both palettes. See scripts/build-jude-mark.mjs. */}
+          <Animated.Image
+            source={require('../../assets/brand/jude-monster.png')}
+            style={[styles.monster, { transform: [{ translateY: bob }] }]}
+            resizeMode="contain"
+            accessibilityRole="image"
+            accessibilityLabel="Jude-a-phone"
+          />
+          <View style={styles.headerText}>
+            <Image
+              source={require('../../assets/brand/jude-wordmark.png')}
+              style={styles.wordmark}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel={KIOSK_DEVICE_NAME}
+            />
+            <Text style={styles.greeting}>
+              {greeting(new Date().getHours())}
+            </Text>
+          </View>
         </View>
 
         <Pressable
@@ -228,16 +277,28 @@ function makeStyles() { return StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  header: { gap: Spacing.xxs },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  headerText: { flex: 1, gap: Spacing.xxs },
+  monster: {
+    width: 56,
+    height: 56,
+    tintColor: Colors.textPrimary,
+  },
+  wordmark: {
+    // Aspect locked to the source SVG (600×72) so the logotype never
+    // stretches; width flexes and height follows.
+    width: '100%',
+    aspectRatio: 600 / 72,
+    maxWidth: 230,
+    tintColor: Colors.textPrimary,
+  },
   // Type tokens are { size, lineHeight, weight }, not RN style keys — they
   // must be mapped explicitly. Spreading them silently yields default 14/400,
   // because React Native ignores `size` and `weight`.
-  deviceName: {
-    fontSize: Type.title.size,
-    lineHeight: Type.title.lineHeight,
-    fontWeight: Type.title.weight,
-    color: Colors.textPrimary,
-  },
   greeting: {
     fontSize: Type.caption.size,
     lineHeight: Type.caption.lineHeight,
