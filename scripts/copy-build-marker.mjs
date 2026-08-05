@@ -107,9 +107,13 @@ if (existsSync(indexPath)) {
   // Strip any auto-injected default favicon link first.
   html = html.replace(/<link rel="icon" href="\/favicon\.ico"\s*\/?>\s*/g, '');
 
-  // Inject <title> if missing, then the head tags. Idempotent — keyed
-  // off the og:title meta so we don't duplicate on reruns.
-  if (!/<title>/.test(html)) {
+  // REPLACE the title, do not merely add one. Expo's static renderer
+  // writes <title> from app.json's name ("HereToo"), ignoring whatever
+  // +html.tsx says — so the inject-if-missing branch never fired and the
+  // shipped tab title stayed bare while every other tag updated.
+  if (/<title>/.test(html)) {
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${TITLE}</title>`);
+  } else {
     html = html.replace('</head>', `    <title>${TITLE}</title>\n  </head>`);
   }
   if (!html.includes('property="og:title"')) {
