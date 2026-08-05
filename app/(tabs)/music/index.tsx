@@ -56,7 +56,6 @@ export default function MusicTab() {
             <Text style={s.heroSub}>
               {active.genre.replace(/^./, (c) => c.toUpperCase())} · {active.city}
             </Text>
-            <Text style={s.heroBlurb} numberOfLines={3}>{active.blurb}</Text>
             {active.url && (
               <TouchableOpacity onPress={() => openHomepage(active.url)} style={s.heroLink}>
                 <Ionicons name="open-outline" size={12} color={Colors.primary} />
@@ -102,7 +101,7 @@ export default function MusicTab() {
                   <View style={{ flex: 1 }}>
                     <Text style={[s.rowName, isActive && s.rowNameActive]}>{station.name}</Text>
                     <Text style={s.rowMeta} numberOfLines={1}>
-                      {station.city} · {station.blurb}
+                      {station.city}
                     </Text>
                   </View>
                   {isActive && playing && (

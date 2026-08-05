@@ -140,7 +140,6 @@ export default function ProfileSetupScreen() {
             autoCorrect={false}
             maxLength={24}
           />
-          <Text style={s.hint}>3–24 lowercase letters, numbers, underscores.</Text>
 
           <Eyebrow style={s.label}>Display name</Eyebrow>
           <TextInput

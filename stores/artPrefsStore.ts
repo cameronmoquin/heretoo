@@ -60,10 +60,10 @@ export const ERA_RANGES: Record<ArtEra, [number, number]> = {
  */
 export type FeedMix = 'art_only' | 'art_and_ads' | 'posts_only';
 
-export const FEED_MIX_LABELS: Record<FeedMix, { title: string; sub: string }> = {
-  art_only:    { title: 'Art only',    sub: 'Public-domain works between posts.' },
-  art_and_ads: { title: 'Art + ads',   sub: 'Same gallery + occasional sponsored picks.' },
-  posts_only:  { title: 'Posts only',  sub: 'Hide everything between posts. (Subscription preview.)' },
+export const FEED_MIX_LABELS: Record<FeedMix, { title: string }> = {
+  art_only:    { title: 'Art only' },
+  art_and_ads: { title: 'Art + ads' },
+  posts_only:  { title: 'Posts only' },
 };
 
 interface Persisted {

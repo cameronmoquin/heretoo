@@ -32,8 +32,6 @@ export interface RadioStation {
   genre: string;
   /** City / market for context. */
   city: string;
-  /** Short blurb for the picker. */
-  blurb: string;
   /** Stream URL list — first that loads wins. */
   streams: string[];
   /** Optional homepage / "more info" link. */
@@ -58,7 +56,6 @@ export const STATIONS: RadioStation[] = [
     name: '99.5 WCRB',
     genre: 'classical',
     city: 'Boston',
-    blurb: 'Classical New England — the original station this app shipped with.',
     streams: [
       'https://wgbh-live.streamguys1.com/WCRB.mp3',
       'https://wgbh-live.streamguys1.com/classical-hi',
@@ -71,7 +68,6 @@ export const STATIONS: RadioStation[] = [
     name: 'King FM',
     genre: 'classical',
     city: 'Seattle',
-    blurb: 'Listener-supported classical, with deep early-music programming.',
     streams: ['https://classicalking.streamguys1.com/king-fm-mp3-128'],
     url: 'https://www.king.org',
   },
@@ -82,7 +78,6 @@ export const STATIONS: RadioStation[] = [
     name: 'WWOZ 90.7',
     genre: 'jazz',
     city: 'New Orleans',
-    blurb: 'NOLA jazz, blues, brass band — community-curated, no playlists.',
     streams: ['https://wwoz-sc.streamguys1.com/wwoz-hi.mp3'],
     url: 'https://www.wwoz.org',
   },
@@ -93,7 +88,6 @@ export const STATIONS: RadioStation[] = [
     name: 'KEXP 90.3',
     genre: 'indie',
     city: 'Seattle',
-    blurb: 'Where the music matters — DJ-driven indie, hip-hop, world.',
     streams: ['https://kexp-mp3-128.streamguys1.com/kexp128.mp3'],
     url: 'https://www.kexp.org',
   },
@@ -102,7 +96,6 @@ export const STATIONS: RadioStation[] = [
     name: 'KCRW Eclectic 24',
     genre: 'eclectic',
     city: 'Los Angeles',
-    blurb: 'Tastemaker mix from KCRW DJs — adjacent to the morning show vibe.',
     streams: ['https://kcrw.streamguys1.com/kcrw_192k_mp3_e24'],
     url: 'https://www.kcrw.com',
   },
@@ -111,7 +104,6 @@ export const STATIONS: RadioStation[] = [
     name: 'WFMU',
     genre: 'free-form',
     city: 'Jersey City',
-    blurb: 'The most freeform station in the world. DJs go where they want.',
     streams: ['https://stream0.wfmu.org/freeform-128k'],
     url: 'https://wfmu.org',
   },
@@ -120,7 +112,6 @@ export const STATIONS: RadioStation[] = [
     name: 'WFUV 90.7',
     genre: 'adult alt',
     city: 'New York',
-    blurb: 'Fordham\'s public radio — adult alternative + great live sessions.',
     streams: ['https://onair.wfuv.org/onair-hi.mp3'],
     url: 'https://wfuv.org',
   },
@@ -131,7 +122,6 @@ export const STATIONS: RadioStation[] = [
     name: 'WBUR 90.9',
     genre: 'talk',
     city: 'Boston',
-    blurb: 'NPR Boston — On Point, Here & Now, BBC overnight.',
     streams: ['https://audio.wbur.org/stream/live_mp3'],
     url: 'https://www.wbur.org',
   },
@@ -140,7 +130,6 @@ export const STATIONS: RadioStation[] = [
     name: 'WNYC FM',
     genre: 'talk',
     city: 'New York',
-    blurb: 'NYC public radio — Brian Lehrer, Radiolab, On the Media.',
     streams: ['https://fm939.wnyc.org/wnycfm-mobile.aac'],
     url: 'https://www.wnyc.org',
   },
@@ -151,7 +140,6 @@ export const STATIONS: RadioStation[] = [
     name: 'BBC 6 Music',
     genre: 'alternative',
     city: 'London',
-    blurb: 'Lauren Laverne, Mary Anne Hobbs — 6 Music\'s alt-canon mix.',
     streams: ['https://stream.live.vc.bbcmedia.co.uk/bbc_6music'],
     url: 'https://www.bbc.co.uk/sounds/play/live:bbc_6music',
   },
@@ -160,7 +148,6 @@ export const STATIONS: RadioStation[] = [
     name: 'BBC Radio 4',
     genre: 'talk',
     city: 'London',
-    blurb: 'The Today Programme, drama, In Our Time, The Archers.',
     streams: ['https://stream.live.vc.bbcmedia.co.uk/bbc_radio_fourfm'],
     url: 'https://www.bbc.co.uk/sounds/play/live:bbc_radio_fourfm',
   },
@@ -171,7 +158,6 @@ export const STATIONS: RadioStation[] = [
     name: 'SomaFM Groove Salad',
     genre: 'downtempo',
     city: 'San Francisco',
-    blurb: 'A nicely chilled plate of ambient/downtempo beats and grooves.',
     streams: ['https://ice2.somafm.com/groovesalad-128-mp3'],
     url: 'https://somafm.com/groovesalad/',
   },
@@ -180,7 +166,6 @@ export const STATIONS: RadioStation[] = [
     name: 'SomaFM Indie Pop Rocks',
     genre: 'indie',
     city: 'San Francisco',
-    blurb: 'New and classic favorite indie pop tracks.',
     streams: ['https://ice2.somafm.com/indiepop-128-mp3'],
     url: 'https://somafm.com/indiepop/',
   },
@@ -189,7 +174,6 @@ export const STATIONS: RadioStation[] = [
     name: 'Radio Paradise',
     genre: 'eclectic',
     city: 'listener-built',
-    blurb: 'DJ-mixed eclectic blend — rock, electronica, world, classical.',
     streams: ['https://stream.radioparadise.com/mp3-192'],
     url: 'https://radioparadise.com',
   },
@@ -203,7 +187,6 @@ export const STATIONS: RadioStation[] = [
     name: 'Absolute Oldies',
     genre: '50s & 60s',
     city: 'curated · free',
-    blurb: 'The original rock and roll, doo-wop, and pop of the late 50s and 60s.',
     streams: [
       'https://strm112.1.fm/oldies_mobile_mp3',
       'https://strm112.2.fm/oldies_mobile_mp3',
@@ -215,7 +198,6 @@ export const STATIONS: RadioStation[] = [
     name: 'Absolute 70s',
     genre: '1970s',
     city: 'curated · free',
-    blurb: 'Carole King, Fleetwood Mac, James Taylor, the rest of that decade.',
     streams: [
       'https://strm112.1.fm/seventies_mobile_mp3',
       'https://strm112.2.fm/seventies_mobile_mp3',
@@ -227,7 +209,6 @@ export const STATIONS: RadioStation[] = [
     name: 'Absolute 80s',
     genre: '1980s',
     city: 'curated · free',
-    blurb: 'Synth-pop, soft rock, and the soundtrack of a generation\'s twenties.',
     streams: [
       'https://strm112.1.fm/eightiesfusion_mobile_mp3',
       'https://strm112.2.fm/eightiesfusion_mobile_mp3',
@@ -239,7 +220,6 @@ export const STATIONS: RadioStation[] = [
     name: 'SomaFM PopTron',
     genre: 'classic pop',
     city: 'San Francisco',
-    blurb: 'Indie pop and post-punk that aged into nostalgia.',
     streams: ['https://ice5.somafm.com/poptron-128-mp3'],
     url: 'https://somafm.com/poptron/',
   },

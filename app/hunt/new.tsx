@@ -252,7 +252,7 @@ export default function HuntNew() {
             <Ionicons name="camera-outline" size={28} color={Colors.textMuted} />
           </View>
         )}
-        {Platform.OS === 'web' ? (
+        {Platform.OS === 'web' && (
           <label style={({
             display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
             minHeight: Heights.touchTarget, boxSizing: 'border-box',
@@ -270,8 +270,6 @@ export default function HuntNew() {
               style={({ display: 'none' } as any)}
             />
           </label>
-        ) : (
-          <Text style={s.note}>Setting a drop runs from the web app for now.</Text>
         )}
 
         {/* Destination. Where the drop lands. */}
