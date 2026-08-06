@@ -121,13 +121,10 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         ? 'Direct to you'
         : 'Direct';
 
-  // The burn, stated as a fact about the object in front of you.
-  // The literal claim, and it is literal: at the moment of burning the
-  // words are overwritten in the database — not hidden, overwritten —
-  // and the purge worker destroys the files. What survives is this
-  // marker.
+  // The burn, stated as a fact about the object in front of you. The
+  // full account of what happened renders under the redaction bar.
   const burnMark = burned
-    ? 'Burned · destroyed, not hidden. Nothing kept.'
+    ? 'Burned'
     : !burns
       ? null
       : isMine
@@ -239,9 +236,20 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         </View>
       ) : (
         <>
-        {/* The tombstone. The server wiped the body and took the media;
-            the bar is what a redaction looks like. */}
-        {burned && <View style={s.redaction} accessibilityLabel="Redacted" />}
+        {/* The tombstone. The bar is what a redaction looks like, and
+            the note under it is the literal record of the mechanics —
+            not reassurance, an account. Every clause is checkable
+            against open_drop() and drop-purge. */}
+        {burned && (
+          <>
+            <View style={s.redaction} accessibilityLabel="Redacted" />
+            <Text style={s.burnedNote}>
+              The text was overwritten in the database the moment this was
+              opened. Any photos or video are destroyed within the hour.
+              No copy exists — not the author&#39;s, not HereToo&#39;s.
+            </Text>
+          </>
+        )}
         {!!post.body && <Text style={s.body}>{post.body}</Text>}
 
         {/* Optional attribution slug — used by Shakespeare bot posts
@@ -871,6 +879,11 @@ function makeStyles() { return StyleSheet.create({
     maxWidth: 260,
     backgroundColor: Colors.textPrimary,
     borderRadius: 2,
+  },
+  // The account of the burn. Muted, under the bar.
+  burnedNote: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textSecondary, marginTop: 6,
   },
   // The deaddrop X. Ink, centred, and the whole card is the door.
   xWrap: { alignItems: 'center', paddingVertical: Spacing.lg, gap: 4 },
