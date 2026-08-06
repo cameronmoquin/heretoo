@@ -26,6 +26,7 @@
  */
 
 import type { Config } from '@netlify/functions';
+import { Vocab } from '../../constants/vocab';
 import {
   renderEmailHtml,
   renderEmailText,
@@ -79,7 +80,7 @@ function renderEmail(
 ): { subject: string; html: string; text: string } {
   const greet = displayName ? escapeHtml(displayName.split(' ')[0]) : 'there';
   const subjectName = escapeHtml(p.subject_name || 'a story');
-  const crew = escapeHtml(p.family_name || 'your crew');
+  const crew = escapeHtml(p.family_name || `your ${Vocab.group}`);
   const author = escapeHtml(p.author_name || p.author_handle || 'Someone');
   const body = escapeHtml((p.body ?? '').slice(0, 600));
   // /subjects/{id} has never existed. The route is
@@ -95,15 +96,15 @@ function renderEmail(
     emailHeading(`New on “${subjectName}”`) +
     emailNote(`Hey ${greet}. ${author} added to a story you follow.`) +
     `<div style="margin:16px 0;padding:16px 18px;background:${EmailBrand.inset};border:1px solid ${EmailBrand.insetBorder};border-radius:10px;">
-       <div style="font-size:15px;color:${EmailBrand.cream};line-height:1.6;">${body || `<span style="color:${EmailBrand.muted};">A new photo or moment.</span>`}</div>
-       <a href="${postLink}" style="display:inline-block;margin-top:12px;font-size:13px;color:${EmailBrand.gold};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
+       <div style="font-size:15px;color:${EmailBrand.ink};line-height:1.6;">${body || `<span style="color:${EmailBrand.muted};">A new photo or moment.</span>`}</div>
+       <a href="${postLink}" style="display:inline-block;margin-top:12px;font-size:13px;color:${EmailBrand.ink};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
      </div>` +
     emailNote(`See the whole story on ${emailLink(link, 'heretoo.social')}.`);
   const html = renderEmailHtml({ subject, body: bodyHtml, footerAction: MANAGE });
 
   const text = renderEmailText({
     subject,
-    text: `${p.author_name || p.author_handle || 'Someone'} added to "${p.subject_name}" in ${p.family_name || 'your crew'}.\n\n${(p.body ?? '').slice(0, 300) || '(A new photo or moment.)'}\n\nRead it: ${postLink}\nWhole story: ${link}`,
+    text: `${p.author_name || p.author_handle || 'Someone'} added to "${p.subject_name}" in ${p.family_name || `your ${Vocab.group}`}.\n\n${(p.body ?? '').slice(0, 300) || '(A new photo or moment.)'}\n\nRead it: ${postLink}\nWhole story: ${link}`,
     footerAction: MANAGE,
   });
 

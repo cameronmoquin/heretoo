@@ -29,6 +29,7 @@
  */
 
 import type { Config } from '@netlify/functions';
+import { Vocab } from '../../constants/vocab';
 import {
   renderEmailHtml,
   renderEmailText,
@@ -98,34 +99,34 @@ function renderEmail(displayName: string, updates: any[]): { subject: string; ht
   const greet = displayName ? escapeHtml(displayName.split(' ')[0]) : 'there';
   const subject =
     updates.length === 1
-      ? `1 new crew update on HereToo`
-      : `${updates.length} new crew updates on HereToo`;
+      ? `1 new ${Vocab.group} update on HereToo`
+      : `${updates.length} new ${Vocab.group} updates on HereToo`;
 
   const items = updates
     .map((u) => {
-      const crew = escapeHtml(u.family_name ?? 'your crew');
+      const crew = escapeHtml(u.family_name ?? `your ${Vocab.group}`);
       const author = escapeHtml(u.author_name ?? u.author_handle ?? 'someone');
       const body = escapeHtml((u.body ?? '').slice(0, 600));
       const link = `https://heretoo.social/feed/${u.post_id}`;
       return `<div style="margin:14px 0;padding:14px 16px;background:${EmailBrand.inset};border:1px solid ${EmailBrand.insetBorder};border-radius:10px;">
-        <div style="font-family:${EmailBrand.display};font-size:11px;color:${EmailBrand.gold};text-transform:uppercase;letter-spacing:1.4px;font-weight:700;">${crew}</div>
+        <div style="font-family:${EmailBrand.display};font-size:11px;color:${EmailBrand.ink};text-transform:uppercase;letter-spacing:1.4px;font-weight:700;">${crew}</div>
         <div style="font-size:13px;color:${EmailBrand.muted};margin-top:4px;">From ${author}</div>
-        <div style="font-size:15px;color:${EmailBrand.cream};line-height:1.6;margin-top:8px;">${body}</div>
-        <a href="${link}" style="display:inline-block;margin-top:10px;font-size:13px;color:${EmailBrand.gold};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
+        <div style="font-size:15px;color:${EmailBrand.ink};line-height:1.6;margin-top:8px;">${body}</div>
+        <a href="${link}" style="display:inline-block;margin-top:10px;font-size:13px;color:${EmailBrand.ink};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
       </div>`;
     })
     .join('\n');
 
   const bodyHtml =
     emailHeading(`Hey ${greet}`) +
-    emailNote('Unread from your crew.') +
+    emailNote(`Unread from your ${Vocab.group}.`) +
     `<div style="margin-top:8px;">${items}</div>`;
   const html = renderEmailHtml({ subject, body: bodyHtml, footerAction: MANAGE });
 
   const text = renderEmailText({
     subject,
-    text: `Hey ${greet}.\n\nUnread from your crew.\n\n${updates
-      .map((u) => `[${u.family_name ?? 'crew'}] ${u.author_name ?? u.author_handle ?? 'someone'}: ${(u.body ?? '').slice(0, 200)}\nhttps://heretoo.social/feed/${u.post_id}`)
+    text: `Hey ${greet}.\n\nUnread from your ${Vocab.group}.\n\n${updates
+      .map((u) => `[${u.family_name ?? Vocab.group}] ${u.author_name ?? u.author_handle ?? 'someone'}: ${(u.body ?? '').slice(0, 200)}\nhttps://heretoo.social/feed/${u.post_id}`)
       .join('\n\n')}`,
     footerAction: MANAGE,
   });

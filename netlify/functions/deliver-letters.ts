@@ -68,7 +68,7 @@ async function sendArrivalEmail(
   // are writing letters, not formatting documents.
   const paragraphHtml = escapeHtml(body ?? '')
     .split(/\n{2,}/)
-    .map((p) => `<p style="margin:0 0 18px 0;font-size:17px;line-height:1.7;color:${EmailBrand.cream};">${p.replace(/\n/g, '<br/>')}</p>`)
+    .map((p) => `<p style="margin:0 0 18px 0;font-size:17px;line-height:1.7;color:${EmailBrand.ink};">${p.replace(/\n/g, '<br/>')}</p>`)
     .join('');
   const writtenLine = (() => {
     try {
@@ -79,7 +79,7 @@ async function sendArrivalEmail(
   })();
 
   const careOfHtml = careOfLabel
-    ? `<div style="margin:16px 0;padding:12px 14px;background:rgba(201,161,75,0.10);border-left:2px solid ${EmailBrand.gold};font-size:13px;line-height:1.6;color:${EmailBrand.cream};">Addressed to <strong>${escapeHtml(careOfLabel)}</strong>. You are the trusted adult on file.</div>`
+    ? `<div style="margin:16px 0;padding:12px 14px;background:rgba(201,161,75,0.10);border-left:2px solid ${EmailBrand.ink};font-size:13px;line-height:1.6;color:${EmailBrand.ink};">Addressed to <strong>${escapeHtml(careOfLabel)}</strong>. You are the trusted adult on file.</div>`
     : '';
   const bodyHtml =
     emailEyebrow('A letter has arrived') +
