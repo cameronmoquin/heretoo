@@ -49,7 +49,7 @@ export default function RoomsScreen() {
    */
   const apps: Door[] = [
     { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
-    { icon: 'home', label: 'Feed', route: '/feed' },
+    // Feed has no door either — it is the home tab, one tap away always.
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
     { icon: 'mail', label: 'Letters', route: '/letter' },
     // The player had no door on mobile at all. The radio row above is a
@@ -58,8 +58,10 @@ export default function RoomsScreen() {
     { icon: 'disc', label: 'Music', route: '/music' },
     { icon: 'people', label: 'Network', route: '/network' },
     { icon: 'boat', label: 'Social', route: '/family' },
-    { icon: 'heart', label: 'Give', route: '/give' },
-    { icon: 'person', label: 'Profile', route: '/profile' },
+    // Give is off the shelf — donations sit inside regulatory territory
+    // that a lemonade stand has no business standing in. The /give route
+    // still exists; no door points at it. Profile is off because the
+    // tab bar already carries it; one door per place.
   ];
 
   const antisocial: Door[] = [
@@ -70,7 +72,7 @@ export default function RoomsScreen() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={s.title}>ROOMS</Text>
+        {/* No headline. The doors are the page. */}
 
         {/* Radio: a live control, not a door. The visible row shows the
             station and its genre and says nothing about what tapping does,

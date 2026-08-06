@@ -84,6 +84,21 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const isDirect = (post.visibility as string) === 'direct';
   const burns = !!extra.destruct_on_view;
 
+  // A deaddrop announcement is not a text post — it is a spot on a map.
+  // The card is an X, because X marks it. Tapping goes straight into
+  // the hunt; the old behavior pushed the post detail with a raw URL in
+  // the body, which is a page about a link about a place.
+  const huntCode = React.useMemo(() => {
+    const m = (post.body ?? '').match(/^DEADDROP · ([A-Z0-9]{6,12})/);
+    return m ? m[1] : null;
+  }, [post.body]);
+  const huntTitle = React.useMemo(() => {
+    if (!huntCode) return null;
+    const line = (post.body ?? '').split('\n')[1]?.trim() ?? '';
+    if (!line || line.startsWith('Sealed until') || line.startsWith('“')) return null;
+    return line;
+  }, [post.body, huntCode]);
+
   // Sealed until an explicit tap. The author is never sealed out of
   // their own drop, and the RLS filter never takes it from them either.
   const revealed = useRevealed(post.id);
@@ -135,6 +150,8 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       // mechanism. The seal control below is the only way in.
       onPress={() => {
         if (sealed) return;
+        // The X opens the hunt, never the post detail.
+        if (huntCode) { router.push(`/hunt/${huntCode}` as any); return; }
         router.push(`/(tabs)/feed/${post.id}` as any);
       }}
     >
@@ -208,6 +225,13 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             size="sm"
             onPress={() => openDrop(post.id)}
           />
+        </View>
+      ) : huntCode ? (
+        // X marks the spot. Nothing else on the card; the hunt screen
+        // holds the compass, the map, and the gate.
+        <View style={s.xWrap}>
+          <Text style={s.xMark} accessibilityLabel={`Deaddrop ${huntCode}`}>✕</Text>
+          {!!huntTitle && <Text style={s.xTitle} numberOfLines={1}>{huntTitle}</Text>}
         </View>
       ) : (
         <>
@@ -844,6 +868,10 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.textPrimary,
     borderRadius: 2,
   },
+  // The deaddrop X. Ink, centred, and the whole card is the door.
+  xWrap: { alignItems: 'center', paddingVertical: Spacing.lg, gap: 4 },
+  xMark: { fontSize: 56, lineHeight: 60, fontWeight: '800', color: Colors.textPrimary },
+  xTitle: { fontSize: Type.ui.size, color: Colors.textSecondary },
   // Right-aligned attribution. Italic and muted so it reads as a
   // citation, not a competing voice.
   slugline: {

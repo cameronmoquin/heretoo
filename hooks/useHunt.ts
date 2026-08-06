@@ -106,9 +106,10 @@ export function huntUrl(code: string): string {
 }
 
 /**
- * The announcement body. Carries the share code and the courier link so
- * the card in the feed opens the run. Never the coordinates, never the
- * photo: those stay sealed behind the physical gate.
+ * The announcement body. First line is the marker PostCard parses to
+ * render the X card, which is the only door the feed shows. No URL and
+ * no explanation — the X is the link and the sentence both. Never the
+ * coordinates, never the photo: those stay sealed behind the gate.
  */
 export function huntDropBody(input: {
   shareCode: string;
@@ -120,7 +121,6 @@ export function huntDropBody(input: {
   if (title) lines.push(title);
   const hint = input.hint?.trim();
   if (hint) lines.push(`“${hint}”`);
-  lines.push(`Sealed until you stand on it. ${huntUrl(input.shareCode)}`);
   return lines.join('\n');
 }
 
