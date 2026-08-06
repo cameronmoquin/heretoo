@@ -275,7 +275,7 @@ export default function PostDetail() {
 
         {/* Comment composer pinned to the bottom */}
         {!commentsDisabled && (
-          <View style={[s.composer, { paddingBottom: 10 + tabBarOffset }]}>
+          <View style={[s.composer, { paddingBottom: 10 }]}>
             {replyTo && (
               <View style={s.replyPill}>
                 <Text style={s.replyPillText} numberOfLines={1}>

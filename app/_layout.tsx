@@ -20,7 +20,7 @@ import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
-import { MobileTabBar } from '../components/shared/MobileTabBar';
+import { MobileTabBar, useMobileTabBarVisible, MOBILE_TAB_BAR_HEIGHT } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
@@ -44,6 +44,7 @@ const NAV_THEME = {
 function RootLayoutInner() {
   const { isLoading } = useAuth();
   const themeMode = useThemeStore((s) => s.mode);
+  const tabBarVisible = useMobileTabBarVisible();
 
   // Apply the active palette before child renders happen. useEffect
   // would render once with the wrong palette; useMemo runs sync.
@@ -84,9 +85,19 @@ function RootLayoutInner() {
     //
     // This View paints the canvas. Nothing else paints it. Flat
     // Colors.background, light or dark, no image behind it.
+    //
+    // paddingBottom reserves the bottom bar's strip whenever the bar is
+    // on screen, so no page's tail can ever sit underneath it. This is
+    // the ONE place that compensation lives — screens must not add
+    // their own (three used to, and every screen that didn't was
+    // covered).
     <View
       key={themeMode}
-      style={{ flex: 1, backgroundColor: Colors.background }}
+      style={{
+        flex: 1,
+        backgroundColor: Colors.background,
+        paddingBottom: tabBarVisible ? MOBILE_TAB_BAR_HEIGHT : 0,
+      }}
     >
       <GlobalWebStyles />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />

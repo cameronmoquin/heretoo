@@ -25,46 +25,55 @@ import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
 import { shouldShowLeftSidebar } from './LeftSidebar';
 
-export function MobileTabBar() {
+// Hide on auth + signup paths so they don't compete with the
+// primary CTAs on those screens. Path matching is loose because
+// Expo Router can return paths with or without the route group
+// prefix (e.g., '/welcome' OR '/(auth)/welcome' depending on how
+// the user navigated). Use `includes` not `startsWith`.
+const HIDE_ON = [
+  '/welcome',
+  '/(auth)',
+  '/profile-setup',
+  // A recovery link leaves the user genuinely signed in, so the bar
+  // would otherwise render over the password form.
+  '/reset-password',
+  '/join/',
+  '/sow/',
+  '/version',
+];
+
+/**
+ * One rule for whether the bottom bar is on screen. The bar renders by
+ * it and the root layout reserves the bar's height by it, so content
+ * can never sit underneath — the two must never drift apart.
+ */
+export function useMobileTabBarVisible(): boolean {
   const pathname = usePathname();
   const session = useAuthStore((s) => s.session);
+  const { width } = useWindowDimensions();
+  // Native: the (tabs) layout still owns native nav.
+  if (Platform.OS !== 'web') return false;
+  // Not signed in: the auth flow has its own CTA hierarchy.
+  if (!session) return false;
+  // Desktop gets the vertical nav; never both.
+  if (shouldShowLeftSidebar(width)) return false;
+  const path = pathname ?? '';
+  return !HIDE_ON.some((p) => path.includes(p));
+}
+
+export function MobileTabBar() {
+  const visible = useMobileTabBarVisible();
+  const pathname = usePathname();
   const radioPlaying = useRadio((s) => s.playing);
   const radioLoading = useRadio((s) => s.loading);
   const station = useActiveStation();
   const { data: unread } = useUnreadCount();
-  const { width } = useWindowDimensions();
 
   const styles = makeStyles();
 
-  // Skip on native (the (tabs) layout still owns native nav until we
-  // ship the native build).
-  if (Platform.OS !== 'web') return null;
+  if (!visible) return null;
 
-  // Skip if not signed in — auth flow has its own CTA hierarchy.
-  if (!session) return null;
-
-  // Skip when LeftSidebar is showing — desktop gets the vertical nav,
-  // mobile gets this bottom bar. They're never both visible.
-  if (shouldShowLeftSidebar(width)) return null;
-
-  // Hide on auth + signup paths so they don't compete with the
-  // primary CTAs on those screens. Path matching is loose because
-  // Expo Router can return paths with or without the route group
-  // prefix (e.g., '/welcome' OR '/(auth)/welcome' depending on how
-  // the user navigated). Use `includes` not `startsWith`.
   const path = pathname ?? '';
-  const HIDE_ON = [
-    '/welcome',
-    '/(auth)',
-    '/profile-setup',
-    // A recovery link leaves the user genuinely signed in, so the bar
-    // would otherwise render over the password form.
-    '/reset-password',
-    '/join/',
-    '/sow/',
-    '/version',
-  ];
-  if (HIDE_ON.some((p) => path.includes(p))) return null;
 
   const onFeed = path.startsWith('/feed') || path === '/' || path === '/(tabs)/feed';
   const onProfile = path.startsWith('/profile') || path.startsWith('/(tabs)/profile');

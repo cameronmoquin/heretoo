@@ -55,7 +55,6 @@ export default function ChatThread() {
   // and the composer sits flush with the viewport bottom. Otherwise
   // (mobile / narrow web) we reserve the tab bar's height so it
   // doesn't overlap the input.
-  const tabBarOffset = shouldShowLeftSidebar(vw) ? 0 : MOBILE_TAB_BAR_HEIGHT;
 
   const { data: thread, isLoading: threadLoading } = useThread(threadId);
   const { data: messages, isLoading: messagesLoading } = useThreadMessages(threadId);
@@ -223,7 +222,7 @@ export default function ChatThread() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={[s.frame, { marginBottom: 12 + tabBarOffset }]}>
+        <View style={[s.frame, { marginBottom: 12 }]}>
         <View style={s.header}>
           <TouchableOpacity
             onPress={() => router.replace('/messages')}
