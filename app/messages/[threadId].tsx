@@ -23,7 +23,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useOpenDrop, useRevealed } from '../../hooks/usePostViews';
 import { supabase } from '../../lib/supabase';
 import {
   useThread, useThreadMessages, useSendMessage,
@@ -111,6 +112,55 @@ export default function ChatThread() {
     },
     enabled: !!otherId,
   });
+
+  // DIRECT DROPS BELONG IN THIS THREAD. They used to live only in the
+  // feed's page-0 splice, so a drop sent to one person sat outside the
+  // conversation with that person — and once burned, RLS pre-074 hid the
+  // row entirely, which read as "my message randomly disappeared."
+  // Migration 074 wipes the body but KEEPS the row (burned_at stamped),
+  // so the thread can show a redaction where the drop used to be.
+  const qc = useQueryClient();
+  const { data: drops } = useQuery({
+    queryKey: ['direct-drops', threadId],
+    enabled: !!userId && !!otherId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, media:post_media(*)')
+        .eq('visibility', 'direct')
+        .or(
+          `and(author_id.eq.${userId},direct_recipient_id.eq.${otherId}),`
+          + `and(author_id.eq.${otherId},direct_recipient_id.eq.${userId})`,
+        )
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // One timeline, chat and drops interleaved by when they happened.
+  const timeline = React.useMemo(() => {
+    const items: Array<{ kind: 'msg' | 'drop'; at: string; m?: any; d?: any }> = [
+      ...(messages ?? []).map((m: any) => ({ kind: 'msg' as const, at: m.created_at, m })),
+      ...(drops ?? []).map((d: any) => ({ kind: 'drop' as const, at: d.created_at, d })),
+    ];
+    return items.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  }, [messages, drops]);
+
+  // A drop landing (INSERT) or burning (UPDATE stamps burned_at) both
+  // arrive on the posts channel; either way this thread's copy is stale.
+  useEffect(() => {
+    if (!threadId) return;
+    const ch = supabase
+      .channel(`dm-drops:${threadId}:${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'posts', filter: 'visibility=eq.direct' },
+        () => qc.invalidateQueries({ queryKey: ['direct-drops', threadId] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [threadId, qc]);
 
   // Scroll to bottom when messages arrive.
   useEffect(() => {
@@ -216,7 +266,18 @@ export default function ChatThread() {
         </View>
 
         <ScrollView ref={scrollRef} contentContainerStyle={s.scroll}>
-          {(messages ?? []).map((m) => {
+          {timeline.map((it) => {
+            if (it.kind === 'drop') {
+              return (
+                <DropBubble
+                  key={`d-${it.d.id}`}
+                  post={it.d}
+                  mine={it.d.author_id === userId}
+                  s={s}
+                />
+              );
+            }
+            const m = it.m;
             const isMine = m.sender_id === userId;
             return (
               <View key={m.id} style={[s.bubbleWrap, isMine ? s.bubbleWrapMine : s.bubbleWrapTheirs]}>
@@ -415,4 +476,77 @@ function makeStyles() { return StyleSheet.create({
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4,
   },
   awaitingHintText: { fontSize: 11, color: Colors.textMuted, fontStyle: 'italic' },
+}); }
+
+/**
+ * One drop, rendered as a chat bubble.
+ *
+ * Three states. Sealed: addressed to you, burns on view, not yet opened —
+ * one tap opens it, and that tap is the reading that burns it. Open: the
+ * body, with a quiet mark saying what this reading costs. Burned: the
+ * redaction — a bar of ink where the words were, because "a message was
+ * here and now is not" is information the thread should keep. The author
+ * sees their own drop until it burns; after that even they get the bar
+ * (migration 074 wipes the body itself, there is nothing left to show).
+ */
+function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
+  const ds = makeDropStyles();
+  const revealed = useRevealed(post.id);
+  const openDrop = useOpenDrop();
+  const burned = !!post.burned_at;
+  const sealed = !!post.destruct_on_view && !mine && !burned && !revealed;
+  const photos = Array.isArray(post.media) ? post.media.length : 0;
+
+  return (
+    <View style={[s.bubbleWrap, mine ? s.bubbleWrapMine : s.bubbleWrapTheirs]}>
+      <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
+        {burned ? (
+          <>
+            <View style={ds.redaction} accessibilityLabel="Redacted" />
+            <Text style={ds.mark}>burned after reading</Text>
+          </>
+        ) : sealed ? (
+          <TouchableOpacity
+            onPress={() => openDrop(post.id)}
+            activeOpacity={0.8}
+            style={ds.sealedRow}
+            accessibilityLabel="Open this drop. It burns after reading"
+          >
+            <Ionicons name="flame-outline" size={14} color={Colors.textSecondary} />
+            <Text style={ds.sealedText}>Sealed. Opens once.</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            {!!post.body && (
+              <Text style={mine ? s.bubbleTextMine : s.bubbleTextTheirs}>{post.body}</Text>
+            )}
+            {photos > 0 && (
+              <Text style={ds.mark}>{photos === 1 ? 'a photo' : `${photos} photos`} · in the feed</Text>
+            )}
+            {!!post.destruct_on_view && (
+              <Text style={ds.mark}>{mine ? 'burns on view' : 'burns after this reading'}</Text>
+            )}
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function makeDropStyles() { return StyleSheet.create({
+  // The width of a sentence that is no longer there.
+  redaction: {
+    height: 14, width: 140, maxWidth: '100%',
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 2, marginVertical: 2,
+  },
+  mark: {
+    fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
+    color: Colors.textMuted, marginTop: 4,
+  },
+  sealedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 },
+  sealedText: {
+    fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
+    color: Colors.textSecondary, fontStyle: 'italic',
+  },
 }); }

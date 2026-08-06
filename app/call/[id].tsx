@@ -163,9 +163,19 @@ function makeStyles() { return StyleSheet.create({
     flex: 1,
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
     padding: Spacing.md,
+    // Whatever the tile math does, the controls stay on screen.
+    alignContent: 'flex-start',
+    overflow: 'hidden',
   },
+  // flex:1 + aspectRatio was the "not within the frame" bug: a lone
+  // tile stretched to the full 688px column, the 4:3 ratio made it
+  // ~516px tall, and two of those stacked past the viewport — video
+  // and controls pushed clean out of frame. The ratio still sets the
+  // shape, but maxHeight caps it against the grid so the call always
+  // fits in front of you.
   tile: {
-    flex: 1, minWidth: '46%', aspectRatio: 4 / 3,
+    flexGrow: 1, flexBasis: '46%', aspectRatio: 4 / 3,
+    maxHeight: '48%', minHeight: 120,
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
     overflow: 'hidden',
