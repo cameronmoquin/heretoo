@@ -601,7 +601,9 @@ export function useFamilyFeed(familyId: string | null) {
   useEffect(() => {
     if (!familyId) return;
     const channel = supabase
-      .channel(`family-posts:${familyId}`)
+      // Unique per mount — a fixed name returns the previous, already
+      // subscribed channel and .on() then throws. See useChat.ts.
+      .channel(`family-posts:${familyId}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'posts', filter: `family_id=eq.${familyId}` },

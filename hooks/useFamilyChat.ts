@@ -81,7 +81,9 @@ export function useFamilyChatMessages(chatId: string | null) {
   useEffect(() => {
     if (!chatId) return;
     const channel = supabase
-      .channel(`family-chat:${chatId}`)
+      // Unique per mount — a fixed name returns the previous, already
+      // subscribed channel and .on() then throws. See useChat.ts.
+      .channel(`family-chat:${chatId}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'family_chat_messages', filter: `family_chat_id=eq.${chatId}` },

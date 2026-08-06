@@ -28,6 +28,19 @@ export function GlobalWebStyles() {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
 
+    // The page is an app, not a document: no pinch zoom, and no iOS
+    // auto-zoom when an input under 16px takes focus (tapping the chat
+    // box was zooming the whole messenger out of frame). maximum-scale
+    // is what actually stops the focus zoom; user-scalable covers the
+    // pinch.
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
+      );
+    }
+
     let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
     if (!style) {
       style = document.createElement('style');

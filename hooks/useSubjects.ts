@@ -337,7 +337,9 @@ export function useFollowedSubjectActivity(familyId: string | null | undefined) 
   useEffect(() => {
     if (!familyId) return;
     const channel = supabase
-      .channel(`subject-activity:${familyId}`)
+      // Unique per mount — a fixed name returns the previous, already
+      // subscribed channel and .on() then throws. See useChat.ts.
+      .channel(`subject-activity:${familyId}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts', filter: `family_id=eq.${familyId}` },

@@ -70,19 +70,34 @@ export interface DropExtras {
  * server has already dropped the row.
  */
 interface RevealState {
-  revealed: Record<string, true>;
-  markRevealed: (postId: string) => void;
+  // true = opened; a string = opened AND the payload at the moment of
+  // opening. The burn overwrites the row server-side within seconds of
+  // the open, so the refetched cache can never show the words again —
+  // this in-memory copy is what lets the OPENER finish reading. It
+  // lives nowhere else and dies with the session.
+  revealed: Record<string, string | true>;
+  markRevealed: (postId: string, body?: string | null) => void;
 }
 
 const useRevealStore = create<RevealState>((set) => ({
   revealed: {},
-  markRevealed: (postId) =>
-    set((s) => (s.revealed[postId] ? s : { revealed: { ...s.revealed, [postId]: true } })),
+  markRevealed: (postId, body) =>
+    set((s) => (s.revealed[postId]
+      ? s
+      : { revealed: { ...s.revealed, [postId]: body ?? true } })),
 }));
 
 /** Has this session opened that drop. */
 export function useRevealed(postId: string): boolean {
   return useRevealStore((s) => !!s.revealed[postId]);
+}
+
+/** The payload as it read at the moment this session opened it, if any. */
+export function useRevealedBody(postId: string): string | null {
+  return useRevealStore((s) => {
+    const v = s.revealed[postId];
+    return typeof v === 'string' ? v : null;
+  });
 }
 
 let warned = false;
@@ -104,9 +119,9 @@ export function useOpenDrop() {
   const markRevealed = useRevealStore((s) => s.markRevealed);
 
   return useCallback(
-    (postId: string) => {
+    (postId: string, body?: string | null) => {
       if (!postId) return;
-      markRevealed(postId);
+      markRevealed(postId, body);
       if (DEV_MODE || !userId) return;
 
       void (async () => {

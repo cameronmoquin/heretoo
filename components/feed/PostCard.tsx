@@ -42,7 +42,7 @@ import { useMyFamilies } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
 import { useTTS } from '../../stores/ttsStore';
 import { useFlagContent, FLAG_REASONS, type FlagReason } from '../../hooks/useFlagContent';
-import { useRevealed, useOpenDrop, type DropExtras } from '../../hooks/usePostViews';
+import { useRevealed, useRevealedBody, useOpenDrop, type DropExtras } from '../../hooks/usePostViews';
 import {
   useLineReactions, useFireLine, useUnfireLine, type LineReactionRow,
 } from '../../hooks/useLineReactions';
@@ -107,6 +107,12 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   // The row is a tombstone now — never sealed, body already null.
   const burned = !!(extra as any).burned_at;
   const sealed = burns && !burned && !isMine && !revealed;
+  // The opener keeps the words for THIS session only — the burn
+  // overwrites the row within seconds of the open, so the cache can
+  // never show them again; this in-memory copy is what "one look"
+  // actually reads by.
+  const revealedBody = useRevealedBody(post.id);
+  const bodyText = post.body ?? (burned ? revealedBody : null);
 
   const recipientName =
     extra.recipient?.display_name ?? extra.recipient?.handle ?? null;
@@ -224,7 +230,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             title="Open once"
             variant="outline"
             size="sm"
-            onPress={() => openDrop(post.id)}
+            onPress={() => openDrop(post.id, post.body)}
           />
         </View>
       ) : huntCode ? (
@@ -240,7 +246,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             the note under it is the literal record of the mechanics —
             not reassurance, an account. Every clause is checkable
             against open_drop() and drop-purge. */}
-        {burned && (
+        {burned && !revealedBody && (
           <>
             <View style={s.redaction} accessibilityLabel="Redacted" />
             <Text style={s.burnedNote}>
@@ -249,7 +255,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             </Text>
           </>
         )}
-        {!!post.body && <Text style={s.body}>{post.body}</Text>}
+        {!!bodyText && <Text style={s.body}>{bodyText}</Text>}
 
         {/* Optional attribution slug — used by Shakespeare bot posts
             ("— Hamlet · Hamlet · III.i") and any future post that

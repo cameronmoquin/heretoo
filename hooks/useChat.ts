@@ -234,8 +234,19 @@ export function useThreadMessages(threadId: string | null) {
 
   useEffect(() => {
     if (!threadId) return;
+    // The suffix is load-bearing. supabase-js caches channels by name, so a
+    // fixed `thread:<id>` hands back the still-subscribed channel from the
+    // previous mount and the .on() below throws
+    //   "cannot add `postgres_changes` callbacks for realtime:thread:<id>
+    //    after `subscribe()`"
+    // which the ErrorBoundary catches as "Something broke."
+    //
+    // Opening a thread, going back, and opening it again is enough to trigger
+    // it — removeChannel() is async, so the old channel is often still cached
+    // when the next mount asks for the same name. The inbox subscription above
+    // already does this; this one was missed.
     const channel = supabase
-      .channel(`thread:${threadId}`)
+      .channel(`thread:${threadId}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `thread_id=eq.${threadId}` },

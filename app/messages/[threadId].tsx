@@ -24,7 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOpenDrop, useRevealed } from '../../hooks/usePostViews';
+import { useOpenDrop, useRevealed, useRevealedBody } from '../../hooks/usePostViews';
 import { supabase } from '../../lib/supabase';
 import {
   useThread, useThreadMessages, useSendMessage,
@@ -549,20 +549,23 @@ function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
   const revealed = useRevealed(post.id);
   const openDrop = useOpenDrop();
   const burned = !!post.burned_at;
+  // The opener reads from the session copy; everyone else reads ash.
+  const revealedBody = useRevealedBody(post.id);
   const sealed = !!post.destruct_on_view && !mine && !burned && !revealed;
+  const bodyText = post.body ?? (burned ? revealedBody : null);
   const photos = Array.isArray(post.media) ? post.media.length : 0;
 
   return (
     <View style={[s.bubbleWrap, mine ? s.bubbleWrapMine : s.bubbleWrapTheirs]}>
       <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
-        {burned ? (
+        {burned && !revealedBody ? (
           <>
             <View style={ds.redaction} accessibilityLabel="Redacted" />
             <Text style={ds.mark}>burned after reading</Text>
           </>
         ) : sealed ? (
           <TouchableOpacity
-            onPress={() => openDrop(post.id)}
+            onPress={() => openDrop(post.id, post.body)}
             activeOpacity={0.8}
             style={ds.sealedRow}
             accessibilityLabel="Open this drop. It burns after reading"
@@ -583,8 +586,8 @@ function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
           </TouchableOpacity>
         ) : (
           <>
-            {!!post.body && (
-              <Text style={mine ? s.bubbleTextMine : s.bubbleTextTheirs}>{post.body}</Text>
+            {!!bodyText && (
+              <Text style={mine ? s.bubbleTextMine : s.bubbleTextTheirs}>{bodyText}</Text>
             )}
             {photos > 0 && (
               <Text style={ds.mark}>{photos === 1 ? 'a photo' : `${photos} photos`} · in the feed</Text>
