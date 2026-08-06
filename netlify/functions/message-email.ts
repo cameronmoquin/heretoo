@@ -60,12 +60,12 @@ function renderEmail(p: Pending): { subject: string; html: string; text: string 
   const who = escapeHtml(p.sender_name || p.sender_handle || 'Someone');
   const link = `https://heretoo.social/messages/${p.thread_id}`;
 
-  const subject = `${p.sender_name || p.sender_handle || 'Someone'} sent you a message`;
+  const subject = `${p.sender_name || p.sender_handle || 'Someone'} wrote.`;
 
+  // Genius-grade copy: the sender and the door. Nothing explained.
   const bodyHtml =
     emailEyebrow('Messages')
-    + emailHeading(`${who} wrote to you.`)
-    + emailNote('It is waiting in your messages.')
+    + emailHeading(`${who} wrote.`)
     + emailButton(link, 'Read it');
 
   return {
@@ -73,7 +73,7 @@ function renderEmail(p: Pending): { subject: string; html: string; text: string 
     html: renderEmailHtml({ subject, body: bodyHtml, footerAction: MANAGE }),
     text: renderEmailText({
       subject,
-      text: `${p.sender_name || p.sender_handle || 'Someone'} wrote to you.\n\n${link}`,
+      text: `${p.sender_name || p.sender_handle || 'Someone'} wrote.\n\n${link}`,
       footerAction: MANAGE,
     }),
   };

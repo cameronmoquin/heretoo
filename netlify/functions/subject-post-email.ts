@@ -78,7 +78,6 @@ function renderEmail(
   displayName: string,
   p: Pending,
 ): { subject: string; html: string; text: string } {
-  const greet = displayName ? escapeHtml(displayName.split(' ')[0]) : 'there';
   const subjectName = escapeHtml(p.subject_name || 'a story');
   const crew = escapeHtml(p.family_name || `your ${Vocab.group}`);
   const author = escapeHtml(p.author_name || p.author_handle || 'Someone');
@@ -93,18 +92,17 @@ function renderEmail(
 
   const bodyHtml =
     emailEyebrow(`${crew} &middot; Following`) +
-    emailHeading(`New on “${subjectName}”`) +
-    emailNote(`Hey ${greet}. ${author} added to a story you follow.`) +
+    emailHeading(`${author}, on “${subjectName}”`) +
     `<div style="margin:16px 0;padding:16px 18px;background:${EmailBrand.inset};border:1px solid ${EmailBrand.insetBorder};border-radius:10px;">
-       <div style="font-size:15px;color:${EmailBrand.ink};line-height:1.6;">${body || `<span style="color:${EmailBrand.muted};">A new photo or moment.</span>`}</div>
-       <a href="${postLink}" style="display:inline-block;margin-top:12px;font-size:13px;color:${EmailBrand.ink};font-weight:600;text-decoration:none;">Read on heretoo.social</a>
+       <div style="font-size:15px;color:${EmailBrand.ink};line-height:1.6;">${body || `<span style="color:${EmailBrand.muted};">&mdash;</span>`}</div>
+       <a href="${postLink}" style="display:inline-block;margin-top:12px;font-size:13px;color:${EmailBrand.ink};font-weight:600;text-decoration:none;">Read it</a>
      </div>` +
-    emailNote(`See the whole story on ${emailLink(link, 'heretoo.social')}.`);
+    emailNote(emailLink(link, 'The whole story'));
   const html = renderEmailHtml({ subject, body: bodyHtml, footerAction: MANAGE });
 
   const text = renderEmailText({
     subject,
-    text: `${p.author_name || p.author_handle || 'Someone'} added to "${p.subject_name}" in ${p.family_name || `your ${Vocab.group}`}.\n\n${(p.body ?? '').slice(0, 300) || '(A new photo or moment.)'}\n\nRead it: ${postLink}\nWhole story: ${link}`,
+    text: `${p.author_name || p.author_handle || 'Someone'} added to "${p.subject_name}".\n\n${(p.body ?? '').slice(0, 300)}\n\nRead it: ${postLink}\nThe whole story: ${link}`,
     footerAction: MANAGE,
   });
 
