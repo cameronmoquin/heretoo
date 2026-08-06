@@ -246,7 +246,6 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             <Text style={s.burnedNote}>
               The text was overwritten in the database the moment this was
               opened. Any photos or video are destroyed within the hour.
-              No copy exists — not the author&#39;s, not HereToo&#39;s.
             </Text>
           </>
         )}
