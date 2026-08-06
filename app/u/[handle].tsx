@@ -167,7 +167,7 @@ export default function UserProfile() {
         {/* Mutual crews */}
         {mutualFamilies.length > 0 && (
           <View style={s.section}>
-            <Eyebrow>Mutual crews</Eyebrow>
+            <Eyebrow>Mutual {Vocab.groupPlural}</Eyebrow>
             {mutualFamilies.map((f: any) => (
               <TouchableOpacity
                 key={f.id}

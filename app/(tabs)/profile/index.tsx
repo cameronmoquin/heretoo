@@ -124,12 +124,12 @@ export default function OwnProfileScreen() {
             <View style={s.statDivider} />
             <View style={s.statBlock}>
               <Text style={s.statValue}>{stats.reachable_families}</Text>
-              <Text style={s.statLabel}>Crews connected</Text>
+              <Text style={s.statLabel}>{Vocab.GroupPlural} connected</Text>
             </View>
             <View style={s.statDivider} />
             <View style={s.statBlock}>
               <Text style={s.statValue}>{stats.direct_family_count}</Text>
-              <Text style={s.statLabel}>Your crews</Text>
+              <Text style={s.statLabel}>Your {Vocab.groupPlural}</Text>
             </View>
           </View>
         )}
@@ -137,7 +137,7 @@ export default function OwnProfileScreen() {
         {/* ── Crews ── */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Your crews</Text>
+            <Text style={s.sectionTitle}>Your {Vocab.groupPlural}</Text>
             <TouchableOpacity onPress={() => router.push('/family' as any)}>
               <Text style={s.sectionLink}>See all →</Text>
             </TouchableOpacity>
@@ -180,10 +180,10 @@ export default function OwnProfileScreen() {
           })}
           {(!families || families.length === 0) && (
             <View style={s.emptyFamilies}>
-              <Text style={s.emptyText}>You're not in a crew yet.</Text>
+              <Text style={s.emptyText}>You're not in {Vocab.groupWithArticle} yet.</Text>
               <View style={s.emptyBtnRow}>
                 <Button
-                  title="Start a crew"
+                  title={`Start ${Vocab.groupWithArticle}`}
                   size="sm"
                   style={s.primaryBtn}
                   onPress={() => router.push('/family/new' as any)}
@@ -220,7 +220,7 @@ export default function OwnProfileScreen() {
           />
           <ActionRow
             icon="key-outline"
-            label="Join a crew with a code"
+            label={`Join ${Vocab.groupWithArticle} with a code`}
             onPress={() => router.push('/family/join' as any)}
           />
           <ActionRow

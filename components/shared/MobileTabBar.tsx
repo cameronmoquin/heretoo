@@ -107,7 +107,7 @@ export function MobileTabBar() {
         style={styles.slot}
         onPress={() => router.push('/rooms' as any)}
         activeOpacity={0.7}
-        accessibilityLabel="All rooms"
+        accessibilityLabel="More"
       >
         <View style={[
           styles.iconRing,
@@ -120,7 +120,7 @@ export function MobileTabBar() {
           />
         </View>
         <Text style={[styles.label, (onRooms || radioPlaying) && styles.labelActive]} numberOfLines={1}>
-          {radioPlaying ? (radioLoading ? '…' : station.name) : 'Rooms'}
+          {radioPlaying ? (radioLoading ? '…' : station.name) : 'More'}
         </Text>
       </TouchableOpacity>
 

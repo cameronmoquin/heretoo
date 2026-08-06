@@ -1,10 +1,11 @@
 /**
  * Vocab — the platform lexicon.
  *
- * One place for the group noun and the post noun. The product calls a
- * group a "crew" and a post a "drop". A drop with a location is a "dead
+ * One place for the group noun and the post noun. Plain speech: a group
+ * is a "group" (Aug 2026 — "crew" retired as too themed, same fate as
+ * "family"). A post is still a "drop"; one with a location is a "dead
  * drop" (the geocache game), so everything a person posts is a drop and
- * the physical ones are dead drops. That taxonomy is deliberate.
+ * the physical ones are dead drops.
  * If either word ever changes again, it changes here and nowhere else.
  * Screens import Vocab instead of typing the word into a string.
  *
@@ -29,13 +30,15 @@
  */
 
 export const Vocab = {
-  group: 'crew',
-  groupPlural: 'crews',
-  Group: 'Crew',
-  GroupPlural: 'Crews',
+  // Plain speech (Aug 2026). "Crew" read as themed and it went the way
+  // of "family". A group is a group.
+  group: 'group',
+  groupPlural: 'groups',
+  Group: 'Group',
+  GroupPlural: 'Groups',
   member: 'member',
   memberPlural: 'members',
-  groupWithArticle: 'a crew',
+  groupWithArticle: 'a group',
   post: 'drop',
   postPlural: 'drops',
   Post: 'Drop',

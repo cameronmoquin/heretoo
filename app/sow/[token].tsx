@@ -35,6 +35,7 @@ import { mediaPathToUrl } from '../../hooks/useUpload';
 import { useSeedInvite, useAcceptSeedInvite } from '../../hooks/useSeedInvite';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 const PENDING_KEY = 'heretoo:pending_seed_token';
@@ -77,7 +78,7 @@ export default function SowPlant() {
     setErr(null);
     if (!tk) return;
     if (familyName.trim().length < 2) {
-      setErr('Pick a crew name with at least 2 characters.');
+      setErr(`Pick a ${Vocab.group} name with at least 2 characters.`);
       return;
     }
     setBusy('plant');
@@ -210,9 +211,9 @@ export default function SowPlant() {
               </View>
             )}
 
-            <Text style={s.headline}>Start your crew</Text>
+            <Text style={s.headline}>Start your {Vocab.group}</Text>
 
-            <Field label="Your crew's name">
+            <Field label={`Your ${Vocab.group}'s name`}>
               <TextInput
                 style={s.input}
                 value={familyName}

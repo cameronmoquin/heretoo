@@ -28,6 +28,7 @@ import {
 import { showAlert } from '../../lib/alert';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 interface Props {
@@ -49,7 +50,7 @@ export function FamilyTriviaPanel({ familyId }: Props) {
           {score && score.total_count > 0 ? (
             <>
               <Text style={s.scoreNum}>{score.correct_count} / {score.total_count}</Text>
-              <Text style={s.scoreLabel}>your answers in this crew</Text>
+              <Text style={s.scoreLabel}>your answers in this {Vocab.group}</Text>
             </>
           ) : (
             <Text style={s.scoreLabel}>No answers yet.</Text>
@@ -102,7 +103,7 @@ function StandingsPane({ familyId }: { familyId: string }) {
         <View style={s.ourRank}>
           <Text style={s.ourRankPos}>#{ourRank.rank}</Text>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={s.ourRankLabel}>your crew</Text>
+            <Text style={s.ourRankLabel}>your {Vocab.group}</Text>
             <Text style={s.ourRankSub}>
               {ourRank.correct_count} correct of {ourRank.total_count} · {ourRank.total_families} crews competing
             </Text>
@@ -192,7 +193,7 @@ function PlayPane({ familyId }: { familyId: string }) {
   return (
     <View style={s.playWrap}>
       <Text style={s.kicker}>
-        From {q.author_name ?? q.author_handle ?? 'a crew member'}
+        From {q.author_name ?? q.author_handle ?? `a ${Vocab.group} member`}
       </Text>
       <Text style={s.question}>{q.question}</Text>
       <View style={s.choices}>

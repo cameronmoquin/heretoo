@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCreateSeedInvite } from '../../hooks/useSeedInvite';
 import { toastSuccess, toastError } from './Toast';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 interface Props {
@@ -90,7 +91,7 @@ export function PlantTreeModal({ visible, onClose }: Props) {
                   textAlignVertical="top"
                 />
               </Field>
-              <Field label="Crew name suggestion (optional)">
+              <Field label={`${Vocab.Group} name suggestion (optional)`}>
                 <TextInput
                   style={s.input}
                   value={suggestedName}

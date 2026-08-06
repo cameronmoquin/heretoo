@@ -135,7 +135,7 @@ function RootLayoutInner() {
         <Stack.Screen name="babybook/index" options={{ title: 'Babybook' }} />
         <Stack.Screen name="babybook/[id]" options={{ title: 'Babybook' }} />
         <Stack.Screen name="hunt" options={{ title: 'Deaddrop' }} />
-        <Stack.Screen name="rooms" options={{ title: 'Rooms' }} />
+        <Stack.Screen name="rooms" options={{ title: 'More' }} />
         <Stack.Screen name="cipher" options={{ title: 'Cipher' }} />
         <Stack.Screen name="news/index" options={{ title: 'News' }} />
         <Stack.Screen name="version" options={{ presentation: 'modal' }} />

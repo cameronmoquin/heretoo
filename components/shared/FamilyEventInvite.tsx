@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 interface EventForm {
@@ -131,7 +132,7 @@ export function FamilyEventInvite() {
     <View style={s.card}>
       <View style={s.header}>
         <Ionicons name="gift-outline" size={14} color={Colors.textSecondary} />
-        <Text style={s.eyebrow}>Crew event invite</Text>
+        <Text style={s.eyebrow}>{Vocab.Group} event invite</Text>
       </View>
 
       <TextInput

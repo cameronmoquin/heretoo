@@ -154,7 +154,7 @@ export default function FeedHomeScreen() {
             <Text style={{ fontWeight: '700' }}>{stats.reachable_profiles}</Text>
             {' people in your network · '}
             <Text style={{ fontWeight: '700' }}>{stats.reachable_families}</Text>
-            {stats.reachable_families === 1 ? ' crew connected' : ' crews connected'}
+            {stats.reachable_families === 1 ? ` ${Vocab.group} connected` : ` ${Vocab.groupPlural} connected`}
           </Text>
         </TouchableOpacity>
       )}

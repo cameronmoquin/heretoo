@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFamilySubscription, useStartCheckout } from '../../hooks/useBilling';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 interface Props {
@@ -39,7 +40,7 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
     return (
       <View style={[s.row, s.rowSubtle]}>
         <Ionicons name="leaf-outline" size={14} color={Colors.textSecondary} />
-        <Text style={s.subtle}>This crew's plan is held free in memory.</Text>
+        <Text style={s.subtle}>This {Vocab.group}'s plan is held free in memory.</Text>
       </View>
     );
   }
@@ -51,7 +52,7 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
         <Ionicons name="alert-circle-outline" size={14} color={Colors.warning ?? Colors.primary} />
         <View style={{ flex: 1 }}>
           <Text style={s.alertTitle}>Billing needs attention.</Text>
-          <Text style={s.alertBody}>The latest payment didn't go through. The crew stays open for 30 days while you sort it out.</Text>
+          <Text style={s.alertBody}>The latest payment didn't go through. The {Vocab.group} stays open for 30 days while you sort it out.</Text>
         </View>
         <TouchableOpacity
           onPress={() => onStart(sub.plan === 'annual' ? 'annual' : 'monthly')}
@@ -88,7 +89,7 @@ export function FamilyBillingBanner({ familyId, isOwner }: Props) {
 
   return (
     <View style={s.cta}>
-      <Text style={s.ctaTitle}>Free for one crew.</Text>
+      <Text style={s.ctaTitle}>Free for one {Vocab.group}.</Text>
       <Text style={s.ctaBody}>
         Five dollars a month or fifty a year covers the crew for everyone in it.
       </Text>

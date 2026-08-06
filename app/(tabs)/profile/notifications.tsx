@@ -116,7 +116,7 @@ export default function NotificationSettings() {
               disabled={!prefs.email_enabled}
             />
             <ToggleRow
-              label="Crew activity (daily digest)"
+              label={`${Vocab.Group} activity (daily digest)`}
               value={prefs.email_family_activity}
               onValueChange={(v) => update.mutate({ email_family_activity: v })}
               disabled={!prefs.email_enabled}

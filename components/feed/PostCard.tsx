@@ -381,7 +381,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
               <Ionicons name="git-network-outline" size={20} color={Colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={s.scopeLabel}>Your network</Text>
-                <Text style={s.scopeHint}>Anyone in your crew graph</Text>
+                <Text style={s.scopeHint}>Anyone in your network</Text>
               </View>
             </TouchableOpacity>
 
@@ -400,7 +400,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
                 <Ionicons name="people-outline" size={20} color={Colors.primary} />
                 <View style={{ flex: 1 }}>
                   <Text style={s.scopeLabel}>{f.name}</Text>
-                  <Text style={s.scopeHint}>Only members of this crew</Text>
+                  <Text style={s.scopeHint}>Only members of this {Vocab.group}</Text>
                 </View>
               </TouchableOpacity>
             ))}

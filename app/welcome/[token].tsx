@@ -29,6 +29,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useWelcomePublic } from '../../hooks/useWelcomeInvitations';
 import { useTTS } from '../../stores/ttsStore';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 type Phase = 'idle' | 'greeting' | 'voice-note' | 'ready';
@@ -51,7 +52,7 @@ export default function WelcomeCeremony() {
     // you a place here" — the one word the rewrite cut, on the first
     // screen a new person ever sees.
     const relationship = data.recipient_relationship || 'friend';
-    const inviter = data.inviter_first_name || 'someone in your crew';
+    const inviter = data.inviter_first_name || `someone in your ${Vocab.group}`;
     return [
       `${recipient}.`,
       `Your ${relationship}, ${inviter}, made you a place here.`,
@@ -185,7 +186,7 @@ export default function WelcomeCeremony() {
         {phase === 'ready' && (
           <>
             <Text style={s.kicker}>Welcome to HereToo</Text>
-            <Text style={s.title}>{data.family_name || 'Your crew'}</Text>
+            <Text style={s.title}>{data.family_name || `Your ${Vocab.group}`}</Text>
             <Text style={s.body}>
               You can come back to this any time. Step inside when you're ready.
             </Text>
