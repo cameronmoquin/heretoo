@@ -192,9 +192,40 @@ export default function ChatThread() {
   const initiatorIntroSent =
     isPending && viewerIsInitiator && (messages ?? []).some((m) => m.sender_id === userId);
 
+  // The flame. Armed, the send writes a burning direct drop instead of
+  // a message — same machinery the feed's DMs use (074/075): sealed
+  // until opened, overwritten at the moment of reading, files destroyed
+  // within the hour, out after a day unopened. One burn system; the
+  // chat composer is just another door into it.
+  const [burn, setBurn] = useState(false);
+  const [burnSending, setBurnSending] = useState(false);
+
+  const sendBurningDrop = async (body: string) => {
+    if (!userId || !otherId) throw new Error('Not ready');
+    const { error } = await supabase.from('posts').insert({
+      author_id: userId,
+      body,
+      visibility: 'direct',
+      direct_recipient_id: otherId,
+      kind: 'post',
+      destruct_on_view: true,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    } as any);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ['direct-drops', threadId] });
+  };
+
   const submit = () => {
     const body = draft.trim();
     if (!body || !threadId) return;
+    if (burn) {
+      setBurnSending(true);
+      sendBurningDrop(body)
+        .then(() => { setDraft(''); setBurn(false); })
+        .catch((e: any) => showAlert('Could not send', e?.message ?? 'Try again.'))
+        .finally(() => setBurnSending(false));
+      return;
+    }
     send.mutate(
       { threadId, body },
       {
@@ -344,14 +375,31 @@ export default function ChatThread() {
               size={20}
               onText={(t) => setDraft((d) => (d ? `${d} ${t}`.trim() : t))}
             />
+            {/* The flame arms the burn for this send. Open threads only —
+                a request conversation earns no special weapons. */}
+            {thread.status === 'open' && (
+              <TouchableOpacity
+                onPress={() => setBurn((v) => !v)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="switch"
+                accessibilityLabel="Burn after reading"
+                accessibilityState={{ checked: burn }}
+              >
+                <Ionicons
+                  name={burn ? 'flame' : 'flame-outline'}
+                  size={20}
+                  color={burn ? Colors.error : Colors.textMuted}
+                />
+              </TouchableOpacity>
+            )}
             {/* M8: opt-in eye when the heuristic flags escalation. */}
             <ReframerEye visible={reframer.eyeVisible} onPress={reframer.open} />
             <TouchableOpacity
-              style={[s.composerSend, !draft.trim() && { opacity: 0.4 }]}
+              style={[s.composerSend, burn && s.composerSendBurn, !draft.trim() && { opacity: 0.4 }]}
               onPress={submit}
-              disabled={!draft.trim() || send.isPending}
+              disabled={!draft.trim() || send.isPending || burnSending}
             >
-              <Ionicons name="send" size={18} color={Colors.onPrimary} />
+              <Ionicons name={burn ? 'flame' : 'send'} size={18} color={Colors.onPrimary} />
             </TouchableOpacity>
           </View>
         )}
@@ -452,6 +500,9 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
+  // Armed. The send button wears the burn so the state is unmissable
+  // at the moment it matters.
+  composerSendBurn: { backgroundColor: Colors.error },
 
   requestBar: {
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
