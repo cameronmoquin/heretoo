@@ -2,11 +2,11 @@
 // See scripts/generate-build-info.mjs
 
 export const BuildInfo = {
-  commit: 'dd7ed52',
-  commitFull: 'dd7ed5270ca5bdaba26c8466851d8ed4d07d6313',
+  commit: '2965806',
+  commitFull: '2965806e6ed52108b0406f62cc8d10269bcb20a9',
   branch: 'master',
   dirty: true,
-  buildTime: '2026-08-06T14:53:44.839Z',
+  buildTime: '2026-08-06T15:33:57.759Z',
   env: 'production' as 'production' | 'development' | 'preview',
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'not-set',
 } as const;

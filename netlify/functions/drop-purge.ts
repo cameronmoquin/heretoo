@@ -25,7 +25,9 @@
 
 import type { Config } from '@netlify/functions';
 
-const ARMED = false;
+// Armed Aug 6 2026 after the dry-run review: zero expired candidates,
+// 375 no-expiry posts structurally unselectable, queue empty.
+const ARMED = true;
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
