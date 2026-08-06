@@ -240,11 +240,24 @@ export function useUpload() {
         row.update_recipient_ids = params.updateRecipientIds;
       }
 
-      const { data: post, error } = await supabase
+      let { data: post, error } = await supabase
         .from('posts')
         .insert(row)
         .select()
         .single();
+      // Migration 074 may not have run. A drop's expires_at is the only
+      // 074 column this insert carries, so a missing-column rejection is
+      // retried without it — the drop lands as a persistent post, which
+      // keeps the words over the expiry.
+      if (error && row.expires_at
+        && ['PGRST204', '42703'].includes(String((error as any).code))) {
+        delete row.expires_at;
+        ({ data: post, error } = await supabase
+          .from('posts')
+          .insert(row)
+          .select()
+          .single());
+      }
       if (error) {
         // eslint-disable-next-line no-console
         console.error('POST_INSERT_ERROR', JSON.stringify(error, null, 2));
