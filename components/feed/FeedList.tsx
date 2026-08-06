@@ -181,10 +181,25 @@ export function FeedList({
   //   - Card k's source depends only on the cards before it, so appending
   //     page 2 leaves page 1's cards exactly where they were.
   const items = useMemo<FeedItem[]>(() => {
-    // Single-source views. Full density, newest first, no cap. These
-    // replace the /loft and /news rooms outright, so every row the
-    // source returns has to land here.
-    if (onlyLoft) return loft.map((l): FeedItem => ({ kind: 'loft', loft: l }));
+    // Single-source views. Full density, newest first, no cap.
+    //
+    // The Public lens is everything public: named public posts (the
+    // submits and drops the composer writes there since migration 074)
+    // interleaved with the loft's pseudonymous cards, one stream,
+    // newest first. Before this it showed the loft alone, and a person
+    // who posted publicly could not find their own post under the chip
+    // that said Public.
+    if (onlyLoft) {
+      const pub: FeedItem[] = posts
+        .filter((p) => p.visibility === 'public')
+        .map((p): FeedItem => ({ kind: 'post', post: p }));
+      const anon: FeedItem[] = loft.map((l): FeedItem => ({ kind: 'loft', loft: l }));
+      return [...pub, ...anon].sort((a, b) => {
+        const ta = a.kind === 'post' ? ms(a.post.created_at) : ms((a as any).loft.created_at);
+        const tb = b.kind === 'post' ? ms(b.post.created_at) : ms((b as any).loft.created_at);
+        return tb - ta;
+      });
+    }
     if (onlyNews) return news.map((n): FeedItem => ({ kind: 'news', news: n }));
     if (onlyDrops) return drops.map((d): FeedItem => ({ kind: 'drop', drop: d }));
 

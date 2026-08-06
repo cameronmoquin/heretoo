@@ -11,15 +11,20 @@ import { useAuthStore } from '../stores/authStore';
 export function useStartVideoCall() {
   const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
-    mutationFn: async (input: { familyId: string; label?: string }): Promise<string> => {
+    // A call belongs to exactly one scope: a family (legacy) or a
+    // message thread (migration 074). Pass one, never both.
+    mutationFn: async (input: { familyId?: string; threadId?: string; label?: string }): Promise<string> => {
       if (!userId) throw new Error('Not signed in');
+      if (!input.familyId && !input.threadId) throw new Error('The call needs a place to happen.');
+      const row: Record<string, unknown> = {
+        host_id: userId,
+        label: input.label ?? null,
+      };
+      if (input.threadId) row.thread_id = input.threadId;
+      else row.family_id = input.familyId;
       const { data, error } = await supabase
         .from('video_calls')
-        .insert({
-          family_id: input.familyId,
-          host_id: userId,
-          label: input.label ?? null,
-        } as any)
+        .insert(row as any)
         .select('id')
         .single();
       if (error) throw error;

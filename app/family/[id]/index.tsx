@@ -246,21 +246,9 @@ export default function FamilyDetail() {
               <Text style={s.welcomeCardText}>Send a welcome card</Text>
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
             </TouchableOpacity>
-            <Button
-              title={startCall.isPending ? 'Starting…' : 'Start a video call'}
-              icon={<Ionicons name="videocam" size={16} color={Colors.onPrimary} />}
-              style={s.callBtn}
-              onPress={async () => {
-                if (!id) return;
-                try {
-                  const callId = await startCall.mutateAsync({ familyId: id });
-                  router.push(`/call/${callId}` as any);
-                } catch (e: any) {
-                  showAlert('Could not start the call', e?.message ?? 'Try again.');
-                }
-              }}
-              disabled={startCall.isPending}
-            />
+            {/* Video calls live in messaging now (Aug 2026). The button
+                that sat here started a whole-cohort call; the call icon
+                in a message thread's header is the door. */}
             <FeedComposer familyId={id} />
             {(!posts || posts.length === 0) ? (
               <View style={s.emptyFeed}>

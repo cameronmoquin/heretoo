@@ -34,6 +34,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Radius, Spacing, Type, Heights, Motion } from '../../constants/design';
@@ -78,6 +79,7 @@ type Props = {
 export function AppShelf({ previewApps }: Props = {}) {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [apps, setApps] = useState<KioskAppInfo[]>(previewApps ?? []);
   const [launching, setLaunching] = useState<string | null>(null);
 
@@ -155,7 +157,14 @@ export function AppShelf({ previewApps }: Props = {}) {
   return (
     <ScrollView
       style={styles.root}
-      contentContainerStyle={styles.content}
+      // The gesture bar overlaps the tail of the scroll content, and what sits
+      // there is the emergency-call disclaimer. A safety label half-hidden
+      // behind system chrome is worse than no label, so the inset is added on
+      // top of the normal bottom padding rather than replacing it.
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: Spacing.xl + insets.bottom },
+      ]}
       showsVerticalScrollIndicator={false}
     >
       <Animated.View style={{ opacity: fade, gap: Spacing.lg }}>

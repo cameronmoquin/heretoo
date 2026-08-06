@@ -15,7 +15,10 @@ import { supabase } from './supabase';
 
 const FUNCTION_PATH = '/.netlify/functions/mux-upload-create';
 
-export const VIDEO_MAX_SECONDS = 7;
+// Was 7 — the Two-Way-era cap. Every ordinary phone clip is longer than
+// seven seconds, so the picker rejected nearly everything and video read
+// as broken. A minute covers what people actually shoot.
+export const VIDEO_MAX_SECONDS = 60;
 
 interface MuxUploadResult {
   assetId: string;

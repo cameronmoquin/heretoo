@@ -39,6 +39,7 @@ import { MicInputButton } from '../../components/shared/MicInputButton';
 import { ReframerDrawer, ReframerEye } from '../../components/chat/ReframerDrawer';
 import { useReframer, type ReframerContextMessage } from '../../hooks/useReframer';
 import { MOBILE_TAB_BAR_HEIGHT } from '../../components/shared/MobileTabBar';
+import { useStartVideoCall } from '../../hooks/useStartVideoCall';
 import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
 import { useWindowDimensions } from 'react-native';
 
@@ -61,6 +62,26 @@ export default function ChatThread() {
   const accept = useAcceptThread();
   const decline = useDeclineThread();
   const markRead = useMarkThreadRead();
+  const startCall = useStartVideoCall();
+
+  // Video calls live here now (migration 074) — a call belongs to the
+  // conversation, not to a page. The link goes into the thread as a
+  // message so the other person's phone rings through the pipeline that
+  // already exists: realtime, push, mail.
+  const onStartCall = async () => {
+    if (!threadId) return;
+    try {
+      const callId = await startCall.mutateAsync({ threadId });
+      const origin =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : 'https://heretoo.social';
+      send.mutate({ threadId, body: `${origin}/call/${callId}` });
+      router.push(`/call/${callId}` as any);
+    } catch (e: any) {
+      showAlert('Could not start the call', e?.message ?? 'Try again.');
+    }
+  };
 
   // Reframer (M8) — opt-in, never visible to the recipient. Builds
   // a small "context" of up to the last 3 messages from the thread
@@ -178,6 +199,20 @@ export default function ChatThread() {
               <Text style={s.headerHandle}>@{(other as any).handle}</Text>
             )}
           </View>
+          {thread?.status === 'open' && (
+            <TouchableOpacity
+              onPress={onStartCall}
+              disabled={startCall.isPending}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Video call"
+            >
+              <Ionicons
+                name="videocam-outline"
+                size={22}
+                color={startCall.isPending ? Colors.textMuted : Colors.textPrimary}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <ScrollView ref={scrollRef} contentContainerStyle={s.scroll}>

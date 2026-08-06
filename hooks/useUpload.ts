@@ -196,6 +196,12 @@ export function useUpload() {
       muxPlaybackId?: string;
       muxThumbnailUrl?: string;
       videoDurationMs?: number;
+      /**
+       * A drop carries insert time + 24h; a submit carries nothing.
+       * Written only when set, so a drop still lands on a database that
+       * predates migration 074.
+       */
+      expiresAt?: string;
     }) => {
       if (!userId) throw new Error('Not authenticated');
       setState((s) => ({ ...s, stage: 'creating_post' }));
@@ -221,6 +227,7 @@ export function useUpload() {
         row.direct_recipient_id = params.directRecipientId;
       }
       if (params.destructOnView) row.destruct_on_view = true;
+      if (params.expiresAt) row.expires_at = params.expiresAt;
       // Recipient-restricted updates: only set the column when there's
       // an actual list. NULL means "broadcast to whole family", which
       // matches the legacy behavior — important to preserve so the UI

@@ -43,6 +43,10 @@ import { useAuthStore } from '../stores/authStore';
 export interface DropExtras {
   /** True: this drop burns for a viewer once that viewer has opened it. */
   destruct_on_view?: boolean | null;
+  /** Migration 074: stamped when the first reading redacted the row. */
+  burned_at?: string | null;
+  /** Migration 074: drops carry insert time + 24h. Null persists. */
+  expires_at?: string | null;
   /** Set only on a visibility='direct' drop. The one person it went to. */
   direct_recipient_id?: string | null;
   /** Joined profile for direct_recipient_id. RLS already restricts the row. */
@@ -107,7 +111,13 @@ export function useOpenDrop() {
 
       void (async () => {
         try {
-          const { error } = await supabase
+          // open_drop (migration 074) records the view AND performs the
+          // burn-to-redaction server-side in one call.
+          const { error } = await supabase.rpc('open_drop', { p_post_id: postId });
+          if (!error) return;
+          // Databases that predate 074: fall back to the bare view row,
+          // which is the old hide-on-next-load behavior.
+          const { error: e2 } = await supabase
             .from('post_views')
             .upsert(
               { post_id: postId, profile_id: userId },
@@ -116,7 +126,7 @@ export function useOpenDrop() {
               // need an UPDATE policy that deliberately does not exist.
               { onConflict: 'post_id,profile_id', ignoreDuplicates: true },
             );
-          if (error) warnOnce(error);
+          if (e2) warnOnce(e2);
         } catch (e) {
           warnOnce(e);
         }

@@ -88,7 +88,10 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   // their own drop, and the RLS filter never takes it from them either.
   const revealed = useRevealed(post.id);
   const openDrop = useOpenDrop();
-  const sealed = burns && !isMine && !revealed;
+  // Burned (migration 074): the first reading redacted it server-side.
+  // The row is a tombstone now — never sealed, body already null.
+  const burned = !!(extra as any).burned_at;
+  const sealed = burns && !burned && !isMine && !revealed;
 
   const recipientName =
     extra.recipient?.display_name ?? extra.recipient?.handle ?? null;
@@ -104,13 +107,15 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         : 'Direct';
 
   // The burn, stated as a fact about the object in front of you.
-  const burnMark = !burns
-    ? null
-    : isMine
-      ? 'Burns on view'
-      : sealed
-        ? 'Sealed · one look'
-        : 'Burned · gone on reload';
+  const burnMark = burned
+    ? 'Burned'
+    : !burns
+      ? null
+      : isMine
+        ? 'Burns on view'
+        : sealed
+          ? 'Sealed · one look'
+          : 'Burned · gone on reload';
 
   const onDelete = () => {
     showConfirm(
@@ -206,6 +211,9 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         </View>
       ) : (
         <>
+        {/* The tombstone. The server wiped the body and took the media;
+            the bar is what a redaction looks like. */}
+        {burned && <View style={s.redaction} accessibilityLabel="Redacted" />}
         {!!post.body && <Text style={s.body}>{post.body}</Text>}
 
         {/* Optional attribution slug — used by Shakespeare bot posts
@@ -826,6 +834,15 @@ function makeStyles() { return StyleSheet.create({
   body: {
     fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
     color: Colors.textPrimary,
+  },
+  // The redaction bar. Solid ink, the width of a sentence that is no
+  // longer there.
+  redaction: {
+    height: Type.body.lineHeight,
+    alignSelf: 'stretch',
+    maxWidth: 260,
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 2,
   },
   // Right-aligned attribution. Italic and muted so it reads as a
   // citation, not a competing voice.
