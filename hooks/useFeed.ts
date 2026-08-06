@@ -14,18 +14,10 @@
  *
  * Engagement (hearts) is wired through `post_reactions`.
  *
- * DM drops (visibility='direct', migration 065) also ride the same
- * stream, by a different route. Neither post query can reach them: the
- * ranked RPC covers public and family, the connections query is pinned to
- * visibility='connections'. So page 0 asks for them separately and puts
- * them at the head. RLS returns a direct drop to its author and its one
- * recipient, nobody else.
- *
- * DEGRADE: migration 065 is run by hand. Until it lands there is no
- * 'direct' row to return and no destruct_on_view column to read, the
- * extra query comes back empty, and this feed behaves exactly as it did
- * before this comment existed. Same pattern as useNews / useLineReactions:
- * a failed side read warns once and yields an empty list, never a throw.
+ * DMs DO NOT RIDE THIS STREAM. A direct drop is conversation, not
+ * feed — it renders inside its message thread and nowhere else. The
+ * page-0 splice that used to put DMs at the head of the feed is gone
+ * (Aug 2026, Cameron's rule: all DM sends land in the Messenger).
  */
 
 import { useEffect } from 'react';
@@ -38,73 +30,6 @@ import { useAuthStore } from '../stores/authStore';
 const PAGE_SIZE = 20;
 
 export type FeedTab = 'for_you' | 'connections';
-
-/**
- * Marks a DM drop spliced onto page 0. It is not part of the server's
- * paging window, so getNextPageParam has to leave it out of the offset
- * or page 2 would skip that many real posts.
- */
-const INJECTED = '__direct_injected';
-
-let directWarned = false;
-function warnDirectOnce(e: any) {
-  if (directWarned) return;
-  directWarned = true;
-  // eslint-disable-next-line no-console
-  console.warn('[feed] direct drops unavailable; migration 065 may not have run', e?.message ?? e);
-}
-
-/**
- * Latched off for the session once the schema answers that it has never
- * heard of these columns. Without it every page-0 fetch on an
- * un-migrated database pays for a roundtrip that can only fail.
- *
- * Only schema errors latch. A timeout or a dropped connection leaves the
- * query armed, so a transient blip does not cost the reader their DMs
- * for the rest of the session.
- *   PGRST200  no such relationship (the recipient join)
- *   PGRST204 / 42703  no such column
- *   42P01     no such table
- */
-let directOff = false;
-const SCHEMA_CODES = new Set(['PGRST200', 'PGRST204', '42703', '42P01']);
-
-/**
- * DM drops the viewer can see: the ones addressed to them, and the ones
- * they sent. No filter on the recipient here on purpose. The posts_read
- * policy already restricts a 'direct' row to author_id and
- * direct_recipient_id, and asking again in the client would only add a
- * second place for the two rules to drift apart.
- *
- * `recipient` is joined off direct_recipient_id so the card can say who
- * the drop went to. Before 065 that column and its foreign key do not
- * exist, PostgREST rejects the select, and this returns an empty list.
- */
-async function fetchDirectDrops(): Promise<any[]> {
-  if (directOff) return [];
-  try {
-    const { data, error } = await supabase
-      .from('posts')
-      .select(`
-        *,
-        author:profiles!author_id(id, handle, display_name, avatar_path),
-        recipient:profiles!direct_recipient_id(id, handle, display_name, avatar_path),
-        media:post_media(*)
-      `)
-      .eq('visibility', 'direct')
-      .order('created_at', { ascending: false })
-      .limit(PAGE_SIZE);
-    if (error) {
-      if (SCHEMA_CODES.has(String((error as any).code))) directOff = true;
-      warnDirectOnce(error);
-      return [];
-    }
-    return (data ?? []).map((p: any) => ({ ...p, [INJECTED]: true }));
-  } catch (e) {
-    warnDirectOnce(e);
-    return [];
-  }
-}
 
 /**
  * @param crewOnly When the Crew chip is selected the column shows crew
@@ -187,19 +112,6 @@ export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
         raw = (data ?? []) as any[];
       }
 
-      // DM drops sit at the head of page 0 and nowhere else, so nothing
-      // repeats as the reader pages down. Deduped against the page in
-      // case a later query ever returns the same row twice. Not in the
-      // crew lens: that column answers "what did my crews drop", and a
-      // DM at its head was the mixed stream leaking through.
-      if (pageParam === 0 && !crewOnly) {
-        const direct = await fetchDirectDrops();
-        if (direct.length > 0) {
-          const already = new Set(raw.map((p: any) => p.id));
-          raw = [...direct.filter((d: any) => !already.has(d.id)), ...raw];
-        }
-      }
-
       const data = raw;
       const error = null as any;
       if (error) throw error;
@@ -235,14 +147,9 @@ export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
       }
       return posts;
     },
-    // Offsets count server-paged posts only. The spliced DM drops are
-    // not in the RPC's window, so including them would advance the
-    // offset past that many real posts. With nothing injected this is
-    // the original arithmetic, unchanged.
     getNextPageParam: (lastPage, allPages) => {
-      const paged = (lastPage as any[]).filter((p: any) => !p?.[INJECTED]);
-      if (paged.length < PAGE_SIZE) return undefined;
-      return (allPages as any[][]).flat().filter((p: any) => !p?.[INJECTED]).length;
+      if ((lastPage as any[]).length < PAGE_SIZE) return undefined;
+      return (allPages as any[][]).flat().length;
     },
     initialPageParam: 0,
   });

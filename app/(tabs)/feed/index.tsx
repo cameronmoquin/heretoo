@@ -30,15 +30,15 @@ import { Layout, Spacing, Radius, Type, Heights } from '../../../constants/desig
 import { Vocab } from '../../../constants/vocab';
 
 // Labels ride Vocab where the lexicon owns the word, so a vocabulary
-// change never has to find this row. 'Dead drops' is the GPS game —
-// per the taxonomy every post is a drop, so a chip called "Drops"
-// showing only the geocaches was lying about four fifths of the feed.
+// change never has to find this row. Drops means DROPS — the 24-hour
+// posts, wherever they were sent. The GPS game is the Deaddrop app at
+// /hunt and is not a feed lens; its only feed presence is the X card.
 const CHIPS: { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'crew', label: Vocab.Group },
   { key: 'public', label: 'Public' },
   { key: 'news', label: 'News' },
-  { key: 'drops', label: 'Dead drops' },
+  { key: 'drops', label: 'Drops' },
 ];
 
 export default function FeedHomeScreen() {

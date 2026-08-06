@@ -20,7 +20,7 @@ import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
-import { MobileTabBar, useMobileTabBarVisible, MOBILE_TAB_BAR_HEIGHT } from '../components/shared/MobileTabBar';
+import { MobileTabBar, useMobileTabBarVisible, useMobileTabBarHeight } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
 import { KonamiChimes } from '../components/easter/KonamiChimes';
@@ -45,6 +45,9 @@ function RootLayoutInner() {
   const { isLoading } = useAuth();
   const themeMode = useThemeStore((s) => s.mode);
   const tabBarVisible = useMobileTabBarVisible();
+  // Includes the gesture-bar inset, so the reservation matches the bar's real
+  // height on native rather than the bare 64.
+  const tabBarHeight = useMobileTabBarHeight();
 
   // Apply the active palette before child renders happen. useEffect
   // would render once with the wrong palette; useMemo runs sync.
@@ -96,7 +99,7 @@ function RootLayoutInner() {
       style={{
         flex: 1,
         backgroundColor: Colors.background,
-        paddingBottom: tabBarVisible ? MOBILE_TAB_BAR_HEIGHT : 0,
+        paddingBottom: tabBarVisible ? tabBarHeight : 0,
       }}
     >
       <GlobalWebStyles />

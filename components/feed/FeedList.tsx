@@ -10,12 +10,10 @@ import { ArtSlot } from './ArtSlot';
 import { ArtBanner } from './ArtBanner';
 import { NewsCard } from './NewsCard';
 import { LoftCard } from './LoftCard';
-import { DropCard } from './DropCard';
 import { FeedComposer } from './FeedComposer';
 import { useArtFeed, type ArtWork } from '../../hooks/useArtFeed';
 import { useNewsFeed, type NewsItem } from '../../hooks/useNews';
 import { useLoftFeed, type LoftPost } from '../../hooks/useLoft';
-import { usePublicHuntCaches, type HuntCache } from '../../hooks/useHunt';
 import { useArtPrefs } from '../../stores/artPrefsStore';
 import { useBrokenArt } from '../../stores/brokenArtStore';
 import { Colors } from '../../constants/colors';
@@ -47,8 +45,7 @@ type FeedItem =
   // in one stream and its id alone is not unique.
   | { kind: 'art'; art: ArtWork; slot: number }
   | { kind: 'news'; news: NewsItem }
-  | { kind: 'loft'; loft: LoftPost }
-  | { kind: 'drop'; drop: HuntCache };
+  | { kind: 'loft'; loft: LoftPost };
 
 // One secondary card after every this many posts: news, loft, a drop, or an
 // inline art piece. The active sources take these slots round-robin, so the
@@ -114,8 +111,7 @@ export function FeedList({
   const mixed = !single && !crewOnly;
 
   const postsAllowed = !single;
-  const loftAllowed = onlyLoft || mixed;
-  const dropsAllowed = onlyDrops || mixed;
+  const loftAllowed = onlyLoft || onlyDrops || mixed;
   const newsAllowed = onlyNews || (mixed && activeTab === 'for_you');
 
   // Additive by construction. While a query is loading, and if it
@@ -124,7 +120,6 @@ export function FeedList({
   // absent. Nothing here can block or throw into the post path.
   const { data: newsRaw, isLoading: newsLoading, refetch: refetchNews } = useNewsFeed();
   const { data: loftRaw, isLoading: loftLoading, refetch: refetchLoft } = useLoftFeed();
-  const { data: dropsRaw, isLoading: dropsLoading, refetch: refetchDrops } = usePublicHuntCaches();
 
   const news = useMemo<NewsItem[]>(() => {
     if (!newsAllowed || !Array.isArray(newsRaw)) return [];
@@ -145,16 +140,6 @@ export function FeedList({
       .slice()
       .sort((a, b) => (ms(b.created_at) - ms(a.created_at)) || a.id.localeCompare(b.id));
   }, [loftRaw, loftAllowed]);
-
-  const drops = useMemo<HuntCache[]>(() => {
-    if (!dropsAllowed || !Array.isArray(dropsRaw)) return [];
-    return dropsRaw
-      // No share code means /hunt/{code} has nowhere to land. A card that
-      // cannot open is worse than one that never rendered.
-      .filter((c) => !!c?.id && !!c.share_code && ms(c.created_at) > 0)
-      .slice()
-      .sort((a, b) => (ms(b.created_at) - ms(a.created_at)) || a.id.localeCompare(b.id));
-  }, [dropsRaw, dropsAllowed]);
 
   // Interleave the crew's posts with the side sources on an even positional
   // cadence.
@@ -201,14 +186,32 @@ export function FeedList({
       });
     }
     if (onlyNews) return news.map((n): FeedItem => ({ kind: 'news', news: n }));
-    if (onlyDrops) return drops.map((d): FeedItem => ({ kind: 'drop', drop: d }));
+    // The Drops lens is every LIVE drop the viewer can see, wherever it
+    // was sent: ephemeral posts (expires_at set — RLS already dropped the
+    // expired ones) plus the loft, whose every card is a 24-hour public
+    // drop by construction. The GPS game is NOT this — Deaddrop lives at
+    // /hunt and its only feed presence is the X announcement card.
+    if (onlyDrops) {
+      const eph: FeedItem[] = posts
+        // Cohort or public only. DMs never ride the feed at all any
+        // more, but the guard stays so a future stream change cannot
+        // leak a private drop into a lens.
+        .filter((p) => !!(p as any).expires_at && (p.visibility as string) !== 'direct')
+        .map((p): FeedItem => ({ kind: 'post', post: p }));
+      const anon: FeedItem[] = loft.map((l): FeedItem => ({ kind: 'loft', loft: l }));
+      return [...eph, ...anon].sort((a, b) => {
+        const ta = a.kind === 'post' ? ms(a.post.created_at) : ms((a as any).loft.created_at);
+        const tb = b.kind === 'post' ? ms(b.post.created_at) : ms((b as any).loft.created_at);
+        return tb - ta;
+      });
+    }
 
     const out: FeedItem[] = [];
     const haveArt = art.length > 0 && showBetweenSlots && postsAllowed;
 
     // Per-source pointers. The only mutable state in this memo, and it never
     // escapes it.
-    let ni = 0, li = 0, di = 0, ai = 0;
+    let ni = 0, li = 0, ai = 0;
 
     // Fixed rotation order. `ready` reports whether the source can place a
     // card at its pointer; `place` builds it and advances. Art reports ready
@@ -216,7 +219,6 @@ export function FeedList({
     const sources: { ready: () => boolean; place: () => FeedItem }[] = [
       { ready: () => ni < news.length, place: () => ({ kind: 'news', news: news[ni++] }) },
       { ready: () => li < loft.length, place: () => ({ kind: 'loft', loft: loft[li++] }) },
-      { ready: () => di < drops.length, place: () => ({ kind: 'drop', drop: drops[di++] }) },
       {
         ready: () => haveArt,
         place: () => {
@@ -263,14 +265,13 @@ export function FeedList({
       out.push({ kind: 'art', art: art[1] ?? art[0], slot: 0 });
     }
     return out;
-  }, [posts, art, showBetweenSlots, news, loft, drops, onlyLoft, onlyNews, onlyDrops, postsAllowed]);
+  }, [posts, art, showBetweenSlots, news, loft, onlyLoft, onlyNews, onlyDrops, postsAllowed]);
 
   const renderItem = useCallback(
     ({ item }: { item: FeedItem }) => {
       if (item.kind === 'post') return <PostCard post={item.post} onHeart={onHeart} />;
       if (item.kind === 'news') return <NewsCard item={item.news} />;
       if (item.kind === 'loft') return <LoftCard post={item.loft} />;
-      if (item.kind === 'drop') return <DropCard cache={item.drop} />;
       return <ArtSlot art={item.art} />;
     },
     [onHeart],
@@ -280,7 +281,6 @@ export function FeedList({
     if (item.kind === 'post') return `post:${item.post.id}`;
     if (item.kind === 'news') return `news:${item.news.id}`;
     if (item.kind === 'loft') return `loft:${item.loft.id}`;
-    if (item.kind === 'drop') return `drop:${item.drop.id}`;
     return `art:${item.slot}:${item.art.id}`;
   }, []);
 
@@ -292,10 +292,9 @@ export function FeedList({
     onRefresh();
     if (newsAllowed) void refetchNews().catch(() => {});
     if (loftAllowed) void refetchLoft().catch(() => {});
-    if (dropsAllowed) void refetchDrops().catch(() => {});
   }, [
-    onRefresh, newsAllowed, loftAllowed, dropsAllowed,
-    refetchNews, refetchLoft, refetchDrops,
+    onRefresh, newsAllowed, loftAllowed,
+    refetchNews, refetchLoft,
   ]);
 
   // In a single-source view the post query says nothing about whether
@@ -305,7 +304,7 @@ export function FeedList({
   const gateLoading =
     onlyLoft ? loftLoading
     : onlyNews ? newsLoading
-    : onlyDrops ? dropsLoading
+    : onlyDrops ? isLoading
     : isLoading;
   const gateEmpty = single ? items.length === 0 : posts.length === 0;
 

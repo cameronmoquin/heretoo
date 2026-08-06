@@ -17,6 +17,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
@@ -51,8 +52,13 @@ export function useMobileTabBarVisible(): boolean {
   const pathname = usePathname();
   const session = useAuthStore((s) => s.session);
   const { width } = useWindowDimensions();
-  // Native: the (tabs) layout still owns native nav.
-  if (Platform.OS !== 'web') return false;
+  // Native used to be excluded here on the grounds that "the (tabs) layout
+  // still owns native nav". It does not: that layout sets
+  // tabBarStyle: { display: 'none' } and its NAV array is never rendered, so
+  // excluding this bar left native builds with NO navigation at all — Feed and
+  // Profile reachable only by landing on them, and Messages, Music and the
+  // whole /rooms hub unreachable. Found on the provisioned phone, where it
+  // looked like HereToo had shipped a cut-down build.
   // Not signed in: the auth flow has its own CTA hierarchy.
   if (!session) return false;
   // Desktop gets the vertical nav; never both.
@@ -68,6 +74,7 @@ export function MobileTabBar() {
   const radioLoading = useRadio((s) => s.loading);
   const station = useActiveStation();
   const { data: unread } = useUnreadCount();
+  const insets = useSafeAreaInsets();
 
   const styles = makeStyles();
 
@@ -82,7 +89,7 @@ export function MobileTabBar() {
   const onRooms = path.startsWith('/rooms');
 
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { paddingBottom: 6 + insets.bottom }]}>
       <TouchableOpacity
         style={styles.slot}
         onPress={() => router.push('/hunt' as any)}
@@ -175,6 +182,16 @@ export function MobileTabBar() {
  *  space at their bottom so the bar doesn't cover the tail content. */
 export const MOBILE_TAB_BAR_HEIGHT = 64;
 
+/**
+ * The bar's real height, including the gesture-bar inset it has to clear on
+ * Android. The bar pads itself by this and the root layout reserves by it, so
+ * the two cannot drift — which is the invariant the docstring above asks for.
+ */
+export function useMobileTabBarHeight(): number {
+  const insets = useSafeAreaInsets();
+  return MOBILE_TAB_BAR_HEIGHT + insets.bottom;
+}
+
 function makeStyles() { return StyleSheet.create({
   bar: ({
     flexDirection: 'row',
@@ -183,9 +200,11 @@ function makeStyles() { return StyleSheet.create({
     borderTopColor: Colors.border,
     paddingVertical: 6,
     paddingHorizontal: 4,
-    // fixed not absolute so it's pinned to the viewport regardless
-    // of parent stacking. Sits above page content on every page.
-    position: 'fixed',
+    // Web wants `fixed` so the bar is pinned to the viewport regardless of
+    // parent stacking. React Native has no `fixed` — it silently does nothing
+    // — so native gets `absolute`, which against the root layout's full-height
+    // View lands in the same place.
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
     bottom: 0, left: 0, right: 0,
     zIndex: 10,
   } as any),

@@ -540,6 +540,11 @@ function makeStyles() { return StyleSheet.create({
  * (migration 074 wipes the body itself, there is nothing left to show).
  */
 function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
+  // A DEADDROP announcement in a DM is an X, same as in the feed.
+  const huntCode = React.useMemo(() => {
+    const m = (post.body ?? '').match(/^DEADDROP · ([A-Z0-9]{6,12})/);
+    return m ? m[1] : null;
+  }, [post.body]);
   const ds = makeDropStyles();
   const revealed = useRevealed(post.id);
   const openDrop = useOpenDrop();
@@ -564,6 +569,17 @@ function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
           >
             <Ionicons name="flame-outline" size={14} color={Colors.textSecondary} />
             <Text style={ds.sealedText}>Sealed. Opens once.</Text>
+          </TouchableOpacity>
+        ) : huntCode ? (
+          // A deaddrop sent direct. X marks the spot here the same as it
+          // does in the feed; the tap opens the run.
+          <TouchableOpacity
+            onPress={() => router.push(`/hunt/${huntCode}` as any)}
+            activeOpacity={0.8}
+            style={ds.xWrap}
+            accessibilityLabel={`Deaddrop ${huntCode}`}
+          >
+            <Text style={ds.xMark}>✕</Text>
           </TouchableOpacity>
         ) : (
           <>
@@ -595,6 +611,8 @@ function makeDropStyles() { return StyleSheet.create({
     color: Colors.textMuted, marginTop: 4,
   },
   sealedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 },
+  xWrap: { alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16 },
+  xMark: { fontSize: 34, lineHeight: 38, fontWeight: '800' as const, color: Colors.textPrimary },
   sealedText: {
     fontSize: Type.body.size, lineHeight: Type.body.lineHeight,
     color: Colors.textSecondary, fontStyle: 'italic',
