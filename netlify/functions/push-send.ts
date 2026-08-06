@@ -80,14 +80,34 @@ export default async (req: Request, _ctx: Context) => {
   if (targets[0].sender_id !== callerId) return new Response('forbidden', { status: 403 });
 
   const who_ = targets[0].sender_name || 'Someone';
+
+  // A message whose entire body is a call link IS a call — the thread's
+  // camera button writes exactly that shape — so the phone should say
+  // so. The body itself still never rides the notification; this is a
+  // server-side shape check, and the lock screen learns only the kind.
+  let isCall = false;
+  let callId: string | null = null;
+  try {
+    const mr = await fetch(
+      `${SUPABASE_URL}/rest/v1/messages?id=eq.${messageId}&select=body`,
+      { headers: SERVICE_HEADERS },
+    );
+    if (mr.ok) {
+      const rows = (await mr.json()) as Array<{ body: string | null }>;
+      const m = (rows[0]?.body ?? '').trim()
+        .match(/^https:\/\/\S+\/call\/([0-9a-f-]{36})$/i);
+      if (m) { isCall = true; callId = m[1]; }
+    }
+  } catch {}
+
   const messages = targets.map((t) => ({
     to: t.token,
     title: who_,
-    body: 'sent you a message',
+    body: isCall ? 'is calling' : 'sent you a message',
     sound: 'default',
     channelId: 'default',
     priority: 'high',
-    data: { kind: 'message', messageId },
+    data: isCall ? { kind: 'call', callId, messageId } : { kind: 'message', messageId },
   }));
 
   const push = await fetch('https://exp.host/--/api/v2/push/send', {

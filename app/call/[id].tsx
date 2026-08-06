@@ -19,7 +19,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useVideoCall } from '../../hooks/useVideoCall';
 import { Colors } from '../../constants/colors';
-import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
 export default function VideoCallScreen() {
@@ -41,7 +40,7 @@ export default function VideoCallScreen() {
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
       <View style={s.header}>
-        <Text style={s.label}>{Vocab.Group} call</Text>
+        {/* No label. It is a video call; the video says so. */}
         <View style={s.dotLive} />
         <Text style={s.subtle}>{1 + remotePeers.length} on</Text>
       </View>
