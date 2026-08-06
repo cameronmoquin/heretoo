@@ -30,15 +30,16 @@
  */
 
 export const Vocab = {
-  // Plain speech (Aug 2026). "Crew" read as themed and it went the way
-  // of "family". A group is a group.
-  group: 'group',
-  groupPlural: 'groups',
-  Group: 'Group',
-  GroupPlural: 'Groups',
+  // "Cohort" (Aug 2026). "Crew" read as themed and went the way of
+  // "family"; plain "group" lasted an hour. Cohort carries the
+  // are-you-intelligent-enough register without costuming anybody.
+  group: 'cohort',
+  groupPlural: 'cohorts',
+  Group: 'Cohort',
+  GroupPlural: 'Cohorts',
   member: 'member',
   memberPlural: 'members',
-  groupWithArticle: 'a group',
+  groupWithArticle: 'a cohort',
   post: 'drop',
   postPlural: 'drops',
   Post: 'Drop',
