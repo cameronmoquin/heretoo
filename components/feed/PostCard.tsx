@@ -122,11 +122,12 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         : 'Direct';
 
   // The burn, stated as a fact about the object in front of you.
-  // "Nothing kept" is the literal claim: at the moment of burning the
-  // words are overwritten in the database, not hidden from view, and
-  // the purge worker takes the files. What survives is this marker.
+  // The literal claim, and it is literal: at the moment of burning the
+  // words are overwritten in the database — not hidden, overwritten —
+  // and the purge worker destroys the files. What survives is this
+  // marker.
   const burnMark = burned
-    ? 'Burned · nothing kept'
+    ? 'Burned · destroyed, not hidden. Nothing kept.'
     : !burns
       ? null
       : isMine
