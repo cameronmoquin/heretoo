@@ -128,7 +128,18 @@ export function useInboxRealtime() {
           qc.invalidateQueries({ queryKey: ['thread-messages', payload?.new?.thread_id] });
         },
       )
-      .subscribe();
+      // postgres_changes does NOT replay what happened while the socket
+      // was down, and a phone's socket goes down every time the screen
+      // locks. Each (re)join therefore refetches everything this channel
+      // covers — the rejoin itself is the "you may have missed
+      // something" signal.
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          qc.invalidateQueries({ queryKey: ['threads'] });
+          qc.invalidateQueries({ queryKey: ['unread-count'] });
+          qc.invalidateQueries({ queryKey: ['thread-messages'] });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [qc, userId]);
 }
@@ -230,6 +241,13 @@ export function useThreadMessages(threadId: string | null) {
       return (data ?? []) as ChatMessage[];
     },
     enabled: !!threadId,
+    // The app default is two minutes of freshness, which is exactly the
+    // blind window a phone opens every time its screen locks: the
+    // socket missed inserts it will never be told about, and the focus
+    // refetch declined to run because the cache still looked fresh. An
+    // open conversation is never fresh enough to skip.
+    staleTime: 0,
+    refetchOnWindowFocus: 'always',
   });
 
   useEffect(() => {
@@ -260,7 +278,14 @@ export function useThreadMessages(threadId: string | null) {
           qc.invalidateQueries({ queryKey: ['unread-count'] });
         },
       )
-      .subscribe();
+      // Rejoin = refetch. postgres_changes never replays what happened
+      // while the socket slept, so the rejoin itself is the "you may
+      // have missed something" signal.
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          qc.invalidateQueries({ queryKey: ['thread-messages', threadId] });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [threadId, qc]);
 

@@ -161,12 +161,19 @@ export default function ChatThread() {
     return () => { supabase.removeChannel(ch); };
   }, [threadId, qc]);
 
-  // Scroll to bottom when messages arrive.
+  // Scroll to bottom when anything lands. The old version fired on a
+  // 50ms timer after messages.length changed — on mobile the layout
+  // (keyboard, images, fonts) routinely takes longer, so the scroll ran
+  // before the new bubble had height and the newest message sat hidden
+  // below the fold until the NEXT message scrolled it into view. The
+  // reliable signal is the content actually changing size, wired on the
+  // ScrollView below; this effect stays as a fallback for the cases
+  // where content height doesn't change (e.g. a swap in place).
   useEffect(() => {
-    if (!messages || messages.length === 0) return;
+    if (!timeline || timeline.length === 0) return;
     const t = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     return () => clearTimeout(t);
-  }, [messages?.length]);
+  }, [timeline?.length]);
 
   // Mark inbound messages as read whenever there's at least one unread
   // message from the other party. Fires on initial load and again
@@ -295,7 +302,14 @@ export default function ChatThread() {
           )}
         </View>
 
-        <ScrollView ref={scrollRef} contentContainerStyle={s.scroll}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={s.scroll}
+          // The reliable scroll signal: the content actually took its
+          // final height. Fires after images size and the keyboard
+          // settles, which the length-based timer above cannot see.
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+        >
           {timeline.map((it) => {
             if (it.kind === 'drop') {
               return (
