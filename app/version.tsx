@@ -19,7 +19,11 @@ export default function VersionScreen() {
     setCheckResult('checking...');
     try {
       const t0 = Date.now();
-      const { error } = await supabase.from('pulse_topics').select('id').limit(1);
+      // pulse_topics was a retired feature's table, so this button
+      // reported an error against a healthy database. find_hunt_by_code
+      // is anon-callable and side-effect-free: any 200 — even an empty
+      // one — proves the whole path.
+      const { error } = await supabase.rpc('find_hunt_by_code', { p_code: 'PING' });
       const ms = Date.now() - t0;
       if (error) setCheckResult(`ERROR: ${error.message}`);
       else setCheckResult(`OK (${ms}ms)`);

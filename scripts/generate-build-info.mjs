@@ -22,10 +22,13 @@ function safeExec(cmd, fallback = 'unknown') {
 const commit = safeExec('git rev-parse --short HEAD');
 const commitFull = safeExec('git rev-parse HEAD');
 const branch = safeExec('git rev-parse --abbrev-ref HEAD');
-// Only count source file changes as "dirty" — ignore build artifacts etc.
+// Only count source file changes as "dirty" — ignore build artifacts,
+// and ignore build-info.ts itself: this script rewrites it moments
+// before the check, which branded every single deploy "dirty" forever.
 const dirty = safeExec('git status --porcelain')
   .split('\n')
   .filter((l) => l.trim())
+  .filter((l) => !l.includes('constants/build-info.ts'))
   .some((l) => /\.(ts|tsx|js|jsx|json|md|sql|toml)$/.test(l));
 const buildTime = new Date().toISOString();
 // This script only ever runs from `npm run build`, and that is always a

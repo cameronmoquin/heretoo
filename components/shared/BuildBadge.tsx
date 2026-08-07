@@ -2,14 +2,19 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { BuildInfo } from '../../constants/build-info';
+import { useMobileTabBarVisible } from './MobileTabBar';
 
 /**
  * Tiny fixed-position badge that shows the current deployed build.
  * Tap to go to /version for full details.
- * Only visible when explicitly enabled (not in dev).
+ *
+ * Desktop only. On a phone it sat right against the tab bar and read
+ * as part of the product; /version stays reachable by URL.
  */
 export function BuildBadge() {
   const styles = makeStyles();
+  const mobileBar = useMobileTabBarVisible();
+  if (mobileBar) return null;
   return (
     <TouchableOpacity
       style={styles.badge}
