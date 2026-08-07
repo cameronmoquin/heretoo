@@ -61,12 +61,24 @@ export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const onText = () => {
+  const onText = async () => {
     if (!token) return;
-    const body = encodeURIComponent(inviteText(token));
-    // iOS wants `sms:&body=`, Android wants `sms:?body=`. The `?&`
-    // spelling is the one both accept.
-    const url = `sms:?&body=${body}`;
+    const text = inviteText(token);
+    // The native share sheet, not an sms: navigation. The sms: URL made
+    // the browser interrupt with an open-this-app? dialog before
+    // anything happened; the share sheet opens clean, Messages is one
+    // tap inside it, and the same prefilled text rides along.
+    if (Platform.OS === 'web' && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ text });
+        onClose();
+        return;
+      } catch {
+        // Dismissed the sheet — nothing sent, sheet stays open.
+        return;
+      }
+    }
+    const url = `sms:?&body=${encodeURIComponent(text)}`;
     if (Platform.OS === 'web') {
       window.location.href = url;
     } else {
