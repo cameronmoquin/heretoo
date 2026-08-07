@@ -31,9 +31,15 @@ import {
   useSetEntryFromPrompt,
   useUpdateBabybook,
   useBabyPrompts,
+  useBabybookMembers,
+  useAddBabybookMember,
+  useRemoveBabybookMember,
   type BabybookEntry,
   type BabybookAsset,
 } from '../../hooks/useBabybook';
+import { useMyConnections } from '../../hooks/useFamily';
+import { useAuthStore } from '../../stores/authStore';
+import { exifDateOf } from '../../lib/exifDate';
 import { getAssetDisplayUrl } from '../../hooks/useMemoir';
 import { formatFuzzyDate } from '../../hooks/useMemoirTimeline';
 import { goBack } from '../../lib/nav';
@@ -193,21 +199,64 @@ export default function BabybookScreen() {
   };
 
   // ── Photos ────────────────────────────────────────────────────────
+  // The photo dates itself when it can: EXIF DateTimeOriginal, read
+  // client-side, day precision. Photos that carry no date queue up and
+  // the person is asked for a best guess instead.
   const [photoDate, setPhotoDate] = useState<DateParts>(emptyParts());
+  const [pendingGuess, setPendingGuess] = useState<File[]>([]);
 
-  const onPickPhoto = (evt: any) => {
+  const onPickPhoto = async (evt: any) => {
     const files: FileList | undefined = evt?.target?.files;
     if (!bookId || !files || files.length === 0) return;
-    const capturedAt = composeDate(photoDate);
-    Array.from(files).forEach(async (file) => {
+    const picked = Array.from(files);
+    if (evt.target) evt.target.value = '';
+    const unstamped: File[] = [];
+    for (const file of picked) {
+      const iso = await exifDateOf(file);
+      if (iso) {
+        try {
+          await upload.mutateAsync({ bookId, file, capturedAt: iso, capturedPrecision: 'day' });
+        } catch (e: any) {
+          showAlert('Could not add photo', e?.message ?? 'Try again.');
+        }
+      } else {
+        unstamped.push(file);
+      }
+    }
+    if (unstamped.length > 0) {
+      setPhotoDate(partsOf(null, null));
+      setPendingGuess((cur) => [...cur, ...unstamped]);
+    }
+  };
+
+  const uploadPending = async (dated: boolean) => {
+    if (!bookId || pendingGuess.length === 0) return;
+    const capturedAt = dated ? composeDate(photoDate) : null;
+    const precision = dated && capturedAt ? photoDate.precision : null;
+    const batch = pendingGuess;
+    setPendingGuess([]);
+    for (const file of batch) {
       try {
-        await upload.mutateAsync({ bookId, file, capturedAt, capturedPrecision: photoDate.precision });
+        await upload.mutateAsync({
+          bookId, file,
+          capturedAt: capturedAt ?? undefined,
+          capturedPrecision: precision ?? undefined,
+        });
       } catch (e: any) {
         showAlert('Could not add photo', e?.message ?? 'Try again.');
       }
-    });
-    if (evt.target) evt.target.value = '';
+    }
   };
+
+  // ── Sharing ───────────────────────────────────────────────────────
+  const userId = useAuthStore((st) => st.user?.id);
+  const isBookAuthor = !!book && (book as any).author_id === userId;
+  const [shareOpen, setShareOpen] = useState(false);
+  const { data: members } = useBabybookMembers(bookId);
+  const { data: connections } = useMyConnections();
+  const addMember = useAddBabybookMember();
+  const removeMember = useRemoveBabybookMember();
+  const memberIds = new Set((members ?? []).map((m) => m.profile_id));
 
   const onSetCover = (asset: BabybookAsset) => {
     if (!bookId) return;
@@ -263,7 +312,55 @@ export default function BabybookScreen() {
               icon={<Ionicons name="chatbubble-ellipses-outline" size={14} color={Colors.primary} />}
             />
           )}
+          {isBookAuthor && (
+            <Button
+              title="Share"
+              variant="outline"
+              size="sm"
+              onPress={() => setShareOpen((v) => !v)}
+              icon={<Ionicons name="person-add-outline" size={14} color={Colors.primary} />}
+            />
+          )}
         </View>
+
+        {/* Who else holds this book. Members read everything and add
+            their own entries and photos; the book stays the author's. */}
+        {shareOpen && (
+          <RailCard eyebrow="The other parent" accentColor={Colors.primary}>
+            {(connections ?? []).length === 0 ? (
+              <Text style={s.promptQ}>No connections yet.</Text>
+            ) : (
+              (connections ?? []).map((c: any) => {
+                const on = memberIds.has(c.id);
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={s.memberRow}
+                    activeOpacity={0.7}
+                    onPress={() =>
+                      (on ? removeMember : addMember).mutate(
+                        { bookId: bookId!, profileId: c.id },
+                        { onError: (e: any) => showAlert('Could not update sharing', e?.message ?? 'Try again.') },
+                      )
+                    }
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={c.display_name ?? c.handle ?? 'Unknown'}
+                  >
+                    <Text style={s.memberName}>
+                      {c.display_name ?? (c.handle ? `@${c.handle}` : 'Unknown')}
+                    </Text>
+                    <Ionicons
+                      name={on ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={on ? Colors.primary : Colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </RailCard>
+        )}
 
         {/* Answer-a-prompt panel */}
         {promptOpen && currentPrompt && (
@@ -318,7 +415,6 @@ export default function BabybookScreen() {
             <Eyebrow accentColor={Colors.primary}>Photos</Eyebrow>
             {Platform.OS === 'web' && (
               <View style={s.photoAdd}>
-                <DateField label="Photo date" value={photoDate} onChange={setPhotoDate} compact />
                 <label
                   style={({
                     display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -332,6 +428,22 @@ export default function BabybookScreen() {
                   <input type="file" accept="image/*" multiple onChange={onPickPhoto} style={({ display: 'none' } as any)} />
                 </label>
               </View>
+            )}
+            {/* Photos that named their own date are already in. These
+                didn't, so the person is the metadata. */}
+            {pendingGuess.length > 0 && (
+              <RailCard eyebrow="Best guess" accentColor={Colors.info}>
+                <Text style={s.promptQ}>
+                  {pendingGuess.length === 1
+                    ? 'This photo carries no date.'
+                    : `These ${pendingGuess.length} photos carry no date.`}
+                </Text>
+                <DateField label="Taken around" value={photoDate} onChange={setPhotoDate} compact />
+                <View style={s.formActions}>
+                  <Button title="Add" onPress={() => uploadPending(true)} loading={upload.isPending} />
+                  <Button title="Undated" variant="ghost" onPress={() => uploadPending(false)} />
+                </View>
+              </RailCard>
             )}
             {photos.length > 0 && (
               <View style={s.photoStrip}>
@@ -531,6 +643,13 @@ function makeStyles() {
       color: Colors.textPrimary, fontStyle: 'italic', ...bodyFont,
     },
     answerInput: { minHeight: 120, marginTop: Spacing.xs },
+
+    // Sharing
+    memberRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingVertical: 10, gap: Spacing.sm,
+    },
+    memberName: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
 
     // Photos
     photoSection: { gap: Spacing.xs, marginTop: Spacing.xs },

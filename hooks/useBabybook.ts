@@ -534,3 +534,68 @@ export function useBabyPrompts() {
     },
   });
 }
+
+// ── Sharing (migration 078) ────────────────────────────────────────────
+// A babybook is a two-parent object. The author adds a member; the
+// member reads everything and writes their own entries and photos.
+
+export interface BabybookMember {
+  babybook_id: string;
+  profile_id: string;
+  added_by: string;
+  created_at: string;
+}
+
+export function useBabybookMembers(bookId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['babybook-members', bookId],
+    enabled: !!bookId,
+    queryFn: async (): Promise<BabybookMember[]> => {
+      const { data, error } = await supabase
+        .from('babybook_members')
+        .select('*')
+        .eq('babybook_id', bookId!);
+      if (error) {
+        warnOnce(error);
+        return [];
+      }
+      return (data ?? []) as BabybookMember[];
+    },
+  });
+}
+
+export function useAddBabybookMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { bookId: string; profileId: string }) => {
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId) throw new Error('Sign in first.');
+      const { error } = await supabase.from('babybook_members').insert({
+        babybook_id: input.bookId,
+        profile_id: input.profileId,
+        added_by: userId,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: (_r, vars) => {
+      qc.invalidateQueries({ queryKey: ['babybook-members', vars.bookId] });
+    },
+  });
+}
+
+export function useRemoveBabybookMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { bookId: string; profileId: string }) => {
+      const { error } = await supabase
+        .from('babybook_members')
+        .delete()
+        .eq('babybook_id', input.bookId)
+        .eq('profile_id', input.profileId);
+      if (error) throw error;
+    },
+    onSuccess: (_r, vars) => {
+      qc.invalidateQueries({ queryKey: ['babybook-members', vars.bookId] });
+    },
+  });
+}
