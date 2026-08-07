@@ -26,12 +26,14 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
 import { Eyebrow } from '../../components/shared/Eyebrow';
+import { InviteSheet } from '../../components/shared/InviteSheet';
 
 export default function ChatList() {
   const s = makeStyles();
   const userId = useAuthStore((st) => st.user?.id);
   const { data: threads } = useThreads();
   const { width: vw } = useWindowDimensions();
+  const [inviteOpen, setInviteOpen] = React.useState(false);
 
   const { open, requests } = useMemo(() => {
     const all = threads ?? [];
@@ -62,14 +64,26 @@ export default function ChatList() {
           <Text style={s.backBtnText}>HereToo</Text>
         </TouchableOpacity>
         <Text style={s.title}>Messages</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/messages/new')}
-          style={s.newBtn}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="create-outline" size={20} color={Colors.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <TouchableOpacity
+            onPress={() => setInviteOpen(true)}
+            style={s.newBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Invite"
+          >
+            <Ionicons name="person-add-outline" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/messages/new')}
+            style={s.newBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="create-outline" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <InviteSheet visible={inviteOpen} onClose={() => setInviteOpen(false)} />
 
       <ScrollView contentContainerStyle={s.list}>
         {requests.length > 0 && (

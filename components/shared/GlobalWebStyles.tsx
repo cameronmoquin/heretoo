@@ -41,6 +41,25 @@ export function GlobalWebStyles() {
       );
     }
 
+    // Self-heal after a deploy. A page loaded before a deploy holds
+    // references to hashed chunks the CDN no longer serves; tapping a
+    // route that lazy-loads one fails silently and the whole app reads
+    // as frozen. A failed chunk import is therefore a reload order —
+    // once, guarded, so a genuinely broken build cannot loop.
+    const onChunkError = (e: ErrorEvent | PromiseRejectionEvent) => {
+      const msg = String(
+        (e as PromiseRejectionEvent).reason?.message
+        ?? (e as ErrorEvent).message
+        ?? '',
+      );
+      if (!/Loading chunk|dynamically imported module|Importing a module script failed/i.test(msg)) return;
+      if (sessionStorage.getItem('chunk-reloaded')) return;
+      sessionStorage.setItem('chunk-reloaded', '1');
+      window.location.reload();
+    };
+    window.addEventListener('error', onChunkError);
+    window.addEventListener('unhandledrejection', onChunkError);
+
     let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
     if (!style) {
       style = document.createElement('style');
@@ -85,6 +104,11 @@ export function GlobalWebStyles() {
         padding-right: 0 !important;
       }
     `;
+
+    return () => {
+      window.removeEventListener('error', onChunkError);
+      window.removeEventListener('unhandledrejection', onChunkError);
+    };
   }, []);
 
   return null;
