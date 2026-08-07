@@ -266,7 +266,9 @@ export function useNextMemoirPrompt(projectId: string | null | undefined) {
       };
     },
     enabled: !!projectId,
-    // The pick is randomised server-side; don't aggressively refetch.
+    // Deterministic server-side (migration 076): the chronological
+    // spine in order, then the threads. Answering invalidates this
+    // query, which is the only thing that advances it.
     staleTime: Infinity,
   });
 }
