@@ -14,12 +14,19 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { BuildInfo } from '../../constants/build-info';
 import { Colors } from '../../constants/colors';
+import { useMobileTabBarVisible, useMobileTabBarHeight } from './MobileTabBar';
 
 const POLL_MS = 60 * 1000;          // every minute
 const CONFIRM_HITS = 2;             // need N consecutive mismatches before nagging
 
 export function UpdateNudge() {
   const [stale, setStale] = useState(false);
+  // The nudge sat at bottom: 0 with zIndex 99999 — directly ON the tab
+  // bar. On deploy-heavy days it was up almost constantly, ate every
+  // footer tap, and the whole menu read as frozen. It sits above the
+  // bar now, covering nothing.
+  const tabBarVisible = useMobileTabBarVisible();
+  const tabBarHeight = useMobileTabBarHeight();
 
   const styles = makeStyles();
 
@@ -74,7 +81,7 @@ export function UpdateNudge() {
   if (!stale) return null;
 
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { bottom: tabBarVisible ? tabBarHeight : 0 }]}>
       <Text style={styles.text}>A newer version of HereToo is available.</Text>
       <TouchableOpacity style={styles.btn} onPress={reload} activeOpacity={0.8}>
         <Text style={styles.btnText}>Reload</Text>
