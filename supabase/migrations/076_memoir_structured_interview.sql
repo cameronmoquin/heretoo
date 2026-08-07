@@ -45,7 +45,7 @@ VALUES (
     {"question":"What was that place like then?","condition_hint":"user_named_a_town_or_hospital"}
   ]$$::jsonb,
   ARRAY[]::text[],
-  0,
+  1,
   false
 )
 ON CONFLICT (id) DO UPDATE SET
