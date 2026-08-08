@@ -40,6 +40,7 @@ import { MicInputButton } from '../../components/shared/MicInputButton';
 import { ReframerDrawer, ReframerEye } from '../../components/chat/ReframerDrawer';
 import { useReframer, type ReframerContextMessage } from '../../hooks/useReframer';
 import { MOBILE_TAB_BAR_HEIGHT } from '../../components/shared/MobileTabBar';
+import { GuestKeepBar } from '../../components/shared/GuestKeepBar';
 import { useStartVideoCall } from '../../hooks/useStartVideoCall';
 import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
 import { useWindowDimensions } from 'react-native';
@@ -301,6 +302,9 @@ export default function ChatThread() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Guests only: the one line about keeping this. */}
+        <GuestKeepBar />
 
         <ScrollView
           ref={scrollRef}
