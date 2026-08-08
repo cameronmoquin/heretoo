@@ -13,6 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { useMobileTabBarVisible, useMobileTabBarHeight } from './MobileTabBar';
 
 const STORAGE_KEY = 'heretoo:pwa-prompt-dismissed-at';
 
@@ -20,6 +21,12 @@ type Mode = 'hidden' | 'android' | 'ios';
 
 export function PWAInstallPrompt() {
   const styles = makeStyles();
+  // Never on the tab bar. bottom: 12 with zIndex 9999 parked this card
+  // directly over the footer icons — the second overlay found doing it
+  // (UpdateNudge was the first) — and the menu read as dead whenever
+  // the card was up. It floats above the bar now.
+  const tabBarVisible = useMobileTabBarVisible();
+  const tabBarHeight = useMobileTabBarHeight();
   const [mode, setMode] = useState<Mode>('hidden');
   // We hold a reference to the deferred prompt event for Chrome's flow.
   const [deferred, setDeferred] = useState<any>(null);
@@ -86,7 +93,7 @@ export function PWAInstallPrompt() {
   if (mode === 'hidden') return null;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { bottom: (tabBarVisible ? tabBarHeight : 0) + 12 }]}>
       <Ionicons
         name={mode === 'ios' ? 'logo-apple' : 'logo-android'}
         size={20}

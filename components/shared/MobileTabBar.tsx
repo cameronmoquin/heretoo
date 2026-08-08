@@ -91,7 +91,7 @@ export function MobileTabBar() {
 
   return (
     <View
-      style={[styles.bar, { paddingBottom: 6 + insets.bottom }]}
+      style={[styles.bar, { paddingBottom: 2 + insets.bottom }]}
       onLayout={(e) => useBarHeight.getState().set(Math.round(e.nativeEvent.layout.height))}
     >
       <TouchableOpacity
@@ -212,7 +212,7 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
-    paddingVertical: 6,
+    paddingVertical: 2,
     paddingHorizontal: 4,
     // Web wants `fixed` so the bar is pinned to the viewport regardless of
     // parent stacking. React Native has no `fixed` — it silently does nothing
@@ -222,11 +222,11 @@ function makeStyles() { return StyleSheet.create({
     bottom: 0, left: 0, right: 0,
     zIndex: 10,
   } as any),
-  slot: { flex: 1, alignItems: 'center', paddingVertical: 4, gap: 2 },
-  label: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
+  slot: { flex: 1, alignItems: 'center', paddingVertical: 3, gap: 1 },
+  label: { fontSize: 10, lineHeight: 12, color: Colors.textMuted, fontWeight: '500' },
   labelActive: { color: Colors.primary, fontWeight: '700' },
   iconRing: {
-    width: 28, height: 28, borderRadius: 8,
+    width: 24, height: 24, borderRadius: 7,
     alignItems: 'center', justifyContent: 'center',
   },
   badge: {
