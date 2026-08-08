@@ -82,10 +82,10 @@ function useBottomInset(): number {
   const standalone =
     (window.navigator as any).standalone === true
     || window.matchMedia?.('(display-mode: standalone)')?.matches;
-  // The home indicator is a floating pill, not a wall — content can
-  // sit closer than the full reported inset. Trimmed so the bar hugs
-  // its icons installed too, while the pill still clears the labels.
-  return standalone ? Math.max(Math.min(insets.bottom, 34) - 14, 0) : 0;
+  // The home indicator is a floating pill, not a wall. This is the
+  // minimum clearance where the labels stay legible above the pill —
+  // any tighter and the two start sharing pixels.
+  return standalone ? Math.max(Math.min(insets.bottom, 34) - 24, 8) : 0;
 }
 
 export function MobileTabBar() {
