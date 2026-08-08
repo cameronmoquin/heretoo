@@ -68,6 +68,23 @@ export function useMobileTabBarVisible(): boolean {
   return !HIDE_ON.some((p) => path.includes(p));
 }
 
+/**
+ * The home-indicator inset is only real when the app IS the screen —
+ * installed, standalone, no browser chrome below it. Inside a browser
+ * the toolbar already owns that zone, but viewport-fit=cover makes
+ * Safari report the inset anyway, and honoring it there padded the
+ * bar's lower half with pure dead space.
+ */
+function useBottomInset(): number {
+  const insets = useSafeAreaInsets();
+  if (Platform.OS !== 'web') return insets.bottom;
+  if (typeof window === 'undefined') return 0;
+  const standalone =
+    (window.navigator as any).standalone === true
+    || window.matchMedia?.('(display-mode: standalone)')?.matches;
+  return standalone ? Math.min(insets.bottom, 34) : 0;
+}
+
 export function MobileTabBar() {
   const visible = useMobileTabBarVisible();
   const pathname = usePathname();
@@ -75,7 +92,7 @@ export function MobileTabBar() {
   const radioLoading = useRadio((s) => s.loading);
   const station = useActiveStation();
   const { data: unread } = useUnreadCount();
-  const insets = useSafeAreaInsets();
+  const bottomInset = useBottomInset();
 
   const styles = makeStyles();
 
@@ -91,7 +108,7 @@ export function MobileTabBar() {
 
   return (
     <View
-      style={[styles.bar, { paddingBottom: 2 + insets.bottom }]}
+      style={[styles.bar, { paddingBottom: 2 + bottomInset }]}
       onLayout={(e) => useBarHeight.getState().set(Math.round(e.nativeEvent.layout.height))}
     >
       <TouchableOpacity
@@ -201,9 +218,9 @@ const useBarHeight = create<{ h: number | null; set: (h: number) => void }>((set
  * only as the first-frame fallback before layout reports.
  */
 export function useMobileTabBarHeight(): number {
-  const insets = useSafeAreaInsets();
+  const bottomInset = useBottomInset();
   const measured = useBarHeight((s) => s.h);
-  return measured ?? (MOBILE_TAB_BAR_HEIGHT + insets.bottom);
+  return measured ?? (MOBILE_TAB_BAR_HEIGHT + bottomInset);
 }
 
 function makeStyles() { return StyleSheet.create({
