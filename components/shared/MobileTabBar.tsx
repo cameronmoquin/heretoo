@@ -82,10 +82,14 @@ function useBottomInset(): number {
   const standalone =
     (window.navigator as any).standalone === true
     || window.matchMedia?.('(display-mode: standalone)')?.matches;
-  // The home indicator is a floating pill, not a wall. This is the
-  // minimum clearance where the labels stay legible above the pill —
-  // any tighter and the two start sharing pixels.
-  return standalone ? Math.max(Math.min(insets.bottom, 34) - 24, 8) : 0;
+  // DO NOT TRIM THIS. The inset zone is the iOS home-gesture strip:
+  // touches there belong to the SYSTEM, not the page. Trimming it
+  // "saves" whitespace by moving the buttons into territory where iOS
+  // eats their taps — which is exactly how the footer read as dead
+  // whenever the bar looked pleasingly tight. Every native tab bar
+  // pays this same band. It is not whitespace; it is the one strip
+  // the buttons cannot live in.
+  return standalone ? Math.min(insets.bottom, 34) : 0;
 }
 
 export function MobileTabBar() {
