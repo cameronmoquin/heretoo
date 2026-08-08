@@ -14,6 +14,7 @@ export default async () => {
   const urls: Array<{ loc: string; lastmod?: string; changefreq?: string; priority?: string }> = [
     { loc: `${BASE}/`, changefreq: 'weekly', priority: '1.0' },
     { loc: `${BASE}/about`, changefreq: 'monthly', priority: '0.9' },
+    { loc: `${BASE}/advertise`, changefreq: 'monthly', priority: '0.6' },
   ];
 
   const xml = [

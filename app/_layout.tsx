@@ -136,6 +136,7 @@ function RootLayoutInner() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="about" options={{ title: 'About HereToo' }} />
+        <Stack.Screen name="advertise" options={{ title: 'Advertise on HereToo' }} />
         <Stack.Screen name="reset-password" options={{ title: 'Reset password' }} />
         <Stack.Screen name="give/index" options={{ title: 'Give' }} />
         <Stack.Screen name="journal" options={{ title: 'Journal' }} />
