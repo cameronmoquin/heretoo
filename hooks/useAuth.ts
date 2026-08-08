@@ -6,6 +6,7 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { registerPushToken, unregisterPushToken } from '../lib/push';
+import { hardSignOutAndRedirect } from '../lib/auth-recovery';
 import { DEV_MODE } from '../lib/dev-mode';
 import { MOCK_USER } from '../lib/mock-data';
 import { useAuthStore } from '../stores/authStore';
@@ -30,6 +31,22 @@ export function useAuth() {
         // Best-effort, never awaited into the boot path.
         void registerPushToken(session.user.id);
         fetchProfile(session.user.id);
+
+        // THE ZOMBIE GUARD. getSession() restores from storage without
+        // asking the server, so a revoked refresh token boots a UI that
+        // looks signed in and detonates on the first data tap
+        // ("Something broke", then the sign-in screen the long way).
+        // One background round-trip settles it: if the server refuses
+        // the session, sign out clean NOW and boot onto sign-in with a
+        // working screen instead of a minefield.
+        void supabase.auth.getUser().then(({ error }) => {
+          const status = (error as any)?.status;
+          if (error && (status === 401 || status === 403)) {
+            void hardSignOutAndRedirect();
+          }
+        }).catch(() => {
+          // Network blip — not evidence of a dead session. Leave it.
+        });
       } else {
         setLoading(false);
       }
