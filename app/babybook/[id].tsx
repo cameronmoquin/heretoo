@@ -34,6 +34,8 @@ import {
   useBabybookMembers,
   useAddBabybookMember,
   useRemoveBabybookMember,
+  useSetAssetBookStatus,
+  useReplaceAssetImage,
   type BabybookEntry,
   type BabybookAsset,
 } from '../../hooks/useBabybook';
@@ -54,6 +56,7 @@ import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import {
   DateField, composeDate, emptyParts, partsOf, type DateParts,
 } from '../../components/shared/FuzzyDateField';
+import { CropPhotoModal } from '../../components/babybook/CropPhotoModal';
 
 // The milestone presets. First-year moments the parent picks from, still
 // fully editable after a tap. Moved here from the memoir timeline; baby
@@ -285,6 +288,57 @@ export default function BabybookScreen() {
   const photos = photosQ.data ?? [];
   const hasEntries = dated.length + undated.length > 0;
 
+  // ── Curation (081). The book is built in passes: everything a bulk
+  // ingest lands is pending; approve it in, or leave it out. A photo
+  // that predates the column reads as approved, which is what it was.
+  const setStatus = useSetAssetBookStatus();
+  const [review, setReview] = useState<'approved' | 'pending' | 'excluded'>('approved');
+  const statusOf = (a: BabybookAsset) => a.book_status ?? 'approved';
+  const counts = useMemo(() => {
+    const c = { approved: 0, pending: 0, excluded: 0 };
+    for (const a of photos) c[statusOf(a)] += 1;
+    return c;
+  }, [photos]);
+  const shown = useMemo(() => photos.filter((a) => statusOf(a) === review), [photos, review]);
+  // A decade reads by year. Undated tails the list.
+  const byYear = useMemo(() => {
+    const groups: Array<{ year: string; items: BabybookAsset[] }> = [];
+    for (const a of shown) {
+      const year = a.captured_at ? a.captured_at.slice(0, 4) : 'Undated';
+      const last = groups[groups.length - 1];
+      if (last && last.year === year) last.items.push(a);
+      else groups.push({ year, items: [a] });
+    }
+    return groups;
+  }, [shown]);
+  // ── Crop. The one edit a photo book needs. ─────────────────────────
+  const replaceImage = useReplaceAssetImage();
+  const [cropAsset, setCropAsset] = useState<BabybookAsset | null>(null);
+  const [cropUrl, setCropUrl] = useState<string | null>(null);
+  const openCrop = async (a: BabybookAsset) => {
+    setCropAsset(a);
+    setCropUrl(null);
+    setCropUrl(await getAssetDisplayUrl(a.storage_path));
+  };
+  const onCropSave = (blob: Blob) => {
+    if (!cropAsset) return;
+    replaceImage.mutate(
+      { asset: cropAsset, blob },
+      {
+        onSuccess: () => { setCropAsset(null); setCropUrl(null); },
+        onError: (e: any) => showAlert('Could not save the crop', e?.message ?? 'Try again.'),
+      },
+    );
+  };
+
+  const judge = (a: BabybookAsset, status: 'approved' | 'excluded' | 'pending') => {
+    if (!bookId) return;
+    setStatus.mutate(
+      { assetId: a.id, bookId, status },
+      { onError: (e: any) => showAlert('Could not save', e?.message ?? 'Try again.') },
+    );
+  };
+
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <ScreenHeader
@@ -446,17 +500,30 @@ export default function BabybookScreen() {
               </RailCard>
             )}
             {photos.length > 0 && (
-              <View style={s.photoStrip}>
-                {photos.map((a) => (
-                  <PhotoTile
-                    key={a.id}
-                    asset={a}
-                    isCover={book?.cover_storage_path === a.storage_path}
-                    onSetCover={() => onSetCover(a)}
-                  />
-                ))}
+              <View style={s.chipRowWrap}>
+                <Chip label={`In the book · ${counts.approved}`} selected={review === 'approved'} onPress={() => setReview('approved')} />
+                <Chip label={`Pending · ${counts.pending}`} selected={review === 'pending'} onPress={() => setReview('pending')} />
+                <Chip label={`Left out · ${counts.excluded}`} selected={review === 'excluded'} onPress={() => setReview('excluded')} />
               </View>
             )}
+            {byYear.map((g) => (
+              <View key={g.year} style={{ gap: 6 }}>
+                <Eyebrow>{g.year}</Eyebrow>
+                <View style={s.photoStrip}>
+                  {g.items.map((a) => (
+                    <PhotoTile
+                      key={a.id}
+                      asset={a}
+                      isCover={book?.cover_storage_path === a.storage_path}
+                      onSetCover={() => onSetCover(a)}
+                      status={statusOf(a)}
+                      onJudge={(st) => judge(a, st)}
+                      onCrop={() => openCrop(a)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ))}
           </View>
         )}
 
@@ -566,11 +633,14 @@ function EntryCard({
 // ── A photo tile ────────────────────────────────────────────────────
 
 function PhotoTile({
-  asset, isCover, onSetCover,
+  asset, isCover, onSetCover, status, onJudge, onCrop,
 }: {
   asset: BabybookAsset;
   isCover: boolean;
   onSetCover: () => void;
+  status: 'approved' | 'pending' | 'excluded';
+  onJudge: (s: 'approved' | 'excluded' | 'pending') => void;
+  onCrop: () => void;
 }) {
   const s = makeStyles();
   const [url, setUrl] = useState<string | null>(null);
@@ -591,6 +661,43 @@ function PhotoTile({
         )}
       </View>
       <Text style={s.photoDate}>{photoDateLabel(asset.captured_at, asset.captured_precision)}</Text>
+      {status === 'pending' ? (
+        <View style={s.judgeRow}>
+          <TouchableOpacity
+            style={[s.judgeBtn, s.judgeBtnIn]}
+            onPress={() => onJudge('approved')}
+            accessibilityLabel="Into the book"
+          >
+            <Ionicons name="checkmark" size={16} color={Colors.onPrimary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.judgeBtn}
+            onPress={() => onJudge('excluded')}
+            accessibilityLabel="Leave it out"
+          >
+            <Ionicons name="close" size={16} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={s.judgeRow}>
+          <TouchableOpacity
+            style={s.judgeBtn}
+            onPress={() => onJudge(status === 'approved' ? 'excluded' : 'approved')}
+            accessibilityLabel={status === 'approved' ? 'Leave it out' : 'Into the book'}
+          >
+            <Ionicons
+              name={status === 'approved' ? 'close' : 'checkmark'}
+              size={16}
+              color={Colors.textSecondary}
+            />
+          </TouchableOpacity>
+          {Platform.OS === 'web' && (
+            <TouchableOpacity style={s.judgeBtn} onPress={onCrop} accessibilityLabel="Crop">
+              <Ionicons name="crop-outline" size={15} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
       <TouchableOpacity
         style={s.coverBtn}
         onPress={onSetCover}
@@ -655,6 +762,14 @@ function makeStyles() {
     photoSection: { gap: Spacing.xs, marginTop: Spacing.xs },
     photoAdd: { gap: Spacing.xs },
     photoStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.xxs },
+    chipRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.xs },
+    judgeRow: { flexDirection: 'row', gap: Spacing.xs, marginTop: 4 },
+    judgeBtn: {
+      flex: 1, minHeight: 30, borderRadius: Radius.control,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceLight,
+    },
+    judgeBtnIn: { backgroundColor: Colors.primary, borderColor: Colors.primary },
     photoTile: {
       width: 150, gap: 6, padding: Spacing.xs,
       borderRadius: Radius.sm, backgroundColor: Colors.surface,

@@ -68,6 +68,10 @@ export interface BabybookAsset {
   captured_at: string | null;
   captured_precision: 'year' | 'month' | 'day' | null;
   entry_id: string | null;
+  /** Curation (081): pending → approved (in the book) | excluded.
+   *  Optional at runtime: absent before the migration runs, and every
+   *  read treats undefined as approved (the pre-curation behavior). */
+  book_status?: 'pending' | 'approved' | 'excluded';
   created_at: string;
 }
 
@@ -596,6 +600,64 @@ export function useRemoveBabybookMember() {
     },
     onSuccess: (_r, vars) => {
       qc.invalidateQueries({ queryKey: ['babybook-members', vars.bookId] });
+    },
+  });
+}
+
+
+/** Judge one photo (081). pending → approved | excluded, revisable forever. */
+export function useSetAssetBookStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { assetId: string; bookId: string; status: 'pending' | 'approved' | 'excluded' }) => {
+      const { error } = await supabase
+        .from('babybook_assets')
+        .update({ book_status: input.status } as any)
+        .eq('id', input.assetId);
+      if (error) throw error;
+    },
+    // Optimistic: a curation pass is hundreds of taps; each must land
+    // instantly or the pass is abandoned.
+    onMutate: async (vars) => {
+      const key = ['babybook-photos', vars.bookId];
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<BabybookAsset[]>(key);
+      qc.setQueryData<BabybookAsset[]>(key, (cur) =>
+        (cur ?? []).map((a) => (a.id === vars.assetId ? { ...a, book_status: vars.status } : a)),
+      );
+      return { prev };
+    },
+    onError: (_e, vars, ctx: any) => {
+      if (ctx?.prev) qc.setQueryData(['babybook-photos', vars.bookId], ctx.prev);
+    },
+  });
+}
+
+
+/** Replace a photo's image with a cropped re-encode (web). Uploads the
+ *  new file first, repoints the row, then best-effort removes the old
+ *  object — failing toward keeping bytes, never toward losing them. */
+export function useReplaceAssetImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { asset: BabybookAsset; blob: Blob }) => {
+      const newPath = `${input.asset.babybook_id}/${(crypto as any).randomUUID?.() ?? Math.random().toString(36).slice(2)}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from('memoir-assets')
+        .upload(newPath, input.blob, { contentType: 'image/jpeg', upsert: false });
+      if (upErr) throw new Error(`Upload: ${upErr.message}`);
+      const { error } = await supabase
+        .from('babybook_assets')
+        .update({ storage_path: newPath, thumbnail_path: null } as any)
+        .eq('id', input.asset.id);
+      if (error) {
+        await supabase.storage.from('memoir-assets').remove([newPath]).catch(() => {});
+        throw error;
+      }
+      await supabase.storage.from('memoir-assets').remove([input.asset.storage_path]).catch(() => {});
+    },
+    onSuccess: (_r, vars) => {
+      qc.invalidateQueries({ queryKey: ['babybook-photos', vars.asset.babybook_id] });
     },
   });
 }
