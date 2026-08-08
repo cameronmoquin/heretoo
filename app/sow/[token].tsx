@@ -32,7 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
-import { useSeedInvite, useAcceptSeedInvite } from '../../hooks/useSeedInvite';
+import { useSeedInvite, useAcceptMessageInvite } from '../../hooks/useSeedInvite';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
@@ -47,13 +47,13 @@ export default function SowPlant() {
   const tk = (token ?? '').trim();
 
   const { data: invite, isLoading: loading } = useSeedInvite(tk || null);
-  const accept = useAcceptSeedInvite();
+  const accept = useAcceptMessageInvite();
 
   const [familyName, setFamilyName] = useState('');
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState<'auth' | 'plant' | null>(null);
+  const [busy, setBusy] = useState<'auth' | 'plant' | 'guest' | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   // Pre-fill the crew name with the sponsor's suggestion when it loads.
@@ -74,20 +74,40 @@ export default function SowPlant() {
     try { localStorage.removeItem(PENDING_KEY); } catch {}
   };
 
+  // The invitation is a message (migration 080). Accepting names the
+  // guest, connects the pair, and lands in the conversation itself. A
+  // cohort is started later, from inside, if ever.
   const onPlant = async () => {
     setErr(null);
     if (!tk) return;
-    if (familyName.trim().length < 2) {
-      setErr(`Pick a ${Vocab.group} name with at least 2 characters.`);
-      return;
-    }
     setBusy('plant');
     try {
-      const { family_id } = await accept.mutateAsync({ token: tk, familyName: familyName.trim() });
+      const { thread_id } = await accept.mutateAsync(tk);
       planted();
-      router.replace(`/family/${family_id}` as any);
+      router.replace(`/messages/${thread_id}` as any);
     } catch (e: any) {
-      setErr(e?.message ?? 'Could not plant your tree.');
+      setErr(e?.message ?? 'Could not come in.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // The guest door: an anonymous session, named by the number the
+  // sender addressed. An account can grow onto it later; the message
+  // comes first.
+  const onGuest = async () => {
+    setErr(null);
+    if (!tk) return;
+    setBusy('guest');
+    try {
+      const { error } = await (supabase.auth as any).signInAnonymously();
+      if (error) throw error;
+      await new Promise((r) => setTimeout(r, 200));
+      const { thread_id } = await accept.mutateAsync(tk);
+      planted();
+      router.replace(`/messages/${thread_id}` as any);
+    } catch (e: any) {
+      setErr(e?.message ?? 'Could not come in as a guest. Sign up below instead.');
     } finally {
       setBusy(null);
     }
@@ -211,25 +231,22 @@ export default function SowPlant() {
               </View>
             )}
 
-            <Text style={s.headline}>Start your {Vocab.group}</Text>
-
-            <Field label={`Your ${Vocab.group}'s name`}>
-              <TextInput
-                style={s.input}
-                value={familyName}
-                onChangeText={setFamilyName}
-                placeholder="The Garcías"
-                placeholderTextColor={Colors.textMuted}
-                maxLength={60}
-                returnKeyType={userId ? 'go' : 'next'}
-                onSubmitEditing={userId ? onPlant : undefined}
-              />
-            </Field>
 
             {!!err && (
               <View style={s.errorBox}>
                 <Text style={s.errorText}>{err}</Text>
               </View>
+            )}
+
+            {!userId && (
+              <TouchableOpacity
+                style={[s.cta, busy === 'guest' && { opacity: 0.5 }]}
+                onPress={onGuest}
+                disabled={busy !== null}
+                activeOpacity={0.85}
+              >
+                <Text style={s.ctaText}>{busy === 'guest' ? 'Coming in…' : 'Respond'}</Text>
+              </TouchableOpacity>
             )}
 
             {userId ? (
@@ -239,7 +256,7 @@ export default function SowPlant() {
                 disabled={busy === 'plant'}
                 activeOpacity={0.85}
               >
-                <Text style={s.ctaText}>{busy === 'plant' ? 'Planting…' : 'Plant my tree'}</Text>
+                <Text style={s.ctaText}>{busy === 'plant' ? 'Coming in…' : 'Come in'}</Text>
               </TouchableOpacity>
             ) : (
               <View style={{ gap: 10 }}>

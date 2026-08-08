@@ -80,12 +80,12 @@ export default async (req: Request, _ctx: Context) => {
 
   const name = invite.sponsor_display_name || invite.sponsor_handle || 'Someone';
   const link = `https://heretoo.social/sow/${token}`;
-  const subject = `${name} invites you.`;
+  const subject = `${name} sent you a message on HereToo.`;
 
   const bodyHtml =
-    emailEyebrow('Invitation')
-    + emailHeading(`${escapeHtml(name)} invites you.`)
-    + emailButton(link, 'Come in');
+    emailEyebrow('Messages')
+    + emailHeading(`${escapeHtml(name)} sent you a message.`)
+    + emailButton(link, 'Respond');
 
   const send = await fetch('https://api.resend.com/emails', {
     method: 'POST',

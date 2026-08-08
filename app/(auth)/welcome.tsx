@@ -249,7 +249,6 @@ export default function WelcomeScreen() {
 
           <View style={s.logoArea}>
             <HereTooLogo size={56} color={Colors.textPrimary} />
-            <Text style={s.logoSub}>heretoo</Text>
           </View>
 
           <View style={s.section}>

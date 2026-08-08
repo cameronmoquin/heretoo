@@ -1,35 +1,36 @@
 /**
- * InviteSheet — invite someone into the app, from wherever you are.
+ * InviteSheet — the invitation is a message.
  *
- * Rides the seed-invite token (/sow/<token>): the recipient signs up,
- * names their cohort, and lands already connected to the inviter.
+ * The text reads "«Name» sent you a message on HereToo" and the link
+ * opens the conversation itself: the recipient lands in the thread as
+ * a guest, signed in anonymously, named by the number the sender
+ * addressed. No form between a person and a message meant for them.
  *
- * Three deliveries, in order of how people actually reach each other:
+ * Three deliveries:
  *
- *   TEXT   opens the device's own Messages app with the invitation
- *          prefilled. It sends from the inviter's real number — the
- *          one signal a friend actually answers — and needs no SMS
- *          vendor, no per-message cost, no third party holding the
- *          social graph.
- *   EMAIL  the server sends the branded note when RESEND_API_KEY is
- *          configured; until then the device's mail composer opens
- *          prefilled instead. Either way the invitation goes.
+ *   TEXT   type their number, and the native share sheet opens with
+ *          the invitation prefilled — it sends from the inviter's own
+ *          phone, and the number rides the invite as the guest's
+ *          username. The platform reads no address books; the sender
+ *          typed what the sender knows.
+ *   EMAIL  the server sends the branded note (mailto fallback when
+ *          unconfigured).
  *   LINK   copied, to carry anywhere else.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Modal,
   Platform, ActivityIndicator, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { useCreateSeedInvite } from '../../hooks/useSeedInvite';
+import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Heights } from '../../constants/design';
-
-const SLOGAN = 'Are you intelligent enough to be HereToo?';
 
 function inviteUrl(token: string): string {
   const origin =
@@ -39,63 +40,68 @@ function inviteUrl(token: string): string {
   return `${origin}/sow/${token}`;
 }
 
-function inviteText(token: string): string {
-  return `${SLOGAN} ${inviteUrl(token)}`;
+function inviteText(name: string, token: string): string {
+  return `${name} sent you a message on HereToo. Click to respond: ${inviteUrl(token)}`;
 }
 
 export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const s = makeStyles();
   const create = useCreateSeedInvite();
-  const [token, setToken] = useState<string | null>(null);
+  const userId = useAuthStore((st) => st.user?.id);
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [sending, setSending] = useState(false);
+  const [working, setWorking] = useState<'text' | 'email' | 'link' | null>(null);
 
-  // One token per opening. Closing without sending costs nothing — the
-  // token expires on its own like any unplanted seed.
-  useEffect(() => {
-    if (!visible) { setToken(null); setEmail(''); return; }
-    create.mutateAsync({}).then(setToken).catch((e: any) => {
-      showAlert('Could not make the invitation', e?.message ?? 'Try again.');
-      onClose();
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+  const { data: me } = useQuery({
+    queryKey: ['profile', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, handle')
+        .eq('id', userId!)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const myName = me?.display_name ?? (me?.handle ? `@${me.handle}` : 'Someone');
 
   const onText = async () => {
-    if (!token) return;
-    const text = inviteText(token);
-    // The native share sheet, not an sms: navigation. The sms: URL made
-    // the browser interrupt with an open-this-app? dialog before
-    // anything happened; the share sheet opens clean, Messages is one
-    // tap inside it, and the same prefilled text rides along.
-    if (Platform.OS === 'web' && (navigator as any).share) {
-      try {
-        await (navigator as any).share({ text });
-        onClose();
-        return;
-      } catch {
-        // Dismissed the sheet — nothing sent, sheet stays open.
+    const to = phone.replace(/[^\d+]/g, '');
+    if (to.length < 7) {
+      showAlert('Not a number', 'Check it and try again.');
+      return;
+    }
+    setWorking('text');
+    try {
+      // The number rides the token: it becomes the guest's username the
+      // moment they open the door.
+      const token = await create.mutateAsync({ guestHandle: to });
+      const text = inviteText(myName, token);
+      if (Platform.OS === 'web' && (navigator as any).share) {
+        try { await (navigator as any).share({ text }); onClose(); } catch {}
         return;
       }
+      const url = `sms:${encodeURIComponent(to)}?&body=${encodeURIComponent(text)}`;
+      if (Platform.OS === 'web') window.location.href = url;
+      else Linking.openURL(url).catch(() => {});
+      onClose();
+    } catch (e: any) {
+      showAlert('Could not make the invitation', e?.message ?? 'Try again.');
+    } finally {
+      setWorking(null);
     }
-    const url = `sms:?&body=${encodeURIComponent(text)}`;
-    if (Platform.OS === 'web') {
-      window.location.href = url;
-    } else {
-      Linking.openURL(url).catch(() => {});
-    }
-    onClose();
   };
 
   const onEmail = async () => {
-    if (!token) return;
     const to = email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
       showAlert('Not an email address', 'Check it and try again.');
       return;
     }
-    setSending(true);
+    setWorking('email');
     try {
+      const token = await create.mutateAsync({});
       const { data } = await supabase.auth.getSession();
       const jwt = data?.session?.access_token;
       const res = await fetch('/.netlify/functions/invite-send', {
@@ -108,26 +114,34 @@ export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: (
         onClose();
         return;
       }
-      // Server mail unavailable — the device's composer carries it.
-      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(SLOGAN)}&body=${encodeURIComponent(inviteText(token))}`;
+      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(`${myName} sent you a message on HereToo`)}&body=${encodeURIComponent(inviteText(myName, token))}`;
       if (Platform.OS === 'web') window.location.href = mailto;
       else Linking.openURL(mailto).catch(() => {});
       onClose();
+    } catch (e: any) {
+      showAlert('Could not make the invitation', e?.message ?? 'Try again.');
     } finally {
-      setSending(false);
+      setWorking(null);
     }
   };
 
   const onCopy = async () => {
-    if (!token) return;
-    const url = inviteUrl(token);
+    setWorking('link');
     try {
-      await (navigator as any).clipboard?.writeText(url);
-      showAlert('Link copied', url);
-    } catch {
-      showAlert('The link', url);
+      const token = await create.mutateAsync({});
+      const url = inviteUrl(token);
+      try {
+        await (navigator as any).clipboard?.writeText(url);
+        showAlert('Link copied', url);
+      } catch {
+        showAlert('The link', url);
+      }
+      onClose();
+    } catch (e: any) {
+      showAlert('Could not make the invitation', e?.message ?? 'Try again.');
+    } finally {
+      setWorking(null);
     }
-    onClose();
   };
 
   return (
@@ -136,44 +150,57 @@ export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: (
         <TouchableOpacity activeOpacity={1} style={s.card}>
           <Text style={s.title}>Invite</Text>
 
-          {!token ? (
-            <ActivityIndicator color={Colors.primary} style={{ marginVertical: 24 }} />
-          ) : (
-            <>
-              <TouchableOpacity style={s.row} onPress={onText} activeOpacity={0.7}>
-                <Ionicons name="chatbox-outline" size={18} color={Colors.textPrimary} />
-                <Text style={s.rowText}>Text</Text>
-              </TouchableOpacity>
+          <View style={s.sendRow}>
+            <TextInput
+              style={s.input}
+              accessibilityLabel="Phone number"
+              placeholder="Phone number"
+              placeholderTextColor={Colors.textMuted}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[s.sendBtn, (working === 'text' || phone.replace(/[^\d]/g, '').length < 7) && { opacity: 0.4 }]}
+              onPress={onText}
+              disabled={working !== null}
+              accessibilityLabel="Text"
+            >
+              {working === 'text'
+                ? <ActivityIndicator color={Colors.onPrimary} size="small" />
+                : <Ionicons name="chatbox-outline" size={16} color={Colors.onPrimary} />}
+            </TouchableOpacity>
+          </View>
 
-              <View style={s.emailRow}>
-                <TextInput
-                  style={s.emailInput}
-                  accessibilityLabel="Email"
-                  placeholder="Email"
-                  placeholderTextColor={Colors.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoCorrect={false}
-                />
-                <TouchableOpacity
-                  style={[s.emailSend, (!email.trim() || sending) && { opacity: 0.4 }]}
-                  onPress={onEmail}
-                  disabled={!email.trim() || sending}
-                >
-                  {sending
-                    ? <ActivityIndicator color={Colors.onPrimary} size="small" />
-                    : <Ionicons name="send" size={16} color={Colors.onPrimary} />}
-                </TouchableOpacity>
-              </View>
+          <View style={s.sendRow}>
+            <TextInput
+              style={s.input}
+              accessibilityLabel="Email"
+              placeholder="Email"
+              placeholderTextColor={Colors.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[s.sendBtn, (working === 'email' || !email.trim()) && { opacity: 0.4 }]}
+              onPress={onEmail}
+              disabled={working !== null}
+              accessibilityLabel="Email"
+            >
+              {working === 'email'
+                ? <ActivityIndicator color={Colors.onPrimary} size="small" />
+                : <Ionicons name="send" size={16} color={Colors.onPrimary} />}
+            </TouchableOpacity>
+          </View>
 
-              <TouchableOpacity style={s.row} onPress={onCopy} activeOpacity={0.7}>
-                <Ionicons name="link-outline" size={18} color={Colors.textPrimary} />
-                <Text style={s.rowText}>Copy the link</Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <TouchableOpacity style={s.row} onPress={onCopy} activeOpacity={0.7} disabled={working !== null}>
+            <Ionicons name="link-outline" size={18} color={Colors.textPrimary} />
+            <Text style={s.rowText}>{working === 'link' ? 'Making the link…' : 'Copy the link'}</Text>
+          </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
@@ -201,8 +228,8 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
   },
   rowText: { fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary },
-  emailRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  emailInput: {
+  sendRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  input: {
     flex: 1, minHeight: Heights.input,
     paddingHorizontal: 12,
     borderRadius: Radius.control,
@@ -210,7 +237,7 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
     fontSize: 16, color: Colors.textPrimary,
   },
-  emailSend: {
+  sendBtn: {
     width: 42, height: 42, borderRadius: Radius.control,
     backgroundColor: Colors.primary,
     alignItems: 'center', justifyContent: 'center',

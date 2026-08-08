@@ -22,6 +22,8 @@ export interface SeedInvitePreview {
   sponsor_avatar_path: string | null;
   message: string | null;
   suggested_family_name: string | null;
+  /** The number (or name) the sender addressed. Becomes the guest's username. */
+  guest_handle?: string | null;
   used: boolean;
   expired: boolean;
 }
@@ -47,10 +49,11 @@ export function useSeedInvite(token: string | null) {
 
 export function useCreateSeedInvite() {
   return useMutation({
-    mutationFn: async (input: { message?: string; suggestedFamilyName?: string }): Promise<string> => {
+    mutationFn: async (input: { message?: string; suggestedFamilyName?: string; guestHandle?: string }): Promise<string> => {
       const { data, error } = await supabase.rpc('create_seed_invite', {
         message_in: input.message ?? null,
         suggested_family_name_in: input.suggestedFamilyName ?? null,
+        ...(input.guestHandle ? { guest_handle_in: input.guestHandle } : {}),
       });
       if (error) throw error;
       // RPC returns text directly (the token).
@@ -62,10 +65,10 @@ export function useCreateSeedInvite() {
 export function useAcceptSeedInvite() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { token: string; familyName: string }) => {
+    mutationFn: async (input: { token: string; familyName?: string }) => {
       const { data, error } = await supabase.rpc('accept_seed_invite', {
         token_in: input.token,
-        family_name_in: input.familyName,
+        family_name_in: input.familyName ?? null,
       });
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
@@ -75,6 +78,27 @@ export function useAcceptSeedInvite() {
       qc.invalidateQueries({ queryKey: ['families'] });
       qc.invalidateQueries({ queryKey: ['network-stats'] });
       qc.invalidateQueries({ queryKey: ['seed-invite'] });
+    },
+  });
+}
+
+
+/**
+ * Guest entry (migration 080): the invitation is a message. Accept
+ * names the guest what the sender addressed, connects the pair, and
+ * returns the open thread with the sponsor.
+ */
+export function useAcceptMessageInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (token: string): Promise<{ thread_id: string; sponsor_id: string }> => {
+      const { data, error } = await supabase.rpc('accept_message_invite', { token_in: token });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return row as { thread_id: string; sponsor_id: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['threads'] });
     },
   });
 }
