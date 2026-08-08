@@ -139,13 +139,9 @@ export function LeftSidebar() {
         active={onJournal}
         onPress={() => router.push('/journal' as any)}
       />
-      <NavRow
-        icon={pathname.startsWith('/give') ? 'heart' : 'heart-outline'}
-        label="Give"
-        active={pathname.startsWith('/give')}
-        onPress={() => router.push('/give' as any)}
-        accent={pathname.startsWith('/give')}
-      />
+      {/* Give is off every shelf — donations sit in regulatory
+          territory a lemonade stand stays out of. The route survives;
+          no door points at it. */}
       <NavRow
         icon={onChat ? 'chatbubbles' : 'chatbubbles-outline'}
         label="Messages"
