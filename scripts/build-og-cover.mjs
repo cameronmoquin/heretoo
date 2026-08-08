@@ -27,75 +27,27 @@ const OUT = join(ROOT, 'public', 'og-cover.png');
 
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background: brand dark with a soft radial vignette -->
-  <defs>
-    <radialGradient id="bg" cx="35%" cy="40%" r="80%">
-      <stop offset="0%" stop-color="#16161E"/>
-      <stop offset="100%" stop-color="#0A0A0F"/>
-    </radialGradient>
-    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#F0D88B"/>
-      <stop offset="100%" stop-color="#D9B85F"/>
-    </linearGradient>
-  </defs>
+  <!-- Monochrome brand: white field, ink. The lever, then the word. -->
+  <rect width="1200" height="630" fill="#FFFFFF"/>
 
-  <rect width="1200" height="630" fill="url(#bg)"/>
-
-  <!-- HT tree logo, centered on the right. Mirrors public/favicon.svg
-       and the in-app HereTooLogo component so the brand reads
-       consistently from social-share preview → app icon → in-app
-       header. Drawn at ~360px tall in the OG cover's coordinate
-       system. The logo's own coordinate system is 100×120; here we
-       scale 3x and place at (840, 130). -->
-  <g transform="translate(840, 130) scale(3)" fill="#F0EEE8">
-    <!-- Apex bud -->
-    <circle cx="50" cy="6" r="7"/>
-    <!-- Central stem -->
-    <rect x="44" y="6" width="12" height="62" rx="6"/>
-    <!-- Crossbar -->
+  <!-- The mark: 100x120 internal coordinates, scaled 3x at (120,135). -->
+  <g transform="translate(120, 135) scale(3)" fill="#0A0A0A">
+    <circle cx="50" cy="14" r="7"/>
+    <rect x="44" y="14" width="12" height="54" rx="6"/>
     <rect x="12" y="56" width="76" height="12" rx="2"/>
-    <!-- Left trunk + root flare -->
-    <rect x="14" y="30" width="14" height="84" rx="7"/>
-    <rect x="8" y="110" width="26" height="6" rx="3"/>
-    <!-- Right trunk + root flare -->
-    <rect x="72" y="30" width="14" height="84" rx="7"/>
-    <rect x="66" y="110" width="26" height="6" rx="3"/>
+    <rect x="14" y="30" width="14" height="80" rx="7"/>
+    <rect x="8" y="106" width="26" height="6" rx="3"/>
+    <rect x="72" y="30" width="14" height="80" rx="7"/>
+    <rect x="66" y="106" width="26" height="6" rx="3"/>
   </g>
 
-  <!-- Soft gold halo around the logo to give it presence. -->
-  <circle cx="990" cy="320" r="220" fill="#E8C97A" fill-opacity="0.04"/>
-  <circle cx="990" cy="320" r="170" fill="#E8C97A" fill-opacity="0.05"/>
-
-  <!-- Wordmark — split-color HereToo. Syne 800 isn't bundled with
-       resvg, so we fall back to a stack that lands on the closest
-       available system display face: Inter / system-ui / Helvetica
-       / sans-serif. The visual weight (800) and tight tracking
-       (-2.5%) is what carries the brand feel. -->
-  <g font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-     font-weight="800"
-     font-size="148"
-     letter-spacing="-3.7">
-    <text x="100" y="285" fill="#F0EEE8">Here</text>
-    <text x="430" y="285" fill="url(#gold)">Too</text>
-  </g>
-
-  <!-- No tagline, no pitch. The mark and the URL.
-       What used to sit here: "Family-first social", then three bullets
-       about being invited into a family, the feed rewarding what
-       unites, and hate staying out by design. All of it described a
-       product that no longer exists, and all of it was still being
-       drawn into every shared link. -->
-
-  <!-- Footer URL -->
-  <text x="100" y="580" fill="#787890"
+  <text x="500" y="330" fill="#0A0A0A"
         font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-        font-weight="600" font-size="20" letter-spacing="0.4">
-    heretoo.social
-  </text>
+        font-weight="800" font-size="88" letter-spacing="22">HERETOO</text>
 
-  <!-- Thin gold edge accent at the bottom-left to echo the brand
-       split. Tiny but recognizable. -->
-  <rect x="100" y="610" width="80" height="3" fill="#E8C97A" opacity="0.85"/>
+  <text x="500" y="392" fill="#6B6B6B"
+        font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
+        font-weight="600" font-size="26" letter-spacing="1">the anti-social media</text>
 </svg>`;
 
 const resvg = new Resvg(svg, {

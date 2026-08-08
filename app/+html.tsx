@@ -16,9 +16,9 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="alternate icon" type="image/png" href="/favicon.png" />
+        <link rel="alternate icon" type="image/png" href="/favicon-32.png" />
         <link rel="mask-icon" href="/mask-icon.svg" color="#1A1A24" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon-512.png" />
         <meta name="theme-color" content="#1A1A24" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

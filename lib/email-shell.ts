@@ -111,6 +111,7 @@ export function renderEmailHtml({ subject, body, footerAction }: EmailHtmlInput)
     <span style="display:none;max-height:0;overflow:hidden;opacity:0;color:${EmailBrand.canvas};">${preheader}</span>
     <div style="background:${EmailBrand.canvas};padding:32px 16px;font-family:${EmailBrand.display};">
       <div style="max-width:580px;margin:0 auto;background:${EmailBrand.card};border:1px solid ${EmailBrand.cardBorder};border-radius:12px;padding:32px 28px;">
+        <img src="https://heretoo.social/favicon-192.png" width="30" height="36" alt="" style="display:block;border:0;margin:0 0 10px 0;" />
         <div style="font-family:${EmailBrand.display};font-size:13px;font-weight:700;color:${EmailBrand.ink};text-transform:uppercase;letter-spacing:4px;">HERETOO</div>
         <div style="margin:18px 0;height:1px;background:${EmailBrand.hairline};"></div>
         ${body}
