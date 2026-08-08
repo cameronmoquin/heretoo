@@ -69,6 +69,26 @@ export default function VersionScreen() {
         <Text style={[s.section, { marginTop: 24 }]}>Runtime</Text>
         {row('User Agent', typeof navigator !== 'undefined' ? navigator.userAgent : 'native')}
         {row('URL', typeof window !== 'undefined' ? window.location.href : 'native')}
+        {row('Display mode', typeof window !== 'undefined'
+          ? (((window.navigator as any).standalone === true
+              || window.matchMedia?.('(display-mode: standalone)')?.matches)
+            ? 'standalone (installed)' : 'browser')
+          : 'native')}
+        {row('Safe-area bottom', typeof window !== 'undefined' && typeof getComputedStyle !== 'undefined'
+          ? (() => {
+              try {
+                const el = document.createElement('div');
+                el.style.paddingBottom = 'env(safe-area-inset-bottom)';
+                document.body.appendChild(el);
+                const v = getComputedStyle(el).paddingBottom;
+                el.remove();
+                return v;
+              } catch { return 'unknown'; }
+            })()
+          : 'native')}
+        {row('Viewport', typeof window !== 'undefined'
+          ? `${window.innerWidth}×${window.innerHeight}`
+          : 'native')}
       </ScrollView>
     </View>
   );
