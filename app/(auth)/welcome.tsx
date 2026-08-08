@@ -39,7 +39,7 @@ import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
-import { HereTooLogo } from '../../components/shared/Logo';
+import { HereTooLogo, HereTooMark } from '../../components/shared/Logo';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
@@ -248,6 +248,7 @@ export default function WelcomeScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           <View style={s.logoArea}>
+            <HereTooMark size={44} color={Colors.textPrimary} />
             <HereTooLogo size={56} color={Colors.textPrimary} />
           </View>
 
