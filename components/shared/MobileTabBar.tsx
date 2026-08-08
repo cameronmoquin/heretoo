@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { create } from 'zustand';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
@@ -89,7 +90,10 @@ export function MobileTabBar() {
   const onRooms = path.startsWith('/rooms');
 
   return (
-    <View style={[styles.bar, { paddingBottom: 6 + insets.bottom }]}>
+    <View
+      style={[styles.bar, { paddingBottom: 6 + insets.bottom }]}
+      onLayout={(e) => useBarHeight.getState().set(Math.round(e.nativeEvent.layout.height))}
+    >
       <TouchableOpacity
         style={styles.slot}
         onPress={() => router.push('/hunt' as any)}
@@ -182,14 +186,24 @@ export function MobileTabBar() {
  *  space at their bottom so the bar doesn't cover the tail content. */
 export const MOBILE_TAB_BAR_HEIGHT = 64;
 
+// What the bar actually measured itself at, once mounted. An estimate
+// can drift from the truth (it did — fonts, insets, wrapped labels);
+// a measurement cannot.
+const useBarHeight = create<{ h: number | null; set: (h: number) => void }>((set) => ({
+  h: null,
+  set: (h) => set((s) => (s.h === h ? s : { h })),
+}));
+
 /**
- * The bar's real height, including the gesture-bar inset it has to clear on
- * Android. The bar pads itself by this and the root layout reserves by it, so
- * the two cannot drift — which is the invariant the docstring above asks for.
+ * The bar's real height. Measured from the bar itself via onLayout, so
+ * the root layout reserves exactly what the bar occupies — the two
+ * cannot drift because there is only one number. The estimate remains
+ * only as the first-frame fallback before layout reports.
  */
 export function useMobileTabBarHeight(): number {
   const insets = useSafeAreaInsets();
-  return MOBILE_TAB_BAR_HEIGHT + insets.bottom;
+  const measured = useBarHeight((s) => s.h);
+  return measured ?? (MOBILE_TAB_BAR_HEIGHT + insets.bottom);
 }
 
 function makeStyles() { return StyleSheet.create({
