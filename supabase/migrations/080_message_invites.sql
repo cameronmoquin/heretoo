@@ -133,7 +133,7 @@ begin
   -- The connection (idempotent), same shape 013 writes.
   if invite.sponsor_id < caller then a := invite.sponsor_id; b := caller;
   else a := caller; b := invite.sponsor_id; end if;
-  insert into public.connections (requester_id, recipient_id, status, accepted_at)
+  insert into public.connections (requester_id, recipient_id, status, responded_at)
     values (a, b, 'accepted', now())
     on conflict do nothing;
 

@@ -52,12 +52,12 @@ begin
   end if;
 
   if invite.sponsor_id < caller then
-    insert into public.connections (requester_id, recipient_id, status, accepted_at)
+    insert into public.connections (requester_id, recipient_id, status, responded_at)
       values (invite.sponsor_id, caller, 'accepted', now())
       on conflict do nothing
       returning id into conn_id;
   else
-    insert into public.connections (requester_id, recipient_id, status, accepted_at)
+    insert into public.connections (requester_id, recipient_id, status, responded_at)
       values (caller, invite.sponsor_id, 'accepted', now())
       on conflict do nothing
       returning id into conn_id;
