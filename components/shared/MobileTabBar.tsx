@@ -240,7 +240,9 @@ function makeStyles() { return StyleSheet.create({
     // View lands in the same place.
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',
     bottom: 0, left: 0, right: 0,
-    zIndex: 10,
+    // Above everything. Two overlays have already been caught sitting
+    // on this bar; whatever is next in line loses by default now.
+    zIndex: 99990,
   } as any),
   slot: { flex: 1, alignItems: 'center', paddingVertical: 3, gap: 1 },
   label: { fontSize: 10, lineHeight: 12, color: Colors.textMuted, fontWeight: '500' },
