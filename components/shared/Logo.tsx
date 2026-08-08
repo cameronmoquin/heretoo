@@ -12,7 +12,9 @@
 
 import React from 'react';
 import { Text } from 'react-native';
+import { Platform } from 'react-native';
 import { Colors } from '../../constants/colors';
+import { FontFamily } from '../../constants/design';
 
 interface LogoProps {
   /** Rough width in pixels, kept from the glyph era. */
@@ -30,6 +32,7 @@ export function HereTooLogo({ size = 48, color }: LogoProps) {
       accessibilityRole="header"
       accessibilityLabel="HereToo"
       style={{
+        ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
         fontSize,
         lineHeight: Math.round(fontSize * 1.2),
         fontWeight: '800',
