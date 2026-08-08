@@ -50,10 +50,15 @@ export function useSeedInvite(token: string | null) {
 export function useCreateSeedInvite() {
   return useMutation({
     mutationFn: async (input: { message?: string; suggestedFamilyName?: string; guestHandle?: string }): Promise<string> => {
+      // All three arguments, always. Two create_seed_invite signatures
+      // exist server-side (080 added the third argument beside the old
+      // pair); a call that omits guest_handle_in matches both and
+      // PostgREST refuses to choose. Naming all three matches exactly
+      // one.
       const { data, error } = await supabase.rpc('create_seed_invite', {
         message_in: input.message ?? null,
         suggested_family_name_in: input.suggestedFamilyName ?? null,
-        ...(input.guestHandle ? { guest_handle_in: input.guestHandle } : {}),
+        guest_handle_in: input.guestHandle ?? null,
       });
       if (error) throw error;
       // RPC returns text directly (the token).

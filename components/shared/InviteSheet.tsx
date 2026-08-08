@@ -18,7 +18,7 @@
  *   LINK   copied, to carry anywhere else.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Modal,
   Platform, ActivityIndicator, Linking,
@@ -52,6 +52,26 @@ export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: (
   const [email, setEmail] = useState('');
   const [working, setWorking] = useState<'text' | 'email' | 'link' | null>(null);
 
+  // The share sheet only opens inside the tap itself — an await before
+  // navigator.share() spends the user gesture and the browser refuses.
+  // So the token is minted WHILE the number is typed, and the tap finds
+  // it ready and calls share() synchronously.
+  const [readyToken, setReadyToken] = useState<{ handle: string; token: string } | null>(null);
+  const mintTimer = useRef<any>(null);
+  useEffect(() => {
+    const to = phone.replace(/[^\d+]/g, '');
+    if (to.length < 7) { setReadyToken(null); return; }
+    if (readyToken?.handle === to) return;
+    clearTimeout(mintTimer.current);
+    mintTimer.current = setTimeout(() => {
+      create.mutateAsync({ guestHandle: to })
+        .then((token) => setReadyToken({ handle: to, token }))
+        .catch(() => setReadyToken(null));
+    }, 500);
+    return () => clearTimeout(mintTimer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone]);
+
   const { data: me } = useQuery({
     queryKey: ['profile', userId],
     enabled: !!userId,
@@ -66,31 +86,40 @@ export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: (
   });
   const myName = me?.display_name ?? (me?.handle ? `@${me.handle}` : 'Someone');
 
-  const onText = async () => {
+  const onText = () => {
     const to = phone.replace(/[^\d+]/g, '');
     if (to.length < 7) {
       showAlert('Not a number', 'Check it and try again.');
       return;
     }
-    setWorking('text');
-    try {
-      // The number rides the token: it becomes the guest's username the
-      // moment they open the door.
-      const token = await create.mutateAsync({ guestHandle: to });
-      const text = inviteText(myName, token);
-      if (Platform.OS === 'web' && (navigator as any).share) {
-        try { await (navigator as any).share({ text }); onClose(); } catch {}
-        return;
-      }
-      const url = `sms:${encodeURIComponent(to)}?&body=${encodeURIComponent(text)}`;
-      if (Platform.OS === 'web') window.location.href = url;
-      else Linking.openURL(url).catch(() => {});
-      onClose();
-    } catch (e: any) {
-      showAlert('Could not make the invitation', e?.message ?? 'Try again.');
-    } finally {
-      setWorking(null);
+    // Synchronous from here to share() — the gesture must not be spent.
+    if (readyToken?.handle === to && Platform.OS === 'web' && (navigator as any).share) {
+      const text = inviteText(myName, readyToken.token);
+      (navigator as any).share({ text })
+        .then(() => onClose())
+        .catch((e: any) => {
+          // Dismissing the sheet is not an error. Anything else falls
+          // back to the sms: composer with the same text.
+          if (e?.name === 'AbortError') return;
+          window.location.href = `sms:${encodeURIComponent(to)}?&body=${encodeURIComponent(text)}`;
+          onClose();
+        });
+      return;
     }
+    // Token not minted yet (fast tap) or no Web Share: the sms: path
+    // tolerates the await.
+    setWorking('text');
+    (readyToken?.handle === to
+      ? Promise.resolve(readyToken.token)
+      : create.mutateAsync({ guestHandle: to }))
+      .then((token) => {
+        const url = `sms:${encodeURIComponent(to)}?&body=${encodeURIComponent(inviteText(myName, token))}`;
+        if (Platform.OS === 'web') window.location.href = url;
+        else Linking.openURL(url).catch(() => {});
+        onClose();
+      })
+      .catch((e: any) => showAlert('Could not make the invitation', e?.message ?? 'Try again.'))
+      .finally(() => setWorking(null));
   };
 
   const onEmail = async () => {
