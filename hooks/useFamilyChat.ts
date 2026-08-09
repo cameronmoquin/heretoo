@@ -76,6 +76,11 @@ export function useFamilyChatMessages(chatId: string | null) {
       return (data ?? []) as FamilyChatMessage[];
     },
     enabled: !!chatId,
+    // Same rule as the 1:1 thread (useChat): an open conversation is
+    // never fresh enough to skip, and the phone's blind window needs
+    // the focus refetch to actually run.
+    staleTime: 0,
+    refetchOnWindowFocus: 'always',
   });
 
   useEffect(() => {
@@ -89,7 +94,13 @@ export function useFamilyChatMessages(chatId: string | null) {
         { event: 'INSERT', schema: 'public', table: 'family_chat_messages', filter: `family_chat_id=eq.${chatId}` },
         () => qc.invalidateQueries({ queryKey: ['family-chat-messages', chatId] }),
       )
-      .subscribe();
+      // Rejoin = refetch. postgres_changes never replays what the
+      // sleeping socket missed. Same pattern as useChat.
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          qc.invalidateQueries({ queryKey: ['family-chat-messages', chatId] });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [chatId, qc]);
 
@@ -133,7 +144,16 @@ export function useSendFamilyChatMessage() {
         created_at: new Date().toISOString(),
       };
       qc.setQueryData<FamilyChatMessage[]>(key, [...prev, optimistic]);
-      return { undo: () => qc.setQueryData(key, prev), tempId };
+      // Undo removes ONLY the failed bubble — restoring the snapshot
+      // erased anything realtime delivered in flight (the "messages
+      // randomly disappear" class, fixed in useChat and ported here).
+      return {
+        undo: () =>
+          qc.setQueryData<FamilyChatMessage[]>(key, (cur) =>
+            (cur ?? []).filter((m) => m.id !== tempId),
+          ),
+        tempId,
+      };
     },
     onError: (_err, _vars, context: any) => {
       if (context?.undo) try { context.undo(); } catch {}

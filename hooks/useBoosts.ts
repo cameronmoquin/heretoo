@@ -39,6 +39,11 @@ export function useBoostPost() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['family-feed'] });
+      // A boost shows anywhere the post shows.
+      qc.invalidateQueries({ queryKey: ['family-updates'] });
+      qc.invalidateQueries({ queryKey: ['profile-posts'] });
+      qc.invalidateQueries({ queryKey: ['user-posts'] });
+      qc.invalidateQueries({ queryKey: ['post'] });
     },
   });
 }

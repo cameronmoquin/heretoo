@@ -158,7 +158,13 @@ export default function ChatThread() {
         { event: '*', schema: 'public', table: 'posts', filter: 'visibility=eq.direct' },
         () => qc.invalidateQueries({ queryKey: ['direct-drops', threadId] }),
       )
-      .subscribe();
+      // Rejoin = refetch; a burn that fired while the socket slept
+      // otherwise never redacts on this screen.
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          qc.invalidateQueries({ queryKey: ['direct-drops', threadId] });
+        }
+      });
     return () => { supabase.removeChannel(ch); };
   }, [threadId, qc]);
 

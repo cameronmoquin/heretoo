@@ -188,6 +188,7 @@ export function useUpdateMemoirProject() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['memoir-project-row', vars.id] });
+      qc.invalidateQueries({ queryKey: ['memoir-project'] });
     },
   });
 }

@@ -58,6 +58,7 @@ export default function FamilyDetail() {
       await Promise.all([
         qc.invalidateQueries({ queryKey: ['family', id] }),
         qc.invalidateQueries({ queryKey: ['family-members', id] }),
+        qc.invalidateQueries({ queryKey: ['family-members-profiles', id] }),
         qc.invalidateQueries({ queryKey: ['family-feed', id] }),
         qc.invalidateQueries({ queryKey: ['family-subjects', id] }),
         qc.invalidateQueries({ queryKey: ['subject-activity', id] }),

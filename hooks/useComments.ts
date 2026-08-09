@@ -138,7 +138,7 @@ export function useAddComment() {
       // reported as "comments don't post immediately."
       const flatKey = ['comments', vars.postId, userId];
       const treeKey = ['comments-tree', vars.postId, userId];
-      const latestKey = ['comments-latest', vars.postId, 2];
+      const latestKey = ['comments-latest', vars.postId, 2]; // default-limit slot; other limits self-heal via the prefix invalidation
 
       await qc.cancelQueries({ queryKey: flatKey });
       await qc.cancelQueries({ queryKey: treeKey });
@@ -195,6 +195,9 @@ export function useAddComment() {
       qc.invalidateQueries({ queryKey: ['comments-latest', vars.postId] });
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['family-feed'] });
+      // The detail page's count was bumped optimistically and must
+      // reconcile against the server, not trust the bump.
+      qc.invalidateQueries({ queryKey: ['post', vars.postId] });
     },
   });
 }
@@ -344,10 +347,18 @@ export function useToggleCommentHeart(postId: string | null) {
           return n;
         });
       qc.setQueryData<CommentNode[]>(treeKey, flip(prev));
-      return { undo: () => qc.setQueryData(treeKey, prev) };
+      // Undo re-flips the one comment rather than restoring the whole
+      // tree — a snapshot restore erases anything that arrived while
+      // the toggle was in flight.
+      return { undo: () => qc.setQueryData<CommentNode[]>(treeKey, (cur) => (cur ? flip(cur) : cur)) };
     },
     onError: (_err, _vars, context: any) => {
       if (context?.undo) try { context.undo(); } catch {}
+    },
+    // The flip is optimistic-only without this: counts never reconcile
+    // with the server, and cross-device drift persists until forever.
+    onSettled: () => {
+      if (postId) qc.invalidateQueries({ queryKey: ['comments-tree', postId] });
     },
   });
 }
@@ -362,8 +373,12 @@ export function useDeleteComment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['comments'] });
       qc.invalidateQueries({ queryKey: ['comments-tree'] });
+      // The inline PostCard preview reads comments-latest; without this
+      // a deleted comment kept showing there until staleness saved it.
+      qc.invalidateQueries({ queryKey: ['comments-latest'] });
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['family-feed'] });
+      qc.invalidateQueries({ queryKey: ['post'] });
     },
   });
 }

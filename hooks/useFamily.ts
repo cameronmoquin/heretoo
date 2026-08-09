@@ -244,7 +244,16 @@ export function useJoinFamily() {
       return family as { id: string; name: string };
     },
     onSuccess: () => {
+      // Membership changed; everything derived from it is stale —
+      // reach, connections, member lists, statures. 'families' alone
+      // left five caches describing a world that no longer exists.
       qc.invalidateQueries({ queryKey: ['families'] });
+      qc.invalidateQueries({ queryKey: ['family-members'] });
+      qc.invalidateQueries({ queryKey: ['family-members-profiles'] });
+      qc.invalidateQueries({ queryKey: ['family-members-profiles'] });
+      qc.invalidateQueries({ queryKey: ['network-stats'] });
+      qc.invalidateQueries({ queryKey: ['my-connections'] });
+      qc.invalidateQueries({ queryKey: ['my-statures'] });
     },
   });
 }
@@ -263,7 +272,16 @@ export function useLeaveFamily() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Membership changed; everything derived from it is stale —
+      // reach, connections, member lists, statures. 'families' alone
+      // left five caches describing a world that no longer exists.
       qc.invalidateQueries({ queryKey: ['families'] });
+      qc.invalidateQueries({ queryKey: ['family-members'] });
+      qc.invalidateQueries({ queryKey: ['family-members-profiles'] });
+      qc.invalidateQueries({ queryKey: ['family-members-profiles'] });
+      qc.invalidateQueries({ queryKey: ['network-stats'] });
+      qc.invalidateQueries({ queryKey: ['my-connections'] });
+      qc.invalidateQueries({ queryKey: ['my-statures'] });
     },
   });
 }
@@ -527,6 +545,7 @@ export function useUpdateMyStature() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['families'] });
       qc.invalidateQueries({ queryKey: ['family-members'] });
+      qc.invalidateQueries({ queryKey: ['family-members-profiles'] });
       qc.invalidateQueries({ queryKey: ['my-statures'] });
       qc.invalidateQueries({ queryKey: ['stature-summary'] });
     },
@@ -612,7 +631,14 @@ export function useFamilyFeed(familyId: string | null) {
           qc.invalidateQueries({ queryKey: ['family-updates', familyId] });
         },
       )
-      .subscribe();
+      // Rejoin = refetch. Same pattern as useChat; the sleeping socket
+      // is never told what it missed.
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          qc.invalidateQueries({ queryKey: ['family-feed', familyId] });
+          qc.invalidateQueries({ queryKey: ['family-updates', familyId] });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [familyId, qc]);
 

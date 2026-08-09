@@ -201,7 +201,13 @@ export function useFeedRealtime(tab: FeedTab) {
             qc.invalidateQueries({ queryKey: ['feed', tab] });
           },
         )
-        .subscribe();
+        // Rejoin = refetch: inserts that landed while the socket slept
+        // are otherwise lost for the whole session.
+        .subscribe((status: string) => {
+          if (status === 'SUBSCRIBED') {
+            qc.invalidateQueries({ queryKey: ['feed', tab] });
+          }
+        });
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn('[feed-realtime] subscribe failed; live updates off', e);
@@ -315,13 +321,17 @@ export function useToggleHeart() {
         ctx.snapshot.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
       }
     },
-    onSettled: () => {
+    onSettled: (_d, _e, postId) => {
       // Refetch all feed flavors so the server's authoritative state
       // catches up if anything drifted (e.g., other clients heart-ed
       // the same post in the same window).
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['family-feed'] });
       queryClient.invalidateQueries({ queryKey: ['family-updates'] });
+      // The detail page and other-profile pages were flipped
+      // optimistically and must reconcile too.
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['user-posts'] });
       queryClient.invalidateQueries({ queryKey: ['connections-feed'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
     },

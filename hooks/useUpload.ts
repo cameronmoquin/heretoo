@@ -346,34 +346,49 @@ export function useUpload() {
       const isFamilyPost = !!vars.familyId && vars.visibility === 'family';
       const isUpdate = vars.kind === 'update';
 
+      // setQueriesData is PREFIX-matched — the real keys carry userId
+      // as a trailing segment (['family-updates', familyId, userId]),
+      // and exact-key setQueryData wrote to an orphan entry nothing
+      // subscribes to: the optimistic post never appeared. Undo removes
+      // only the temp row rather than restoring a stale snapshot.
+      const optimisticId = tempPost.id;
       if (isFamilyPost && isUpdate) {
         await queryClient.cancelQueries({ queryKey: ['family-updates', vars.familyId] });
-        const prev = queryClient.getQueryData<any[]>(['family-updates', vars.familyId]);
-        queryClient.setQueryData<any[]>(['family-updates', vars.familyId],
-          (old) => [tempPost, ...(old ?? [])]);
-        return { undo: () => queryClient.setQueryData(['family-updates', vars.familyId], prev) };
+        queryClient.setQueriesData({ queryKey: ['family-updates', vars.familyId] },
+          (old: any) => [tempPost, ...((old as any[]) ?? [])]);
+        return { undo: () => queryClient.setQueriesData({ queryKey: ['family-updates', vars.familyId] },
+          (old: any) => ((old as any[]) ?? []).filter((x) => x?.id !== optimisticId)) };
       }
       if (isFamilyPost) {
         await queryClient.cancelQueries({ queryKey: ['family-feed', vars.familyId] });
-        const prev = queryClient.getQueryData<any[]>(['family-feed', vars.familyId]);
-        queryClient.setQueryData<any[]>(['family-feed', vars.familyId],
-          (old) => [tempPost, ...(old ?? [])]);
-        return { undo: () => queryClient.setQueryData(['family-feed', vars.familyId], prev) };
+        queryClient.setQueriesData({ queryKey: ['family-feed', vars.familyId] },
+          (old: any) => [tempPost, ...((old as any[]) ?? [])]);
+        return { undo: () => queryClient.setQueriesData({ queryKey: ['family-feed', vars.familyId] },
+          (old: any) => ((old as any[]) ?? []).filter((x) => x?.id !== optimisticId)) };
       }
-      // Public / connections: prepend to every infinite-feed page-set we know about.
+      // Public / connections: prepend to matching infinite-feed pages —
+      // but never the crew lens, whose refetch can only return family
+      // rows; a public post there appears and then vanishes.
       const feedKeys = queryClient.getQueryCache().findAll({ queryKey: ['feed'] });
-      const undos: Array<() => void> = [];
+      const touched: any[] = [];
       for (const q of feedKeys) {
-        const key = q.queryKey;
+        const key = q.queryKey as any[];
+        if (key[2] === 'crew') continue;
         const data: any = queryClient.getQueryData(key);
         if (!data?.pages) continue;
-        const prev = data;
         const nextPages = [...data.pages];
         nextPages[0] = [tempPost, ...(nextPages[0] ?? [])];
         queryClient.setQueryData(key, { ...data, pages: nextPages });
-        undos.push(() => queryClient.setQueryData(key, prev));
+        touched.push(key);
       }
-      return { undo: () => undos.forEach((u) => u()) };
+      return { undo: () => touched.forEach((key) => {
+        const data: any = queryClient.getQueryData(key);
+        if (!data?.pages) return;
+        queryClient.setQueryData(key, {
+          ...data,
+          pages: data.pages.map((pg: any[]) => (pg ?? []).filter((x) => x?.id !== optimisticId)),
+        });
+      }) };
     },
     onSuccess: (_post, vars) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });

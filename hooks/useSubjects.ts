@@ -203,6 +203,7 @@ export function useTagPostWithSubject() {
     onSuccess: (_d, { subjectId }) => {
       qc.invalidateQueries({ queryKey: ['subject'] });
       qc.invalidateQueries({ queryKey: ['family-subjects'] });
+      qc.invalidateQueries({ queryKey: ['post-subjects'] });
     },
   });
 }
@@ -221,6 +222,7 @@ export function useUntagPostFromSubject() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['subject'] });
       qc.invalidateQueries({ queryKey: ['family-subjects'] });
+      qc.invalidateQueries({ queryKey: ['post-subjects'] });
     },
   });
 }
@@ -348,7 +350,13 @@ export function useFollowedSubjectActivity(familyId: string | null | undefined) 
           qc.invalidateQueries({ queryKey: ['family-subjects', familyId] });
         },
       )
-      .subscribe();
+      // Rejoin = refetch, same as every other channel now.
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          qc.invalidateQueries({ queryKey: ['subject-activity', familyId] });
+          qc.invalidateQueries({ queryKey: ['family-subjects', familyId] });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [familyId, qc]);
 
