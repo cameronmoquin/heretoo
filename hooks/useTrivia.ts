@@ -158,32 +158,22 @@ export function useAnswerTrivia() {
       explanation: string | null;
     }> => {
       if (!userId) throw new Error('Not signed in');
-      // Pull the question now (RLS has already gated visibility) so
-      // we know the right answer.
-      const { data: q, error: qErr } = await supabase
-        .from('trivia_questions')
-        .select('correct_index, explanation')
-        .eq('id', input.questionId)
-        .maybeSingle();
-      if (qErr || !q) throw new Error('Question not found');
-      const correctIndex = (q as any).correct_index as number;
-      const wasCorrect = correctIndex === input.chosenIndex;
-
-      // Record the attempt.
-      const { error: aErr } = await supabase
-        .from('trivia_attempts')
-        .insert({
-          question_id: input.questionId,
-          player_id: userId,
-          chosen_index: input.chosenIndex,
-          was_correct: wasCorrect,
-        } as any);
-      if (aErr) throw aErr;
-
+      // The server scores it (migration 086). The client used to read
+      // the answer key, decide for itself, and write its own verdict
+      // into trivia_attempts — so the key was readable before playing
+      // and the standings were forgeable by anyone willing to POST.
+      // answer_trivia is now the only way an attempt is recorded.
+      const { data, error } = await supabase.rpc('answer_trivia', {
+        p_question_id: input.questionId,
+        p_chosen_index: input.chosenIndex,
+      });
+      if (error) throw error;
+      const row = (Array.isArray(data) ? data[0] : data) as any;
+      if (!row) throw new Error('Question not found');
       return {
-        wasCorrect,
-        correctIndex,
-        explanation: ((q as any).explanation as string | null) ?? null,
+        wasCorrect: !!row.was_correct,
+        correctIndex: row.correct_index as number,
+        explanation: (row.explanation as string | null) ?? null,
       };
     },
     onSuccess: () => {

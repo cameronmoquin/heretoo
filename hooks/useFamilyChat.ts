@@ -44,13 +44,17 @@ export function useFamilyChat(familyId: string | null) {
       if (error) throw error;
       if (existing) return existing as any;
 
-      // Create on first access
+      // Create on first access. A zero-row read is ambiguous under
+      // RLS: it means "no chat yet" for a member and "not yours to
+      // see" for anyone else, and the old code answered both by
+      // inserting — so a pending member met a raw Postgres policy
+      // string on screen. A denied insert now reads as "no chat".
       const { data: created, error: createErr } = await supabase
         .from('family_chats')
         .insert({ family_id: familyId })
         .select('id')
         .single();
-      if (createErr) throw createErr;
+      if (createErr) return null;
       return created as any;
     },
     enabled: !!familyId,

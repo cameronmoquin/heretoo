@@ -450,7 +450,7 @@ export default function BabybookScreen() {
         {hasEntries && (
           <View style={s.list}>
             {dated.map((e) => (
-              <EntryCard key={e.id} entry={e} onEdit={openEdit} onDelete={onDeleteEntry} />
+              <EntryCard key={e.id} entry={e} onEdit={openEdit} onDelete={onDeleteEntry} canEdit={isBookAuthor || e.author_id === userId} />
             ))}
             {undated.length > 0 && (
               <View style={s.undatedDivider}>
@@ -458,7 +458,7 @@ export default function BabybookScreen() {
               </View>
             )}
             {undated.map((e) => (
-              <EntryCard key={e.id} entry={e} onEdit={openEdit} onDelete={onDeleteEntry} />
+              <EntryCard key={e.id} entry={e} onEdit={openEdit} onDelete={onDeleteEntry} canEdit={isBookAuthor || e.author_id === userId} />
             ))}
           </View>
         )}
@@ -589,8 +589,12 @@ export default function BabybookScreen() {
 // ── One entry on the spine ──────────────────────────────────────────
 
 function EntryCard({
-  entry, onEdit, onDelete,
+  entry, onEdit, onDelete, canEdit,
 }: {
+  // False for a member looking at the other parent's entry: RLS
+  // refuses the write and PostgREST reports success on zero rows, so
+  // the card would vanish and come back. Hide the controls instead.
+  canEdit: boolean;
   entry: BabybookEntry;
   onEdit: (e: BabybookEntry) => void;
   onDelete: (e: BabybookEntry) => void;
@@ -606,26 +610,28 @@ function EntryCard({
     <RailCard eyebrow={eyebrow || 'Undated'} accentColor={accent}>
       <Text style={[s.entryTitle, isNote && s.entryTitleNote]}>{entry.title}</Text>
       {!!entry.body && <Text style={s.entryBody}>{entry.body}</Text>}
-      <View style={s.entryActions}>
-        <TouchableOpacity
-          style={s.entryAction}
-          onPress={() => onEdit(entry)}
-          accessibilityLabel="Edit entry"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="create-outline" size={14} color={Colors.textSecondary} />
-          <Text style={s.entryActionText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={s.entryAction}
-          onPress={() => onDelete(entry)}
-          accessibilityLabel="Delete entry"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="trash-outline" size={14} color={Colors.error} />
-          <Text style={[s.entryActionText, { color: Colors.error }]}>Delete</Text>
-        </TouchableOpacity>
-      </View>
+      {canEdit && (
+        <View style={s.entryActions}>
+          <TouchableOpacity
+            style={s.entryAction}
+            onPress={() => onEdit(entry)}
+            accessibilityLabel="Edit entry"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="create-outline" size={14} color={Colors.textSecondary} />
+            <Text style={s.entryActionText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.entryAction}
+            onPress={() => onDelete(entry)}
+            accessibilityLabel="Delete entry"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="trash-outline" size={14} color={Colors.error} />
+            <Text style={[s.entryActionText, { color: Colors.error }]}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </RailCard>
   );
 }

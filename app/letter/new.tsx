@@ -64,10 +64,15 @@ export default function NewLetterScreen() {
       setSearchResults([]);
       return;
     }
+    // The typed text goes into a PostgREST or() filter, whose grammar
+    // treats , ( ) . and * as syntax — raw interpolation let a typed
+    // comma rewrite the query. Strip the operators; keep the letters.
+    const safe = q.trim().replace(/[,()*.\%]/g, ' ').trim();
+    if (safe.length < 2) { setSearchResults([]); return; }
     const { data } = await supabase
       .from('profiles')
       .select('id, handle, display_name')
-      .or(`handle.ilike.%${q}%,display_name.ilike.%${q}%`)
+      .or(`handle.ilike.%${safe}%,display_name.ilike.%${safe}%`)
       .limit(6);
     setSearchResults((data ?? []) as any[]);
   };

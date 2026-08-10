@@ -194,8 +194,13 @@ export function useDeleteLetter() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('letters').delete().eq('id', id);
+      // .select() so a row filtered out by RLS comes back as zero rows
+      // instead of a silent success — the author was being navigated
+      // away from a letter that never actually went.
+      const { data, error } = await supabase
+        .from('letters').delete().eq('id', id).select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('That letter is not yours to delete.');
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-letters'] });
