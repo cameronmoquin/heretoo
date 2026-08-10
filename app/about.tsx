@@ -35,33 +35,33 @@ export default function AboutScreen() {
 
         <View style={s.thesis}>
           <Text style={s.para}>
-            There are no strangers on your feed. Not filtered out — impossible.
+            There are no strangers on your feed. Not filtered out. Impossible.
             You see the people your circles reach, and no one else.
           </Text>
           <Text style={s.para}>
             The unit here is the cohort: a family, a school class, a team, a
-            friend group — any real container of real people. You join one or
+            friend group. Any real container of real people. You join one or
             you start one. Your feed grows one way only: cohorts linking to
             cohorts, each link a real person vouching. Nobody grows a
             following here. People grow a neighborhood.
           </Text>
           <Text style={s.para}>
             One room is open to everyone: the public square. No names, no
-            faces, no photographs, no video — text, under a pseudonym. If you
+            faces, no photographs, no video. Text, under a pseudonym. If you
             want people to find your cohort, you convince them with prose.
             Writing is the only advertisement for yourself this place sells.
           </Text>
           <Text style={s.para}>
             There is no For You. No follower counts, no metrics, no streaks,
             no algorithmic feed deciding what you deserve. Messages can burn
-            after reading — overwritten in the database at the moment they
-            are read, not hidden. The journal is sealed with a key that never
+            after reading, overwritten in the database at the moment they are
+            read, not hidden. The journal is sealed with a key that never
             leaves your device; nobody can read it, including us. A lost
             passphrase is unrecoverable. That is the design working.
           </Text>
           <Text style={s.para}>
-            The ads are small businesses only — a jeweler, an Etsy maker, the
-            ice-cream shop — hand-placed, held to the same artistic standard
+            The ads are small businesses only. A jeweler, an Etsy maker, the
+            ice-cream shop, hand-placed and held to the same artistic standard
             as the gallery they hang in. No tracking, no surveillance, no data
             sold, none collected to sell. The town paper's back page, not a
             billboard.
