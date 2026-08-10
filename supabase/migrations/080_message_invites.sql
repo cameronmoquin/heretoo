@@ -42,7 +42,7 @@ begin
   if caller is null then
     raise exception 'Must be signed in to create a seed invite';
   end if;
-  tok := encode(gen_random_bytes(9), 'hex');
+  tok := encode(extensions.gen_random_bytes(9), 'hex');
   insert into public.seed_invites (token, sponsor_id, message, suggested_family_name, guest_handle)
     values (tok, caller, message_in, suggested_family_name_in, nullif(trim(coalesce(guest_handle_in, '')), ''));
   return tok;
