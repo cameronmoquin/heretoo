@@ -947,7 +947,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
 
             <ScrollView style={{ maxHeight: 360 }}>
               {(familyMembers ?? [])
-                .filter((m) => m.profile_id !== userId)
+                .filter((m) => m.profile_id !== userId && !!m.profile)
                 .map((m) => {
                   const checked = updateRecipientIds.has(m.profile_id);
                   return (
@@ -1166,8 +1166,8 @@ function recipientSummary(
   selfId: string | null | undefined,
 ): string {
   const picked = members
-    .filter((m) => selected.has(m.profile_id) && m.profile_id !== selfId)
-    .map((m) => m.profile.display_name ?? m.profile.handle ?? 'someone');
+    .filter((m) => selected.has(m.profile_id) && m.profile_id !== selfId && !!m.profile)
+    .map((m) => m.profile?.display_name ?? m.profile?.handle ?? 'someone');
   if (picked.length === 0) return 'No one selected';
   if (picked.length === 1) return picked[0];
   if (picked.length === 2) return `${picked[0]}, ${picked[1]}`;

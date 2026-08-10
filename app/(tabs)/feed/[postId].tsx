@@ -63,6 +63,14 @@ export default function PostDetail() {
   const deleteComment = useDeleteComment();
   const toggleMute = useToggleCommentsDisabled();
   const toggleCommentHeart = useToggleCommentHeart(postId);
+  // Burn-drop hooks. These MUST sit above every early return with the
+  // rest of the hooks — the same rule the useEffect comment below spells
+  // out. They were added below the loading guard, which changed the hook
+  // count between the loading render and the loaded render (React #310),
+  // and crashed the detail page on every open. Keyed on postId (not
+  // post.id) because post is not resolved yet up here.
+  const revealed = useRevealed(postId ?? '');
+  const openDrop = useOpenDrop();
 
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', postId],
@@ -113,9 +121,9 @@ export default function PostDetail() {
   // A burning drop stays shut here too. PostCard only blocked navigation
   // from the card, so any other way in (pasted link, boost, comment deep
   // link) rendered the payload in full and recorded no view, which meant
-  // the drop never burned. The author always sees their own.
-  const revealed = useRevealed(post.id);
-  const openDrop = useOpenDrop();
+  // the drop never burned. The author always sees their own. (revealed +
+  // openDrop are hoisted above the early returns — see the top of the
+  // component.)
   const sealed = !!(post as any).destruct_on_view && !isOwner && !revealed;
   const commentsDisabled = !!post.comments_disabled;
   const totalCount: number = post.comment_count ?? countTree(comments ?? []);

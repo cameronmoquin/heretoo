@@ -78,7 +78,7 @@ export default function LetterScreen() {
       'Delete this letter?',
       "If you've shared the claim URL with someone, they won't be able to open it.",
       () => del.mutate(letter.id, {
-        onSuccess: () => router.replace('/letter/drafts' as any),
+        onSuccess: () => router.replace('/letter' as any),
         onError: (e: any) => showAlert('Could not delete', e?.message ?? 'Try again.'),
       }),
       'Delete', 'Cancel',

@@ -92,14 +92,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Row({ letter, variant }: { letter: LetterWithMeta; variant: 'received' | 'queued' | 'sent' }) {
   const s = makeStyles();
   const meta =
-    variant === 'received' ? `Delivered ${formatDate(letter.delivered_at!)}` :
+    variant === 'received' ? `Delivered ${letter.delivered_at ? formatDate(letter.delivered_at) : ''}` :
     variant === 'queued' ? `Queued for ${formatDate(letter.deliver_at)}` :
-    `Delivered ${formatDate(letter.delivered_at!)}`;
+    `Delivered ${letter.delivered_at ? formatDate(letter.delivered_at) : ''}`;
   const recipientLabel =
     variant === 'received'
       ? `From ${letter.author?.display_name || letter.author?.handle || 'someone'}`
       : `To ${(letter.recipients ?? []).map((r) => r.future_recipient_label || 'someone').join(', ') || 'someone'}`;
-  const preview = (letter.body_plain || letter.body_md).slice(0, 120).trim();
+  const preview = (letter.body_plain || letter.body_md || '').slice(0, 120).trim();
   return (
     <TouchableOpacity
       style={s.row}

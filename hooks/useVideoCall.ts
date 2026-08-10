@@ -97,7 +97,7 @@ export function useVideoCall(callId: string | null): UseVideoCallReturn {
       } catch {}
 
       // 3. Open the Realtime signaling channel.
-      const channel = supabase.channel(`call:${callId}`, {
+      const channel = supabase.channel(`call:${callId}:${Math.random().toString(36).slice(2)}`, {
         config: { broadcast: { self: false } },
       });
       channelRef.current = channel;

@@ -118,10 +118,13 @@ export function useBabybooks() {
     staleTime: 30_000,
     queryFn: async (): Promise<Babybook[]> => {
       if (!userId) return [];
+      // No author_id filter: migration 078's babybooks_self_select
+      // already returns books you author OR are a member of, and the
+      // client filter re-imposed the pre-sharing rule so a shared book
+      // never appeared for the other parent.
       const { data, error } = await supabase
         .from('babybooks')
         .select('*')
-        .eq('author_id', userId)
         .order('created_at', { ascending: true });
       if (error) {
         warnOnce(error);
