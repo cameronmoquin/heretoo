@@ -3,18 +3,20 @@
 -- ════════════════════════════════════════════════════════════════════════
 -- trivia_attempts stored a was_correct the CLIENT computed, and the
 -- insert policy checked only that you were inserting as yourself. Any
--- member could POST a thousand rows with was_correct=true and take the
--- cross-cohort standings, which is the whole point of the game. The
--- answer key was readable too: correct_index sits on trivia_questions,
--- and RLS is row-level, so a member could read every answer before
--- playing.
+-- member could POST a thousand rows with was_correct = true and take
+-- the cross-cohort standings, which is the whole point of the game.
 --
--- Both are fixed the same way: the server scores the answer, and the
--- key stops being client-readable.
+-- answer_trivia(question_id, chosen_index) now reads the key, decides,
+-- writes the attempt, and returns the verdict. It is the only way an
+-- attempt is ever recorded.
 --
---   answer_trivia(question_id, chosen_index) reads the key, decides,
---   writes the attempt, and returns the verdict. It is the only way to
---   record one.
+-- KNOWN AND ACCEPTED: correct_index stays readable by members of the
+-- cohort a question belongs to. RLS is row-level, so hiding one column
+-- means revoking it from the role, and the author of a question has to
+-- see the answer to their own question on the manage screen. Reading
+-- ahead is therefore still possible for someone who opens a console —
+-- but it no longer buys a forged score, and this is a game played
+-- among people who know each other. The forgery was the real hole.
 --
 -- Run BY HAND in the dashboard SQL editor. Idempotent.
 -- ════════════════════════════════════════════════════════════════════════
@@ -24,11 +26,13 @@ begin;
 -- ── 1. No client writes an attempt directly, ever ────────────────────
 drop policy if exists trivia_attempts_insert on public.trivia_attempts;
 drop policy if exists trivia_attempts_self on public.trivia_attempts;
+
+drop policy if exists trivia_attempts_read on public.trivia_attempts;
 create policy trivia_attempts_read on public.trivia_attempts
   for select to authenticated
   using (player_id = auth.uid());
--- No insert/update/delete policy for clients. The definer below is the
--- only writer.
+-- No insert / update / delete policy for clients. The definer below is
+-- the only writer, and it bypasses RLS by design.
 
 
 -- ── 2. The server scores it ──────────────────────────────────────────
@@ -42,9 +46,11 @@ security definer
 set search_path = public
 as $$
 declare
-  q      record;
-  caller uuid := auth.uid();
-  ok     boolean;
+  q_family_id  uuid;
+  q_correct    int;
+  q_expl       text;
+  caller       uuid := auth.uid();
+  ok           boolean;
 begin
   if caller is null then
     raise exception 'Must be signed in';
@@ -53,67 +59,42 @@ begin
     raise exception 'Guests do not play';
   end if;
 
-  select tq.id, tq.family_id, tq.correct_index, tq.explanation
-    into q
+  select tq.family_id, tq.correct_index, tq.explanation
+    into q_family_id, q_correct, q_expl
     from public.trivia_questions tq
    where tq.id = p_question_id;
-  if not found then
+
+  if q_family_id is null and q_correct is null then
     raise exception 'Question not found';
   end if;
 
-  -- You play your own cohort's questions.
-  if q.family_id is not null and not exists (
+  -- You answer your own cohort's questions.
+  if not exists (
     select 1 from public.family_members fm
-    where fm.family_id = q.family_id
+    where fm.family_id = q_family_id
       and fm.profile_id = caller
       and fm.status = 'active'
   ) then
     raise exception 'Not your question';
   end if;
 
-  -- One attempt per question per player. A second call returns the
-  -- verdict without recording anything new.
-  ok := (q.correct_index = p_chosen_index);
+  ok := (q_correct = p_chosen_index);
+
   insert into public.trivia_attempts (question_id, player_id, chosen_index, was_correct)
     values (p_question_id, caller, p_chosen_index, ok)
     on conflict do nothing;
 
-  return query select ok, q.correct_index, q.explanation;
+  return query select ok, q_correct, q_expl;
 end$$;
 
 revoke all on function public.answer_trivia(uuid, int) from public, anon, authenticated;
 grant execute on function public.answer_trivia(uuid, int) to authenticated;
-
-
--- ── 3. The answer key leaves the client ──────────────────────────────
--- RLS cannot hide a column, so the readable surface becomes a view
--- without the key, and the table stops being client-readable.
-drop policy if exists trivia_questions_read on public.trivia_questions;
-create policy trivia_questions_read on public.trivia_questions
-  for select to authenticated
-  using (
-    family_id is null
-    or exists (
-      select 1 from public.family_members fm
-      where fm.family_id = trivia_questions.family_id
-        and fm.profile_id = auth.uid()
-        and fm.status = 'active'
-    )
-  );
-
--- The column-level lock. Postgres checks column privileges before RLS,
--- so this is what actually keeps the key.
-revoke select on public.trivia_questions from authenticated;
-grant select (
-  id, family_id, prompt, choices, retired_at, created_at, created_by
-) on public.trivia_questions to authenticated;
 
 commit;
 
 notify pgrst, 'reload schema';
 
 -- ── Verify ───────────────────────────────────────────────────────────
---   select correct_index from trivia_questions  → permission denied
---   insert into trivia_attempts                 → denied
---   select public.answer_trivia('<uuid>', 0)    → scores honestly
+--   insert into trivia_attempts directly  → denied
+--   select public.answer_trivia(id, 0)    → scores honestly, records once
 -- DONE.
