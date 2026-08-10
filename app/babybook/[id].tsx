@@ -515,9 +515,9 @@ export default function BabybookScreen() {
                       key={a.id}
                       asset={a}
                       isCover={book?.cover_storage_path === a.storage_path}
-                      onSetCover={() => onSetCover(a)}
+                      onSetCover={isBookAuthor ? () => onSetCover(a) : null}
                       status={statusOf(a)}
-                      onJudge={(st) => judge(a, st)}
+                      onJudge={isBookAuthor ? (st) => judge(a, st) : null}
                       onCrop={() => openCrop(a)}
                     />
                   ))}
@@ -637,9 +637,12 @@ function PhotoTile({
 }: {
   asset: BabybookAsset;
   isCover: boolean;
-  onSetCover: () => void;
+  // Null when the viewer is a member rather than the book's author:
+  // RLS permits neither, and a control that silently does nothing is
+  // worse than no control.
+  onSetCover: (() => void) | null;
   status: 'approved' | 'pending' | 'excluded';
-  onJudge: (s: 'approved' | 'excluded' | 'pending') => void;
+  onJudge: ((s: 'approved' | 'excluded' | 'pending') => void) | null;
   onCrop: () => void;
 }) {
   const s = makeStyles();
@@ -661,7 +664,7 @@ function PhotoTile({
         )}
       </View>
       <Text style={s.photoDate}>{photoDateLabel(asset.captured_at, asset.captured_precision)}</Text>
-      {status === 'pending' ? (
+      {onJudge && status === 'pending' ? (
         <View style={s.judgeRow}>
           <TouchableOpacity
             style={[s.judgeBtn, s.judgeBtnIn]}
@@ -680,17 +683,19 @@ function PhotoTile({
         </View>
       ) : (
         <View style={s.judgeRow}>
-          <TouchableOpacity
-            style={s.judgeBtn}
-            onPress={() => onJudge(status === 'approved' ? 'excluded' : 'approved')}
-            accessibilityLabel={status === 'approved' ? 'Leave it out' : 'Into the book'}
-          >
-            <Ionicons
-              name={status === 'approved' ? 'close' : 'checkmark'}
-              size={16}
-              color={Colors.textSecondary}
-            />
-          </TouchableOpacity>
+          {onJudge && (
+            <TouchableOpacity
+              style={s.judgeBtn}
+              onPress={() => onJudge(status === 'approved' ? 'excluded' : 'approved')}
+              accessibilityLabel={status === 'approved' ? 'Leave it out' : 'Into the book'}
+            >
+              <Ionicons
+                name={status === 'approved' ? 'close' : 'checkmark'}
+                size={16}
+                color={Colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
           {Platform.OS === 'web' && (
             <TouchableOpacity style={s.judgeBtn} onPress={onCrop} accessibilityLabel="Crop">
               <Ionicons name="crop-outline" size={15} color={Colors.textSecondary} />
@@ -700,8 +705,8 @@ function PhotoTile({
       )}
       <TouchableOpacity
         style={s.coverBtn}
-        onPress={onSetCover}
-        disabled={isCover}
+        onPress={onSetCover ?? undefined}
+        disabled={isCover || !onSetCover}
         accessibilityLabel={isCover ? 'Cover photo' : 'Set as cover'}
         activeOpacity={0.85}
       >

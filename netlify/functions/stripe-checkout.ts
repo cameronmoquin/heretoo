@@ -82,10 +82,14 @@ export default async (req: Request) => {
 
   // 2. Verify the user is owner/active in the family.
   const fmRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/family_members?select=profile_id,role,status&family_id=eq.${body.family_id}&profile_id=eq.${user.id}`,
+    `${SUPABASE_URL}/rest/v1/family_members?select=profile_id,status&family_id=eq.${body.family_id}&profile_id=eq.${user.id}`,
     { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
   );
-  const fmRows = (await fmRes.json()) as Array<{ status: string; role: string }>;
+  // family_members has no `role` column and never has. Asking for it
+  // made PostgREST answer 400 with an error OBJECT, which failed the
+  // Array.isArray test below and returned "Not a member" to everyone,
+  // including the owner. Nothing here ever read .role.
+  const fmRows = (await fmRes.json()) as Array<{ status: string }>;
   if (!Array.isArray(fmRows) || fmRows.length === 0 || fmRows[0].status !== 'active') {
     return new Response(JSON.stringify({ error: 'Not a member' }), { status: 403 });
   }

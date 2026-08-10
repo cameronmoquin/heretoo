@@ -64,6 +64,12 @@ export async function registerPushToken(profileId: string | null | undefined): P
     // Upsert on the token, so reinstalling or handing the device to
     // someone else re-points the row instead of leaving a stale one
     // ringing the wrong person's phone.
+    // The upsert alone could not perform the handover it was written
+    // for: push_tokens' own-row policy fails the UPDATE half when the
+    // row still belongs to the previous person, so a shared phone
+    // silently delivered nothing to its new owner. Clear any row for
+    // this device first (own-row DELETE is permitted), then insert.
+    await supabase.from('push_tokens').delete().eq('token', token);
     await supabase
       .from('push_tokens')
       .upsert(

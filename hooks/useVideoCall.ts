@@ -97,7 +97,13 @@ export function useVideoCall(callId: string | null): UseVideoCallReturn {
       } catch {}
 
       // 3. Open the Realtime signaling channel.
-      const channel = supabase.channel(`call:${callId}:${Math.random().toString(36).slice(2)}`, {
+      // The topic name IS the room. Both peers must open the SAME string
+      // or they broadcast into separate voids and no call ever connects.
+      // A random suffix was added here by analogy with the
+      // postgres_changes channels, where the name is only a local
+      // identifier for a server-side subscription; for broadcast it is
+      // the rendezvous. Do not add one.
+      const channel = supabase.channel(`call:${callId}`, {
         config: { broadcast: { self: false } },
       });
       channelRef.current = channel;
