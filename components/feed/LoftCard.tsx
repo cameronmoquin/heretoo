@@ -26,7 +26,8 @@ export function LoftCard({ post }: LoftCardProps) {
   const s = makeStyles();
   const userId = useAuthStore((st) => st.user?.id);
   const remove = useDeleteLoftPost();
-  const isMine = !!userId && post.author_id === userId;
+  // The square never hands out its authors (087). The view answers.
+  const isMine = !!post.is_mine;
   const left = timeLeft(post.expires_at);
 
   const onDelete = () => {

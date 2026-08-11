@@ -8,7 +8,11 @@ import { useAuthStore } from '../stores/authStore';
 
 export interface LoftPost {
   id: string;
-  author_id: string;
+  /** The author is NOT exposed (migration 087): the square is
+   *  anonymous, and handing out author_id let any member resolve a
+   *  pseudonym to a real name in one more request. is_mine answers the
+   *  only question this ever served. */
+  is_mine?: boolean;
   body: string;
   pseudonym: string;
   created_at: string;
@@ -21,7 +25,7 @@ export function useLoftFeed() {
     queryKey: ['loft-feed'],
     queryFn: async (): Promise<LoftPost[]> => {
       const { data, error } = await supabase
-        .from('loft_posts')
+        .from('square')
         .select('*')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
@@ -95,7 +99,7 @@ export function useCreateLoftPost() {
       const { data, error } = await supabase
         .from('loft_posts')
         .insert({ author_id: userId, body: body.trim(), pseudonym } as any)
-        .select()
+        .select('id, body, pseudonym, created_at, expires_at')
         .single();
       if (error) throw error;
       return data as LoftPost;
@@ -116,7 +120,7 @@ export function useCreateLoftPost() {
 
       const optimistic: LoftPost = {
         id: `optimistic-${Date.now()}`,
-        author_id: userId,
+        is_mine: true,
         body: body.trim(),
         pseudonym: cachedHandle,
         created_at: new Date().toISOString(),
