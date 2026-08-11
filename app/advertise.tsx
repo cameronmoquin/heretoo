@@ -28,6 +28,13 @@ import { Spacing, Radius, Type, Heights } from '../constants/design';
 import { Button } from '../components/shared/Button';
 import { Eyebrow } from '../components/shared/Eyebrow';
 import { HereTooLogo } from '../components/shared/Logo';
+import { Copy } from '../constants/copy';
+
+/** Fills {reach} and {rate} in the author's strings. */
+function fill(s: string, vals: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (m, k) => (k in vals ? String(vals[k]) : m));
+}
+const C = Copy.advertise;
 
 /** Dollars per hundred people, per month. The whole pricing model. */
 const RATE_PER_HUNDRED = 20;
@@ -93,7 +100,7 @@ export default function AdvertiseScreen() {
         <ScrollView contentContainerStyle={s.scroll}>
           <HereTooLogo size={56} />
           <Text style={s.para}>
-            Received. If it passes the standard, you&apos;ll hear from us.
+            {C.received}
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -104,7 +111,7 @@ export default function AdvertiseScreen() {
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <HereTooLogo size={56} />
-        <Text style={s.title}>Advertising</Text>
+        <Text style={s.title}>{C.title}</Text>
 
         {/* The price, computed in front of you from the only number
             that should set it. */}
@@ -113,43 +120,28 @@ export default function AdvertiseScreen() {
             <ActivityIndicator color={Colors.primary} />
           ) : reach == null ? (
             <Text style={s.para}>
-              ${RATE_PER_HUNDRED} for every hundred people here, per month.
+              {fill(C.priceFallback, { rate: RATE_PER_HUNDRED })}
             </Text>
           ) : (
             <>
               <Text style={s.priceBig}>${priceFor(reach)}</Text>
-              <Text style={s.priceUnit}>a month</Text>
+              <Text style={s.priceUnit}>{C.priceUnit}</Text>
               <Text style={s.priceWhy}>
-                There are {reach} people here today. The rate is $
-                {RATE_PER_HUNDRED} for every hundred of them. When more
-                arrive the price rises, and you are never charged for
-                growth that has not happened yet.
+                {fill(C.priceWhy, { reach, rate: RATE_PER_HUNDRED })}
               </Text>
             </>
           )}
         </View>
 
-        <View style={s.deal}>
-          <Text style={s.para}>
-            Small businesses only. A jeweler, an Etsy shop, the ice-cream
-            stand, not a corporation. Every ad is placed by hand and held to
-            the same artistic standard as the gallery it hangs in. Most
-            applications will be declined, and the standard is not
-            negotiable.
-          </Text>
-          <Text style={s.para}>
-            Targeting is three declared facts: age, gender identity, and
-            location. Nothing else. No tracking, no pixels, no dashboard, no
-            data going back to you. You are buying a place on the wall, the
-            way the town paper sold one.
-          </Text>
-          <Text style={s.para}>
-            Approval comes before payment, billing is by Stripe, and nothing
-            is owed for applying.
-          </Text>
-        </View>
+        {C.terms.length > 0 && (
+          <View style={s.deal}>
+            {C.terms.map((p, i) => (
+              <Text key={i} style={s.para}>{p}</Text>
+            ))}
+          </View>
+        )}
 
-        <Eyebrow>Business</Eyebrow>
+        <Eyebrow>{C.fieldBusiness}</Eyebrow>
         <TextInput
           style={s.input}
           accessibilityLabel="Business name"
@@ -158,7 +150,7 @@ export default function AdvertiseScreen() {
           maxLength={120}
         />
 
-        <Eyebrow>Email</Eyebrow>
+        <Eyebrow>{C.fieldEmail}</Eyebrow>
         <TextInput
           style={s.input}
           accessibilityLabel="Email"
@@ -168,18 +160,18 @@ export default function AdvertiseScreen() {
           keyboardType="email-address"
         />
 
-        <Eyebrow>Where we can see your work</Eyebrow>
+        <Eyebrow>{C.fieldLink}</Eyebrow>
         <TextInput
           style={s.input}
           accessibilityLabel="Link"
           value={link}
           onChangeText={setLink}
           autoCapitalize="none"
-          placeholder="https://"
+          placeholder={C.placeholderLink}
           placeholderTextColor={Colors.textMuted}
         />
 
-        <Eyebrow>The pitch</Eyebrow>
+        <Eyebrow>{C.fieldPitch}</Eyebrow>
         <TextInput
           style={[s.input, s.pitchInput]}
           accessibilityLabel="The pitch"
@@ -190,14 +182,14 @@ export default function AdvertiseScreen() {
           textAlignVertical="top"
         />
 
-        <Eyebrow>Who it&apos;s for (each optional)</Eyebrow>
+        <Eyebrow>{C.fieldTargeting}</Eyebrow>
         <View style={s.targetRow}>
           <TextInput
             style={[s.input, s.targetInput]}
             accessibilityLabel="Age"
             value={age}
             onChangeText={setAge}
-            placeholder="Age"
+            placeholder={C.placeholderAge}
             placeholderTextColor={Colors.textMuted}
             maxLength={40}
           />
@@ -206,7 +198,7 @@ export default function AdvertiseScreen() {
             accessibilityLabel="Gender identity"
             value={gender}
             onChangeText={setGender}
-            placeholder="Gender identity"
+            placeholder={C.placeholderGender}
             placeholderTextColor={Colors.textMuted}
             maxLength={40}
           />
@@ -216,13 +208,13 @@ export default function AdvertiseScreen() {
           accessibilityLabel="Location"
           value={location}
           onChangeText={setLocation}
-          placeholder="Location"
+          placeholder={C.placeholderLocation}
           placeholderTextColor={Colors.textMuted}
           maxLength={80}
         />
 
         <Button
-          title={sending ? 'Sending' : 'Apply'}
+          title={sending ? C.submitting : C.submit}
           onPress={submit}
           loading={sending}
           size="lg"
