@@ -12,7 +12,10 @@
  * the network — otherwise we'd lose writes.
  */
 
-const VERSION = 'heretoo-v130';
+// v131 adds the push and notificationclick handlers at the foot of this file.
+// Bumping is what makes browsers install the new worker rather than keeping
+// the cached one, which would have no push listener at all.
+const VERSION = 'heretoo-v131';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSETS_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;
@@ -110,4 +113,65 @@ self.addEventListener('fetch', (event) => {
       ),
     );
   }
+});
+
+/**
+ * Push.
+ *
+ * The payload is deliberately thin — who wrote and which thread — and never
+ * the message body. A push notification renders on a lock screen anyone can
+ * see, and this app's argument is that what people write here is theirs. The
+ * email path (netlify/functions/message-email.ts) withholds the body for the
+ * same reason.
+ *
+ * Sent from netlify/functions/push-send.ts, which fires the moment a message
+ * is written rather than on the email poller's two-minute cycle.
+ */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    // A malformed payload should still buzz rather than vanish silently.
+    data = {};
+  }
+
+  const title = data.title || 'HereToo';
+  const options = {
+    body: data.body || 'You have a message.',
+    // Reusing the maskable PWA icon; no separate asset to keep in sync.
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    // iOS ignores this, Android honours it. Harmless where unsupported.
+    vibrate: [0, 250, 250, 250],
+    // Collapse repeats from one thread instead of stacking a screenful.
+    tag: data.tag || 'heretoo-message',
+    renotify: true,
+    data: { url: data.url || '/messages' },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+/**
+ * Tapping the notification focuses an open tab rather than opening a second
+ * one, then routes it to the thread.
+ */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/messages';
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((list) => {
+        for (const client of list) {
+          if ('focus' in client) {
+            if ('navigate' in client) client.navigate(target).catch(() => {});
+            return client.focus();
+          }
+        }
+        return self.clients.openWindow ? self.clients.openWindow(target) : undefined;
+      }),
+  );
 });
