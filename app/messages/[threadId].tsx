@@ -369,13 +369,19 @@ export default function ChatThread() {
             const isMine = m.sender_id === userId;
             return (
               <View key={m.id} style={[s.bubbleWrap, isMine ? s.bubbleWrapMine : s.bubbleWrapTheirs]}>
-                {/* In flight. The bubble is real and stays put; the half
-                    tone is the only thing that says the server has not
-                    answered yet. */}
-                <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleTheirs, m.pending && s.bubbleUnsent]}>
+                {/* A message in flight looks exactly like a message that
+                    landed. It briefly wore a half tone and withheld its
+                    timestamp, which meant every send changed appearance
+                    twice AND moved as the timestamp appeared — two
+                    events to read for something that needs none. A
+                    failure still speaks for itself: the text returns to
+                    the composer and an alert says why. The `pending`
+                    flag is still what pins this to the foot of the
+                    timeline; it just no longer changes how it looks. */}
+                <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleTheirs]}>
                   <Text style={isMine ? s.bubbleTextMine : s.bubbleTextTheirs}>{m.body}</Text>
                 </View>
-                {!m.pending && <Text style={s.bubbleTime}>{relTime(m.created_at)}</Text>}
+                <Text style={s.bubbleTime}>{relTime(m.created_at)}</Text>
               </View>
             );
           })}
@@ -544,7 +550,6 @@ function makeStyles() { return StyleSheet.create({
   // The 4px tail corner is bubble geometry — no Radius token is that tight.
   bubbleMine: { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },
   bubbleTheirs: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, borderBottomLeftRadius: 4 },
-  bubbleUnsent: { opacity: 0.55 },
   bubbleTextMine: { color: Colors.onPrimary, fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight },
   bubbleTextTheirs: { color: Colors.textPrimary, fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight },
   bubbleTime: { fontSize: 10, color: Colors.textMuted, marginTop: 2, marginHorizontal: Spacing.xxs },
