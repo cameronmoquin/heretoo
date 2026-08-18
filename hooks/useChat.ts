@@ -15,10 +15,12 @@
  * messages stream in without polling.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { Platform } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { usePendingMessages, pendingFor, unsettled } from '../stores/pendingMessages';
 
 export type ThreadStatus = 'open' | 'pending' | 'declined';
 
@@ -48,6 +50,8 @@ export interface ChatMessage {
   body: string;
   read_at: string | null;
   created_at: string;
+  /** Drawn from the pending store, not yet acknowledged by the server. */
+  pending?: boolean;
 }
 
 // ── Threads list ───────────────────────────────────────────────────────
@@ -157,14 +161,29 @@ async function notifyPush(messageId: string | undefined): Promise<void> {
     const { data } = await supabase.auth.getSession();
     const jwt = data?.session?.access_token;
     if (!jwt) return;
-    const base = typeof window !== 'undefined' ? window.location.origin : 'https://heretoo.social';
+    // Platform.OS, not `typeof window`. React Native aliases window to global,
+    // so that check passes on a phone — but RN ships no window.location, and
+    // reading .origin off undefined throws a TypeError straight into the catch
+    // below, where it looks like nothing happened.
+    //
+    // The effect was that push worked in a browser and silently did nothing on
+    // the Jude-a-phone: every message he sent notified no one, with no error
+    // anywhere to say so.
+    const base =
+      Platform.OS === 'web' && typeof window !== 'undefined' && window.location
+        ? window.location.origin
+        : 'https://heretoo.social';
     await fetch(`${base}/.netlify/functions/push-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
       body: JSON.stringify({ messageId }),
     });
-  } catch {
-    // The message is sent and saved. A failed push is not a failed send.
+  } catch (e) {
+    // The message is sent and saved. A failed push is not a failed send — but
+    // it is not nothing either. Swallowing this silently is what let a
+    // TypeError on window.location hide for as long as it did.
+    // eslint-disable-next-line no-console
+    console.warn('[push] notify failed:', e);
   }
 }
 
@@ -289,7 +308,43 @@ export function useThreadMessages(threadId: string | null) {
     return () => { supabase.removeChannel(channel); };
   }, [threadId, qc]);
 
-  return query;
+  // Messages in flight, merged over the server's answer. They are stored
+  // outside the query cache precisely so the refetches above cannot
+  // delete them mid-send; see stores/pendingMessages.ts.
+  const byThread = usePendingMessages((s) => s.byThread);
+  const remove = usePendingMessages((s) => s.remove);
+  const pending = pendingFor(byThread, threadId);
+
+  const live = useMemo(
+    () => (pending.length > 0 ? unsettled(pending, query.data ?? []) : pending),
+    [pending, query.data],
+  );
+
+  // Retired bubbles are dropped on a later tick, never during render.
+  useEffect(() => {
+    if (!threadId || pending.length === live.length) return;
+    const keep = new Set(live.map((p) => p.tempId));
+    for (const p of pending) if (!keep.has(p.tempId)) remove(threadId, p.tempId);
+  }, [threadId, pending, live, remove]);
+
+  const data = useMemo(() => {
+    const rows = query.data ?? [];
+    if (live.length === 0) return rows;
+    return [
+      ...rows,
+      ...live.map((p): ChatMessage => ({
+        id: p.tempId,
+        thread_id: p.threadId,
+        sender_id: p.senderId,
+        body: p.body,
+        read_at: null,
+        created_at: p.createdAt,
+        pending: true,
+      })),
+    ];
+  }, [query.data, live]);
+
+  return { ...query, data };
 }
 
 export function useThread(threadId: string | null) {
@@ -384,41 +439,37 @@ export function useSendMessage() {
       if (error) throw error;
       return data as ChatMessage;
     },
-    // Drop a placeholder into the thread cache the instant the user
-    // taps Send — the real message replaces it on round-trip success.
-    // Without this the bubble doesn't appear until either (a) the
-    // mutation completes AND the query re-fetches, or (b) the next
-    // message arrives via realtime. Slow on bad WiFi, surprising for
-    // the sender.
-    onMutate: async (vars) => {
-      if (!userId) return { undo: () => {} };
+    // The bubble appears on the frame of the tap. NOT AWAITED, and NOT
+    // written to the query cache — both of those were the bug.
+    //
+    // The old version awaited cancelQueries before drawing anything. On a
+    // phone there is nearly always a fetch in flight (staleTime 0 plus a
+    // focus refetch fired by the keyboard dismissing on send), so that
+    // await routinely pushed the bubble a tick or more past the tap: the
+    // send felt instant sometimes and laggy other times, depending on
+    // whether a refetch happened to be running. Nothing needs cancelling
+    // now, because a refetch landing on top of the cache can no longer
+    // erase a message that was never in it.
+    onMutate: (vars) => {
+      if (!userId) return {};
       const key = ['thread-messages', vars.threadId];
-      await qc.cancelQueries({ queryKey: key });
       const prev = qc.getQueryData<ChatMessage[]>(key) ?? [];
-      const tempId = `optimistic-${Date.now()}`;
-      const optimistic: ChatMessage = {
-        id: tempId,
-        thread_id: vars.threadId,
-        sender_id: userId,
-        body: vars.body,
-        read_at: null,
-        created_at: new Date().toISOString(),
-      };
-      qc.setQueryData<ChatMessage[]>(key, [...prev, optimistic]);
-      // Undo removes ONLY the failed bubble. Restoring the pre-send
-      // snapshot rolled the whole thread back in time — anything that
-      // arrived while the send was in flight vanished with it, which is
-      // exactly "messages randomly disappear."
-      return {
-        undo: () =>
-          qc.setQueryData<ChatMessage[]>(key, (cur) =>
-            (cur ?? []).filter((m) => m.id !== tempId),
-          ),
+      // Sort last, even on a phone whose clock disagrees with the
+      // server's. A device running a few minutes slow used to file its
+      // own new message into the middle of the conversation.
+      const newest = prev.reduce((max, m) => Math.max(max, Date.parse(m.created_at) || 0), 0);
+      const tempId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      usePendingMessages.getState().add({
         tempId,
-      };
+        threadId: vars.threadId,
+        senderId: userId,
+        body: vars.body,
+        createdAt: new Date(Math.max(Date.now(), newest + 1)).toISOString(),
+      });
+      return { tempId };
     },
     onError: (_err, vars, context: any) => {
-      if (context?.undo) try { context.undo(); } catch {}
+      if (context?.tempId) usePendingMessages.getState().remove(vars.threadId, context.tempId);
     },
     onSuccess: (msg, vars, context: any) => {
       // Ring the recipient's phone. Fired here rather than from a poll
@@ -427,21 +478,20 @@ export function useSendMessage() {
       // push that fails must never surface as a failed send.
       void notifyPush((msg as any)?.id);
 
-      // Replace the temp row with the real one in-place so the bubble
-      // doesn't visibly re-render and shift around.
+      // The real row goes into the cache; the pending bubble is marked
+      // settled rather than deleted. It keeps drawing until this id is
+      // provably in the fetched list, so a refetch that started before
+      // the INSERT committed and resolves after it cannot blink the
+      // message out on its way past.
       const key = ['thread-messages', vars.threadId];
-      const tempId = context?.tempId;
       qc.setQueryData<ChatMessage[]>(key, (cur) => {
         if (!cur) return [msg];
-        const swapped = cur.map((m) => (m.id === tempId ? msg : m));
-        // De-dup in case realtime already delivered the real one.
-        const seen = new Set<string>();
-        return swapped.filter((m) => {
-          if (seen.has(m.id)) return false;
-          seen.add(m.id);
-          return true;
-        });
+        if (cur.some((m) => m.id === msg.id)) return cur;
+        return [...cur, msg];
       });
+      if (context?.tempId) {
+        usePendingMessages.getState().settle(vars.threadId, context.tempId, msg.id);
+      }
       qc.invalidateQueries({ queryKey: ['threads'] });
     },
   });

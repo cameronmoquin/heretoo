@@ -240,11 +240,19 @@ export default function ChatThread() {
         .finally(() => setBurnSending(false));
       return;
     }
+    // Clear the box NOW, not on the server's answer. Waiting meant that
+    // on a phone the same sentence sat in the composer and in a bubble
+    // below it for the length of the round-trip, and the send button
+    // stayed disabled the whole time. If the send fails the text comes
+    // back, so nothing is lost by clearing early.
+    setDraft('');
     send.mutate(
       { threadId, body },
       {
-        onSuccess: () => setDraft(''),
-        onError: (e: any) => showAlert('Could not send', e?.message ?? 'Try again.'),
+        onError: (e: any) => {
+          setDraft((d) => (d ? d : body));
+          showAlert('Could not send', e?.message ?? 'Try again.');
+        },
       },
     );
   };
@@ -335,10 +343,13 @@ export default function ChatThread() {
             const isMine = m.sender_id === userId;
             return (
               <View key={m.id} style={[s.bubbleWrap, isMine ? s.bubbleWrapMine : s.bubbleWrapTheirs]}>
-                <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleTheirs]}>
+                {/* In flight. The bubble is real and stays put; the half
+                    tone is the only thing that says the server has not
+                    answered yet. */}
+                <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleTheirs, m.pending && s.bubbleUnsent]}>
                   <Text style={isMine ? s.bubbleTextMine : s.bubbleTextTheirs}>{m.body}</Text>
                 </View>
-                <Text style={s.bubbleTime}>{relTime(m.created_at)}</Text>
+                {!m.pending && <Text style={s.bubbleTime}>{relTime(m.created_at)}</Text>}
               </View>
             );
           })}
@@ -421,7 +432,11 @@ export default function ChatThread() {
             <TouchableOpacity
               style={[s.composerSend, burn && s.composerSendBurn, !draft.trim() && { opacity: 0.4 }]}
               onPress={submit}
-              disabled={!draft.trim() || send.isPending || burnSending}
+              // NOT gated on send.isPending. One mutation instance backs
+              // every send in the thread, so a slow round-trip locked the
+              // button and swallowed the next message — worst exactly
+              // where sends are slowest.
+              disabled={!draft.trim() || burnSending}
             >
               <Ionicons name={burn ? 'flame' : 'send'} size={18} color={Colors.onPrimary} />
             </TouchableOpacity>
@@ -503,6 +518,7 @@ function makeStyles() { return StyleSheet.create({
   // The 4px tail corner is bubble geometry — no Radius token is that tight.
   bubbleMine: { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },
   bubbleTheirs: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, borderBottomLeftRadius: 4 },
+  bubbleUnsent: { opacity: 0.55 },
   bubbleTextMine: { color: Colors.onPrimary, fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight },
   bubbleTextTheirs: { color: Colors.textPrimary, fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight },
   bubbleTime: { fontSize: 10, color: Colors.textMuted, marginTop: 2, marginHorizontal: Spacing.xxs },
