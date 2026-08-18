@@ -39,10 +39,23 @@ export interface PendingMessage {
   threadId: string;
   senderId: string;
   body: string;
-  /** Client clock, floored to just after the newest message we know of. */
+  /** Client clock, floored past everything we already know about. */
   createdAt: string;
   /** The real row's id, once the insert has answered. */
   settledId?: string;
+  /**
+   * Every message id the thread already held when this was queued.
+   *
+   * This is what makes the fuzzy match safe. Matching on sender + body
+   * alone would retire a bubble against a message the user sent an hour
+   * ago; the first attempt guarded that with a timestamp window, which
+   * was wrong in both directions — the floor below stamps a pending
+   * message at newest+1ms, so on a lagging device clock the newest
+   * existing row sat inside any tolerance you picked. A row that was not
+   * there when we queued cannot be a row from an hour ago, and no clock
+   * is involved.
+   */
+  knownIds: Set<string>;
 }
 
 interface PendingState {
@@ -50,8 +63,20 @@ interface PendingState {
   add: (m: PendingMessage) => void;
   /** The insert answered. Keep drawing until the real row shows up. */
   settle: (threadId: string, tempId: string, realId: string) => void;
-  /** The insert failed, or the real row has arrived. Stop drawing. */
+  /** The insert failed. Stop drawing, nothing was claimed. */
   remove: (threadId: string, tempId: string) => void;
+  /**
+   * The row arrived and this bubble is done. Drops the entry AND hands
+   * its row id to everyone still waiting.
+   *
+   * The hand-off is the point. A claim used to live only in the working
+   * set of whoever was matching at that moment, so deleting a finished
+   * bubble released its row — and the next pending message with the same
+   * text immediately matched it and vanished while its own insert was
+   * still in flight. Writing the id into the survivors' knownIds makes
+   * the claim permanent and independent of who is still in the list.
+   */
+  retire: (threadId: string, tempId: string, rowId: string) => void;
 }
 
 export const usePendingMessages = create<PendingState>((set) => ({
@@ -81,6 +106,23 @@ export const usePendingMessages = create<PendingState>((set) => ({
     else byThread[threadId] = next;
     return { byThread };
   }),
+
+  retire: (threadId, tempId, rowId) => set((s) => {
+    const list = s.byThread[threadId];
+    if (!list) return s;
+    const next = list
+      .filter((p) => p.tempId !== tempId)
+      .map((p) => {
+        if (!rowId || p.knownIds.has(rowId)) return p;
+        const knownIds = new Set(p.knownIds);
+        knownIds.add(rowId);
+        return { ...p, knownIds };
+      });
+    const byThread = { ...s.byThread };
+    if (next.length === 0) delete byThread[threadId];
+    else byThread[threadId] = next;
+    return { byThread };
+  }),
 }));
 
 /** Nothing pending is the common case; keep the same array identity for it. */
@@ -99,26 +141,58 @@ export function pendingFor(byThread: Record<string, PendingMessage[]>, threadId:
  * thread's own realtime channel does NOT filter out self-inserts, so a
  * refetch it triggers can deliver the real row BEFORE the insert's
  * promise resolves — at which point there is no id to match on yet and
- * the message would draw twice. Same sender, same body, at or after the
- * moment we queued it, is that row. Each server row can only retire one
- * pending message, so sending the same word twice still shows twice.
+ * the message would draw twice. A row that was absent when we queued,
+ * from us, with our text, is that row.
+ *
+ * ONE SERVER ROW RETIRES AT MOST ONE BUBBLE, so sending the same word
+ * twice still shows twice. That is why the settled pass runs first and
+ * claims its rows: it used to return early WITHOUT claiming, which left
+ * the row free for the next identical message to match, and the second
+ * bubble vanished while its own insert was still in flight.
  */
-export function unsettled<T extends { id: string; sender_id: string; body: string; created_at: string }>(
+export function matchRows<T extends { id: string; sender_id: string; body: string }>(
+  pending: PendingMessage[],
+  serverRows: T[],
+): Map<string, string> {
+  const out = new Map<string, string>();
+  if (pending.length === 0) return out;
+  const ids = new Set(serverRows.map((m) => m.id));
+
+  // Pass one: every settled bubble claims its row, before any fuzzy
+  // match can take it. Order within `pending` must not decide who wins.
+  const claimed = new Set<string>();
+  for (const p of pending) {
+    if (p.settledId && ids.has(p.settledId)) {
+      claimed.add(p.settledId);
+      out.set(p.tempId, p.settledId);
+    }
+  }
+
+  // Pass two: the rest match against what is left.
+  for (const p of pending) {
+    if (out.has(p.tempId)) continue;
+    const match = serverRows.find((m) =>
+      !claimed.has(m.id)
+      && !p.knownIds.has(m.id)
+      && m.sender_id === p.senderId
+      && m.body === p.body,
+    );
+    if (match) { claimed.add(match.id); out.set(p.tempId, match.id); }
+  }
+
+  return out;
+}
+
+/**
+ * The bubbles still worth drawing. Always call with the COMPLETE pending
+ * list for the thread — the claim bookkeeping lives in that list, so
+ * feeding this function its own output lets a row retire a second bubble.
+ */
+export function unsettled<T extends { id: string; sender_id: string; body: string }>(
   pending: PendingMessage[],
   serverRows: T[],
 ): PendingMessage[] {
   if (pending.length === 0) return NONE;
-  const ids = new Set(serverRows.map((m) => m.id));
-  const claimed = new Set<string>();
-  return pending.filter((p) => {
-    if (p.settledId && ids.has(p.settledId)) return false;
-    const match = serverRows.find((m) =>
-      !claimed.has(m.id)
-      && m.sender_id === p.senderId
-      && m.body === p.body
-      && Date.parse(m.created_at) >= Date.parse(p.createdAt) - 1000,
-    );
-    if (match) { claimed.add(match.id); return false; }
-    return true;
-  });
+  const matched = matchRows(pending, serverRows);
+  return pending.filter((p) => !matched.has(p.tempId));
 }

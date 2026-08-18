@@ -139,12 +139,33 @@ export default function ChatThread() {
   });
 
   // One timeline, chat and drops interleaved by when they happened.
+  //
+  // Sorted on parsed time, not on the raw strings. Postgres hands back
+  // "…+00:00" and the client stamps "…Z", so a string compare of two
+  // identical instants ordered them by their suffix.
+  //
+  // In-flight messages are pinned to the bottom regardless. Their stamp
+  // is the client's tap time while a settled row carries the database's
+  // insert time, so an earlier message's real row can legitimately
+  // outrank a later message's pending stamp and the two would swap. A
+  // message you have not finished sending is always the newest thing in
+  // the conversation.
   const timeline = React.useMemo(() => {
-    const items: Array<{ kind: 'msg' | 'drop'; at: string; m?: any; d?: any }> = [
-      ...(messages ?? []).map((m: any) => ({ kind: 'msg' as const, at: m.created_at, m })),
-      ...(drops ?? []).map((d: any) => ({ kind: 'drop' as const, at: d.created_at, d })),
+    const items: Array<{ kind: 'msg' | 'drop'; at: number; flight: number; m?: any; d?: any }> = [
+      ...(messages ?? []).map((m: any) => ({
+        kind: 'msg' as const,
+        at: Date.parse(m.created_at) || 0,
+        flight: m.pending ? 1 : 0,
+        m,
+      })),
+      ...(drops ?? []).map((d: any) => ({
+        kind: 'drop' as const,
+        at: Date.parse(d.created_at) || 0,
+        flight: 0,
+        d,
+      })),
     ];
-    return items.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    return items.sort((a, b) => (a.flight - b.flight) || (a.at - b.at));
   }, [messages, drops]);
 
   // A drop landing (INSERT) or burning (UPDATE stamps burned_at) both
@@ -246,15 +267,20 @@ export default function ChatThread() {
     // stayed disabled the whole time. If the send fails the text comes
     // back, so nothing is lost by clearing early.
     setDraft('');
-    send.mutate(
-      { threadId, body },
-      {
-        onError: (e: any) => {
-          setDraft((d) => (d ? d : body));
-          showAlert('Could not send', e?.message ?? 'Try again.');
-        },
-      },
-    );
+    // mutateAsync, NOT mutate with per-call options. One mutation
+    // observer backs every send in this thread, and its per-call
+    // callbacks are overwritten by the next call — so with the send
+    // button no longer gated on isPending, a second send made the first
+    // send's error handler unreachable and a failure passed in silence.
+    // The promise returned here belongs to this send alone.
+    send.mutateAsync({ threadId, body }).catch((e: any) => {
+      // Put the words back. Restoring only into an empty composer meant
+      // that anyone who started typing again while the send was in
+      // flight lost the failed sentence outright: not in the box, not in
+      // a bubble, not in the store, not on the server.
+      setDraft((d) => (d.trim() ? `${body}\n${d}` : body));
+      showAlert('Could not send', e?.message ?? 'Try again.');
+    });
   };
 
   if (threadLoading || messagesLoading) {

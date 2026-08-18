@@ -20,9 +20,18 @@ import { Platform } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
-import { usePendingMessages, pendingFor, unsettled } from '../stores/pendingMessages';
+import { usePendingMessages, pendingFor, unsettled, matchRows } from '../stores/pendingMessages';
 
 export type ThreadStatus = 'open' | 'pending' | 'declined';
+
+/**
+ * How long a retired bubble keeps its entry before it is thrown away.
+ *
+ * Long enough to outlast any refetch that was already in the air when
+ * the message committed, since such a refetch resolves without the new
+ * row and would otherwise erase a message nothing could redraw.
+ */
+const RETIRE_GRACE_MS = 15_000;
 
 export interface MessageThread {
   id: string;
@@ -312,7 +321,7 @@ export function useThreadMessages(threadId: string | null) {
   // outside the query cache precisely so the refetches above cannot
   // delete them mid-send; see stores/pendingMessages.ts.
   const byThread = usePendingMessages((s) => s.byThread);
-  const remove = usePendingMessages((s) => s.remove);
+  const retire = usePendingMessages((s) => s.retire);
   const pending = pendingFor(byThread, threadId);
 
   const live = useMemo(
@@ -320,12 +329,50 @@ export function useThreadMessages(threadId: string | null) {
     [pending, query.data],
   );
 
-  // Retired bubbles are dropped on a later tick, never during render.
+  // Retirement is a DRAWING decision, recomputed every render. Dropping
+  // the entry is a separate, deliberately late step.
+  //
+  // Deleting the instant a row appeared was wrong twice over. A refetch
+  // that started before the INSERT committed can resolve afterwards and
+  // replace the array WITHOUT the new row — and with the entry already
+  // deleted there was nothing left to draw the bubble again, so the
+  // message showed and then disappeared. That is the original bug moved
+  // one step later, not fixed. Keeping the entry means `unsettled` sees
+  // the row go missing and simply draws it again; it heals both ways.
+  //
+  // It also fed its own output back in: remove() changed `pending`, which
+  // recomputed `live` with a FRESH claim set, so a row that had already
+  // retired one bubble was free to retire the next identical one, and a
+  // duplicate send lost its second bubble one pass at a time.
+  const retiredKey = useMemo(() => {
+    if (pending.length === live.length) return '';
+    const drawn = new Set(live.map((p) => p.tempId));
+    return pending.filter((p) => !drawn.has(p.tempId)).map((p) => p.tempId).join(',');
+  }, [pending, live]);
+
   useEffect(() => {
-    if (!threadId || pending.length === live.length) return;
-    const keep = new Set(live.map((p) => p.tempId));
-    for (const p of pending) if (!keep.has(p.tempId)) remove(threadId, p.tempId);
-  }, [threadId, pending, live, remove]);
+    if (!threadId || !retiredKey) return;
+    const ids = new Set(retiredKey.split(','));
+    const t = setTimeout(() => {
+      // Re-decided against the cache as it stands NOW, not as it stood
+      // when the timer was set. Anything that has gone missing in the
+      // meantime keeps its entry and keeps drawing.
+      //
+      // Matched against the WHOLE list, not just the entries being
+      // dropped: the claim bookkeeping only works on the complete set.
+      // Each drop then hands its row id to the survivors so the claim
+      // does not die with the entry.
+      const rows = qc.getQueryData<ChatMessage[]>(['thread-messages', threadId]) ?? [];
+      const all = usePendingMessages.getState().byThread[threadId] ?? [];
+      const matched = matchRows(all, rows);
+      for (const p of all) {
+        if (!ids.has(p.tempId)) continue;
+        const rowId = matched.get(p.tempId);
+        if (rowId) retire(threadId, p.tempId, rowId);
+      }
+    }, RETIRE_GRACE_MS);
+    return () => clearTimeout(t);
+  }, [threadId, retiredKey, retire, qc]);
 
   const data = useMemo(() => {
     const rows = query.data ?? [];
@@ -457,7 +504,18 @@ export function useSendMessage() {
       // Sort last, even on a phone whose clock disagrees with the
       // server's. A device running a few minutes slow used to file its
       // own new message into the middle of the conversation.
-      const newest = prev.reduce((max, m) => Math.max(max, Date.parse(m.created_at) || 0), 0);
+      //
+      // The floor has to clear the messages ALREADY IN FLIGHT too, not
+      // just the cache. Pending sends are deliberately not in the cache,
+      // so two taps inside one round trip both read the same `newest`
+      // and both stamped newest+1ms — identical, and their order after
+      // that was whatever the sort happened to do.
+      const inFlight = usePendingMessages.getState().byThread[vars.threadId] ?? [];
+      const newest = Math.max(
+        0,
+        ...prev.map((m) => Date.parse(m.created_at) || 0),
+        ...inFlight.map((p) => Date.parse(p.createdAt) || 0),
+      );
       const tempId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       usePendingMessages.getState().add({
         tempId,
@@ -465,6 +523,9 @@ export function useSendMessage() {
         senderId: userId,
         body: vars.body,
         createdAt: new Date(Math.max(Date.now(), newest + 1)).toISOString(),
+        // What the thread already held. Anything outside this set is new,
+        // which is what lets the fuzzy match work without consulting a clock.
+        knownIds: new Set(prev.map((m) => m.id)),
       });
       return { tempId };
     },
