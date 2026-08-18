@@ -30,6 +30,16 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# sw.js: never cache. This is the one file where a stale copy is
+# self-perpetuating — an old worker keeps serving an old app AND keeps
+# deciding when it is allowed to update itself. Netlify's default already
+# happens to be no-cache; pinning it means a default change cannot
+# silently strand every installed PWA.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 # Fingerprinted JS/CSS bundles: cache aggressively (1 year).
 # Expo adds a content hash to every filename, so a new build = new filename.
 [[headers]]

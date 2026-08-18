@@ -12,13 +12,20 @@
  * the network — otherwise we'd lose writes.
  */
 
-// v131 adds the push and notificationclick handlers at the foot of this file.
-// Bumping is what makes browsers install the new worker rather than keeping
-// the cached one, which would have no push listener at all.
-const VERSION = 'heretoo-v131';
+// v132 refreshes the offline shell on every successful load and prunes
+// superseded bundles. The bump is not cosmetic: activate() deletes every
+// cache that does not start with VERSION, which is what evicts the stale
+// v131 shell and the old bundles it pointed at from devices already stuck
+// on them. Bumping is also what makes browsers install a new worker
+// rather than keeping the cached one.
+const VERSION = 'heretoo-v132';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSETS_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;
+
+// The one key the offline fallback is stored under. Every navigation in a
+// SPA returns the same document, so there is exactly one shell.
+const SHELL_KEY = '/index.html';
 
 const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
@@ -61,6 +68,34 @@ function isHtml(request) {
     || request.headers.get('accept')?.includes('text/html');
 }
 
+/**
+ * Drop entry bundles the live HTML no longer references.
+ *
+ * Two reasons. The bundle is ~3.8MB and assets are cache-first and never
+ * evicted within a VERSION, so every deploy left another copy behind
+ * forever — and an origin that blows its storage budget gets its whole
+ * quota reclaimed by the browser, taking the working cache with it.
+ * Second, a superseded bundle sitting in the cache is exactly what let a
+ * stale shell boot an old app. Nothing references it; nothing should keep
+ * it.
+ *
+ * Only entry-*.js is touched. Fonts, images and CSS are left alone.
+ */
+async function pruneSupersededBundles(html) {
+  const m = /\/_expo\/static\/js\/web\/(entry-[a-f0-9]+\.js)/.exec(html || '');
+  if (!m) return;
+  const current = m[1];
+  const cache = await caches.open(ASSETS_CACHE);
+  const keys = await cache.keys();
+  await Promise.all(keys.map((request) => {
+    const name = new URL(request.url).pathname.split('/').pop() || '';
+    if (/^entry-[a-f0-9]+\.js$/.test(name) && name !== current) {
+      return cache.delete(request);
+    }
+    return undefined;
+  }));
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
@@ -68,32 +103,63 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   if (isHtml(req)) {
-    // Network-only for HTML during active development. Caching index.html
-    // and falling back to it is the classic PWA cache-trap: cached HTML
-    // pins users to a stale fingerprinted-bundle URL that no longer
-    // exists on the CDN, breaking the whole app. Refusing the cache
-    // means users always see the live HTML pointing to live bundles.
-    // We give up offline support for HTML; assets + Supabase GETs are
-    // still cached so the feed loads offline once seen.
-    event.respondWith(
-      fetch(req).catch(async () =>
-        (await caches.match('/index.html')) ?? Response.error(),
-      ),
-    );
+    // Network-first, and the fallback is kept in step with the network.
+    //
+    // The previous version fell back to an index.html precached at INSTALL
+    // time and never refreshed. That copy pins the device to whatever
+    // bundle was live the day the worker installed — a hash that is
+    // cache-first below and may no longer exist on the CDN at all. One
+    // failed fetch on a flaky connection was enough to boot a months-old
+    // app that looked completely normal and stayed that way, because
+    // nothing in the loop ever advanced the shell. The stale-HTML trap the
+    // old comment warned about was still here, just one step quieter.
+    //
+    // Now every successful load rewrites the fallback, so the worst the
+    // offline path can serve is the last HTML this device actually saw,
+    // whose bundle is by construction the one sitting in ASSETS_CACHE.
+    event.respondWith((async () => {
+      try {
+        const res = await fetch(req);
+        if (res && res.ok) {
+          const forCache = res.clone();
+          const forParse = res.clone();
+          event.waitUntil((async () => {
+            try {
+              const cache = await caches.open(SHELL_CACHE);
+              await cache.put(SHELL_KEY, forCache);
+              await pruneSupersededBundles(await forParse.text());
+            } catch {
+              // A cache write failing must never fail the navigation.
+            }
+          })());
+        }
+        return res;
+      } catch {
+        const cache = await caches.open(SHELL_CACHE);
+        return (await cache.match(SHELL_KEY)) ?? Response.error();
+      }
+    })());
     return;
   }
 
   if (isAsset(req)) {
-    event.respondWith(
-      caches.match(req).then((cached) =>
-        cached
-        ?? fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(ASSETS_CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          return res;
-        }),
-      ),
-    );
+    event.respondWith((async () => {
+      // Scoped to this version's cache. A bare caches.match() searches
+      // every cache on the origin, so a leftover from an older VERSION
+      // could still be served ahead of the network.
+      const cache = await caches.open(ASSETS_CACHE);
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      const res = await fetch(req);
+      // Only store what actually came back. Caching a 404 for a bundle
+      // the CDN has dropped would make that failure permanent, and
+      // fingerprinted URLs never retry under a different name.
+      if (res && res.ok) {
+        const copy = res.clone();
+        event.waitUntil(cache.put(req, copy).catch(() => {}));
+      }
+      return res;
+    })());
     return;
   }
 
