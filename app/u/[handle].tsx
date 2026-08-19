@@ -213,6 +213,37 @@ export default function UserProfile() {
           </View>
         )}
 
+        {/* Shared connections — the graph read from their side. Their
+            3-hop reach intersected with yours, so nobody outside your
+            own reach ever appears; /network already shows all of these
+            people. This answers the same question from the other end. */}
+        {sharedConnections.length > 0 && (
+          <View style={s.section}>
+            <Eyebrow>Shared connections</Eyebrow>
+            {sharedConnections.slice(0, 12).map((c: any) => (
+              <TouchableOpacity
+                key={c.id}
+                style={s.familyRow}
+                onPress={() => c.handle && router.push(`/u/${c.handle}` as any)}
+                disabled={!c.handle}
+                activeOpacity={0.7}
+              >
+                <View style={s.familyIcon}>
+                  {c.avatar_path ? (
+                    <Image source={{ uri: mediaPathToUrl(c.avatar_path) }} style={s.familyIconImg} />
+                  ) : (
+                    <Ionicons name="person" size={16} color={Colors.primary} />
+                  )}
+                </View>
+                <Text style={s.familyName}>
+                  {c.display_name ?? (c.handle ? `@${c.handle}` : 'Member')}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Their style — radio + gallery picks. Reads from
             profile.style_prefs which is synced from the user's own
             stores (radioStore, artPrefsStore). The visited person's
