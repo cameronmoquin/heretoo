@@ -39,11 +39,11 @@ export function MemoirWelcome({ initialTitle, onComplete, onSkip }: Props) {
     : { primary: Colors.textPrimary, accent: Colors.primary, secondary: Colors.textSecondary, onAccent: '#0A0A0F' };
 
   const [step, setStep] = useState(0);
-  const [title, setTitle] = useState(initialTitle || 'My Life, So Far');
+  const [title, setTitle] = useState(initialTitle || '');
 
   const next = () => {
     if (step < STEPS - 1) setStep(step + 1);
-    else onComplete(title.trim() || 'My Life, So Far');
+    else onComplete(title.trim() || 'Memoir');
   };
   const back = () => { if (step > 0) setStep(step - 1); };
 
@@ -101,7 +101,7 @@ export function MemoirWelcome({ initialTitle, onComplete, onSkip }: Props) {
                 style={s.titleInput}
                 value={title}
                 onChangeText={setTitle}
-                placeholder="My Life, So Far"
+                placeholder=""
                 placeholderTextColor={elder ? '#9A9684' : Colors.textMuted}
                 maxLength={120}
                 autoFocus

@@ -59,7 +59,7 @@ export default function MemoirBookScreen() {
     if (!projectId) return;
     await updateProject.mutateAsync({
       id: projectId,
-      patch: { title: title.trim() || 'My Life, So Far', dedication: dedication.trim() || null },
+      patch: { title: title.trim() || 'Memoir', dedication: dedication.trim() || null },
     }).catch(() => {});
   };
 
@@ -97,8 +97,6 @@ export default function MemoirBookScreen() {
             value={title}
             onChangeText={setTitle}
             onBlur={saveMeta}
-            placeholder="My Life, So Far"
-            placeholderTextColor={Colors.textMuted}
             maxLength={120}
           />
         </View>

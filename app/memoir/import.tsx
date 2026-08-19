@@ -149,14 +149,21 @@ export default function MemoirImportScreen() {
     const file = files?.[0];
     if (!file) return;
     try {
-      const t = await file.text();
-      if (readableRatio(t) < 0.85) {
+      // A .docx is a ZIP, so file.text() reads as noise and the ratio
+      // check below would bounce it. lib/docx-text unzips the one entry
+      // that matters in the browser; nothing leaves the device.
+      const isDocx = /\.docx$/i.test(file.name)
+        || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const t = isDocx ? await docxToText(await file.arrayBuffer()) : await file.text();
+      if (!isDocx && readableRatio(t) < 0.85) {
         showAlert('Could not read the file', 'This file is not plain text. Paste its text instead.');
+      } else if (!t.trim()) {
+        showAlert('Could not read the file', 'Nothing readable inside. Paste its text instead.');
       } else {
         setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${t}` : t));
       }
-    } catch {
-      showAlert('Could not read the file', 'Paste its text instead.');
+    } catch (e: any) {
+      showAlert('Could not read the file', e?.message ?? 'Paste its text instead.');
     }
     if (evt.target) evt.target.value = '';
   };

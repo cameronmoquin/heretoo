@@ -55,7 +55,7 @@ export default function MemoirPreviewScreen() {
   const authorName =
     profile?.display_name?.trim() ||
     (profile?.handle ? `@${profile.handle}` : 'Anonymous');
-  const title = project?.title?.trim() || 'My Life, So Far';
+  const title = project?.title?.trim() || 'Memoir';
   const dedication = project?.dedication?.trim() || '';
 
   const isEmpty = book.entryCount === 0 && book.photoCount === 0;
