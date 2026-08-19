@@ -48,6 +48,7 @@ import { RailCard } from '../../components/shared/RailCard';
 import { Eyebrow } from '../../components/shared/Eyebrow';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { ReadingSizeAction } from '../../components/memoir/ReadingSizeAction';
+import { TimelineRail } from '../../components/memoir/TimelineRail';
 
 /** A prompt-and-its-tree the interview is currently sitting on.
  *  Either a library prompt (the user just landed on it) or a
@@ -320,13 +321,18 @@ export default function MemoirScreen() {
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <ScreenHeader
-        title={project?.title ?? 'Memoir'}
+        title="Memoir"
         showBack
         onBack={onSaveAndStepAway}
         backLabel="Save and step away"
         right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
       />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+      {/* The life on the left, the writing on the right. The rail reads
+          the same events the timeline writes, so it grows as entries
+          land, and each dot opens the timeline focused on its event. */}
+      <View style={s.railRow}>
+        <TimelineRail />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Room nav. */}
         <View style={s.nav}>
           <Button
@@ -335,13 +341,6 @@ export default function MemoirScreen() {
             size="sm"
             onPress={() => router.push('/memoir/timeline')}
             icon={<Ionicons name="git-commit-outline" size={14} color={Colors.primary} />}
-          />
-          <Button
-            title="Import a resume or transcript"
-            variant="outline"
-            size="sm"
-            onPress={() => router.push('/memoir/import')}
-            icon={<Ionicons name="document-attach-outline" size={14} color={Colors.primary} />}
           />
           {(responses ?? []).length > 0 && (
             <>
@@ -504,6 +503,7 @@ export default function MemoirScreen() {
           </Animated.View>
         )}
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -720,7 +720,8 @@ function makeStyles(scale: number = 1) {
   const bodyFont = Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {};
 
   return StyleSheet.create({
-    root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
+    railRow: { flex: 1, flexDirection: 'row' },
+  root: { flex: 1, backgroundColor: 'transparent', maxWidth: 720, alignSelf: 'center', width: '100%' },
     scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 100, paddingTop: Spacing.sm, gap: Spacing.lg },
 
     nav: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },

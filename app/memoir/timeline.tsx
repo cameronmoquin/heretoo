@@ -34,7 +34,7 @@ import {
   Platform, ActivityIndicator, Modal, Switch, Image as RNImage,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useTimelineEvents,
@@ -137,6 +137,12 @@ export default function MemoirTimelineScreen() {
   const reading = useMemoirReadingMode();
   const { scale, large } = reading;
   const s = makeStyles(scale);
+  // A rail dot lands here focused on its event: that card arrives
+  // expanded, with its entries readable, and the page scrolls to it.
+  const { focus } = useLocalSearchParams<{ focus?: string }>();
+  const focusId = typeof focus === 'string' ? focus : null;
+  const scrollRef = useRef<ScrollView | null>(null);
+  const focusY = useRef<number | null>(null);
 
   const { data: projectId } = useEnsureMemoirProject();
   const eventsQ = useTimelineEvents(projectId);
@@ -330,8 +336,9 @@ export default function MemoirTimelineScreen() {
         backLabel="Back"
         right={<ReadingSizeAction large={large} onToggle={reading.toggle} />}
       />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {/* Add affordances */}
+      <ScrollView ref={scrollRef} contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        {/* Add affordances. Import lives HERE now — everything that
+            feeds the spine is inside the room the spine lives in. */}
         <View style={s.addRow}>
           <Button
             title="Add event"
@@ -339,6 +346,13 @@ export default function MemoirTimelineScreen() {
             size="sm"
             onPress={() => openAdd()}
             icon={<Ionicons name="add" size={16} color={Colors.primary} />}
+          />
+          <Button
+            title="Import"
+            variant="outline"
+            size="sm"
+            onPress={() => router.push('/memoir/import')}
+            icon={<Ionicons name="document-attach-outline" size={14} color={Colors.primary} />}
           />
           <Button
             title="Seed school years"
@@ -363,6 +377,12 @@ export default function MemoirTimelineScreen() {
                 ensureSession={ensureSession}
                 onEdit={openEdit}
                 onDelete={onDeleteEvent}
+                focused={e.id === focusId}
+                onLayoutY={(y) => {
+                  if (e.id !== focusId || focusY.current !== null) return;
+                  focusY.current = y;
+                  scrollRef.current?.scrollTo({ y: Math.max(0, y - 80), animated: true });
+                }}
               />
             ))}
 
@@ -382,6 +402,12 @@ export default function MemoirTimelineScreen() {
                 ensureSession={ensureSession}
                 onEdit={openEdit}
                 onDelete={onDeleteEvent}
+                focused={e.id === focusId}
+                onLayoutY={(y) => {
+                  if (e.id !== focusId || focusY.current !== null) return;
+                  focusY.current = y;
+                  scrollRef.current?.scrollTo({ y: Math.max(0, y - 80), animated: true });
+                }}
               />
             ))}
           </View>
@@ -530,6 +556,7 @@ export default function MemoirTimelineScreen() {
 
 function EventCard({
   event, projectId, scale, first, last, ensureSession, onEdit, onDelete,
+  focused = false, onLayoutY,
 }: {
   event: TimelineEvent;
   projectId: string | null;
@@ -539,9 +566,13 @@ function EventCard({
   ensureSession: () => Promise<string | null>;
   onEdit: (e: TimelineEvent) => void;
   onDelete: (e: TimelineEvent) => void;
+  /** The rail sent the reader here: arrive open, and report where you
+   *  landed so the page can scroll to you. */
+  focused?: boolean;
+  onLayoutY?: (y: number) => void;
 }) {
   const s = makeStyles(scale);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(focused);
   const [answerOpen, setAnswerOpen] = useState(false);
   const [answer, setAnswer] = useState('');
   // Rotation cursor for "different question" within this event's kind.
@@ -647,7 +678,10 @@ function EventCard({
   };
 
   return (
-    <View style={[s.spineRow, last && s.spineRowLast]}>
+    <View
+      style={[s.spineRow, last && s.spineRowLast]}
+      onLayout={(e) => onLayoutY?.(e.nativeEvent.layout.y)}
+    >
       {/* Gutter: continuous line + node */}
       <View style={s.gutter}>
         <View style={[s.line, first && s.lineFirst, last && s.lineLast]} />
@@ -682,7 +716,7 @@ function EventCard({
             {responses.length > 0 && (
               <View style={s.section}>
                 <Eyebrow accentColor={Colors.primary}>Answers</Eyebrow>
-                {responses.map((r) => <ResponseRow key={r.id} response={r} scale={scale} />)}
+                {responses.map((r) => <ResponseRow key={r.id} response={r} scale={scale} projectId={projectId} />)}
               </View>
             )}
 
@@ -767,13 +801,77 @@ function EventCard({
 
 // ── An answered prompt inside an event ──────────────────────────────
 
-function ResponseRow({ response, scale }: { response: MemoirResponse; scale: number }) {
+/**
+ * One saved entry under an event: a heading first, the prose on tap,
+ * and the prose editable in place. The heading is the prompt the entry
+ * answered, or its own first words when it answered no prompt (a
+ * journal send, an import). Reading is one tap; editing is one more.
+ */
+function ResponseRow({ response, scale, projectId }: {
+  response: MemoirResponse; scale: number; projectId: string | null;
+}) {
   const s = makeStyles(scale);
+  const update = useUpdateMemoirResponse();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
   const q = response.prompt?.primary_question ?? response.custom_prompt_text ?? '';
+  const heading = q || `${(response.final_text ?? '').slice(0, 64)}${(response.final_text ?? '').length > 64 ? '…' : ''}`;
+
+  const onSave = () => {
+    if (!projectId) return;
+    update.mutate(
+      { id: response.id, projectId, patch: { final_text: draft } },
+      {
+        onSuccess: () => setEditing(false),
+        onError: (e: any) => showAlert('Could not save', e?.message ?? 'Try again.'),
+      },
+    );
+  };
+
   return (
     <View style={s.respRow}>
-      {!!q && <Text style={s.respQ}>{q}</Text>}
-      <Text style={s.respBody}>{response.final_text}</Text>
+      <TouchableOpacity
+        onPress={() => setOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityLabel={`${heading}. ${open ? 'Collapse' : 'Read'}`}
+        activeOpacity={0.7}
+        style={s.respHead}
+      >
+        <Text style={[s.respQ, { flex: 1 }]} numberOfLines={open ? undefined : 2}>{heading}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
+      </TouchableOpacity>
+      {open && !editing && (
+        <>
+          <Text style={s.respBody}>{editing ? draft : (update.isPending ? draft : response.final_text)}</Text>
+          <TouchableOpacity
+            style={s.linkBtn}
+            onPress={() => { setDraft(response.final_text ?? ''); setEditing(true); }}
+            accessibilityRole="button"
+            accessibilityLabel="Edit this entry"
+            activeOpacity={0.85}
+          >
+            <Text style={s.linkText}>Edit</Text>
+          </TouchableOpacity>
+        </>
+      )}
+      {open && editing && (
+        <>
+          <TextInput
+            style={[s.input, s.answerInput]}
+            value={draft}
+            onChangeText={setDraft}
+            multiline
+            textAlignVertical="top"
+            accessibilityLabel="Entry text"
+          />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Button title="Save" size="sm" onPress={onSave} loading={update.isPending} />
+            <Button title="Cancel" variant="ghost" size="sm" onPress={() => setEditing(false)} />
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -988,6 +1086,7 @@ function makeStyles(scale: number = 1) {
       gap: 3, paddingVertical: 8,
       borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border,
     },
+    respHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     respQ: { fontSize: fs(Type.caption.size), color: Colors.primary, fontStyle: 'italic', fontWeight: '600', ...bodyFont },
     respBody: { fontSize: fs(Type.ui.size), lineHeight: fs(Type.ui.lineHeight + 5), color: Colors.textPrimary, ...bodyFont },
 

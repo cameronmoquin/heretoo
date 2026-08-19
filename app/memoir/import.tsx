@@ -35,6 +35,7 @@ import {
 } from '../../hooks/useMemoirTimeline';
 import { useMemoirReadingMode } from '../../hooks/useMemoirReadingMode';
 import { showAlert } from '../../lib/alert';
+import { docxToText } from '../../lib/docx-text';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, FontFamily } from '../../constants/design';
 import { Button } from '../../components/shared/Button';
@@ -229,12 +230,12 @@ export default function MemoirImportScreen() {
                   Upload a file
                   <input
                     type="file"
-                    accept=".txt,.md,.text,.csv,.rtf,.pdf,text/plain,application/pdf"
+                    accept=".txt,.md,.text,.csv,.rtf,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     onChange={onPickFile}
                     style={({ display: 'none' } as any)}
                   />
                 </label>
-                <Text style={s.footnote}>Text or PDF. Scans need OCR.</Text>
+                <Text style={s.footnote}>Text, PDF, or Word (.docx). Scans need OCR.</Text>
               </View>
             )}
 
