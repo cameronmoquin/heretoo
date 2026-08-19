@@ -51,7 +51,6 @@ export default function RoomsScreen() {
     { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
     // Feed has no door either — it is the home tab, one tap away always.
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
-    { icon: 'mail', label: 'Letters', route: '/letter' },
     // The player had no door on mobile at all. The radio row above is a
     // play/pause control and nothing else, and the only route into
     // /music anywhere was a long-press on the desktop sidebar.

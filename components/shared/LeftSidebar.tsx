@@ -118,12 +118,6 @@ export function LeftSidebar() {
         onPress={() => router.replace('/(tabs)/feed' as any)}
       />
       <NavRow
-        icon={pathname.startsWith('/letter') ? 'mail' : 'mail-outline'}
-        label="Letters"
-        active={pathname.startsWith('/letter')}
-        onPress={() => router.push('/letter' as any)}
-      />
-      <NavRow
         icon={pathname.startsWith('/memoir') ? 'book' : 'book-outline'}
         label="Memoir"
         active={pathname.startsWith('/memoir')}

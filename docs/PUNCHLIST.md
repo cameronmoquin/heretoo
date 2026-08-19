@@ -55,25 +55,15 @@ answers rather than a separate thing to fill in.
       photos, and the answer decides the design. Defaulting to
       never-stored costs nothing and is the safer starting point.
 
-## A3 — Letters: physical print-and-mail
+## A3 — Letters: REMOVED (2026-08-19)
 
-Cameron, 2026-08-19: "the letters — this is going to change completely."
-Direction pending; do not touch the letters code until he states the
-design. What is known:
-
-- [ ] **Print-and-mail service integration.** Lob is the developer
-      standard (API takes HTML/PDF; they print, envelope, stamp
-      First-Class, mail; ~$0.90–1.30/letter US; address verification
-      included). PostGrid comparable, better for Canada. Handwrytten
-      does robot-pen handwritten letters (~$3.25–5) with a real stamp —
-      arguably the better fit for what letters ARE on this platform.
-- [ ] Integration shape when green-lit: a `letter-print.ts` Netlify
-      function rendering the letter to PDF and POSTing to the service,
-      tracking id stored on the letter row.
-- [ ] **Decision needed from Cameron first:** recipient postal
-      addresses are heavier PII than anything the platform currently
-      holds. Where they live, how long, and whether they're stored at
-      all (vs. entered per-send and discarded) decides the design.
+Cameron: "i think we need to delete the 'letters' option fully." Done —
+routes (app/letter/), hook, the deliver-letters cron worker, and both
+nav entries are gone; /letter redirects 302 to the feed for links in
+old emails. The letters tables keep their data; nothing reads them.
+The print-and-mail research (Lob / PostGrid / Handwrytten, ~$0.90–5 per
+letter) is preserved in git history at this heading if a physical-mail
+successor is ever wanted.
 
 ## B — Confirm which keys are live in prod (Cameron / Netlify dashboard)
 

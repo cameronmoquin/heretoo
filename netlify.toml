@@ -76,6 +76,20 @@
 # until they clear state by hand. New retirements still start at 302.
 #
 # chat → messages. The room is called Messages; the URL now says so.
+# Letters retired outright (Aug 2026). Old notification emails carry
+# /letter and /letter/claim/<token> links; they land on the feed rather
+# than a dead screen. 302 deliberately — the feature's replacement is
+# undecided, and a cached 301 would outlive the decision.
+[[redirects]]
+  from = "/letter"
+  to = "/"
+  status = 302
+
+[[redirects]]
+  from = "/letter/*"
+  to = "/"
+  status = 302
+
 [[redirects]]
   from = "/chat"
   to = "/messages"
