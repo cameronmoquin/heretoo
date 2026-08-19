@@ -28,6 +28,33 @@ vars below are set.
 - [x] In-app book preview (`/memoir/preview`).
 - [x] Arrange/reorder + reassign entries (`/memoir/arrange`).
 
+## A2 — Memoir: the résumé that falls out of it
+
+Requested 2026-08-18. The memoir interview already collects the raw
+material of a working life; a CV is a second rendering of the same
+answers rather than a separate thing to fill in.
+
+- [ ] **Résumé / CV writer driven by the memoir's own inputs.** Reads
+      the structured interview (employers, dates, places, roles) and
+      composes a CV from it, rather than asking again. Sits alongside
+      the book as a second output of one corpus. Cameron writes any
+      user-facing wording.
+- [ ] **Tax-document upload as a shortcut into that résumé.** W-2s and
+      1099s carry employer names and employment dates, which are the
+      two fields people are worst at recalling. Parse those, ignore
+      everything else.
+- [ ] **Redaction guidance before upload, and it must be advice, not
+      silence.** Recommend the user black out dollar amounts and any
+      personal identifiers (SSN, full address, account numbers) — none
+      of that is needed for a CV. Cameron writes the wording; the point
+      is that the app must not accept a full unredacted tax form as if
+      that were normal.
+- [ ] Open question for Cameron: whether the uploaded document is ever
+      stored at all, or parsed in the browser and discarded. Storing
+      tax forms is a materially different security posture from storing
+      photos, and the answer decides the design. Defaulting to
+      never-stored costs nothing and is the safer starting point.
+
 ## B — Confirm which keys are live in prod (Cameron / Netlify dashboard)
 
 Each feature has a graceful "not configured" path, so an unset key just
