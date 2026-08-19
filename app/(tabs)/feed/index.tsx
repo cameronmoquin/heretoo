@@ -30,15 +30,17 @@ import { Layout, Spacing, Radius, Type, Heights } from '../../../constants/desig
 import { Vocab } from '../../../constants/vocab';
 
 // Labels ride Vocab where the lexicon owns the word, so a vocabulary
-// change never has to find this row. Drops means DROPS — the 24-hour
-// posts, wherever they were sent. The GPS game is the Deaddrop app at
-// /hunt and is not a feed lens; its only feed presence is the X card.
+// change never has to find this row. The last lens keeps its 'drops'
+// KEY (keys are identifiers, not copy) but wears the new noun: it shows
+// the passing submissions — the 24-hour ones, wherever they were sent.
+// The GPS game is the Deaddrop app at /hunt and is not a feed lens; its
+// only feed presence is the X card.
 const CHIPS: { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'crew', label: Vocab.Group },
   { key: 'public', label: 'Public' },
   { key: 'news', label: 'News' },
-  { key: 'drops', label: 'Drops' },
+  { key: 'drops', label: Vocab.PostPlural },
 ];
 
 export default function FeedHomeScreen() {

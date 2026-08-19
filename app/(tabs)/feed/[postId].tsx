@@ -192,7 +192,7 @@ export default function PostDetail() {
               onPress={() => openDrop(post.id)}
               activeOpacity={0.85}
               accessibilityRole="button"
-              accessibilityLabel="Open this drop. It does not come back."
+              accessibilityLabel={`Open this ${Vocab.post}. It does not come back.`}
             >
               <Ionicons name="flame-outline" size={22} color={Colors.textSecondary} />
               <Text style={s.sealText}>Opens once</Text>

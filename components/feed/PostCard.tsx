@@ -353,16 +353,20 @@ export function PostCard({ post, onHeart }: PostCardProps) {
             )}
           </TouchableOpacity>
 
-          {/* Fire a line. The reaction vocabulary here is language, not
-              glyphs: you answer a drop with a real Shakespeare line and
-              the quote lands on the card with its speaker and play. */}
+          {/* The dagger. You answer a submission with a real Shakespeare
+              line — the quote lands on the card with its speaker and
+              play. It wore a flame, but the flame means burn-after-
+              reading everywhere else in this app, and a reaction must
+              not share a glyph with destruction. † is the typographic
+              dagger: Shakespearean twice over, and Ionicons has no
+              dagger so the type case supplies one. */}
           <TouchableOpacity
             style={s.actionBtn}
             activeOpacity={0.7}
             onPress={(e) => { e.stopPropagation(); setLineOpen(true); }}
             accessibilityLabel={`Fire a Shakespeare line at this ${Vocab.post}`}
           >
-            <Ionicons name="flame-outline" size={ACTION_ICON} color={Colors.textSecondary} />
+            <Text style={s.daggerGlyph}>†</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -951,6 +955,11 @@ function makeStyles() { return StyleSheet.create({
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: Spacing.xxs,
+  },
+  // Sized to read at the same weight as the 22px Ionicons beside it.
+  daggerGlyph: {
+    fontSize: ACTION_ICON, lineHeight: ACTION_ICON + 2,
+    color: Colors.textSecondary, fontWeight: '600',
   },
   actionCount: {
     fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,

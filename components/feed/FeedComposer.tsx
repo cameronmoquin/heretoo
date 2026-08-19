@@ -1,21 +1,19 @@
 /**
- * The composer. Pinned to the top of the feed.
+ * The composer. Pinned to the top of the feed. "Drop a submission."
  *
- * A contribution forks two ways (migration 074):
+ * THE FORK IS GONE (Aug 2026). Drop-vs-submit was two modes nobody
+ * could tell apart — the author included — so the destination now
+ * carries the rules and every option shows:
  *
- *   SUBMIT  persists. No burn.
- *   DROP    out after a day (expires_at = insert + 24h), and it may
- *           burn on first reading.
- *
- * Either goes to one of three places, chosen on screen before the send:
- *
- *   PUBLIC  a DROP rides loft_posts — pseudonymous byline, 1200
- *           characters, 24-hour expiry, text only. A SUBMIT is a named
- *           posts row, visibility='public', that stays.
- *   COHORT  posts, visibility='family', family_id set.
+ *   PUBLIC  text only and anonymous, always. Rides loft_posts —
+ *           pseudonymous byline, 1200 characters, 24-hour expiry. The
+ *           named public submit is gone; a name in public was the
+ *           doctrine violation, not a feature.
+ *   COHORT  full privileges: media, destroy-after-viewing, and an
+ *           out-after-a-day toggle. posts, visibility='family'.
  *           One: used automatically. Several: picked. None: off.
- *   DM      posts, visibility='direct', direct_recipient_id set. One
- *           person, from the author's connections.
+ *   DM      same full privileges to one person. posts,
+ *           visibility='direct', direct_recipient_id set.
  *
  * THE BURN REDACTS NOW. "Destroy after viewing" writes
  * posts.destruct_on_view; the first non-author reading physically wipes
@@ -25,9 +23,9 @@
  * in the feed at the chosen destination like anything else. The physical
  * unlock lives in the hunt screens, not here.
  *
- * NO CREW GATE. A person with no crew drops on their own platform. Crew
- * is a destination, not a permission. The old gate replaced the whole
- * composer, send button included, and that was the broken send.
+ * NO CREW GATE. A person with no crew submits on their own platform.
+ * Crew is a destination, not a permission. The old gate replaced the
+ * whole composer, send button included, and that was the broken send.
  *
  * NO CREW ASSUMPTION EITHER. The composer opens on Public. Crew is the
  * default only when the composer itself is crew-scoped (a crew room),
@@ -127,16 +125,14 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const isCrew = destination === 'crew';
   const isDM = destination === 'dm';
 
-  // THE FORK (migration 074). A contribution is a SUBMIT or a DROP.
-  //   SUBMIT  persists. No burn.
-  //   DROP    out after a day, and it may burn on reading.
-  // Both go to the same three destinations. A public DROP rides
-  // loft_posts — pseudonymous, text-only, already 24-hour — and a
-  // public SUBMIT is a named posts row that stays. Drop is the default
-  // because a drop is what the platform calls the thing you post.
-  const [contribution, setContribution] = useState<'drop' | 'submit'>('drop');
-  const isDrop = contribution === 'drop';
-  const isLoft = isPublic && isDrop;
+  // Ephemerality is an OPTION now, not a mode (the drop/submit fork is
+  // gone). Off by default: the canon contribution stays. Public ignores
+  // it — the loft is 24-hour by construction.
+  const [expire24h, setExpire24h] = useState(false);
+  // Public is the loft, always. Anonymous and text-only is what public
+  // MEANS here; the named public submit was the exception, and it died
+  // with the fork.
+  const isLoft = isPublic;
 
   // Which crew. Pinned when the composer is crew-scoped. Automatic when
   // the author has exactly one. Picked when they have several.
@@ -210,13 +206,11 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // never be satisfied by media alone; loft posts carry no media. Crew
   // and DM need a named destination.
   const hasPayload = trimmedLen > 0 || hasMedia;
-  const canPost = isLoft
+  const canPost = isPublic
     ? trimmedLen > 0 && !overLoftLimit && !!loftHandle
-    : isPublic
-      ? hasPayload
-      : isCrew
-        ? hasPayload && !!activeCrewId
-        : hasPayload && !!dmChoice;
+    : isCrew
+      ? hasPayload && !!activeCrewId
+      : hasPayload && !!dmChoice;
 
   /**
    * Pseudonym claim. Lifted unchanged from the /loft screen: roll a
@@ -239,10 +233,10 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // either along would discard it silently at insert time.
   const switchDestination = (next: Destination) => {
     if (next === destinationChoice) return;
-    if (next === 'public' && isDrop && (hasMedia || destruct)) {
+    if (next === 'public' && (hasMedia || destruct)) {
       const lost = [hasMedia ? 'Attachments' : null, destruct ? 'Self-destruct' : null]
         .filter(Boolean).join(' and ');
-      showAlert(`${lost} dropped`, `Public ${Vocab.postPlural} are text. 24 hours, then gone.`);
+      showAlert(`${lost} removed`, `Public ${Vocab.postPlural} are text, unsigned. 24 hours, then gone.`);
       if (hasMedia) upload.reset();
       setDestruct(false);
     }
@@ -255,28 +249,12 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     if (next === 'dm' && !dmChoice) openDmPicker();
   };
 
-  // Switching the fork. Heading into a public DROP means the loft, and
-  // the loft carries a body and nothing else — same clearing rule as
-  // switching destination. A SUBMIT cannot burn, so the flag comes off.
-  const switchContribution = (next: 'drop' | 'submit') => {
-    if (next === contribution) return;
-    if (next === 'drop' && isPublic && (hasMedia || destruct)) {
-      const lost = [hasMedia ? 'Attachments' : null, destruct ? 'Self-destruct' : null]
-        .filter(Boolean).join(' and ');
-      showAlert(`${lost} dropped`, `Public ${Vocab.postPlural} are text. 24 hours, then gone.`);
-      if (hasMedia) upload.reset();
-      setDestruct(false);
-    }
-    if (next === 'submit') setDestruct(false);
-    setContribution(next);
-  };
-
   const resetComposer = () => {
     setBody('');
     setTaggedIds(new Set());
     setUpdateRecipientIds(new Set());
     setPostKind('post');
-    setContribution('drop');
+    setExpire24h(false);
     setDestinationChoice(defaultDestination);
     setDmChoice(null);
     setDestruct(false);
@@ -336,7 +314,9 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   };
 
   const handlePost = async () => {
-    if (isLoft) return handlePublicPost();
+    // Public IS the loft. Anonymous, text-only; there is no named
+    // public path any more.
+    if (isPublic) return handlePublicPost();
     if (isCrew && !activeCrewId) {
       showAlert(`Pick a ${Vocab.group}`, `This ${Vocab.post} needs a destination.`);
       return;
@@ -369,12 +349,12 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         visibility: isDM ? 'direct' : isPublic ? 'public' : 'family',
         familyId: isCrew ? activeCrewId! : undefined,
         directRecipientId: isDM ? dmChoice! : undefined,
-        // Only ride the insert when the author picked it. A plain drop
-        // still lands on a schema that predates migration 065.
-        destructOnView: isDrop && !isUpdate && destruct ? true : undefined,
-        // The fork. A drop is out after a day; a submit and an update
-        // stay. Written only when set (migration 074).
-        expiresAt: isDrop && !isUpdate
+        // Only ride the insert when the author picked it. A plain
+        // submission still lands on a schema that predates migration 065.
+        destructOnView: !isUpdate && destruct ? true : undefined,
+        // Ephemerality is the author's choice per submission now, not a
+        // mode. Written only when set (migration 074).
+        expiresAt: !isUpdate && expire24h
           ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
           : undefined,
         kind: isUpdate ? 'update' : 'post',
@@ -411,7 +391,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           accessibilityLabel={`New ${Vocab.post}`}
         >
           <Ionicons name="create-outline" size={14} color={Colors.textMuted} />
-          <Text style={s.collapsedPlaceholder}>{Vocab.Post}</Text>
+          <Text style={s.collapsedPlaceholder}>Drop a submission</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.collapsedIcon}
@@ -427,10 +407,9 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   return (
     <View style={s.card}>
       <View style={s.headerRow}>
-        <Eyebrow>
-          {isUpdate ? 'New update'
-            : `New ${isPublic ? 'public ' : isDM ? 'direct ' : ''}${isDrop ? Vocab.post : 'submit'}`}
-        </Eyebrow>
+        {/* The canon phrase. The heading does not vary by destination —
+            the destination pills already say where it goes. */}
+        <Eyebrow>{isUpdate ? 'New update' : 'Drop a submission'}</Eyebrow>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <TouchableOpacity
             onPress={resetComposer}
@@ -446,20 +425,17 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
             disabled={!canPost || isSending}
             activeOpacity={0.85}
             accessibilityLabel={
-              isLoft ? `${Vocab.Post} to Public`
-                : isPublic ? 'Submit to Public'
-                  : isDM ? `Send to ${dmRecipient?.display_name ?? dmRecipient?.handle ?? 'one person'}`
-                    : isUpdate ? 'Send update'
-                      : `${Vocab.Post} to ${activeCrew?.name ?? `this ${Vocab.group}`}`
+              isPublic ? 'Submit to Public. Text only, unsigned, gone in 24 hours'
+                : isDM ? `Submit to ${dmRecipient?.display_name ?? dmRecipient?.handle ?? 'one person'}`
+                  : isUpdate ? 'Send update'
+                    : `Submit to ${activeCrew?.name ?? `this ${Vocab.group}`}`
             }
           >
             {isSending
               ? <ActivityIndicator color={Colors.onPrimary} size="small" />
               : (
                 <Text style={s.postBtnText}>
-                  {isLoft ? `${Vocab.Post} to Public`
-                    : isUpdate ? 'Send update'
-                      : isDrop ? Vocab.Post : 'Submit'}
+                  {isUpdate ? 'Send update' : 'Submit'}
                 </Text>
               )}
           </TouchableOpacity>
@@ -472,12 +448,10 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         <DestBtn
           icon="earth-outline"
           label="Public"
-          tag={isDrop ? '24h' : undefined}
+          tag="24h"
           selected={isPublic}
           onPress={() => switchDestination('public')}
-          accessibilityLabel={isDrop
-            ? `${Vocab.Post} to Public. Pseudonymous, vanishes after 24 hours`
-            : 'Submit to Public'}
+          accessibilityLabel="Submit to Public. Text only, unsigned, gone after 24 hours"
         />
         <DestBtn
           icon="people-outline"
@@ -485,7 +459,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           selected={isCrew}
           disabled={!crewAvailable}
           onPress={() => switchDestination('crew')}
-          accessibilityLabel={`${Vocab.Post} to ${activeCrew?.name ?? `one ${Vocab.group}`}`}
+          accessibilityLabel={`Submit to ${activeCrew?.name ?? `one ${Vocab.group}`}`}
         />
         <DestBtn
           icon="person-outline"
@@ -493,45 +467,30 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           selected={isDM}
           disabled={!dmAvailable}
           onPress={() => switchDestination('dm')}
-          accessibilityLabel={`${Vocab.Post} to one person`}
+          accessibilityLabel="Submit to one person"
+
         />
       </View>
 
-      {/* The fork. A drop is out after a day; a submit stays. Updates
-          are their own instrument and skip the choice. */}
-      {!isUpdate && (
-        <View style={s.kindRow}>
-          <TouchableOpacity
-            style={[s.kindBtn, isDrop && s.kindBtnActive]}
-            onPress={() => switchContribution('drop')}
-            activeOpacity={0.7}
-            accessibilityRole="radio"
-            accessibilityLabel={`${Vocab.Post} — out after a day`}
-            accessibilityState={{ selected: isDrop }}
-          >
-            <Ionicons
-              name="hourglass-outline"
-              size={13}
-              color={isDrop ? Colors.primary : Colors.textMuted}
-            />
-            <Text style={[s.kindBtnText, isDrop && s.kindBtnTextActive]}>{Vocab.Post}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.kindBtn, !isDrop && s.kindBtnActive]}
-            onPress={() => switchContribution('submit')}
-            activeOpacity={0.7}
-            accessibilityRole="radio"
-            accessibilityLabel="Submit — it stays"
-            accessibilityState={{ selected: !isDrop }}
-          >
-            <Ionicons
-              name="archive-outline"
-              size={13}
-              color={!isDrop ? Colors.primary : Colors.textMuted}
-            />
-            <Text style={[s.kindBtnText, !isDrop && s.kindBtnTextActive]}>Submit</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Out after a day — an option like the burn, not a mode. Public
+          skips it because the loft is 24-hour by construction; updates
+          are their own instrument. */}
+      {!isUpdate && !isPublic && (
+        <TouchableOpacity
+          style={[s.kindBtn, expire24h && s.kindBtnActive]}
+          onPress={() => setExpire24h((v) => !v)}
+          activeOpacity={0.7}
+          accessibilityRole="switch"
+          accessibilityLabel="Out after a day"
+          accessibilityState={{ checked: expire24h }}
+        >
+          <Ionicons
+            name="hourglass-outline"
+            size={13}
+            color={expire24h ? Colors.primary : Colors.textMuted}
+          />
+          <Text style={[s.kindBtnText, expire24h && s.kindBtnTextActive]}>Out after a day</Text>
+        </TouchableOpacity>
       )}
 
       {/* Which crew. Only when the author has a choice to make. */}

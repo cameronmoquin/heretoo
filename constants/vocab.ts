@@ -40,12 +40,17 @@ export const Vocab = {
   member: 'member',
   memberPlural: 'members',
   groupWithArticle: 'a cohort',
-  post: 'drop',
-  postPlural: 'drops',
-  Post: 'Drop',
-  PostPlural: 'Drops',
-  postVerb: 'drop',
-  postVerbPast: 'dropped',
+  // "Submission" (Aug 2026). The thing you contribute is a submission;
+  // "drop" survives as the VERB of contributing it — the canon phrase is
+  // "Drop a submission" and the button says Submit. This also ends the
+  // drop/Deaddrop collision: Deaddrop (the GPS game) keeps its name and
+  // no longer shares a noun with every post on the platform.
+  post: 'submission',
+  postPlural: 'submissions',
+  Post: 'Submission',
+  PostPlural: 'Submissions',
+  postVerb: 'submit',
+  postVerbPast: 'submitted',
 } as const;
 
 export type VocabKey = keyof typeof Vocab;
