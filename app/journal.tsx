@@ -46,6 +46,7 @@ import {
 import { isWrongPassphrase, vaultAvailable } from '../lib/vault';
 import { showAlert, showConfirm } from '../lib/alert';
 import { Colors } from '../constants/colors';
+import { HoverTip } from '../components/shared/HoverTip';
 import { Spacing, Radius, Type } from '../constants/design';
 
 const MIN_PASSPHRASE = 8;
@@ -75,6 +76,12 @@ export default function JournalScreen() {
   const saveResponse = useSaveMemoirResponse();
   const endSession = useEndMemoirSession();
   const [sendingId, setSendingId] = useState<string | null>(null);
+  // Entries sent to the memoir during THIS visit. Nothing records the
+  // link in the database — a memoir response carries the entry's title,
+  // not its id — so this resets on reload. It is enough to stop the
+  // same entry being sent twice in one sitting and to flip the tip to
+  // 'sent'; persisting it properly needs a column.
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   // Composer.
   const [title, setTitle] = useState('');
@@ -279,6 +286,7 @@ export default function JournalScreen() {
         chapterAssignment: null,
       });
 
+      setSentIds((prev) => new Set(prev).add(entry.id));
       showAlert('Sent to your memoir.');
     } catch (e: any) {
       // Best effort: close an empty session so a failed send leaves
@@ -411,6 +419,7 @@ export default function JournalScreen() {
                 onSendToMemoir={() => onSendToMemoir(entry)}
                 sending={sendingId === entry.id}
                 sendLocked={sendingId !== null}
+                sent={sentIds.has(entry.id)}
               />
             ))}
             </View>
@@ -593,7 +602,7 @@ export default function JournalScreen() {
 // ── Entry card ─────────────────────────────────────────────────────
 
 function EntryCard({
-  entry, s, onUnlock, onRead, onSeal, onDelete, onSendToMemoir, sending, sendLocked,
+  entry, s, onUnlock, onRead, onSeal, onDelete, onSendToMemoir, sending, sendLocked, sent,
 }: {
   entry: JournalEntry;
   s: ReturnType<typeof makeStyles>;
@@ -604,6 +613,8 @@ function EntryCard({
   onSendToMemoir: () => void;
   sending: boolean;
   sendLocked: boolean;
+  /** Already sent in this session — see sentIds in the screen. */
+  sent: boolean;
 }) {
   const at = new Date(entry.created_at);
   const when =
@@ -659,17 +670,25 @@ function EntryCard({
         <Text style={s.openLine}>Open. {when}</Text>
       </TouchableOpacity>
       <View style={s.cardActions}>
-        <TouchableOpacity
-          onPress={onSendToMemoir}
-          disabled={sendLocked}
-          style={[s.cardAction, sendLocked && !sending && s.dim]}
-          accessibilityRole="button"
-          accessibilityLabel="Send to memoir"
-        >
-          {sending
-            ? <ActivityIndicator size="small" color={Colors.primary} />
-            : <Ionicons name="arrow-redo-outline" size={18} color={Colors.primary} />}
-        </TouchableOpacity>
+        <HoverTip label={sent ? 'sent' : 'send to memoir'}>
+          <TouchableOpacity
+            onPress={onSendToMemoir}
+            disabled={sendLocked}
+            style={[s.cardAction, sendLocked && !sending && s.dim]}
+            accessibilityRole="button"
+            accessibilityLabel={sent ? 'Sent to memoir' : 'Send to memoir'}
+          >
+            {sending
+              ? <ActivityIndicator size="small" color={Colors.primary} />
+              : (
+                <Ionicons
+                  name={sent ? 'checkmark' : 'arrow-redo-outline'}
+                  size={18}
+                  color={Colors.primary}
+                />
+              )}
+          </TouchableOpacity>
+        </HoverTip>
         <TouchableOpacity
           onPress={onSeal}
           style={s.cardAction}
