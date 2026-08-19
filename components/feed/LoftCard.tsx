@@ -76,7 +76,8 @@ export function LoftCard({ post }: LoftCardProps) {
   );
 }
 
-/** Time until the hard 24h expiry. Empty string for an unparseable stamp. */
+/** Time until expiry. Empty for a null stamp — a submission that
+ *  stays (089) simply shows no countdown. */
 function timeLeft(iso: string | null | undefined): string {
   const t = Date.parse(iso ?? '');
   if (!Number.isFinite(t)) return '';

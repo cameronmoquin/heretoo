@@ -1,5 +1,10 @@
 /**
- * The Loft — pseudonymous, 24-hour-expiry, modernist wing of HereToo.
+ * The Loft — the pseudonymous public square.
+ *
+ * Expiry is the author's choice (migration 089): expires_at = null
+ * means the submission stays. The old hard 24-hour timer survives only
+ * as the DB default, which protects authors on stale bundles whose UI
+ * still promises "24 hours, then gone".
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +21,8 @@ export interface LoftPost {
   body: string;
   pseudonym: string;
   created_at: string;
-  expires_at: string;
+  /** null = stays (089). A stamp means it leaves at that time. */
+  expires_at: string | null;
 }
 
 /** Fetch the active Loft feed — non-expired posts, newest first. */
@@ -24,10 +30,13 @@ export function useLoftFeed() {
   return useQuery({
     queryKey: ['loft-feed'],
     queryFn: async (): Promise<LoftPost[]> => {
+      // The view already refuses expired rows; this filter only keeps a
+      // stale client honest between refetches. or() rather than gt()
+      // because gt() silently drops the null-stamped rows that stay.
       const { data, error } = await supabase
         .from('square')
         .select('*')
-        .gt('expires_at', new Date().toISOString())
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order('created_at', { ascending: false })
         .limit(60);
       if (error) throw error;
@@ -83,7 +92,8 @@ export function useCreateLoftPost() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
-    mutationFn: async (body: string): Promise<LoftPost> => {
+    mutationFn: async (input: { body: string; expire24h: boolean }): Promise<LoftPost> => {
+      const { body, expire24h } = input;
       if (!userId) throw new Error('Not signed in');
       // Resolve the user's current pseudonym (will create one if needed).
       // Defer hard-failure on handle generation to the insert step so the
@@ -96,18 +106,37 @@ export function useCreateLoftPost() {
         }
       } catch {}
 
+      // The stamp is explicit either way. Omitting the column would let
+      // the DB default quietly re-impose 24 hours on a submission whose
+      // author chose to keep it.
       const { data, error } = await supabase
         .from('loft_posts')
-        .insert({ author_id: userId, body: body.trim(), pseudonym } as any)
+        .insert({
+          author_id: userId,
+          body: body.trim(),
+          pseudonym,
+          expires_at: expire24h
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            : null,
+        } as any)
         .select('id, body, pseudonym, created_at, expires_at')
         .single();
-      if (error) throw error;
+      if (error) {
+        // 23502 = migration 089 has not run and null hit the old NOT
+        // NULL. Refusing is right; silently making the post vanish in a
+        // day when the author chose "stays" would be the wrong kind of
+        // helpful.
+        if ((error as any).code === '23502' && !expire24h) {
+          throw new Error('Lasting public submissions are not switched on yet. Arm the hourglass, or try later.');
+        }
+        throw error;
+      }
       return data as LoftPost;
     },
 
     // Optimistic: drop a placeholder into the feed cache the instant
     // the user taps Post. The real row replaces it on success.
-    onMutate: async (body) => {
+    onMutate: async (input) => {
       if (!userId) return { prev: null as LoftPost[] | null };
       const key = ['loft-feed'];
       await qc.cancelQueries({ queryKey: key });
@@ -121,10 +150,12 @@ export function useCreateLoftPost() {
       const optimistic: LoftPost = {
         id: `optimistic-${Date.now()}`,
         is_mine: true,
-        body: body.trim(),
+        body: input.body.trim(),
         pseudonym: cachedHandle,
         created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        expires_at: input.expire24h
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          : null,
       };
       qc.setQueryData<LoftPost[]>(key, [optimistic, ...prev]);
       return { prev };

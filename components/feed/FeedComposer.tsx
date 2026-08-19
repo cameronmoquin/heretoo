@@ -6,14 +6,19 @@
  * carries the rules and every option shows:
  *
  *   PUBLIC  text only and anonymous, always. Rides loft_posts —
- *           pseudonymous byline, 1200 characters, 24-hour expiry. The
- *           named public submit is gone; a name in public was the
- *           doctrine violation, not a feature.
- *   COHORT  full privileges: media, destroy-after-viewing, and an
- *           out-after-a-day toggle. posts, visibility='family'.
- *           One: used automatically. Several: picked. None: off.
+ *           pseudonymous byline, 1200 characters. The named public
+ *           submit is gone; a name in public was the doctrine
+ *           violation, not a feature.
+ *   COHORT  full privileges: media, destroy-after-viewing. posts,
+ *           visibility='family'. One: used automatically. Several:
+ *           picked. None: off.
  *   DM      same full privileges to one person. posts,
  *           visibility='direct', direct_recipient_id set.
+ *
+ * NOTHING EXPIRES UNLESS ARMED. The hourglass is one option on every
+ * submission, public included (migration 089) — out after a day, off by
+ * default. The old scheme where public meant a forced 24-hour timer is
+ * gone; the timer answers to the author, not the destination.
  *
  * THE BURN REDACTS NOW. "Destroy after viewing" writes
  * posts.destruct_on_view; the first non-author reading physically wipes
@@ -126,8 +131,8 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const isDM = destination === 'dm';
 
   // Ephemerality is an OPTION now, not a mode (the drop/submit fork is
-  // gone). Off by default: the canon contribution stays. Public ignores
-  // it — the loft is 24-hour by construction.
+  // gone). Off by default: the canon contribution stays. Every
+  // destination honors it, public included (089).
   const [expire24h, setExpire24h] = useState(false);
   // Public is the loft, always. Anonymous and text-only is what public
   // MEANS here; the named public submit was the exception, and it died
@@ -236,7 +241,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     if (next === 'public' && (hasMedia || destruct)) {
       const lost = [hasMedia ? 'Attachments' : null, destruct ? 'Self-destruct' : null]
         .filter(Boolean).join(' and ');
-      showAlert(`${lost} removed`, `Public ${Vocab.postPlural} are text, unsigned. 24 hours, then gone.`);
+      showAlert(`${lost} removed`, `Public ${Vocab.postPlural} are text, unsigned.`);
       if (hasMedia) upload.reset();
       setDestruct(false);
     }
@@ -306,7 +311,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
       return;
     }
     try {
-      await createLoftPost.mutateAsync(text);
+      await createLoftPost.mutateAsync({ body: text, expire24h });
       resetComposer();
     } catch (e: any) {
       showAlert(`Could not ${Vocab.postVerb}`, e?.message ?? 'Try again.');
@@ -425,7 +430,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
             disabled={!canPost || isSending}
             activeOpacity={0.85}
             accessibilityLabel={
-              isPublic ? 'Submit to Public. Text only, unsigned, gone in 24 hours'
+              isPublic ? 'Submit to Public. Text only, unsigned'
                 : isDM ? `Submit to ${dmRecipient?.display_name ?? dmRecipient?.handle ?? 'one person'}`
                   : isUpdate ? 'Send update'
                     : `Submit to ${activeCrew?.name ?? `this ${Vocab.group}`}`
@@ -448,10 +453,9 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         <DestBtn
           icon="earth-outline"
           label="Public"
-          tag="24h"
           selected={isPublic}
           onPress={() => switchDestination('public')}
-          accessibilityLabel="Submit to Public. Text only, unsigned, gone after 24 hours"
+          accessibilityLabel="Submit to Public. Text only, unsigned"
         />
         <DestBtn
           icon="people-outline"
@@ -472,10 +476,9 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         />
       </View>
 
-      {/* Out after a day — an option like the burn, not a mode. Public
-          skips it because the loft is 24-hour by construction; updates
-          are their own instrument. */}
-      {!isUpdate && !isPublic && (
+      {/* Out after a day — one option on every submission, public
+          included (089). Updates are their own instrument. */}
+      {!isUpdate && (
         <TouchableOpacity
           style={[s.kindBtn, expire24h && s.kindBtnActive]}
           onPress={() => setExpire24h((v) => !v)}
