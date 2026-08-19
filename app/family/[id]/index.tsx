@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
-  Modal, Pressable, RefreshControl, Platform,
+  Modal, Pressable, RefreshControl, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useFamily, useFamilyMembers, useFamilyFeed, useLeaveFamily,
+  useFamily, useFamilyMembers, useFamilyMembersWithProfiles, useFamilyFeed, useLeaveFamily,
   useDeleteFamily, usePendingRename, useProposeRename, useVoteRename,
 } from '../../../hooks/useFamily';
 import { useSubjectsNewActivity } from '../../../hooks/useSubjects';
 import { useToggleHeart } from '../../../hooks/useFeed';
+import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { useAuthStore } from '../../../stores/authStore';
 import { goBackToFeed } from '../../../lib/nav';
 import { showAlert, showConfirm } from '../../../lib/alert';
@@ -37,6 +38,7 @@ export default function FamilyDetail() {
   const [tab, setTab] = useState<Tab>('feed');
   const { data: family, isLoading } = useFamily(id);
   const { data: members } = useFamilyMembers(id);
+  const { data: memberProfiles } = useFamilyMembersWithProfiles(id ?? null);
   const { data: posts } = useFamilyFeed(id ?? null);
   // New-activity signal for the Subjects tab badge ("something's happening").
   const subjectsActivity = useSubjectsNewActivity(id ?? null);
@@ -390,19 +392,37 @@ export default function FamilyDetail() {
 
             <View style={s.card}>
               <Eyebrow style={s.sectionLabel}>Members ({members?.length ?? 0})</Eyebrow>
-              {members?.map((m) => (
-                <View key={m.id} style={s.memberRow}>
+              {/* The roster is people, not identifiers — it used to
+                  print truncated profile UUIDs, which made the cohort's
+                  own list unreadable and the cohort→person lookup a
+                  dead end. Every row walks to the profile now, and the
+                  profile walks back here via its cohort rows. */}
+              {(memberProfiles ?? []).map((m: any) => (
+                <TouchableOpacity
+                  key={m.id}
+                  style={s.memberRow}
+                  onPress={() => {
+                    if (m.profile?.handle) router.push(`/u/${m.profile.handle}` as any);
+                  }}
+                  disabled={!m.profile?.handle}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${m.profile?.display_name ?? m.profile?.handle ?? 'this member'}'s profile`}
+                >
                   <View style={s.memberAvatar}>
-                    <Ionicons name="person" size={14} color={Colors.primary} />
+                    {m.profile?.avatar_path ? (
+                      <Image source={{ uri: mediaPathToUrl(m.profile.avatar_path) }} style={s.memberAvatarImg} />
+                    ) : (
+                      <Ionicons name="person" size={14} color={Colors.primary} />
+                    )}
                   </View>
                   <Text style={s.memberText}>
-                    {m.profile_id === userId ? 'You' : `${m.profile_id.slice(0, 8)}…`}
+                    {m.profile_id === userId
+                      ? 'You'
+                      : m.profile?.display_name ?? (m.profile?.handle ? `@${m.profile.handle}` : 'Member')}
                   </Text>
                   <Text style={s.memberRole}>{m.relationship_label}</Text>
-                  {m.status !== 'active' && (
-                    <Text style={[s.memberRole, { color: Colors.textMuted }]}>· {m.status}</Text>
-                  )}
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
 
@@ -561,6 +581,7 @@ function makeStyles() { return StyleSheet.create({
   },
   sectionLabel: { marginBottom: Spacing.xxs },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  memberAvatarImg: { width: '100%', height: '100%' },
   memberAvatar: {
     width: 28, height: 28, borderRadius: Radius.xs, backgroundColor: Colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',

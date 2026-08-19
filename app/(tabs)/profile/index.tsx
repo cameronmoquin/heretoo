@@ -100,33 +100,6 @@ export default function OwnProfileScreen() {
           />
         </View>
 
-        {/* ── Network stats ── */}
-        {stats && (
-          <View style={s.statsCard}>
-            {/* "People in network" is now tappable — opens the
-                network list page where you can see everyone and
-                jump to their profile or message them. */}
-            <TouchableOpacity
-              style={s.statBlock}
-              onPress={() => router.push('/network' as any)}
-              activeOpacity={0.7}
-            >
-              <Text style={s.statValue}>{stats.reachable_profiles}</Text>
-              <Text style={s.statLabel}>People in network</Text>
-            </TouchableOpacity>
-            <View style={s.statDivider} />
-            <View style={s.statBlock}>
-              <Text style={s.statValue}>{stats.reachable_families}</Text>
-              <Text style={s.statLabel}>{Vocab.GroupPlural} connected</Text>
-            </View>
-            <View style={s.statDivider} />
-            <View style={s.statBlock}>
-              <Text style={s.statValue}>{stats.direct_family_count}</Text>
-              <Text style={s.statLabel}>Your {Vocab.groupPlural}</Text>
-            </View>
-          </View>
-        )}
-
         {/* ── Crews ── */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
@@ -224,6 +197,36 @@ export default function OwnProfileScreen() {
           {/* Dark theme toggle removed for now — light-only while we
               dial in the polish pass. */}
         </View>
+
+        {/* ── Network, demoted ──
+            The counts are a mirror, not a control; they read after the
+            actions rather than before the cohorts. Secondary on
+            request. */}
+        {stats && (
+          <View style={s.statsCard}>
+            {/* "People in network" is now tappable — opens the
+                network list page where you can see everyone and
+                jump to their profile or message them. */}
+            <TouchableOpacity
+              style={s.statBlock}
+              onPress={() => router.push('/network' as any)}
+              activeOpacity={0.7}
+            >
+              <Text style={s.statValue}>{stats.reachable_profiles}</Text>
+              <Text style={s.statLabel}>People in network</Text>
+            </TouchableOpacity>
+            <View style={s.statDivider} />
+            <View style={s.statBlock}>
+              <Text style={s.statValue}>{stats.reachable_families}</Text>
+              <Text style={s.statLabel}>{Vocab.GroupPlural} connected</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statBlock}>
+              <Text style={s.statValue}>{stats.direct_family_count}</Text>
+              <Text style={s.statLabel}>Your {Vocab.groupPlural}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Gallery filter + wallpaper picker + classical music stream.
             These three components together render the user's "style"

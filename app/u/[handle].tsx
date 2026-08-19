@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
-import { useMyFamilies } from '../../hooks/useFamily';
+import { useMyFamilies, useMyConnections } from '../../hooks/useFamily';
 import { useOpenThread } from '../../hooks/useChat';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { PostCard } from '../../components/feed/PostCard';
@@ -96,6 +96,30 @@ export default function UserProfile() {
   const mutualFamilies = useMemo(
     () => (myFamilies ?? []).filter((f: any) => theirFamilyIds?.has(f.id)),
     [myFamilies, theirFamilyIds],
+  );
+
+  // 4. Shared connections — their 3-hop reach intersected with yours.
+  // Nobody outside your own reach ever appears, so this shows nothing
+  // you could not already see on /network; it just answers it from the
+  // other end. The reverse lookup: person → who you both know.
+  const { data: myConnections } = useMyConnections();
+  const { data: theirReachIds } = useQuery({
+    queryKey: ['their-reach', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return new Set<string>();
+      const { data, error } = await supabase
+        .rpc('family_network_reach', { viewer: profile.id, max_depth: 3 });
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.profile_id as string));
+    },
+    enabled: !!profile?.id && profile?.id !== viewerId,
+  });
+
+  const sharedConnections = useMemo(
+    () => (myConnections ?? []).filter(
+      (c: any) => c.id !== profile?.id && theirReachIds?.has(c.id),
+    ),
+    [myConnections, theirReachIds, profile?.id],
   );
 
   const openThread = useOpenThread();
