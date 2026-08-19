@@ -55,6 +55,26 @@ answers rather than a separate thing to fill in.
       photos, and the answer decides the design. Defaulting to
       never-stored costs nothing and is the safer starting point.
 
+## A3 — Letters: physical print-and-mail
+
+Cameron, 2026-08-19: "the letters — this is going to change completely."
+Direction pending; do not touch the letters code until he states the
+design. What is known:
+
+- [ ] **Print-and-mail service integration.** Lob is the developer
+      standard (API takes HTML/PDF; they print, envelope, stamp
+      First-Class, mail; ~$0.90–1.30/letter US; address verification
+      included). PostGrid comparable, better for Canada. Handwrytten
+      does robot-pen handwritten letters (~$3.25–5) with a real stamp —
+      arguably the better fit for what letters ARE on this platform.
+- [ ] Integration shape when green-lit: a `letter-print.ts` Netlify
+      function rendering the letter to PDF and POSTing to the service,
+      tracking id stored on the letter row.
+- [ ] **Decision needed from Cameron first:** recipient postal
+      addresses are heavier PII than anything the platform currently
+      holds. Where they live, how long, and whether they're stored at
+      all (vs. entered per-send and discarded) decides the design.
+
 ## B — Confirm which keys are live in prod (Cameron / Netlify dashboard)
 
 Each feature has a graceful "not configured" path, so an unset key just
