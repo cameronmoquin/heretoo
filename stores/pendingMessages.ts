@@ -1,5 +1,5 @@
 /**
- * Messages that have been sent but not yet acknowledged.
+ * Things that have been sent but not yet acknowledged.
  *
  * They live HERE and not in the react-query cache, which is the whole
  * point. The optimistic bubble used to be written straight into
@@ -21,22 +21,21 @@
  * window: a send over cellular takes long enough for one of them to
  * land inside it, where the same race on a desk resolves in 80ms.
  *
- * Any one of those resolving before the INSERT commits replaced the
- * array with server rows that did not contain the new message yet, and
- * the bubble disappeared until the round-trip finished. That is the
- * "inconsistent optimism": the bubble was never guaranteed, it was
- * racing.
- *
- * A refetch cannot touch this store. The bubble is drawn from here,
- * merged over the server rows at render, and only stops being drawn
- * once the real row is provably in hand.
+ * SCOPES. Chat messages are not the only thing sent from that composer —
+ * a burning drop writes to `posts` and had no optimism at all, so it sat
+ * invisible until a refetch caught up. Rather than grow a second copy of
+ * this machinery (this codebase has already paid for a fix landing in
+ * one copy of a pattern that existed in five), entries are filed under a
+ * scope string: `msg:<threadId>` for chat, `drop:<threadId>` for drops.
+ * The matching rules below do not care which is which.
  */
 
 import { create } from 'zustand';
 
-export interface PendingMessage {
+export interface PendingItem {
   tempId: string;
-  threadId: string;
+  /** `msg:<threadId>` or `drop:<threadId>`. */
+  scope: string;
   senderId: string;
   body: string;
   /** Client clock, floored past everything we already know about. */
@@ -44,71 +43,77 @@ export interface PendingMessage {
   /** The real row's id, once the insert has answered. */
   settledId?: string;
   /**
-   * Every message id the thread already held when this was queued.
+   * Every row id the scope already held when this was queued.
    *
    * This is what makes the fuzzy match safe. Matching on sender + body
    * alone would retire a bubble against a message the user sent an hour
    * ago; the first attempt guarded that with a timestamp window, which
-   * was wrong in both directions — the floor below stamps a pending
-   * message at newest+1ms, so on a lagging device clock the newest
-   * existing row sat inside any tolerance you picked. A row that was not
-   * there when we queued cannot be a row from an hour ago, and no clock
-   * is involved.
+   * was wrong in both directions — the floor stamps a pending item at
+   * newest+1ms, so on a lagging device clock the newest existing row sat
+   * inside any tolerance you picked. A row that was not there when we
+   * queued cannot be a row from an hour ago, and no clock is involved.
    */
   knownIds: Set<string>;
 }
 
+/** The shape the matcher needs. Callers project their rows into it. */
+export interface MatchableRow {
+  id: string;
+  sender_id: string;
+  body: string;
+}
+
 interface PendingState {
-  byThread: Record<string, PendingMessage[]>;
-  add: (m: PendingMessage) => void;
+  byScope: Record<string, PendingItem[]>;
+  add: (m: PendingItem) => void;
   /** The insert answered. Keep drawing until the real row shows up. */
-  settle: (threadId: string, tempId: string, realId: string) => void;
+  settle: (scope: string, tempId: string, realId: string) => void;
   /** The insert failed. Stop drawing, nothing was claimed. */
-  remove: (threadId: string, tempId: string) => void;
+  remove: (scope: string, tempId: string) => void;
   /**
    * The row arrived and this bubble is done. Drops the entry AND hands
    * its row id to everyone still waiting.
    *
    * The hand-off is the point. A claim used to live only in the working
    * set of whoever was matching at that moment, so deleting a finished
-   * bubble released its row — and the next pending message with the same
+   * bubble released its row — and the next pending item with the same
    * text immediately matched it and vanished while its own insert was
    * still in flight. Writing the id into the survivors' knownIds makes
    * the claim permanent and independent of who is still in the list.
    */
-  retire: (threadId: string, tempId: string, rowId: string) => void;
+  retire: (scope: string, tempId: string, rowId: string) => void;
 }
 
-export const usePendingMessages = create<PendingState>((set) => ({
-  byThread: {},
+export const usePendingItems = create<PendingState>((set) => ({
+  byScope: {},
 
   add: (m) => set((s) => ({
-    byThread: { ...s.byThread, [m.threadId]: [...(s.byThread[m.threadId] ?? []), m] },
+    byScope: { ...s.byScope, [m.scope]: [...(s.byScope[m.scope] ?? []), m] },
   })),
 
-  settle: (threadId, tempId, realId) => set((s) => {
-    const list = s.byThread[threadId];
+  settle: (scope, tempId, realId) => set((s) => {
+    const list = s.byScope[scope];
     if (!list) return s;
     return {
-      byThread: {
-        ...s.byThread,
-        [threadId]: list.map((p) => (p.tempId === tempId ? { ...p, settledId: realId } : p)),
+      byScope: {
+        ...s.byScope,
+        [scope]: list.map((p) => (p.tempId === tempId ? { ...p, settledId: realId } : p)),
       },
     };
   }),
 
-  remove: (threadId, tempId) => set((s) => {
-    const list = s.byThread[threadId];
+  remove: (scope, tempId) => set((s) => {
+    const list = s.byScope[scope];
     if (!list) return s;
     const next = list.filter((p) => p.tempId !== tempId);
-    const byThread = { ...s.byThread };
-    if (next.length === 0) delete byThread[threadId];
-    else byThread[threadId] = next;
-    return { byThread };
+    const byScope = { ...s.byScope };
+    if (next.length === 0) delete byScope[scope];
+    else byScope[scope] = next;
+    return { byScope };
   }),
 
-  retire: (threadId, tempId, rowId) => set((s) => {
-    const list = s.byThread[threadId];
+  retire: (scope, tempId, rowId) => set((s) => {
+    const list = s.byScope[scope];
     if (!list) return s;
     const next = list
       .filter((p) => p.tempId !== tempId)
@@ -118,48 +123,63 @@ export const usePendingMessages = create<PendingState>((set) => ({
         knownIds.add(rowId);
         return { ...p, knownIds };
       });
-    const byThread = { ...s.byThread };
-    if (next.length === 0) delete byThread[threadId];
-    else byThread[threadId] = next;
-    return { byThread };
+    const byScope = { ...s.byScope };
+    if (next.length === 0) delete byScope[scope];
+    else byScope[scope] = next;
+    return { byScope };
   }),
 }));
 
 /** Nothing pending is the common case; keep the same array identity for it. */
-const NONE: PendingMessage[] = [];
+const NONE: PendingItem[] = [];
 
-export function pendingFor(byThread: Record<string, PendingMessage[]>, threadId: string | null) {
-  return (threadId && byThread[threadId]) || NONE;
+export function pendingFor(byScope: Record<string, PendingItem[]>, scope: string | null) {
+  return (scope && byScope[scope]) || NONE;
 }
 
 /**
- * Which pending messages are still worth drawing, given what the server
- * has actually handed back.
+ * Stamp for a new pending item: later than every row and every item
+ * already in flight, whatever the device clock says.
  *
- * Two ways a bubble retires. The precise one: the insert answered with
- * an id and that id is now in the fetched list. The fuzzy one: the
- * thread's own realtime channel does NOT filter out self-inserts, so a
- * refetch it triggers can deliver the real row BEFORE the insert's
+ * The floor has to clear what is in flight too, not just the fetched
+ * rows. Pending items are deliberately not in the query cache, so two
+ * taps inside one round trip both read the same newest and both stamped
+ * newest+1ms — identical, and their order after that was whatever the
+ * sort happened to do.
+ */
+export function nextStamp(rowTimes: Array<string | null | undefined>, inFlight: PendingItem[]): string {
+  const newest = Math.max(
+    0,
+    ...rowTimes.map((t) => (t ? Date.parse(t) || 0 : 0)),
+    ...inFlight.map((p) => Date.parse(p.createdAt) || 0),
+  );
+  return new Date(Math.max(Date.now(), newest + 1)).toISOString();
+}
+
+/**
+ * Which server row, if any, each pending item corresponds to.
+ *
+ * Two ways an item is accounted for. The precise one: the insert
+ * answered with an id and that id is now in the fetched list. The fuzzy
+ * one: a thread's realtime channel does NOT filter out self-inserts, so
+ * a refetch it triggers can deliver the real row BEFORE the insert's
  * promise resolves — at which point there is no id to match on yet and
- * the message would draw twice. A row that was absent when we queued,
- * from us, with our text, is that row.
+ * the item would draw twice. A row that was absent when we queued, from
+ * us, with our text, is that row.
  *
- * ONE SERVER ROW RETIRES AT MOST ONE BUBBLE, so sending the same word
+ * ONE SERVER ROW ACCOUNTS FOR AT MOST ONE ITEM, so sending the same word
  * twice still shows twice. That is why the settled pass runs first and
  * claims its rows: it used to return early WITHOUT claiming, which left
- * the row free for the next identical message to match, and the second
+ * the row free for the next identical item to match, and the second
  * bubble vanished while its own insert was still in flight.
  */
-export function matchRows<T extends { id: string; sender_id: string; body: string }>(
-  pending: PendingMessage[],
-  serverRows: T[],
-): Map<string, string> {
+export function matchRows(pending: PendingItem[], serverRows: MatchableRow[]): Map<string, string> {
   const out = new Map<string, string>();
   if (pending.length === 0) return out;
   const ids = new Set(serverRows.map((m) => m.id));
 
-  // Pass one: every settled bubble claims its row, before any fuzzy
-  // match can take it. Order within `pending` must not decide who wins.
+  // Pass one: every settled item claims its row, before any fuzzy match
+  // can take it. Order within `pending` must not decide who wins.
   const claimed = new Set<string>();
   for (const p of pending) {
     if (p.settledId && ids.has(p.settledId)) {
@@ -184,14 +204,12 @@ export function matchRows<T extends { id: string; sender_id: string; body: strin
 }
 
 /**
- * The bubbles still worth drawing. Always call with the COMPLETE pending
- * list for the thread — the claim bookkeeping lives in that list, so
- * feeding this function its own output lets a row retire a second bubble.
+ * The items still worth drawing. Always call with the COMPLETE pending
+ * list for the scope — the claim bookkeeping lives in that list, so
+ * feeding this function its own output lets a row account for a second
+ * item.
  */
-export function unsettled<T extends { id: string; sender_id: string; body: string }>(
-  pending: PendingMessage[],
-  serverRows: T[],
-): PendingMessage[] {
+export function unsettled(pending: PendingItem[], serverRows: MatchableRow[]): PendingItem[] {
   if (pending.length === 0) return NONE;
   const matched = matchRows(pending, serverRows);
   return pending.filter((p) => !matched.has(p.tempId));

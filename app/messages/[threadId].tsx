@@ -31,6 +31,8 @@ import {
   useAcceptThread, useDeclineThread, useMarkThreadRead,
 } from '../../hooks/useChat';
 import { useAuthStore } from '../../stores/authStore';
+import { usePendingItems, nextStamp } from '../../stores/pendingMessages';
+import { usePendingLive } from '../../hooks/usePendingLive';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { showAlert, showConfirm } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
@@ -138,6 +140,23 @@ export default function ChatThread() {
     },
   });
 
+  // A burning drop is sent from the same composer as a message and had
+  // no optimism at all: it wrote to `posts` and then waited for a refetch
+  // to notice, so the words vanished from the box and nothing appeared
+  // for the length of the round trip. Same treatment as messages now,
+  // through the same store and the same retirement rules.
+  const dropScope = threadId ? `drop:${threadId}` : null;
+  const dropRows = React.useMemo(
+    () => (drops ?? []).map((d: any) => ({ id: d.id, sender_id: d.author_id, body: d.body ?? '' })),
+    [drops],
+  );
+  const liveDrops = usePendingLive(
+    dropScope,
+    dropRows,
+    () => (qc.getQueryData<any[]>(['direct-drops', threadId]) ?? [])
+      .map((d: any) => ({ id: d.id, sender_id: d.author_id, body: d.body ?? '' })),
+  );
+
   // One timeline, chat and drops interleaved by when they happened.
   //
   // Sorted on parsed time, not on the raw strings. Postgres hands back
@@ -164,9 +183,26 @@ export default function ChatThread() {
         flight: 0,
         d,
       })),
+      // Drops still in flight, shaped like the real thing so DropBubble
+      // needs no special case.
+      ...liveDrops.map((p) => ({
+        kind: 'drop' as const,
+        at: Date.parse(p.createdAt) || 0,
+        flight: 1,
+        d: {
+          id: p.tempId,
+          author_id: p.senderId,
+          body: p.body,
+          visibility: 'direct',
+          destruct_on_view: true,
+          burned_at: null,
+          media: [],
+          created_at: p.createdAt,
+        },
+      })),
     ];
     return items.sort((a, b) => (a.flight - b.flight) || (a.at - b.at));
-  }, [messages, drops]);
+  }, [messages, drops, liveDrops]);
 
   // A drop landing (INSERT) or burning (UPDATE stamps burned_at) both
   // arrive on the posts channel; either way this thread's copy is stale.
@@ -236,28 +272,63 @@ export default function ChatThread() {
   const [burnSending, setBurnSending] = useState(false);
 
   const sendBurningDrop = async (body: string) => {
-    if (!userId || !otherId) throw new Error('Not ready');
-    const { error } = await supabase.from('posts').insert({
-      author_id: userId,
+    if (!userId || !otherId || !dropScope) throw new Error('Not ready');
+
+    // Register the bubble BEFORE the insert, exactly as a message does,
+    // so it is on screen from the frame of the tap rather than after a
+    // round trip and a refetch.
+    const store = usePendingItems.getState();
+    const prev = (qc.getQueryData<any[]>(['direct-drops', threadId]) ?? []);
+    const tempId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    store.add({
+      tempId,
+      scope: dropScope,
+      senderId: userId,
       body,
-      visibility: 'direct',
-      direct_recipient_id: otherId,
-      kind: 'post',
-      destruct_on_view: true,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    } as any);
-    if (error) throw error;
-    qc.invalidateQueries({ queryKey: ['direct-drops', threadId] });
+      createdAt: nextStamp(prev.map((d: any) => d.created_at), store.byScope[dropScope] ?? []),
+      knownIds: new Set(prev.map((d: any) => d.id)),
+    });
+
+    try {
+      // .select().single() so there is a real id to settle against.
+      // Without it the bubble could only ever retire by the fuzzy route.
+      const { data, error } = await supabase.from('posts').insert({
+        author_id: userId,
+        body,
+        visibility: 'direct',
+        direct_recipient_id: otherId,
+        kind: 'post',
+        destruct_on_view: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      } as any).select().single();
+      if (error) throw error;
+      if ((data as any)?.id) {
+        usePendingItems.getState().settle(dropScope, tempId, (data as any).id);
+      }
+      qc.invalidateQueries({ queryKey: ['direct-drops', threadId] });
+    } catch (e) {
+      usePendingItems.getState().remove(dropScope, tempId);
+      throw e;
+    }
   };
 
   const submit = () => {
     const body = draft.trim();
     if (!body || !threadId) return;
     if (burn) {
+      // Same contract as a message: the box empties on the tap, and the
+      // words come back if the send fails. Holding the draft until the
+      // server answered meant the sentence sat in the composer with a
+      // bubble of itself below it for the whole round trip.
+      setDraft('');
+      setBurn(false);
       setBurnSending(true);
       sendBurningDrop(body)
-        .then(() => { setDraft(''); setBurn(false); })
-        .catch((e: any) => showAlert('Could not send', e?.message ?? 'Try again.'))
+        .catch((e: any) => {
+          setDraft((d) => (d.trim() ? `${body}\n${d}` : body));
+          setBurn(true);
+          showAlert('Could not send', e?.message ?? 'Try again.');
+        })
         .finally(() => setBurnSending(false));
       return;
     }

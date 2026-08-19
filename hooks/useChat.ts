@@ -20,18 +20,13 @@ import { Platform } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
-import { usePendingMessages, pendingFor, unsettled, matchRows } from '../stores/pendingMessages';
+import { usePendingItems, nextStamp } from '../stores/pendingMessages';
+import { usePendingLive } from './usePendingLive';
+
+/** Scope key for a thread's chat messages. See stores/pendingMessages.ts. */
+export const msgScope = (threadId: string) => `msg:${threadId}`;
 
 export type ThreadStatus = 'open' | 'pending' | 'declined';
-
-/**
- * How long a retired bubble keeps its entry before it is thrown away.
- *
- * Long enough to outlast any refetch that was already in the air when
- * the message committed, since such a refetch resolves without the new
- * row and would otherwise erase a message nothing could redraw.
- */
-const RETIRE_GRACE_MS = 15_000;
 
 export interface MessageThread {
   id: string;
@@ -319,60 +314,13 @@ export function useThreadMessages(threadId: string | null) {
 
   // Messages in flight, merged over the server's answer. They are stored
   // outside the query cache precisely so the refetches above cannot
-  // delete them mid-send; see stores/pendingMessages.ts.
-  const byThread = usePendingMessages((s) => s.byThread);
-  const retire = usePendingMessages((s) => s.retire);
-  const pending = pendingFor(byThread, threadId);
-
-  const live = useMemo(
-    () => (pending.length > 0 ? unsettled(pending, query.data ?? []) : pending),
-    [pending, query.data],
+  // delete them mid-send; see stores/pendingMessages.ts. The merge and
+  // its retirement timing live in usePendingLive, shared with drops.
+  const live = usePendingLive(
+    threadId ? msgScope(threadId) : null,
+    query.data ?? [],
+    () => qc.getQueryData<ChatMessage[]>(['thread-messages', threadId]) ?? [],
   );
-
-  // Retirement is a DRAWING decision, recomputed every render. Dropping
-  // the entry is a separate, deliberately late step.
-  //
-  // Deleting the instant a row appeared was wrong twice over. A refetch
-  // that started before the INSERT committed can resolve afterwards and
-  // replace the array WITHOUT the new row — and with the entry already
-  // deleted there was nothing left to draw the bubble again, so the
-  // message showed and then disappeared. That is the original bug moved
-  // one step later, not fixed. Keeping the entry means `unsettled` sees
-  // the row go missing and simply draws it again; it heals both ways.
-  //
-  // It also fed its own output back in: remove() changed `pending`, which
-  // recomputed `live` with a FRESH claim set, so a row that had already
-  // retired one bubble was free to retire the next identical one, and a
-  // duplicate send lost its second bubble one pass at a time.
-  const retiredKey = useMemo(() => {
-    if (pending.length === live.length) return '';
-    const drawn = new Set(live.map((p) => p.tempId));
-    return pending.filter((p) => !drawn.has(p.tempId)).map((p) => p.tempId).join(',');
-  }, [pending, live]);
-
-  useEffect(() => {
-    if (!threadId || !retiredKey) return;
-    const ids = new Set(retiredKey.split(','));
-    const t = setTimeout(() => {
-      // Re-decided against the cache as it stands NOW, not as it stood
-      // when the timer was set. Anything that has gone missing in the
-      // meantime keeps its entry and keeps drawing.
-      //
-      // Matched against the WHOLE list, not just the entries being
-      // dropped: the claim bookkeeping only works on the complete set.
-      // Each drop then hands its row id to the survivors so the claim
-      // does not die with the entry.
-      const rows = qc.getQueryData<ChatMessage[]>(['thread-messages', threadId]) ?? [];
-      const all = usePendingMessages.getState().byThread[threadId] ?? [];
-      const matched = matchRows(all, rows);
-      for (const p of all) {
-        if (!ids.has(p.tempId)) continue;
-        const rowId = matched.get(p.tempId);
-        if (rowId) retire(threadId, p.tempId, rowId);
-      }
-    }, RETIRE_GRACE_MS);
-    return () => clearTimeout(t);
-  }, [threadId, retiredKey, retire, qc]);
 
   const data = useMemo(() => {
     const rows = query.data ?? [];
@@ -381,7 +329,7 @@ export function useThreadMessages(threadId: string | null) {
       ...rows,
       ...live.map((p): ChatMessage => ({
         id: p.tempId,
-        thread_id: p.threadId,
+        thread_id: threadId ?? '',
         sender_id: p.senderId,
         body: p.body,
         read_at: null,
@@ -501,36 +449,25 @@ export function useSendMessage() {
       if (!userId) return {};
       const key = ['thread-messages', vars.threadId];
       const prev = qc.getQueryData<ChatMessage[]>(key) ?? [];
-      // Sort last, even on a phone whose clock disagrees with the
-      // server's. A device running a few minutes slow used to file its
-      // own new message into the middle of the conversation.
-      //
-      // The floor has to clear the messages ALREADY IN FLIGHT too, not
-      // just the cache. Pending sends are deliberately not in the cache,
-      // so two taps inside one round trip both read the same `newest`
-      // and both stamped newest+1ms — identical, and their order after
-      // that was whatever the sort happened to do.
-      const inFlight = usePendingMessages.getState().byThread[vars.threadId] ?? [];
-      const newest = Math.max(
-        0,
-        ...prev.map((m) => Date.parse(m.created_at) || 0),
-        ...inFlight.map((p) => Date.parse(p.createdAt) || 0),
-      );
+      const scope = msgScope(vars.threadId);
+      const store = usePendingItems.getState();
       const tempId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      usePendingMessages.getState().add({
+      store.add({
         tempId,
-        threadId: vars.threadId,
+        scope,
         senderId: userId,
         body: vars.body,
-        createdAt: new Date(Math.max(Date.now(), newest + 1)).toISOString(),
+        // Sorts last even on a phone whose clock disagrees with the
+        // server's, and later than anything still in flight.
+        createdAt: nextStamp(prev.map((m) => m.created_at), store.byScope[scope] ?? []),
         // What the thread already held. Anything outside this set is new,
         // which is what lets the fuzzy match work without consulting a clock.
         knownIds: new Set(prev.map((m) => m.id)),
       });
-      return { tempId };
+      return { tempId, scope };
     },
     onError: (_err, vars, context: any) => {
-      if (context?.tempId) usePendingMessages.getState().remove(vars.threadId, context.tempId);
+      if (context?.tempId) usePendingItems.getState().remove(msgScope(vars.threadId), context.tempId);
     },
     onSuccess: (msg, vars, context: any) => {
       // Ring the recipient's phone. Fired here rather than from a poll
@@ -551,7 +488,7 @@ export function useSendMessage() {
         return [...cur, msg];
       });
       if (context?.tempId) {
-        usePendingMessages.getState().settle(vars.threadId, context.tempId, msg.id);
+        usePendingItems.getState().settle(msgScope(vars.threadId), context.tempId, msg.id);
       }
       qc.invalidateQueries({ queryKey: ['threads'] });
     },

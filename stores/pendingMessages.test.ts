@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { unsettled, usePendingMessages, type PendingMessage } from './pendingMessages';
+import { unsettled, nextStamp, usePendingItems, type PendingItem } from './pendingMessages';
 
 const ME = 'user-me';
 
@@ -24,10 +24,10 @@ function pending(
   tempId: string,
   body: string,
   opts: { settledId?: string; knownIds?: string[] } = {},
-): PendingMessage {
+): PendingItem {
   return {
     tempId,
-    threadId: 't',
+    scope: 'msg:t',
     senderId: ME,
     body,
     createdAt: '2026-08-17T12:00:00.000Z',
@@ -36,7 +36,7 @@ function pending(
   };
 }
 
-const ids = (list: PendingMessage[]) => list.map((p) => p.tempId);
+const ids = (list: PendingItem[]) => list.map((p) => p.tempId);
 
 describe('unsettled', () => {
   it('keeps drawing a message the server has not answered for', () => {
@@ -98,19 +98,19 @@ describe('unsettled', () => {
     // identical message matched it and vanished mid-flight. The store
     // writes the id into the survivors instead, so the claim outlives the
     // entry that made it.
-    usePendingMessages.setState({ byThread: {} });
-    const store = usePendingMessages.getState();
+    usePendingItems.setState({ byScope: {} });
+    const store = usePendingItems.getState();
     store.add(pending('tmp1', 'ok'));
     store.add(pending('tmp2', 'ok'));
 
     const rows = [row('real1', 'ok')];
-    const before = usePendingMessages.getState().byThread.t;
+    const before = usePendingItems.getState().byScope['msg:t'];
     expect(ids(unsettled(before, rows))).toEqual(['tmp2']);
 
     // tmp1 is done and takes real1 out of circulation on its way out.
-    usePendingMessages.getState().retire('t', 'tmp1', 'real1');
+    usePendingItems.getState().retire('msg:t', 'tmp1', 'real1');
 
-    const after = usePendingMessages.getState().byThread.t;
+    const after = usePendingItems.getState().byScope['msg:t'];
     expect(ids(after)).toEqual(['tmp2']);
     expect(after[0].knownIds.has('real1')).toBe(true);
     // The survivor keeps drawing: real1 was never its message.
@@ -118,13 +118,13 @@ describe('unsettled', () => {
   });
 
   it('a survivor still retires against its OWN row after a hand-off', () => {
-    usePendingMessages.setState({ byThread: {} });
-    const store = usePendingMessages.getState();
+    usePendingItems.setState({ byScope: {} });
+    const store = usePendingItems.getState();
     store.add(pending('tmp1', 'ok'));
     store.add(pending('tmp2', 'ok'));
-    usePendingMessages.getState().retire('t', 'tmp1', 'real1');
+    usePendingItems.getState().retire('msg:t', 'tmp1', 'real1');
 
-    const after = usePendingMessages.getState().byThread.t;
+    const after = usePendingItems.getState().byScope['msg:t'];
     expect(unsettled(after, [row('real1', 'ok'), row('real2', 'ok')])).toHaveLength(0);
   });
 
@@ -152,7 +152,67 @@ describe('unsettled', () => {
   it('is unaffected by the device clock', () => {
     // No branch reads a timestamp any more. A phone half an hour out of
     // step retires exactly the same bubbles.
-    const skewed: PendingMessage = { ...pending('tmp1', 'hello'), createdAt: '1999-01-01T00:00:00.000Z' };
+    const skewed: PendingItem = { ...pending('tmp1', 'hello'), createdAt: '1999-01-01T00:00:00.000Z' };
     expect(unsettled([skewed], [row('real1', 'hello')])).toHaveLength(0);
+  });
+});
+
+describe('scopes', () => {
+  it('a message and a burning drop with the same text do not retire each other', () => {
+    // Chat messages and drops live in one store but two scopes. Without
+    // the split, sending "ok" as a message and "ok" as a drop in the same
+    // thread would cross-match, and one of the two would vanish.
+    usePendingItems.setState({ byScope: {} });
+    const store = usePendingItems.getState();
+    store.add(pending('m1', 'ok'));
+    store.add({ ...pending('d1', 'ok'), scope: 'drop:t' });
+
+    const state = usePendingItems.getState().byScope;
+    expect(ids(state['msg:t'])).toEqual(['m1']);
+    expect(ids(state['drop:t'])).toEqual(['d1']);
+
+    // The message's row arrives. The drop is in a different scope and is
+    // never even offered it.
+    expect(unsettled(state['msg:t'], [row('real1', 'ok')])).toHaveLength(0);
+    expect(unsettled(state['drop:t'], [])).toHaveLength(1);
+  });
+
+  it('retiring in one scope leaves the other alone', () => {
+    usePendingItems.setState({ byScope: {} });
+    const store = usePendingItems.getState();
+    store.add(pending('m1', 'ok'));
+    store.add({ ...pending('d1', 'ok'), scope: 'drop:t' });
+
+    usePendingItems.getState().retire('msg:t', 'm1', 'real1');
+    const state = usePendingItems.getState().byScope;
+    expect(state['msg:t']).toBeUndefined();
+    expect(ids(state['drop:t'])).toEqual(['d1']);
+    expect(state['drop:t'][0].knownIds.has('real1')).toBe(false);
+  });
+});
+
+describe('nextStamp', () => {
+  it('clears the newest row even when the device clock lags', () => {
+    const future = new Date(Date.now() + 60_000).toISOString();
+    const stamp = nextStamp([future], []);
+    expect(Date.parse(stamp)).toBeGreaterThan(Date.parse(future));
+  });
+
+  it('clears items already in flight, so back-to-back sends keep their order', () => {
+    // The floor used to read the query cache only, and pending items are
+    // deliberately not in it — so two taps inside one round trip both
+    // stamped newest+1ms and their order was left to the sort.
+    const first = nextStamp([], []);
+    const second = nextStamp([], [{ ...pending('p1', 'a'), createdAt: first }]);
+    const third = nextStamp([], [
+      { ...pending('p1', 'a'), createdAt: first },
+      { ...pending('p2', 'b'), createdAt: second },
+    ]);
+    expect(Date.parse(second)).toBeGreaterThan(Date.parse(first));
+    expect(Date.parse(third)).toBeGreaterThan(Date.parse(second));
+  });
+
+  it('survives a row with no timestamp', () => {
+    expect(() => nextStamp([null, undefined, ''], [])).not.toThrow();
   });
 });
