@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useHuntByCode, useClaimFind, useBurnCache, getHuntPhotoUrl } from '../../hooks/useHunt';
+import { useHuntByCode, useClaimFind, useBurnCache, getHuntPhotoUrl, usePayloadUrl } from '../../hooks/useHunt';
 import { Button } from '../../components/shared/Button';
 import { ScreenHeader } from '../../components/shared/ScreenHeader';
 import { useGeolocation } from '../../hooks/useGeolocation';
@@ -92,6 +92,13 @@ export default function HuntSeek() {
   // seeker is physically inside the find radius (or has logged the find).
   const revealed = gated || found;
 
+  // The TRUE payload (090): private bucket, and the claim is the key —
+  // the signed URL only resolves once this seeker's hunt_finds row
+  // exists, so it is not even requested before then. Legacy drops keep
+  // their public clue photo via photoUrl below.
+  const payload = usePayloadUrl(found ? (cache as any)?.payload_photo_path : null);
+  const payloadUrl = payload.data ?? null;
+
   const onFound = async () => {
     if (!cache || !coords) return;
     if (!signedIn) {
@@ -156,7 +163,7 @@ export default function HuntSeek() {
           <View style={s.foundCard}>
             {cache.self_destruct ? (
               <>
-                {photoUrl && <RNImage source={{ uri: photoUrl }} style={[s.clue, s.burning]} resizeMode="cover" />}
+                {(payloadUrl ?? photoUrl) && <RNImage source={{ uri: (payloadUrl ?? photoUrl)! }} style={[s.clue, s.burning]} resizeMode="cover" />}
                 <Text style={s.goneTitle}>GONE</Text>
                 <Text style={s.foundSub}>It burned on delivery. One look. That was the price.</Text>
               </>
@@ -164,7 +171,7 @@ export default function HuntSeek() {
               <>
                 <Ionicons name="checkmark-circle" size={48} color={Colors.success} />
                 <Text style={s.foundTitle}>Collected</Text>
-                {photoUrl && <RNImage source={{ uri: photoUrl }} style={s.clue} resizeMode="cover" />}
+                {(payloadUrl ?? photoUrl) && <RNImage source={{ uri: (payloadUrl ?? photoUrl)! }} style={s.clue} resizeMode="cover" />}
                 <Text style={s.foundSub}>Logged. {cache.found_count + 1} pickups on this one.</Text>
               </>
             )}
@@ -195,6 +202,11 @@ export default function HuntSeek() {
               {coords ? ` · ±${Math.round(coords.accuracy)}m` : ''}
             </Text>
             {!!cache.hint && <Text style={s.hint}>“{cache.hint}”</Text>}
+            {!!((cache as any).creator_name || (cache as any).creator_handle) && (
+              <Text style={s.sub}>
+                left by {(cache as any).creator_name ?? `@${(cache as any).creator_handle}`}
+              </Text>
+            )}
 
             {Platform.OS === 'web' && heading === null && (
               <Button

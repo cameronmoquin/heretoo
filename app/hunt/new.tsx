@@ -23,6 +23,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useCreateHuntCache, useUploadHuntPhoto, useMyHuntCaches, useAnnounceHuntDrop,
+  useSetCachePayload, useSetCachePhoto,
   huntScopeFor, huntUrl, type HuntDestination,
 } from '../../hooks/useHunt';
 import { useMyFamilies, useMyConnections } from '../../hooks/useFamily';
@@ -61,6 +62,8 @@ export default function HuntNew() {
   const create = useCreateHuntCache();
   const upload = useUploadHuntPhoto();
   const announce = useAnnounceHuntDrop();
+  const setPayload = useSetCachePayload();
+  const setPhoto = useSetCachePhoto();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -148,7 +151,10 @@ export default function HuntNew() {
     try {
       const id = genId();
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const photoPath = await upload.mutateAsync({ cacheId: id, file, kind: 'clue', ext });
+      // The row first, the photo second. The payload upload verifies the
+      // uploader OWNS the cache, so the cache has to exist before the
+      // photo can. (The old order — photo first — was for the public
+      // clue bucket, which checked nothing.)
       const cache = await create.mutateAsync({
         id,
         title, hint,
@@ -156,12 +162,23 @@ export default function HuntNew() {
         // A hand-set pin has no measured accuracy. Do not invent one.
         accuracyM: usingManual ? undefined : coords?.accuracy,
         radiusM: Math.max(5, parseInt(radius, 10) || 25),
-        photoPath,
         scope: huntScopeFor(dest),
         familyId: dest === 'crew' ? activeCrewId : null,
         selfDestruct,
         prerequisiteCacheId: prereqId,
       });
+
+      // The photo is the PAYLOAD now — private bucket, shut until
+      // someone stands on it (090). If that path is not live yet, fall
+      // back to the old public-bucket photo rather than shipping a drop
+      // with nothing at the X.
+      try {
+        const payloadPath = await upload.mutateAsync({ cacheId: id, file, kind: 'payload', ext });
+        await setPayload.mutateAsync({ cacheId: id, path: payloadPath });
+      } catch {
+        const photoPath = await upload.mutateAsync({ cacheId: id, file, kind: 'clue', ext });
+        await setPhoto.mutateAsync({ cacheId: id, path: photoPath });
+      }
 
       const code = cache.share_code || '';
       const line = destinationLine();

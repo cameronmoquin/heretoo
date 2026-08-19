@@ -39,15 +39,30 @@ export default async (req: Request) => {
   // Inputs.
   const url = new URL(req.url);
   const cacheId = url.searchParams.get('cacheId') || '';
-  const kind = url.searchParams.get('kind') === 'find' ? 'find' : 'clue';
+  const kindParam = url.searchParams.get('kind');
+  const kind = kindParam === 'find' ? 'find' : kindParam === 'payload' ? 'payload' : 'clue';
   const ext = (url.searchParams.get('ext') || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
   if (!/^[0-9a-fA-F-]{10,40}$/.test(cacheId)) return json({ error: 'bad cacheId' }, 400);
+
+  // The payload is the sealed thing itself (090): private bucket, read
+  // gated to the hider and to claimed finders. Only the cache's creator
+  // may write it — any signed-in user writing another hider's payload
+  // would be planting evidence.
+  const bucket = kind === 'payload' ? 'hunt-payloads' : BUCKET;
+  if (kind === 'payload') {
+    const own = await fetch(
+      `${SUPABASE_URL}/rest/v1/hunt_caches?id=eq.${cacheId}&creator_id=eq.${userId}&select=id`,
+      { headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE } },
+    );
+    const rows = own.ok ? ((await own.json()) as any[]) : [];
+    if (rows.length === 0) return json({ error: 'not your drop' }, 403);
+  }
 
   const body = new Uint8Array(await req.arrayBuffer());
   if (body.byteLength === 0) return json({ error: 'empty body' }, 400);
   if (body.byteLength > MAX_BYTES) return json({ error: 'file too large' }, 413);
 
-  const name = kind === 'clue' ? `clue.${ext}` : `find-${userId}.${ext}`;
+  const name = kind === 'clue' ? `clue.${ext}` : kind === 'payload' ? `payload.${ext}` : `find-${userId}.${ext}`;
   const path = `${cacheId}/${name}`;
 
   // Upload via the service role (bypasses storage RLS). x-upsert lets a

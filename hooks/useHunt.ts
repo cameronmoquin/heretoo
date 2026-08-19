@@ -32,6 +32,9 @@ export interface HuntCache {
   accuracy_m: number | null;
   radius_m: number;
   photo_path: string | null;
+  /** The sealed thing itself (090). Private bucket; a signed URL only
+   *  resolves for the hider or a claimed finder. */
+  payload_photo_path?: string | null;
   scope: 'public' | 'family' | 'link';
   family_id: string | null;
   share_code: string | null;
@@ -58,6 +61,9 @@ export interface HuntCachePublic {
   hint: string | null;
   lat: number;
   lng: number;
+  payload_photo_path?: string | null;
+  creator_name?: string | null;
+  creator_handle?: string | null;
   radius_m: number;
   photo_path: string | null;
   found_count: number;
@@ -218,7 +224,7 @@ export function useUploadHuntPhoto() {
     mutationFn: async (input: {
       cacheId: string;
       file: File | Blob;
-      kind: 'clue' | 'find';
+      kind: 'clue' | 'find' | 'payload';
       ext?: string;
     }): Promise<string> => {
       const ext = input.ext || (input.file as File).name?.split('.').pop()?.toLowerCase() || 'jpg';
@@ -387,6 +393,129 @@ export function useBurnCache() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['hunt-caches-mine'] });
       qc.invalidateQueries({ queryKey: ['hunt-caches-public'] });
+    },
+  });
+}
+
+
+// ── The payload, nearby search, and deletion (090) ───────────────────
+
+/**
+ * Signed URL for a sealed payload. Resolves only for the hider or a
+ * claimed finder — storage RLS is the gate, so callers pass the path
+ * freely and read nothing until they have stood on the spot. Enabled is
+ * the caller's job: pass null until the find is claimed, or the fetch
+ * burns a denied request per render.
+ */
+export function usePayloadUrl(path: string | null | undefined) {
+  return useQuery({
+    queryKey: ['hunt-payload-url', path],
+    queryFn: async (): Promise<string | null> => {
+      if (!path) return null;
+      const { data, error } = await supabase.storage
+        .from('hunt-payloads')
+        .createSignedUrl(path, 60 * 10);
+      if (error) return null; // denied = still sealed for this viewer
+      return data?.signedUrl ?? null;
+    },
+    enabled: !!path,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export interface NearbyCache {
+  id: string;
+  title: string | null;
+  hint: string | null;
+  lat: number;
+  lng: number;
+  radius_m: number;
+  share_code: string | null;
+  found_count: number;
+  has_payload: boolean;
+  distance_miles: number;
+  creator_name: string | null;
+  creator_handle: string | null;
+}
+
+/**
+ * Drops around a point, by mileage radius. Public drops for anyone
+ * signed in; cohort drops for their members; link drops never — a link
+ * is an invitation, not a listing. Scope lives in the RPC (090).
+ */
+export function useNearbyCaches(
+  coords: { lat: number; lng: number } | null,
+  radiusMiles: number,
+) {
+  return useQuery({
+    queryKey: ['hunt-nearby', coords?.lat?.toFixed(3), coords?.lng?.toFixed(3), radiusMiles],
+    queryFn: async (): Promise<NearbyCache[]> => {
+      if (!coords) return [];
+      const { data, error } = await supabase.rpc('nearby_hunt_caches', {
+        p_lat: coords.lat,
+        p_lng: coords.lng,
+        p_radius_miles: radiusMiles,
+      });
+      if (error) throw error;
+      return (data ?? []) as NearbyCache[];
+    },
+    enabled: !!coords,
+    staleTime: 60_000,
+  });
+}
+
+/** Stamp the payload path onto a cache after its upload lands. The
+ *  update policy (052) already restricts this to the creator. */
+export function useSetCachePayload() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { cacheId: string; path: string }) => {
+      const { error } = await supabase
+        .from('hunt_caches')
+        .update({ payload_photo_path: input.path } as any)
+        .eq('id', input.cacheId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['hunt-caches-mine'] });
+    },
+  });
+}
+
+/** The legacy public clue photo, for drops made before 090 ran. */
+export function useSetCachePhoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { cacheId: string; path: string }) => {
+      const { error } = await supabase
+        .from('hunt_caches')
+        .update({ photo_path: input.path } as any)
+        .eq('id', input.cacheId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['hunt-caches-mine'] });
+    },
+  });
+}
+
+/**
+ * Delete a drop outright. The 052 delete policy restricts this to the
+ * creator; finds go with the row (FK cascade). Photos in storage are
+ * not chased here — an orphaned object in a private bucket is inert,
+ * and the burn path already owns server-side photo destruction.
+ */
+export function useDeleteHuntCache() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cacheId: string) => {
+      const { error } = await supabase.from('hunt_caches').delete().eq('id', cacheId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['hunt-caches-mine'] });
+      qc.invalidateQueries({ queryKey: ['hunt-caches-public'] });
+      qc.invalidateQueries({ queryKey: ['hunt-nearby'] });
     },
   });
 }
