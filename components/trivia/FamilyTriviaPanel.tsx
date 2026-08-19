@@ -218,16 +218,16 @@ function PlayPane({ familyId }: { familyId: string }) {
             >
               <Text style={[
                 s.choiceText,
-                isCorrect && { color: '#0A0A0F', fontWeight: '700' },
-                isWrongMine && { color: Colors.brandIvory },
+                isCorrect && { color: Colors.onPrimary, fontWeight: '700' },
+                isWrongMine && { color: Colors.textPrimary },
               ]}>
                 {String.fromCharCode(65 + i)}.  {c}
               </Text>
               {isSubmitted && isCorrect && (
-                <Ionicons name="checkmark" size={16} color="#0A0A0F" />
+                <Ionicons name="checkmark" size={16} color={Colors.onPrimary} />
               )}
               {isWrongMine && (
-                <Ionicons name="close" size={16} color={Colors.brandIvory} />
+                <Ionicons name="close" size={16} color={Colors.textPrimary} />
               )}
             </TouchableOpacity>
           );
@@ -419,7 +419,7 @@ function makeStyles() { return StyleSheet.create({
   },
   scoreCol: { flex: 1, minWidth: 0 },
   scoreNum: {
-    fontSize: 22, fontWeight: '800', color: Colors.brandIvory, letterSpacing: -0.4,
+    fontSize: 22, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.4,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   scoreLabel: {
@@ -447,7 +447,7 @@ function makeStyles() { return StyleSheet.create({
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   question: {
-    fontSize: 22, lineHeight: 30, color: Colors.brandIvory, fontWeight: '500',
+    fontSize: 22, lineHeight: 30, color: Colors.textPrimary, fontWeight: '500',
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Source Serif 4", Georgia, serif' } as any) : {}),
   },
   choices: { gap: 8, marginTop: 4 },
@@ -468,7 +468,7 @@ function makeStyles() { return StyleSheet.create({
 
   resultBox: {
     padding: Spacing.md, borderRadius: Radius.md,
-    backgroundColor: 'rgba(22, 22, 29, 0.78)',
+    backgroundColor: Colors.surfaceLight,
     borderLeftWidth: 2, borderLeftColor: Colors.primary, gap: 10,
   },
   resultBody: {
@@ -481,11 +481,11 @@ function makeStyles() { return StyleSheet.create({
     borderRadius: Radius.full,
     backgroundColor: Colors.primary,
   },
-  nextBtnText: { color: '#0A0A0F', fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
+  nextBtnText: { color: Colors.onPrimary, fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
 
   emptyWrap: { paddingVertical: Spacing.xl, gap: 6, alignItems: 'flex-start' },
   emptyTitle: {
-    fontSize: 18, fontWeight: '700', color: Colors.brandIvory,
+    fontSize: 18, fontWeight: '700', color: Colors.textPrimary,
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
   // Compose
@@ -518,7 +518,7 @@ function makeStyles() { return StyleSheet.create({
     borderRadius: Radius.full,
     backgroundColor: Colors.primary, marginTop: Spacing.md,
   },
-  saveBtnText: { color: '#0A0A0F', fontSize: 14, fontWeight: '700', letterSpacing: 0.2 },
+  saveBtnText: { color: Colors.onPrimary, fontSize: 14, fontWeight: '700', letterSpacing: 0.2 },
 
   // Standings
   ourRank: {
@@ -558,7 +558,7 @@ function makeStyles() { return StyleSheet.create({
     minWidth: 32, textAlign: 'center',
     ...(Platform.OS === 'web' ? ({ fontFamily: '"Syne", "Inter", sans-serif' } as any) : {}),
   },
-  boardName: { fontSize: 14, fontWeight: '700', color: Colors.brandIvory },
+  boardName: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   boardMeta: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
   boardFootnote: {
     fontSize: 11, color: Colors.textMuted, fontStyle: 'italic',
