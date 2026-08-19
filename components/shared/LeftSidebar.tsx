@@ -7,7 +7,7 @@
  *   - Viewport ≥1024px (240px sidebar + 600px feed + gutters fits)
  *   - NOT on auth-flow pages (welcome / profile-setup / join / sow)
  *
- * Slots: Feed · Messages (with unread badge) · Network · Crews ·
+ * Slots: Feed · Messages (with unread badge) ·
  * Music (with active station + play state) · Profile · Sign out.
  *
  * Collaborates with MobileTabBar — when this sidebar shows, the
@@ -82,8 +82,6 @@ export function LeftSidebar() {
 
   const onFeed = pathname === '/' || pathname.startsWith('/feed') || pathname.startsWith('/(tabs)/feed');
   const onChat = pathname.startsWith('/messages');
-  const onNetwork = pathname.startsWith('/network');
-  const onFamily = pathname.startsWith('/family');
   const onProfile = pathname.startsWith('/profile') || pathname.startsWith('/(tabs)/profile');
   const onMusic = pathname.startsWith('/music') || pathname.startsWith('/(tabs)/music');
   const onJournal = pathname.startsWith('/journal');
@@ -143,18 +141,10 @@ export function LeftSidebar() {
         badge={unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined}
         onPress={() => router.push('/messages')}
       />
-      <NavRow
-        icon={onNetwork ? 'people' : 'people-outline'}
-        label="Network"
-        active={onNetwork}
-        onPress={() => router.push('/network' as any)}
-      />
-      <NavRow
-        icon={onFamily ? 'leaf' : 'leaf-outline'}
-        label="Social"
-        active={onFamily}
-        onPress={() => router.push('/family' as any)}
-      />
+      {/* Network and Social left the rail (Aug 2026): both live under
+          Profile now — the stats card walks to /network, and the cohort
+          rows walk to /family — so the rail rows were second doors to
+          rooms the Profile already opens. */}
       <NavRow
         icon={onProfile ? 'person' : 'person-outline'}
         label="Profile"

@@ -55,9 +55,7 @@ export default function RoomsScreen() {
     // play/pause control and nothing else, and the only route into
     // /music anywhere was a long-press on the desktop sidebar.
     { icon: 'disc', label: 'Music', route: '/music' },
-    { icon: 'people', label: 'Network', route: '/network' },
     { icon: 'pricetag', label: 'Advertise', route: '/advertise' },
-    { icon: 'boat', label: 'Social', route: '/family' },
     // Give is off the shelf — donations sit inside regulatory territory
     // that a lemonade stand has no business standing in. The /give route
     // still exists; no door points at it. Profile is off because the
