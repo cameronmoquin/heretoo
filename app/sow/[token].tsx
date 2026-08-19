@@ -217,7 +217,7 @@ export default function SowPlant() {
                 name={invite.sponsor_display_name}
                 photoUrl={invite.sponsor_avatar_path ? mediaPathToUrl(invite.sponsor_avatar_path) : null}
                 size={64}
-                hideMeta
+
               />
               <Text style={s.eyebrow}>A seed from</Text>
               <Text style={s.sponsor}>

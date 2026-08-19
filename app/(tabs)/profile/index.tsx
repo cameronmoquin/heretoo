@@ -14,7 +14,7 @@
 
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Pressable,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -24,16 +24,13 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
 import {
   useMyFamilies, useMyNetworkStats,
-  useMyStatures, useUpdateMyStature,
-  STATURE_LABELS, type FamilyStature,
 } from '../../../hooks/useFamily';
 import { useToggleHeart } from '../../../hooks/useFeed';
 import { PostCard } from '../../../components/feed/PostCard';
-import { showConfirm, showAlert } from '../../../lib/alert';
+import { showConfirm } from '../../../lib/alert';
 import { StatureAvatar } from '../../../components/shared/StatureAvatar';
 import { ArtPreferences } from '../../../components/shared/ArtPreferences';
 import { WCRBPlayer } from '../../../components/shared/WCRBPlayer';
-import { PlantTreeModal } from '../../../components/shared/PlantTreeModal';
 import { mediaPathToUrl } from '../../../hooks/useUpload';
 import { Button } from '../../../components/shared/Button';
 import { Colors } from '../../../constants/colors';
@@ -45,10 +42,6 @@ export default function OwnProfileScreen() {
   const { profile, signOut } = useAuth();
   const { data: families } = useMyFamilies();
   const { data: stats } = useMyNetworkStats();
-  const { data: statures } = useMyStatures();
-  const updateStature = useUpdateMyStature();
-  const [picker, setPicker] = useState<{ familyId: string; familyName: string } | null>(null);
-  const [plantOpen, setPlantOpen] = useState(false);
   const toggleHeart = useToggleHeart();
 
   // Your own public posts — shown at the bottom of the profile hub.
@@ -142,9 +135,13 @@ export default function OwnProfileScreen() {
               <Text style={s.sectionLink}>See all →</Text>
             </TouchableOpacity>
           </View>
+          {/* No role pill. The cohort row is the cohort's name and a way
+              into it; what your standing is called inside it was a second
+              control competing with that, on a screen that is meant to be
+              a launchpad. Removed on request along with the picker it
+              opened. useMyStatures / useUpdateMyStature still exist for
+              wherever roles are genuinely edited. */}
           {(families ?? []).slice(0, 4).map((f: any) => {
-            const myStature = (statures?.[f.id] ?? null) as FamilyStature | null;
-            const myRoleLabel = myStature ? STATURE_LABELS[myStature] : 'Set role';
             return (
               <View key={f.id} style={s.familyRow}>
                 <TouchableOpacity
@@ -164,16 +161,6 @@ export default function OwnProfileScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={s.familyName}>{f.name}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={s.rolePill}
-                  onPress={() => setPicker({ familyId: f.id, familyName: f.name })}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[s.rolePillText, !myStature && { color: Colors.textMuted }]}>
-                    {myRoleLabel}
-                  </Text>
-                  <Ionicons name="chevron-down" size={12} color={Colors.textMuted} />
                 </TouchableOpacity>
               </View>
             );
@@ -223,10 +210,16 @@ export default function OwnProfileScreen() {
             label={`Join ${Vocab.groupWithArticle} with a code`}
             onPress={() => router.push('/family/join' as any)}
           />
+          {/* This row used to open the seed-invite modal, which does not
+              start a cohort — it mints a link so someone ELSE can start
+              theirs. The label said "Plant a tree with a friend", so the
+              row was both fluffy and inaccurate. It now does the thing
+              its name says. The sponsor flow itself is untouched; it is
+              simply no longer reachable from this screen. */}
           <ActionRow
-            icon="leaf-outline"
-            label="Plant a tree with a friend"
-            onPress={() => setPlantOpen(true)}
+            icon="people-outline"
+            label={`Start a new ${Vocab.group}`}
+            onPress={() => router.push('/family/new' as any)}
           />
           {/* Dark theme toggle removed for now — light-only while we
               dial in the polish pass. */}
@@ -265,54 +258,6 @@ export default function OwnProfileScreen() {
         />
       </ScrollView>
 
-      {/* Plant-a-tree (founding seed invite) modal */}
-      <PlantTreeModal visible={plantOpen} onClose={() => setPlantOpen(false)} />
-
-      {/* Stature picker modal */}
-      <Modal
-        visible={!!picker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPicker(null)}
-      >
-        <Pressable style={s.modalBackdrop} onPress={() => setPicker(null)}>
-          <Pressable style={s.modalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={s.modalTitle}>Your role in {picker?.familyName}</Text>
-            <ScrollView style={{ maxHeight: 380 }}>
-              {(Object.keys(STATURE_LABELS) as FamilyStature[]).map((key) => {
-                const isCurrent = picker && statures?.[picker.familyId] === key;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[s.statureRow, isCurrent && s.statureRowActive]}
-                    onPress={() => {
-                      if (!picker) return;
-                      updateStature.mutate(
-                        { familyId: picker.familyId, stature: key },
-                        {
-                          onSuccess: () => setPicker(null),
-                          onError: (e: any) => showAlert('Could not update', e?.message ?? 'Try again.'),
-                        },
-                      );
-                    }}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[s.statureLabel, isCurrent && s.statureLabelActive]}>
-                      {STATURE_LABELS[key]}
-                    </Text>
-                    {isCurrent && (
-                      <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <TouchableOpacity style={s.modalCancel} onPress={() => setPicker(null)}>
-              <Text style={s.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </SafeAreaView>
     </View>
   );
@@ -421,36 +366,5 @@ function makeStyles() { return StyleSheet.create({
   },
   signOutText: { fontSize: 13, color: Colors.error, fontWeight: '600' },
 
-  rolePill: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.full,
-    borderWidth: 1, borderColor: Colors.border,
-    backgroundColor: Colors.surfaceLight,
-  },
-  rolePillText: {
-    fontSize: Type.caption.size, fontWeight: '600', color: Colors.textPrimary,
-  },
 
-  modalBackdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
-    alignItems: 'center', justifyContent: 'center', padding: 20,
-  },
-  modalCard: {
-    backgroundColor: Colors.surface, borderRadius: Radius.control,
-    width: '100%', maxWidth: 420, padding: 18, gap: Spacing.xxs,
-    borderWidth: 1, borderColor: Colors.border,
-  },
-  modalTitle: {
-    fontSize: Type.bodyBold.size, fontWeight: Type.bodyBold.weight,
-    color: Colors.textPrimary, marginBottom: Spacing.xs,
-  },
-  statureRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 10, paddingHorizontal: Spacing.sm, borderRadius: Radius.sm,
-  },
-  statureRowActive: { backgroundColor: Colors.primaryFaint },
-  statureLabel: { fontSize: 15, color: Colors.textPrimary },
-  statureLabelActive: { fontWeight: '700' },
-  modalCancel: { alignItems: 'center', paddingVertical: 11, marginTop: 6 },
-  modalCancelText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '500' },
 }); }

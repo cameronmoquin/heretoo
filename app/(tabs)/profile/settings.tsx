@@ -187,7 +187,7 @@ export default function ProfileSettings() {
               name={displayName || profile.display_name}
               photoUrl={avatarPath ? mediaPathToUrl(avatarPath) : null}
               size={96}
-              hideMeta
+
             />
             <View style={s.avatarOverlay}>
               {busy === 'avatar' ? (
