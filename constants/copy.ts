@@ -30,32 +30,36 @@ export const Copy = {
     priceUnit: `a month`,
 
     /**
-     * The price explanation, under the number.
+     * The price explanation, under the number. EMPTY — the sentence that
+     * was here was written by Claude and never cleared. The page shows no
+     * explanation until you put one here.
      * {reach} = how many people are on HereToo right now.
      * {rate}  = dollars per hundred people (currently 20).
      */
-    priceWhy: `There are {reach} people here today. The rate is ${'$'}{rate} for every hundred of them. When more arrive the price rises, and you are never charged for growth that has not happened yet.`,
+    priceWhy: ``,
 
-    /** Shown instead of the number if the live count can't be reached. */
-    priceFallback: `${'$'}{rate} for every hundred people here, per month.`,
+    /**
+     * Shown instead of the number if the live count can't be reached.
+     * EMPTY for the same reason. While it is empty that rare case shows
+     * no price at all.
+     */
+    priceFallback: ``,
 
     /**
      * The body of the page. Each string is its own paragraph. Add or
-     * remove paragraphs freely; the list can be any length, including
-     * empty (`terms: []` shows no prose at all).
+     * remove paragraphs freely; the list can be any length.
+     *
+     * EMPTIED. Three paragraphs stood here that you never approved. The
+     * page now runs as a bare form: heading, price, fields, button.
      */
-    terms: [
-      `Small businesses only. A jeweler, an Etsy shop, the ice-cream stand, not a corporation. Every ad is placed by hand and held to the same artistic standard as the gallery it hangs in. Most applications will be declined, and the standard is not negotiable.`,
-      `Targeting is three declared facts: age, gender identity, and location. Nothing else. No tracking, no pixels, no dashboard, no data going back to you. You are buying a place on the wall, the way the town paper sold one.`,
-      `Approval comes before payment, billing is by Stripe, and nothing is owed for applying.`,
-    ],
+    terms: [] as string[],
 
     /** The small labels above each field. */
     fieldBusiness: `Business`,
     fieldEmail: `Email`,
-    fieldLink: `Where we can see your work`,
-    fieldPitch: `The pitch`,
-    fieldTargeting: `Who it's for (each optional)`,
+    fieldLink: `Link`,
+    fieldPitch: `Pitch`,
+    fieldTargeting: `Targeting`,
 
     /** Greyed-out hints inside the boxes. */
     placeholderLink: `https://`,
@@ -67,7 +71,10 @@ export const Copy = {
     submit: `Apply`,
     submitting: `Sending`,
 
-    /** The whole page after a successful send. */
-    received: `Received. If it passes the standard, you'll hear from us.`,
+    /**
+     * The whole page after a successful send. Trimmed to the bare
+     * acknowledgement; the sentence that followed it was Claude's.
+     */
+    received: `Received.`,
   },
 } as const;

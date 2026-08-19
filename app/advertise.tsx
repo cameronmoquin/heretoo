@@ -111,24 +111,31 @@ export default function AdvertiseScreen() {
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <HereTooLogo size={56} />
-        <Text style={s.title}>{C.title}</Text>
+        {!!C.title && <Text style={s.title}>{C.title}</Text>}
 
         {/* The price, computed in front of you from the only number
             that should set it. */}
         <View style={s.priceCard}>
+          {/* Every string here can be emptied in constants/copy.ts, and an
+              emptied one renders nothing at all rather than an empty line
+              holding space where a sentence used to be. */}
           {reachLoading ? (
             <ActivityIndicator color={Colors.primary} />
           ) : reach == null ? (
-            <Text style={s.para}>
-              {fill(C.priceFallback, { rate: RATE_PER_HUNDRED })}
-            </Text>
+            !!C.priceFallback && (
+              <Text style={s.para}>
+                {fill(C.priceFallback, { rate: RATE_PER_HUNDRED })}
+              </Text>
+            )
           ) : (
             <>
               <Text style={s.priceBig}>${priceFor(reach)}</Text>
-              <Text style={s.priceUnit}>{C.priceUnit}</Text>
-              <Text style={s.priceWhy}>
-                {fill(C.priceWhy, { reach, rate: RATE_PER_HUNDRED })}
-              </Text>
+              {!!C.priceUnit && <Text style={s.priceUnit}>{C.priceUnit}</Text>}
+              {!!C.priceWhy && (
+                <Text style={s.priceWhy}>
+                  {fill(C.priceWhy, { reach, rate: RATE_PER_HUNDRED })}
+                </Text>
+              )}
             </>
           )}
         </View>
