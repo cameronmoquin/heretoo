@@ -41,8 +41,10 @@ import {
   useMemoirProject,
   useStartMemoirSession,
   useSaveMemoirResponse,
+  useUpdateMemoirResponse,
   useEndMemoirSession,
 } from '../hooks/useMemoir';
+import { useCreateTimelineEvent } from '../hooks/useMemoirTimeline';
 import { isWrongPassphrase, vaultAvailable } from '../lib/vault';
 import { showAlert, showConfirm } from '../lib/alert';
 import { Colors } from '../constants/colors';
@@ -74,6 +76,8 @@ export default function JournalScreen() {
   const { data: memoirProject } = useMemoirProject(ensureProject.data);
   const startSession = useStartMemoirSession();
   const saveResponse = useSaveMemoirResponse();
+  const linkResponse = useUpdateMemoirResponse();
+  const createEvent = useCreateTimelineEvent();
   const endSession = useEndMemoirSession();
   const [sendingId, setSendingId] = useState<string | null>(null);
   // Entries sent to the memoir during THIS visit. Nothing records the
@@ -277,7 +281,7 @@ export default function JournalScreen() {
         guidanceMode: memoirProject?.guidance_mode ?? 'socratic',
       });
 
-      await saveResponse.mutateAsync({
+      const saved = await saveResponse.mutateAsync({
         sessionId,
         projectId,
         customPromptText: entry.title?.trim() || 'Journal entry',
@@ -285,6 +289,28 @@ export default function JournalScreen() {
         finalText: entry.body ?? '',
         chapterAssignment: null,
       });
+
+      // TIMESTAMPED, AND PLACED. The entry lands on the timeline as a
+      // dated event — the day it was written — so it appears on the
+      // rail and opens from it. Best-effort by design: the words are
+      // already saved above, and a spine that predates migration 061
+      // must not turn a successful send into a failure.
+      try {
+        const event = await createEvent.mutateAsync({
+          kind: 'custom',
+          title: entry.title?.trim() || 'Journal entry',
+          start_date: String(entry.created_at).slice(0, 10),
+          start_precision: 'day',
+          source: 'manual',
+        });
+        // Same link the timeline's own answer flow writes; the patch
+        // passes through verbatim, so the extra column lands.
+        await linkResponse.mutateAsync({
+          id: (saved as any).id,
+          projectId,
+          patch: { timeline_event_id: event.id } as any,
+        });
+      } catch {}
 
       setSentIds((prev) => new Set(prev).add(entry.id));
       showAlert('Sent to your memoir.');
