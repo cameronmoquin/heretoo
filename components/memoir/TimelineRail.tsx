@@ -28,7 +28,8 @@ const YEAR_PX = 26;
 const MIN_GAP = 18;
 
 interface Placed {
-  event: TimelineEvent;
+  /** Every event at this spot; the first carries the tap. */
+  events: TimelineEvent[];
   y: number;
   year: number;
 }
@@ -51,19 +52,25 @@ export function TimelineRail() {
     const span = Math.max(1, lastYear - firstYear);
     const height = span * YEAR_PX + 40;
 
-    let prevY = -Infinity;
-    const dots = dated.map((event) => {
+    // STRICTLY PROPORTIONAL, then CLUSTERED. The first version pushed
+    // each crowded dot 18px down and never recovered, so a busy year
+    // slid everything below it later and later — a seeded K-12 could
+    // shove events years past where they happened and stretch the
+    // ruler past "now". A ruler that moves its marks is not a ruler.
+    // Now a dot sits exactly at its date forever, and dots that would
+    // collide merge into one cluster wearing a count; the tap opens
+    // the timeline at the cluster's first event.
+    const clusters: Placed[] = [];
+    for (const event of dated) {
       const t = new Date(String(event.start_date));
       const frac = (t.getFullYear() + t.getMonth() / 12 - firstYear) / span;
-      // Proportional first, then pushed down just enough that two
-      // same-year dots stay separately tappable.
-      let y = 16 + Math.max(0, Math.min(1, frac)) * (height - 32);
-      if (y - prevY < MIN_GAP) y = prevY + MIN_GAP;
-      prevY = y;
-      return { event, y, year: t.getFullYear() };
-    });
+      const y = 16 + Math.max(0, Math.min(1, frac)) * (height - 32);
+      const last = clusters[clusters.length - 1];
+      if (last && y - last.y < MIN_GAP) last.events.push(event);
+      else clusters.push({ events: [event], y, year: t.getFullYear() });
+    }
 
-    return { dots, height: Math.max(height, prevY + 40), firstYear, lastYear };
+    return { dots: clusters, height, firstYear, lastYear };
   }, [events]);
 
   const s = makeStyles();
@@ -87,14 +94,20 @@ export function TimelineRail() {
         <View style={s.spine} />
         {placed.dots.map((d) => (
           <TouchableOpacity
-            key={d.event.id}
+            key={d.events[0].id}
             style={[s.dotWrap, { top: d.y }]}
-            onPress={() => router.push(`/memoir/timeline?focus=${d.event.id}` as any)}
+            onPress={() => router.push(`/memoir/timeline?focus=${d.events[0].id}` as any)}
             hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
             accessibilityRole="button"
-            accessibilityLabel={`${d.event.title}, ${d.year}. Open on the timeline.`}
+            accessibilityLabel={
+              d.events.length === 1
+                ? `${d.events[0].title}, ${d.year}. Open on the timeline.`
+                : `${d.events.length} events around ${d.year}. Open on the timeline.`
+            }
           >
-            <View style={s.dot} />
+            <View style={[s.dot, d.events.length > 1 && s.dotCluster]}>
+              {d.events.length > 1 && <Text style={s.dotCount}>{d.events.length}</Text>}
+            </View>
             {showYear(d) && <Text style={s.year}>{String(d.year).slice(2)}</Text>}
           </TouchableOpacity>
         ))}
@@ -124,7 +137,10 @@ function makeStyles() { return StyleSheet.create({
     width: 12, height: 12, borderRadius: 6,
     backgroundColor: Colors.primary,
     borderWidth: 2, borderColor: Colors.surface,
+    alignItems: 'center', justifyContent: 'center',
   },
+  dotCluster: { width: 16, height: 16, borderRadius: 8 },
+  dotCount: { color: '#FFFFFF', fontSize: 8, fontWeight: '800', lineHeight: 10 },
   year: { fontSize: 9, color: Colors.textMuted, fontWeight: '700' },
   terminus: {
     position: 'absolute', left: 8, width: 34,

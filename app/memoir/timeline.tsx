@@ -39,6 +39,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   useTimelineEvents,
   useCreateTimelineEvent,
+  useBulkCreateTimelineEvents,
   useUpdateTimelineEvent,
   useDeleteTimelineEvent,
   useEventResponses,
@@ -148,6 +149,7 @@ export default function MemoirTimelineScreen() {
   const { data: projectId } = useEnsureMemoirProject();
   const eventsQ = useTimelineEvents(projectId);
   const createEvent = useCreateTimelineEvent();
+  const bulkCreate = useBulkCreateTimelineEvents();
   const updateEvent = useUpdateTimelineEvent();
   const deleteEvent = useDeleteTimelineEvent();
 
@@ -300,22 +302,36 @@ export default function MemoirTimelineScreen() {
     const [lo, hi] = SEED_RANGES[seedRange];
     setSeeding(true);
     try {
+      // ONE insert, all rows or none. The first version looped a
+      // mutation per grade, so a mid-loop failure left half a school
+      // behind and every retry re-planted the grades that had already
+      // landed — which is where duplicate K-12 runs came from. Grades
+      // this school already has are skipped, so retrying after any
+      // failure plants only what is missing.
+      const existing = new Set(
+        (eventsQ.data ?? [])
+          .filter((e) => e.kind === 'school' && (e.organization ?? '') === name)
+          .map((e) => e.role_or_grade ?? ''),
+      );
+      const rows = [];
       for (let i = lo; i <= hi; i++) {
+        if (existing.has(GRADES[i])) continue;
         const year = y0 + (i - lo);
-        await createEvent.mutateAsync({
-          kind: 'school',
+        rows.push({
+          kind: 'school' as const,
           title: GRADES[i],
           organization: name,
           role_or_grade: GRADES[i],
           location: null,
           start_date: `${year}-09-01`,
-          start_precision: 'year',
+          start_precision: 'year' as const,
           end_date: `${year + 1}-06-01`,
-          end_precision: 'year',
+          end_precision: 'year' as const,
           is_ongoing: false,
           notes: null,
         });
       }
+      if (rows.length > 0) await bulkCreate.mutateAsync(rows);
       await eventsQ.refetch();
       setSeedOpen(false);
       setSeedSchool(''); setSeedYear('');
