@@ -1,11 +1,14 @@
 /**
  * Vocab — the platform lexicon.
  *
- * One place for the group noun and the post noun. Plain speech: a group
- * is a "group" (Aug 2026 — "crew" retired as too themed, same fate as
- * "family"). A post is still a "drop"; one with a location is a "dead
- * drop" (the geocache game), so everything a person posts is a drop and
- * the physical ones are dead drops.
+ * One place for the group noun and the post noun.
+ *
+ * A post is a SUBMISSION (Aug 2026 — Cameron: "Drop a submission
+ * should be the canon, so it should change from Drops to
+ * submissions"). "Drop" survives in exactly two places: as the verb in
+ * the composer's own heading — you drop a submission — and in
+ * "Deaddrop", the geocache game, which is a proper name and not this
+ * noun. Nothing else in the app calls a post a drop any more.
  * If either word ever changes again, it changes here and nowhere else.
  * Screens import Vocab instead of typing the word into a string.
  *

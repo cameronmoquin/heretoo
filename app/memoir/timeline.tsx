@@ -79,6 +79,7 @@ type Precision = 'year' | 'month' | 'day';
 type SpineKind = Exclude<Kind, 'baby'>;
 
 const KIND_META: Record<SpineKind, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  birth:        { label: 'Born',         icon: 'star-outline' },
   school:       { label: 'School',       icon: 'school-outline' },
   job:          { label: 'Job',          icon: 'briefcase-outline' },
   residence:    { label: 'Home',         icon: 'home-outline' },
@@ -347,6 +348,19 @@ export default function MemoirTimelineScreen() {
             onPress={() => openAdd()}
             icon={<Ionicons name="add" size={16} color={Colors.primary} />}
           />
+          {/* The first vertebra, offered until it exists. A life gets
+              one birth, so the generic kind picker never lists it —
+              this button is its only door, and it disappears once the
+              event is on the spine. */}
+          {!(eventsQ.data ?? []).some((e) => e.kind === 'birth') && (
+            <Button
+              title="Born"
+              variant="outline"
+              size="sm"
+              onPress={() => { openAdd('birth' as Kind); setTitle('Born'); }}
+              icon={<Ionicons name="star-outline" size={14} color={Colors.primary} />}
+            />
+          )}
           <Button
             title="Import"
             variant="outline"

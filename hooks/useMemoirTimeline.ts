@@ -34,6 +34,7 @@ import {
 export type DatePrecision = 'year' | 'month' | 'day';
 
 export type TimelineKind =
+  | 'birth'
   | 'school'
   | 'job'
   | 'residence'

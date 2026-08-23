@@ -43,7 +43,10 @@ export function TimelineRail() {
       .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
     if (dated.length === 0) return null;
 
-    const firstYear = new Date(String(dated[0].start_date)).getFullYear();
+    // Birth anchors the ruler when it is on the spine; otherwise the
+    // earliest dated event stands in until it is.
+    const birth = dated.find((e) => e.kind === 'birth');
+    const firstYear = new Date(String((birth ?? dated[0]).start_date)).getFullYear();
     const lastYear = new Date().getFullYear();
     const span = Math.max(1, lastYear - firstYear);
     const height = span * YEAR_PX + 40;

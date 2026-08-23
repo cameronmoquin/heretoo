@@ -30,17 +30,20 @@ import { Layout, Spacing, Radius, Type, Heights } from '../../../constants/desig
 import { Vocab } from '../../../constants/vocab';
 
 // Labels ride Vocab where the lexicon owns the word, so a vocabulary
-// change never has to find this row. The last lens keeps its 'drops'
-// KEY (keys are identifiers, not copy) but wears the new noun: it shows
-// the passing submissions — the 24-hour ones, wherever they were sent.
-// The GPS game is the Deaddrop app at /hunt and is not a feed lens; its
-// only feed presence is the X card.
+// change never has to find this row.
+//
+// The old fifth lens ('drops' — "the 24-hour ones") is gone: when the
+// timer became a per-submission choice (089), expiring stopped being a
+// category, and the lens showed exactly what Public shows. A persisted
+// 'drops' filter from an old session still renders (FeedList treats it
+// as the square); it simply has no chip. The GPS game is the Deaddrop
+// app at /hunt and is not a feed lens; its only feed presence is the X
+// card.
 const CHIPS: { key: FeedFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'crew', label: Vocab.Group },
   { key: 'public', label: 'Public' },
   { key: 'news', label: 'News' },
-  { key: 'drops', label: Vocab.PostPlural },
 ];
 
 export default function FeedHomeScreen() {
