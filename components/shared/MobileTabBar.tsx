@@ -33,6 +33,12 @@ import { shouldShowLeftSidebar } from './LeftSidebar';
 // prefix (e.g., '/welcome' OR '/(auth)/welcome' depending on how
 // the user navigated). Use `includes` not `startsWith`.
 const HIDE_ON = [
+  // The kiosk launcher is not a screen inside the app — it is the device's
+  // home. The bar rendered over its bottom row of tiles and covered the
+  // emergency-call disclaimer entirely, which is a safety label and must
+  // never be obscured. Jude reaches the app through a tile; the bar appears
+  // once he is inside it.
+  '/shelf',
   '/welcome',
   '/(auth)',
   '/profile-setup',
@@ -69,27 +75,48 @@ export function useMobileTabBarVisible(): boolean {
 }
 
 /**
- * The home-indicator inset is only real when the app IS the screen —
- * installed, standalone, no browser chrome below it. Inside a browser
- * the toolbar already owns that zone, but viewport-fit=cover makes
- * Safari report the inset anyway, and honoring it there padded the
- * bar's lower half with pure dead space.
+ * Standalone means the app IS the screen — installed, no browser
+ * chrome below it — and the home-indicator inset is only real there.
+ * Inside a browser the toolbar already owns that zone, but
+ * viewport-fit=cover makes Safari report the inset anyway, and
+ * honoring it there padded the bar's lower half with pure dead space.
+ * The detection itself is synchronous and never flickers.
  */
+function isStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (window.navigator as any).standalone === true
+    || !!window.matchMedia?.('(display-mode: standalone)')?.matches;
+}
+
+/**
+ * The bar's bottom padding. On web this is a CSS calc() STRING, and
+ * that is the point: CSS resolves env(safe-area-inset-bottom) on the
+ * very first paint, while the JS insets from SafeAreaProvider arrive
+ * from an async post-mount probe. Padding from the JS value made the
+ * installed app launch with the bar flush against the screen edge —
+ * icons inside the home-gesture strip, taps eaten by the system — and
+ * then hop up a beat later when the probe resolved. An identity
+ * crisis, in the user's words. CSS knows the inset before the first
+ * frame, so the bar is born in the right place.
+ *
+ * DO NOT TRIM THE INSET. The zone it reserves is the iOS home-gesture
+ * strip: touches there belong to the SYSTEM, not the page. Trimming it
+ * "saves" whitespace by moving the buttons into territory where iOS
+ * eats their taps. Every native tab bar pays this same band.
+ */
+function useBottomPadding(): number | string {
+  const insets = useSafeAreaInsets();
+  if (Platform.OS !== 'web') return 2 + insets.bottom;
+  return isStandalone() ? 'calc(2px + env(safe-area-inset-bottom, 0px))' : 2;
+}
+
+/** Numeric estimate of the same inset, ONLY for the pre-measurement
+ *  height fallback below. The probe's lateness is harmless here: the
+ *  measured height replaces it on the first layout pass. */
 function useBottomInset(): number {
   const insets = useSafeAreaInsets();
   if (Platform.OS !== 'web') return insets.bottom;
-  if (typeof window === 'undefined') return 0;
-  const standalone =
-    (window.navigator as any).standalone === true
-    || window.matchMedia?.('(display-mode: standalone)')?.matches;
-  // DO NOT TRIM THIS. The inset zone is the iOS home-gesture strip:
-  // touches there belong to the SYSTEM, not the page. Trimming it
-  // "saves" whitespace by moving the buttons into territory where iOS
-  // eats their taps — which is exactly how the footer read as dead
-  // whenever the bar looked pleasingly tight. Every native tab bar
-  // pays this same band. It is not whitespace; it is the one strip
-  // the buttons cannot live in.
-  return standalone ? Math.min(insets.bottom, 34) : 0;
+  return isStandalone() ? Math.min(insets.bottom, 34) : 0;
 }
 
 export function MobileTabBar() {
@@ -99,7 +126,7 @@ export function MobileTabBar() {
   const radioLoading = useRadio((s) => s.loading);
   const station = useActiveStation();
   const { data: unread } = useUnreadCount();
-  const bottomInset = useBottomInset();
+  const paddingBottom = useBottomPadding();
 
   const styles = makeStyles();
 
@@ -115,7 +142,7 @@ export function MobileTabBar() {
 
   return (
     <View
-      style={[styles.bar, { paddingBottom: 2 + bottomInset }]}
+      style={[styles.bar, { paddingBottom } as any]}
       onLayout={(e) => useBarHeight.getState().set(Math.round(e.nativeEvent.layout.height))}
     >
       <TouchableOpacity
