@@ -1,3 +1,12 @@
+// ─────────────────────────────────────────────────────────────────────
+// THIS FILE IS IGNORED IN PRODUCTION. web.output is "single" (the
+// default), and expo export only reads +html.tsx under output:
+// "static" — the shipped index.html comes from Expo's own template.
+// Document-level changes (meta tags, viewport) must go through
+// scripts/fix-viewport.mjs or a sibling post-build step, which is
+// where viewport-fit=cover actually lands. Editing this file changes
+// nothing anyone downloads; it stays only in case output ever flips.
+// ─────────────────────────────────────────────────────────────────────
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
