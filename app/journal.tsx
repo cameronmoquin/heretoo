@@ -355,10 +355,6 @@ export default function JournalScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={s.column}>
-            <Text style={s.lede}>
-              Write it down. Then choose where it goes.
-            </Text>
-
             {/* ── Composer ───────────────────────────────────── */}
             <View style={s.composer}>
               <TextInput
@@ -374,8 +370,6 @@ export default function JournalScreen() {
                 style={s.bodyInput}
                 value={body}
                 onChangeText={setBody}
-                placeholder="Start writing."
-                placeholderTextColor={Colors.textMuted}
                 multiline
                 textAlignVertical="top"
               />
@@ -763,12 +757,6 @@ function makeStyles() {
     scroll: { padding: Spacing.md, paddingBottom: Spacing.xxl },
     column: { width: '100%', maxWidth: 560, alignSelf: 'center' },
 
-    lede: {
-      fontSize: 15,
-      lineHeight: 22,
-      color: Colors.textSecondary,
-      marginBottom: Spacing.md,
-    },
 
     composer: {
       backgroundColor: Colors.surface,
