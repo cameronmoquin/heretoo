@@ -25,7 +25,7 @@ import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { useMyFamilies } from '../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 import { isKioskBuild } from '../../modules/heretoo-kiosk';
-import { HereTooLogo } from './Logo';
+import { HereTooLogo, HereTooMark } from './Logo';
 import { Colors } from '../../constants/colors';
 
 const HIDE_ON_PATHS = [
@@ -97,8 +97,12 @@ export function LeftSidebar() {
         onPress={() => router.push('/feed' as any)}
         activeOpacity={0.7}
       >
-        <HereTooLogo size={32} color={Colors.textPrimary} />
-        <Text style={s.brandText}>HereToo</Text>
+        {/* The lockup: throttle-lever glyph + the spaced wordmark. A
+            hardcoded bold "HereToo" used to sit here beside the new
+            wordmark — the OLD wordmark, never removed when the lockup
+            landed, so the rail wore both and no glyph. */}
+        <HereTooMark size={20} color={Colors.textPrimary} />
+        <HereTooLogo size={38} color={Colors.textPrimary} />
       </TouchableOpacity>
 
       <View style={s.divider} />
@@ -285,7 +289,6 @@ function makeStyles() { return StyleSheet.create({
     } as any) : {}),
   } as any),
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, paddingHorizontal: 6 },
-  brandText: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.3 },
 
   divider: { height: 1, backgroundColor: Colors.borderLight, marginVertical: 10 },
 
