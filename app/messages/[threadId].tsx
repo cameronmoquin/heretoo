@@ -24,7 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOpenDrop, useRevealed, useRevealedBody } from '../../hooks/usePostViews';
+import { useOpenDrop, useRevealed, useRevealedBody, useBurnFuse, useAshed } from '../../hooks/usePostViews';
 import { supabase } from '../../lib/supabase';
 import {
   useThread, useThreadMessages, useSendMessage,
@@ -690,11 +690,15 @@ function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
   const ds = makeDropStyles();
   const revealed = useRevealed(post.id);
   const openDrop = useOpenDrop();
-  const burned = !!post.burned_at;
-  // The opener reads from the session copy; everyone else reads ash.
-  const revealedBody = useRevealedBody(post.id);
+  // The reading is a window, not a possession: the fuse ticks from the
+  // open, sized to the words, and the ash takes back BOTH copies — the
+  // session body and whatever the cache still holds.
+  const fuseLeft = useBurnFuse(post.id);
+  const ashed = useAshed(post.id);
+  const burned = !!post.burned_at || ashed;
+  const revealedBody = ashed ? null : useRevealedBody(post.id);
   const sealed = !!post.destruct_on_view && !mine && !burned && !revealed;
-  const bodyText = post.body ?? (burned ? revealedBody : null);
+  const bodyText = ashed ? null : (post.body ?? (burned ? revealedBody : null));
   const photos = Array.isArray(post.media) ? post.media.length : 0;
 
   return (
@@ -731,11 +735,8 @@ function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
             {!!bodyText && (
               <Text style={mine ? s.bubbleTextMine : s.bubbleTextTheirs}>{bodyText}</Text>
             )}
-            {photos > 0 && (
-              <Text style={ds.mark}>{photos === 1 ? 'a photo' : `${photos} photos`} · in the feed</Text>
-            )}
-            {!!post.destruct_on_view && (
-              <Text style={ds.mark}>{mine ? 'burns on view' : 'burns after this reading'}</Text>
+            {!!post.destruct_on_view && !mine && fuseLeft !== null && (
+              <Text style={ds.mark}>0:{String(fuseLeft).padStart(2, '0')}</Text>
             )}
           </>
         )}

@@ -26,7 +26,7 @@
  * policy. A burned drop stays burned.
  */
 
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { DEV_MODE } from '../lib/dev-mode';
@@ -72,20 +72,76 @@ export interface DropExtras {
 interface RevealState {
   // true = opened; a string = opened AND the payload at the moment of
   // opening. The burn overwrites the row server-side within seconds of
-  // the open, so the refetched cache can never show the words again —
-  // this in-memory copy is what lets the OPENER finish reading. It
-  // lives nowhere else and dies with the session.
+  // the open; this in-memory copy is what lets the OPENER finish
+  // reading. It lives nowhere else, and the fuse below takes it back.
   revealed: Record<string, string | true>;
+  /** Epoch ms at which the opener's copy turns to ash. The reading is
+   *  a WINDOW, not a possession: long enough to read what was written,
+   *  gone on its own after that. Sized by length, 10–60 seconds. */
+  fuse: Record<string, number>;
+  /** Drops this session opened whose window has closed. Render sources
+   *  (the session copy AND any cached row body) go dark together. */
+  ashed: Record<string, true>;
   markRevealed: (postId: string, body?: string | null) => void;
+  ash: (postId: string) => void;
+}
+
+/** How long the opener gets with the words. Three seconds of slack plus
+ *  reading pace; a sentence gets ten seconds, a wall of text a minute. */
+function readingMs(body?: string | null): number {
+  const chars = (body ?? '').length;
+  return Math.min(60, Math.max(10, 3 + Math.ceil(chars / 15))) * 1000;
 }
 
 const useRevealStore = create<RevealState>((set) => ({
   revealed: {},
+  fuse: {},
+  ashed: {},
   markRevealed: (postId, body) =>
     set((s) => (s.revealed[postId]
       ? s
-      : { revealed: { ...s.revealed, [postId]: body ?? true } })),
+      : {
+        revealed: { ...s.revealed, [postId]: body ?? true },
+        fuse: { ...s.fuse, [postId]: Date.now() + readingMs(body) },
+      })),
+  ash: (postId) =>
+    set((s) => {
+      if (s.ashed[postId]) return s;
+      const fuse = { ...s.fuse };
+      delete fuse[postId];
+      return {
+        revealed: { ...s.revealed, [postId]: true },
+        fuse,
+        ashed: { ...s.ashed, [postId]: true },
+      };
+    }),
 }));
+
+/** Seconds left in the opener's reading window, ticking; null when no
+ *  fuse is lit. Fires the ash itself at zero, so any surface that shows
+ *  the words burns them by merely watching. */
+export function useBurnFuse(postId: string): number | null {
+  const lit = useRevealStore((s) => s.fuse[postId] ?? null);
+  const ash = useRevealStore((s) => s.ash);
+  const [left, setLeft] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    if (!lit) { setLeft(null); return; }
+    const tick = () => {
+      const ms = lit - Date.now();
+      if (ms <= 0) { ash(postId); setLeft(null); return; }
+      setLeft(Math.ceil(ms / 1000));
+    };
+    tick();
+    const t = setInterval(tick, 250);
+    return () => clearInterval(t);
+  }, [lit, postId, ash]);
+  return left;
+}
+
+/** This session read it, and the window has closed. */
+export function useAshed(postId: string): boolean {
+  return useRevealStore((s) => !!s.ashed[postId]);
+}
 
 /** Has this session opened that drop. */
 export function useRevealed(postId: string): boolean {

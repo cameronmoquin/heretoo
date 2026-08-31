@@ -30,7 +30,7 @@ import {
 } from '../../../hooks/useComments';
 import { useMyConnections } from '../../../hooks/useFamily';
 import { useAuthStore } from '../../../stores/authStore';
-import { useRevealed, useOpenDrop } from '../../../hooks/usePostViews';
+import { useRevealed, useOpenDrop, useBurnFuse, useAshed } from '../../../hooks/usePostViews';
 import { showAlert, showConfirm } from '../../../lib/alert';
 import { Colors } from '../../../constants/colors';
 import { MicInputButton } from '../../../components/shared/MicInputButton';
@@ -71,6 +71,8 @@ export default function PostDetail() {
   // post.id) because post is not resolved yet up here.
   const revealed = useRevealed(postId ?? '');
   const openDrop = useOpenDrop();
+  const fuseLeft = useBurnFuse(postId ?? '');
+  const ashed = useAshed(postId ?? '');
 
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', postId],
@@ -189,7 +191,7 @@ export default function PostDetail() {
           {sealed ? (
             <TouchableOpacity
               style={s.sealCard}
-              onPress={() => openDrop(post.id)}
+              onPress={() => openDrop(post.id, post.body)}
               activeOpacity={0.85}
               accessibilityRole="button"
               accessibilityLabel={`Open this ${Vocab.post}. It does not come back.`}
@@ -197,9 +199,17 @@ export default function PostDetail() {
               <Ionicons name="flame-outline" size={22} color={Colors.textSecondary} />
               <Text style={s.sealText}>Opens once</Text>
             </TouchableOpacity>
+          ) : ashed ? (
+            <View style={s.ashRow}>
+              <View style={s.ashBar} accessibilityLabel="Redacted" />
+              <Text style={s.ashMark}>burned after reading</Text>
+            </View>
           ) : (
           <>
           {!!post.body && <Text style={s.body}>{post.body}</Text>}
+          {!!(post as any).destruct_on_view && !isOwner && fuseLeft !== null && (
+            <Text style={s.ashMark}>0:{String(fuseLeft).padStart(2, '0')}</Text>
+          )}
           {!!post.slugline && (
             <Text style={s.slugline} numberOfLines={2}>{post.slugline}</Text>
           )}
@@ -523,6 +533,9 @@ function makeStyles() { return StyleSheet.create({
     backgroundColor: Colors.surfaceAlt,
     alignSelf: 'flex-start',
   },
+  ashRow: { gap: 4, paddingVertical: 8 },
+  ashBar: { height: 14, width: 140, maxWidth: '100%', backgroundColor: Colors.textPrimary, borderRadius: 2 },
+  ashMark: { fontSize: Type.caption.size, color: Colors.textMuted },
   sealText: {
     fontSize: Type.ui.size, lineHeight: Type.ui.lineHeight,
     fontWeight: '600', color: Colors.textPrimary,
