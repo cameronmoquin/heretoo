@@ -65,6 +65,22 @@ The print-and-mail research (Lob / PostGrid / Handwrytten, ~$0.90–5 per
 letter) is preserved in git history at this heading if a physical-mail
 successor is ever wanted.
 
+## A4 — Video calls on the native build
+
+Reported 2026-08-21: "video calling is not functioning — at least from
+the Jude-a-phone." Not a bug — an architectural gap: the call screen is
+WebRTC through browser APIs, and on native it deliberately renders a
+placeholder tile (app/call/[id].tsx, Platform.OS !== 'web'). The phone
+cannot call until the native build carries real WebRTC.
+
+- [ ] Add react-native-webrtc + config plugin; new EAS build (JS-only
+      OTA cannot deliver a native module).
+- [ ] Port the call screen's getUserMedia/RTCPeerConnection paths to
+      the react-native-webrtc equivalents behind a Platform fork.
+- [ ] Until then: calls work in any browser, including the phone's
+      browser at heretoo.social — the installed PWA can call; the
+      kiosk APK cannot.
+
 ## B — Confirm which keys are live in prod (Cameron / Netlify dashboard)
 
 Each feature has a graceful "not configured" path, so an unset key just
