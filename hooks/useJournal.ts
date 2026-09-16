@@ -21,6 +21,184 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import { sealEntry, openEntry, type SealedEntry } from '../lib/vault';
 
+// ── The one-password vault (migration 095) ─────────────────────────
+//
+// Every NEW entry seals under a single journal password. The password
+// is verified against a sealed sentinel in journal_vaults; entries and
+// sentinel alike use lib/vault.ts unchanged, each with its own salt.
+// Legacy rows — plaintext "open" entries and per-passphrase seals —
+// remain readable by their old paths; nothing is rewritten unasked.
+
+/** Decrypting this proves the password. The phrase is arbitrary and
+ *  public; the proof is that GCM authenticates. */
+export const VAULT_SENTINEL = 'heretoo-journal-vault-v1';
+
+export interface JournalVault {
+  user_id: string;
+  ciphertext: string;
+  iv: string;
+  salt: string;
+  iterations: number;
+  crypto_v: number;
+  created_at: string;
+}
+
+export function vaultPayload(v: JournalVault): SealedEntry {
+  return { ciphertext: v.ciphertext, iv: v.iv, salt: v.salt, iterations: v.iterations, v: v.crypto_v };
+}
+
+/** The author's vault row, or null before one exists. Errors surface
+ *  as null too (a missing table pre-095 must not brick the screen);
+ *  the screen treats null as "not set up yet" and setup will then fail
+ *  loudly with the real reason. */
+export function useJournalVault() {
+  const userId = useAuthStore((s) => s.user?.id);
+  return useQuery({
+    queryKey: ['journal-vault', userId],
+    queryFn: async (): Promise<JournalVault | null> => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from('journal_vaults')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) return null;
+      return (data as JournalVault) ?? null;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** First visit: seal the sentinel under the chosen password and write
+ *  the verifier. The password itself is consumed here and never sent. */
+export function useCreateJournalVault() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  return useMutation({
+    mutationFn: async (input: { password: string }): Promise<JournalVault> => {
+      if (!userId) throw new Error('Sign in first.');
+      const sealed = await sealEntry(VAULT_SENTINEL, input.password);
+      const { data, error } = await supabase
+        .from('journal_vaults')
+        .insert({
+          user_id: userId,
+          ciphertext: sealed.ciphertext,
+          iv: sealed.iv,
+          salt: sealed.salt,
+          iterations: sealed.iterations,
+          crypto_v: sealed.v,
+        } as any)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as JournalVault;
+    },
+    onSuccess: (row) => {
+      qc.setQueryData(['journal-vault', userId], row);
+    },
+  });
+}
+
+/** The entry payload is a tiny JSON envelope so the title travels
+ *  encrypted with the body. Legacy sealed rows hold a bare string;
+ *  parseEntryPayload reads both. */
+export function packEntryPayload(title: string, body: string): string {
+  return JSON.stringify({ t: title, b: body });
+}
+
+export function parseEntryPayload(plaintext: string): { title: string; body: string } {
+  try {
+    const o = JSON.parse(plaintext);
+    if (o && typeof o === 'object' && typeof o.b === 'string') {
+      return { title: typeof o.t === 'string' ? o.t : '', body: o.b };
+    }
+  } catch {}
+  return { title: '', body: plaintext };
+}
+
+/**
+ * Save an entry under the journal password. Title and body are sealed
+ * TOGETHER — the row carries no plaintext at all, title column
+ * included; the list shows the ciphertext itself, which is the point.
+ * Plaintext is consumed inside mutationFn and dies there.
+ */
+export function useSaveVaultEntry() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  const key = ['journal-entries', userId] as const;
+  return useMutation({
+    mutationFn: async (input: { title: string; body: string; password: string }): Promise<JournalEntry> => {
+      if (!userId) throw new Error('Sign in first.');
+      const payload = await sealEntry(packEntryPayload(input.title.trim(), input.body), input.password);
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .insert({
+          author_id: userId,
+          title: null,
+          sealed: true,
+          body: null,
+          ciphertext: payload.ciphertext,
+          iv: payload.iv,
+          salt: payload.salt,
+          iterations: payload.iterations,
+          crypto_v: payload.v,
+        } as any)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as JournalEntry;
+    },
+    onMutate: async () => {
+      if (!userId) return { snapshot: undefined, tempId: null };
+      await qc.cancelQueries({ queryKey: key });
+      const snapshot = qc.getQueryData<JournalEntry[]>(key);
+      const id = tempId();
+      const row = optimisticEntry({ id, authorId: userId, title: '', sealed: true, body: null });
+      qc.setQueryData<JournalEntry[]>(key, (prev) => [row, ...(prev ?? [])]);
+      return { snapshot, tempId: id };
+    },
+    onError: (_e, _input, ctx) => {
+      if (ctx && ctx.snapshot !== undefined) qc.setQueryData(key, ctx.snapshot);
+    },
+    onSuccess: (serverRow, _input, ctx) => {
+      qc.setQueryData<JournalEntry[]>(key, (prev) =>
+        (prev ?? []).map((e) => (e.id === ctx?.tempId ? serverRow : e)));
+    },
+  });
+}
+
+/** Edit a vault entry: re-seal the whole envelope with a fresh salt and
+ *  IV, replace the row's ciphertext in one update. */
+export function useUpdateVaultEntry() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  return useMutation({
+    mutationFn: async (input: { id: string; title: string; body: string; password: string }) => {
+      const payload = await sealEntry(packEntryPayload(input.title.trim(), input.body), input.password);
+      const { error } = await supabase
+        .from('journal_entries')
+        .update({
+          title: null,
+          sealed: true,
+          body: null,
+          ciphertext: payload.ciphertext,
+          iv: payload.iv,
+          salt: payload.salt,
+          iterations: payload.iterations,
+          crypto_v: payload.v,
+        } as any)
+        .eq('id', input.id);
+      if (error) throw error;
+      return { id: input.id };
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['journal-entries', userId] });
+      qc.invalidateQueries({ queryKey: ['journal-entry', vars.id] });
+    },
+  });
+}
+
 // ── Types ──────────────────────────────────────────────────────────
 
 export interface JournalEntry {

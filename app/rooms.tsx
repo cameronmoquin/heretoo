@@ -26,6 +26,9 @@ interface Door {
   label: string;
   route: string;
   badge?: string;
+  /** The heavy tile. Filled icon, primary fill, bold label — one door
+   *  per shelf at most, or weight stops meaning anything. */
+  accent?: boolean;
 }
 
 export default function RoomsScreen() {
@@ -48,6 +51,11 @@ export default function RoomsScreen() {
    * only moves shelf if what it does to a person changes.
    */
   const apps: Door[] = [
+    // The Journal leads. It is the room the platform's whole privacy
+    // argument lives in, and it reads first with the heaviest tile so
+    // its weight against the other doors says so. Memoir's door is
+    // gone — the room is retired (data kept; punch list holds it).
+    { icon: 'lock-closed', label: 'Journal', route: '/journal', accent: true },
     { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
     // Feed has no door either — it is the home tab, one tap away always.
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
@@ -63,8 +71,6 @@ export default function RoomsScreen() {
   ];
 
   const antisocial: Door[] = [
-    { icon: 'lock-closed', label: 'Journal', route: '/journal' },
-    { icon: 'create', label: 'Memoir', route: '/memoir' },
   ];
 
   return (
@@ -112,19 +118,23 @@ function Grid({ doors, s }: { doors: Door[]; s: ReturnType<typeof makeStyles> })
       {doors.map((d) => (
         <TouchableOpacity
           key={d.route}
-          style={s.door}
+          style={[s.door, d.accent && s.doorAccent]}
           onPress={() => router.push(d.route as any)}
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel={d.label}
         >
           <View>
-            <Ionicons name={`${d.icon}-outline` as any} size={26} color={Colors.primary} />
+            <Ionicons
+              name={(d.accent ? d.icon : `${d.icon}-outline`) as any}
+              size={d.accent ? 30 : 26}
+              color={d.accent ? Colors.onPrimary : Colors.primary}
+            />
             {!!d.badge && (
               <View style={s.badge}><Text style={s.badgeText}>{d.badge}</Text></View>
             )}
           </View>
-          <Text style={s.doorLabel}>{d.label}</Text>
+          <Text style={[s.doorLabel, d.accent && s.doorLabelAccent]}>{d.label}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -173,6 +183,11 @@ function makeStyles() {
       borderWidth: 1, borderColor: Colors.border,
       justifyContent: 'center',
     },
+    doorAccent: {
+      backgroundColor: Colors.primary,
+      borderColor: Colors.primary,
+    },
+    doorLabelAccent: { color: Colors.onPrimary, fontWeight: '800' },
     doorLabel: {
       fontSize: Type.body.size, fontWeight: '700', color: Colors.textPrimary,
     },

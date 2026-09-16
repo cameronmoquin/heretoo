@@ -119,18 +119,12 @@ export function LeftSidebar() {
         active={onFeed}
         onPress={() => router.replace('/(tabs)/feed' as any)}
       />
+      {/* The Journal, directly under the door of the house. Filled lock
+          at all times: the room's weight in the rail matches its weight
+          in the platform's argument. Memoir's row is gone — the room is
+          retired (data kept; punch list holds it). */}
       <NavRow
-        icon={pathname.startsWith('/memoir') ? 'book' : 'book-outline'}
-        label="Memoir"
-        active={pathname.startsWith('/memoir')}
-        onPress={() => router.push('/memoir' as any)}
-      />
-      {/* Journal. It sits with Memoir and Babybook because it is the
-          third of the writing rooms, and it was missing from this
-          sidebar entirely — reachable on mobile through /rooms and on
-          desktop only by typing the URL. */}
-      <NavRow
-        icon={onJournal ? 'lock-closed' : 'lock-closed-outline'}
+        icon="lock-closed"
         label="Journal"
         active={onJournal}
         onPress={() => router.push('/journal' as any)}

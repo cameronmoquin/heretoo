@@ -10,7 +10,17 @@ them.
 
 ---
 
-## A — Blocking the memoir payoff (the printed book)
+## A — Memoir: PARKED (2026-09-16)
+
+Cameron retired the room. Every door is gone — sidebar, More grid, and
+the journal's send arrow (the journal now encrypts everything, so a
+plaintext export to the memoir contradicted its promise anyway). Routes
+and data stay; nothing points at them. The render-worker items below
+are parked with it, as is A2 (the résumé) — both revive if the room
+does. The platform's writing surface is the Journal now, and the feed
+is turning educational (FSOT) — see the plan at the punch list's foot.
+
+## A (parked) — Blocking the memoir payoff (the printed book)
 
 The memoir is usable for *writing and reading* today, but "Make the
 book" fails until the render pipeline is live. `memoir-render.ts` marks
@@ -28,7 +38,7 @@ vars below are set.
 - [x] In-app book preview (`/memoir/preview`).
 - [x] Arrange/reorder + reassign entries (`/memoir/arrange`).
 
-## A2 — Memoir: the résumé that falls out of it
+## A2 (parked with the room) — Memoir: the résumé that falls out of it
 
 Requested 2026-08-18. The memoir interview already collects the raw
 material of a working life; a CV is a second rendering of the same
@@ -158,3 +168,26 @@ into product.
 - [ ] Search (posts / people by handle / families by name).
 - [ ] Phone-camera photo capture for the memoir (currently web
       file-picker only).
+
+## F — FSOT: the feed turns incidentally educational (2026-09-16)
+
+Cameron's ruling: HereToo becomes an FSOT training platform. Historical
+figures Washington → G.W. Bush post first-person facts (all clearly
+labeled educational bots — his explicit choice, including living
+figures) about US foreign affairs, wars, and diplomacy; users reply and
+the figure answers FROM A KNOWLEDGE BANK, never inventing — same law as
+the PCR narratives. Source: the fsot-trainer question bank (9 topic
+jsonl files; explanations are the vetted facts) plus per-figure
+dossiers. The static /fsot study section (another session's work) is
+the sibling surface.
+
+- [ ] Migration: `fsot_facts` (or import fsot_questions wholesale) into
+      HereToo's Supabase + one bot profile per figure.
+- [ ] `post-historical.ts` scheduled worker replacing post-shakespeare:
+      picks a figure + a bank fact, writes a public post in persona.
+- [ ] Reply worker (playhouse-replies pattern): answers comments in
+      persona, context = dossier + the bank rows near the topic;
+      refuses gracefully off-bank.
+- [ ] Figure dossiers: era, offices, voice notes; facts only from the
+      bank. Cameron approves the voice rules before the first post.
+- [ ] Retire or keep post-shakespeare + the insults room: Cameron's call.
