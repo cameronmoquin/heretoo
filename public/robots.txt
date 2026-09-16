@@ -12,6 +12,7 @@ Disallow: /(auth)/
 Disallow: /(tabs)/
 
 Sitemap: https://heretoo.social/sitemap.xml
+Sitemap: https://heretoo.social/fsot/sitemap.xml
 
 # LLM training crawlers. What gets written here is written for a
 # specific reader. We keep it out of training corpora. Future-you can

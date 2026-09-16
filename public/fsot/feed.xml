@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>FSOT Audio Course</title>
+<link>https://heretoo.social/fsot/listen/</link>
+<atom:link href="https://heretoo.social/fsot/feed.xml" rel="self" type="application/rss+xml"/>
+<language>en-us</language>
+<description>Free narrated study episodes for the U.S. Foreign Service Officer Test: US history as cause and effect, logic drills answered out loud, recall practice built in.</description>
+<itunes:author>FSOT Trainer</itunes:author>
+<itunes:image href="https://heretoo.social/fsot/icon.png"/>
+<itunes:category text="Education"/>
+<itunes:type>serial</itunes:type>
+<itunes:explicit>false</itunes:explicit>
+<item>
+  <title>The Founders&#x27; Republic, 1789 to 1825</title>
+  <link>https://heretoo.social/fsot/listen/us-01.html</link>
+  <guid isPermaLink="false">fsot-audio-us-01</guid>
+  <pubDate>Wed, 16 Sep 2026 13:00:00 +0000</pubDate>
+  <description>Welcome to the FSOT audio course. This is episode one: the Founders&#x27; Republic, 1789 to 1825. Five presidents, one question asked over and over: how strong should the national government be? Hold that question in mind, because almost every fact in this era is an answer to it. The five presidents, in order: Washington, Adams, Jefferson, Madison, Monroe. The mnemonic: Will A Jolly Man Make. Before…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us-01.mp3" length="7428894" type="audio/mpeg"/>
+  <itunes:episode>1</itunes:episode>
+  <itunes:duration>464</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Road to the Civil War, 1820 to 1861</title>
+  <link>https://heretoo.social/fsot/listen/us-02.html</link>
+  <guid isPermaLink="false">fsot-audio-us-02</guid>
+  <pubDate>Wed, 16 Sep 2026 14:00:00 +0000</pubDate>
+  <description>Episode two: the road to the Civil War, 1820 to 1861. First, sixty seconds on last episode; answer out loud in the pauses. The five presidents of the Founders&#x27; Republic, in order? Washington, Adams, Jefferson, Madison, Monroe. Which case established judicial review, and in what year? Marbury versus Madison, 1803. What idea did the Virginia and Kentucky Resolutions plant? That states could judge…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us-02.mp3" length="8669441" type="audio/mpeg"/>
+  <itunes:episode>2</itunes:episode>
+  <itunes:duration>542</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>War, Reconstruction, and the Gilded Age, 1861 to 1900</title>
+  <link>https://heretoo.social/fsot/listen/us-03.html</link>
+  <guid isPermaLink="false">fsot-audio-us-03</guid>
+  <pubDate>Wed, 16 Sep 2026 15:00:00 +0000</pubDate>
+  <description>Episode three: the Civil War, Reconstruction, and the Gilded Age, 1861 to 1900. First, review. Answer out loud in the pauses. What did the Kansas-Nebraska Act repeal? The Missouri Compromise line; popular sovereignty replaced it, and the Republican party was born in protest. What did Dred Scott rule about Congress and the territories? That Congress had no power to ban slavery in any territory.…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us-03.mp3" length="7870259" type="audio/mpeg"/>
+  <itunes:episode>3</itunes:episode>
+  <itunes:duration>492</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Reform, Boom, and Bust, 1900 to 1945</title>
+  <link>https://heretoo.social/fsot/listen/us-04.html</link>
+  <guid isPermaLink="false">fsot-audio-us-04</guid>
+  <pubDate>Wed, 16 Sep 2026 16:00:00 +0000</pubDate>
+  <description>Episode four: reform, boom, and bust, 1900 to 1945. Review first; out loud in the pauses. The three Reconstruction amendments, in one breath? Thirteen abolition, fourteen citizenship and equal protection, fifteen the vote regardless of race. What was the first federal regulatory agency? The Interstate Commerce Commission, 1887, aimed at railroads. What did America take from Spain in 1898? Cuba…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us-04.mp3" length="8327968" type="audio/mpeg"/>
+  <itunes:episode>4</itunes:episode>
+  <itunes:duration>520</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Cold War and After, 1945 to Now</title>
+  <link>https://heretoo.social/fsot/listen/us-05.html</link>
+  <guid isPermaLink="false">fsot-audio-us-05</guid>
+  <pubDate>Wed, 16 Sep 2026 17:00:00 +0000</pubDate>
+  <description>Episode five: the Cold War and after, 1945 to now. Review first; answer in the pauses. The four Progressive amendments? Income tax, direct election of senators, Prohibition, women&#x27;s suffrage; sixteen through nineteen. Why did the New Deal survive the Supreme Court? The 1937 switch in time; the Court began upholding, and the commerce power stretched through Wickard. What did Lend-Lease do, and…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us-05.mp3" length="8872568" type="audio/mpeg"/>
+  <itunes:episode>5</itunes:episode>
+  <itunes:duration>555</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Drill 1, The Four Questions</title>
+  <link>https://heretoo.social/fsot/listen/lr-01.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-01</guid>
+  <pubDate>Wed, 16 Sep 2026 18:00:00 +0000</pubDate>
+  <description>Logic drill one: the four questions. This episode works differently from the history ones. I&#x27;ll read you short arguments, twice each, then ask one question and go silent. Answer out loud before I do; producing the answer yourself is what builds the skill, and saying it aloud keeps you honest. The test itself is read on a screen, so what we&#x27;re training here is the part that transfers: hearing the…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-01.mp3" length="6720871" type="audio/mpeg"/>
+  <itunes:episode>6</itunes:episode>
+  <itunes:duration>420</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Constitution&#x27;s Architecture</title>
+  <link>https://heretoo.social/fsot/listen/gov-01.html</link>
+  <guid isPermaLink="false">fsot-audio-gov-01</guid>
+  <pubDate>Wed, 16 Sep 2026 19:00:00 +0000</pubDate>
+  <description>Episode seven: the Constitution&#x27;s architecture. Review first; answer out loud in the pauses. From the logic drill: what&#x27;s the test for a necessary assumption? Negate it; if the argument dies, that was the assumption. And the most tested confusion in logical reasoning? Necessary versus sufficient. Keep that one warm, because it&#x27;s also the key to constitutional questions: what government may do…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/gov-01.mp3" length="7647904" type="audio/mpeg"/>
+  <itunes:episode>7</itunes:episode>
+  <itunes:duration>478</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Congress, the Presidency, and the Money</title>
+  <link>https://heretoo.social/fsot/listen/gov-02.html</link>
+  <guid isPermaLink="false">fsot-audio-gov-02</guid>
+  <pubDate>Wed, 16 Sep 2026 20:00:00 +0000</pubDate>
+  <description>Episode eight: Congress, the presidency, and the money. Review; out loud. The two routes to proposing an amendment? Two-thirds of both houses, or a convention called by two-thirds of the states. Which Federalist paper says ambition must counteract ambition? Fifty-one, Madison. What clause did McCulloch read broadly? Necessary and proper — the elastic clause, implied powers. Three questions. One:…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/gov-02.mp3" length="6949913" type="audio/mpeg"/>
+  <itunes:episode>8</itunes:episode>
+  <itunes:duration>434</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Drill 2, The Named Flaws</title>
+  <link>https://heretoo.social/fsot/listen/lr-02.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-02</guid>
+  <pubDate>Wed, 16 Sep 2026 21:00:00 +0000</pubDate>
+  <description>Logic drill two: the named flaws. Quick recap of drill one&#x27;s moves; say them with me. The test for an inference? It must be true — if it needs one extra assumption, it isn&#x27;t one. The test for an assumption? Negate it; if the argument dies, that was it. Good. Today: flaws. The skill is naming — a flaw you can name is a flaw you can find in three seconds, and on parallel-flaw questions the name is…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-02.mp3" length="6284940" type="audio/mpeg"/>
+  <itunes:episode>9</itunes:episode>
+  <itunes:duration>393</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Supreme Court by Era</title>
+  <link>https://heretoo.social/fsot/listen/gov-03.html</link>
+  <guid isPermaLink="false">fsot-audio-gov-03</guid>
+  <pubDate>Wed, 16 Sep 2026 22:00:00 +0000</pubDate>
+  <description>Episode ten: the Supreme Court by era. Review; out loud. If A then B, B, therefore A — name the flaw. Affirming the consequent. Where do most bills die? Committee. Youngstown&#x27;s lowest ebb is presidential action against what? The express will of Congress. Three questions. One: how did a court with no army and no purse become a co-equal branch? Two: which court expanded rights fastest, and through…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/gov-03.mp3" length="7688864" type="audio/mpeg"/>
+  <itunes:episode>10</itunes:episode>
+  <itunes:duration>481</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Amendments in Runs</title>
+  <link>https://heretoo.social/fsot/listen/gov-04.html</link>
+  <guid isPermaLink="false">fsot-audio-gov-04</guid>
+  <pubDate>Wed, 16 Sep 2026 23:00:00 +0000</pubDate>
+  <description>Episode eleven: the amendments in runs, and the liberties they carry. Review; out loud. What doctrinal move applied the Bill of Rights to the states? Incorporation, through the Fourteenth Amendment&#x27;s due process clause. Marshall Court&#x27;s project in two words? Federal power. Dobbs overruled — Roe. Three questions. One: why do the amendments cluster in bursts instead of arriving steadily? Two:…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/gov-04.mp3" length="7397547" type="audio/mpeg"/>
+  <itunes:episode>11</itunes:episode>
+  <itunes:duration>462</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Drill 3, Strengthen and Weaken</title>
+  <link>https://heretoo.social/fsot/listen/lr-03.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-03</guid>
+  <pubDate>Thu, 17 Sep 2026 00:00:00 +0000</pubDate>
+  <description>Logic drill three: strengthen and weaken. The recap, out loud. Composition is — whole from parts. Appeal to ignorance is — absence of proof as proof of absence. Affirming the consequent is — if A then B, B, therefore A. Today&#x27;s drill is the money skill: most strengthen-weaken questions are causal arguments in disguise, and causal arguments live or die on one thing — alternative explanations.…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-03.mp3" length="6591722" type="audio/mpeg"/>
+  <itunes:episode>12</itunes:episode>
+  <itunes:duration>412</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Doctrine Chain, Washington to Now</title>
+  <link>https://heretoo.social/fsot/listen/fp-01.html</link>
+  <guid isPermaLink="false">fsot-audio-fp-01</guid>
+  <pubDate>Thu, 17 Sep 2026 01:00:00 +0000</pubDate>
+  <description>Episode thirteen: the doctrine chain — American foreign policy from Washington&#x27;s Farewell to today, told as one continuous argument. Review first; out loud. The weakener for any member-versus-nonmember comparison? Selection effect. The two First Amendment religion clauses? Establishment and free exercise. Sixteen-seventeen-eighteen-nineteen are whose amendments? The Progressives&#x27;. Three…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/fp-01.mp3" length="7420996" type="audio/mpeg"/>
+  <itunes:episode>13</itunes:episode>
+  <itunes:duration>464</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Diplomatic Toolkit and the Institutions</title>
+  <link>https://heretoo.social/fsot/listen/fp-02.html</link>
+  <guid isPermaLink="false">fsot-audio-fp-02</guid>
+  <pubDate>Thu, 17 Sep 2026 02:00:00 +0000</pubDate>
+  <description>Episode fourteen: the diplomatic toolkit and the institutions that hold the world together — or try. Review; out loud. The Rogers Act of 1924 created what? The professional Foreign Service. NATO reversed which founding advice? Washington&#x27;s Farewell — no permanent alliances. The 1947 National Security Act created which three things? CIA, NSC, and the Defense Department. Three questions. One:…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/fp-02.mp3" length="7362020" type="audio/mpeg"/>
+  <itunes:episode>14</itunes:episode>
+  <itunes:duration>460</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The World Before 1789</title>
+  <link>https://heretoo.social/fsot/listen/wh-01.html</link>
+  <guid isPermaLink="false">fsot-audio-wh-01</guid>
+  <pubDate>Thu, 17 Sep 2026 03:00:00 +0000</pubDate>
+  <description>Episode fifteen: the world before 1789 — the spine every other date hangs on. Review; out loud. The IMF treats what? Currency and balance-of-payments crises. An embassy is inviolable — meaning? The host may not enter without permission; it is not the sender&#x27;s territory. Which needs two-thirds of the Senate — treaty or executive agreement? Treaty. Three questions. One: what did the Peace of…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/wh-01.mp3" length="7519591" type="audio/mpeg"/>
+  <itunes:episode>15</itunes:episode>
+  <itunes:duration>470</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Revolutions and Empires, 1789 to 1914</title>
+  <link>https://heretoo.social/fsot/listen/wh-02.html</link>
+  <guid isPermaLink="false">fsot-audio-wh-02</guid>
+  <pubDate>Thu, 17 Sep 2026 04:00:00 +0000</pubDate>
+  <description>Episode sixteen: revolutions and empires, 1789 to 1914 — the long nineteenth century. Review; out loud. Westphalia, year and invention? 1648, sovereignty. The Declaration channels which philosopher? Locke. Tordesillas explains what modern fact? Portuguese-speaking Brazil. Three questions. One: why did the French Revolution, unlike the American, eat itself? Two: what did the Congress of Vienna…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/wh-02.mp3" length="7336107" type="audio/mpeg"/>
+  <itunes:episode>16</itunes:episode>
+  <itunes:duration>459</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The World Wars and the Empires&#x27; End, 1914 to 1991</title>
+  <link>https://heretoo.social/fsot/listen/wh-03.html</link>
+  <guid isPermaLink="false">fsot-audio-wh-03</guid>
+  <pubDate>Thu, 17 Sep 2026 05:00:00 +0000</pubDate>
+  <description>Episode seventeen: the world wars and the empires&#x27; end, 1914 to 1991. Review; out loud. Vienna&#x27;s peace lasted until? 1914 — ninety-nine years. Bismarck proclaimed the German Empire where? Versailles, 1871. The Berlin Conference did what? Set the rules for carving Africa. Three questions. One: how does one assassination consume a continent in six weeks? Two: why did Versailles produce another war…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/wh-03.mp3" length="7821775" type="audio/mpeg"/>
+  <itunes:episode>17</itunes:episode>
+  <itunes:duration>489</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Drill 4, The Gauntlet</title>
+  <link>https://heretoo.social/fsot/listen/lr-04.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-04</guid>
+  <pubDate>Thu, 17 Sep 2026 06:00:00 +0000</pubDate>
+  <description>Logic drill four: the gauntlet. No new material today — this is the speed round. Fifteen short arguments; after each, name the flaw or the move out loud before I do. The point is automaticity: on test day you get about two minutes a question, and naming the pattern in three seconds buys you the other hundred seventeen for the answer choices. The full vocabulary is in play: post hoc, hasty…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-04.mp3" length="6305420" type="audio/mpeg"/>
+  <itunes:episode>18</itunes:episode>
+  <itunes:duration>394</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Great Power Competition, The Board Today</title>
+  <link>https://heretoo.social/fsot/listen/fp-03.html</link>
+  <guid isPermaLink="false">fsot-audio-fp-03</guid>
+  <pubDate>Thu, 17 Sep 2026 07:00:00 +0000</pubDate>
+  <description>Episode nineteen: great power competition — the board as it stands. One caution up front: this episode describes the world as of early 2026; headlines will move, but the structures underneath move slowly, and structures are what the test rewards. Review first; out loud. Denying the antecedent is? Not A, therefore not B — invalid. Suez 1956 proved? The European empires now needed American…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/fp-03.mp3" length="7554282" type="audio/mpeg"/>
+  <itunes:episode>19</itunes:episode>
+  <itunes:duration>472</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Regions and Flashpoints</title>
+  <link>https://heretoo.social/fsot/listen/fp-04.html</link>
+  <guid isPermaLink="false">fsot-audio-fp-04</guid>
+  <pubDate>Thu, 17 Sep 2026 08:00:00 +0000</pubDate>
+  <description>Episode twenty: regions and flashpoints — the rest of the board, region by region. Same caution as last time: structures as of early 2026, built to outlast headlines. Review; out loud. Strategic ambiguity deters both sides because? Neither Beijing nor Taipei can count on America&#x27;s choice. Asia&#x27;s alliance architecture differs from Europe&#x27;s how? Hub and spokes of bilateral treaties, not one big…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/fp-04.mp3" length="8116480" type="audio/mpeg"/>
+  <itunes:episode>20</itunes:episode>
+  <itunes:duration>507</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Economic Thought Chain</title>
+  <link>https://heretoo.social/fsot/listen/econ-01.html</link>
+  <guid isPermaLink="false">fsot-audio-econ-01</guid>
+  <pubDate>Thu, 17 Sep 2026 09:00:00 +0000</pubDate>
+  <description>Episode twenty-one: the economic thought chain — every economist the test names, as one running argument. Review; out loud. Pyongyang&#x27;s bomb is rational because? Regime insurance — the Iraq-Libya lesson. Resolution 242&#x27;s formula? Land for peace. Who holds Western Sahara? Morocco. Three questions. One: what was mercantilism, and what single book demolished it? Two: what problem did Keynes solve…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/econ-01.mp3" length="7514575" type="audio/mpeg"/>
+  <itunes:episode>21</itunes:episode>
+  <itunes:duration>470</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The Machinery, Micro and Macro</title>
+  <link>https://heretoo.social/fsot/listen/econ-02.html</link>
+  <guid isPermaLink="false">fsot-audio-econ-02</guid>
+  <pubDate>Thu, 17 Sep 2026 10:00:00 +0000</pubDate>
+  <description>Episode twenty-two: the machinery — the micro and macro concepts the test actually scores. Review; out loud. Smith, Ricardo, Keynes, Friedman — each one&#x27;s headline? Invisible hand; comparative advantage; aggregate demand; inflation is monetary. The paradox of thrift? Simultaneous saving shrinks everyone&#x27;s income. Three questions. One: what moves a curve versus what moves along it — the…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/econ-02.mp3" length="7709762" type="audio/mpeg"/>
+  <itunes:episode>22</itunes:episode>
+  <itunes:duration>482</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Trade, Currencies, and the Trilemma</title>
+  <link>https://heretoo.social/fsot/listen/econ-03.html</link>
+  <guid isPermaLink="false">fsot-audio-econ-03</guid>
+  <pubDate>Thu, 17 Sep 2026 11:00:00 +0000</pubDate>
+  <description>Episode twenty-three: trade, currencies, and the trilemma — economics where diplomacy lives. Review; out loud. The Fed&#x27;s workhorse? The federal funds rate. GDP counts production where — domestic or by ownership? Domestic — within the borders; GNP tracks ownership. A price ceiling below equilibrium creates? Shortage. Three questions. One: if trade enriches both sides, why does it stay politically…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/econ-03.mp3" length="7150951" type="audio/mpeg"/>
+  <itunes:episode>23</itunes:episode>
+  <itunes:duration>447</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Chokepoints, Capitals, and Traps</title>
+  <link>https://heretoo.social/fsot/listen/geo-01.html</link>
+  <guid isPermaLink="false">fsot-audio-geo-01</guid>
+  <pubDate>Thu, 17 Sep 2026 12:00:00 +0000</pubDate>
+  <description>Episode twenty-four: geography that scores — chokepoints, capitals, and the traps the test sets. Review; out loud. The trilemma&#x27;s corners? Fixed rate, free capital, independent policy — pick two. Quotas are worse than tariffs because? No revenue collected — the scarcity premium goes private. The reserve currency grants America? Cheap borrowing and sanctions leverage — the exorbitant privilege.…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/geo-01.mp3" length="7020547" type="audio/mpeg"/>
+  <itunes:episode>24</itunes:episode>
+  <itunes:duration>439</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Rivers, Mountains, and People</title>
+  <link>https://heretoo.social/fsot/listen/geo-02.html</link>
+  <guid isPermaLink="false">fsot-audio-geo-02</guid>
+  <pubDate>Thu, 17 Sep 2026 13:00:00 +0000</pubDate>
+  <description>Episode twenty-five: rivers, mountains, and people — the physical layer and the demography that drives policy. Review; out loud. The eight chokepoints, west to east? Panama, Gibraltar, Bosporus, Suez, Bab el-Mandeb, Hormuz, Malacca, Taiwan Strait. Australia&#x27;s capital? Canberra. The doubly landlocked two? Liechtenstein and Uzbekistan. Three questions. One: which rivers are also political fault…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/geo-02.mp3" length="6951167" type="audio/mpeg"/>
+  <itunes:episode>25</itunes:episode>
+  <itunes:duration>434</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Mental Math, The Toolkit</title>
+  <link>https://heretoo.social/fsot/listen/math-01.html</link>
+  <guid isPermaLink="false">fsot-audio-math-01</guid>
+  <pubDate>Thu, 17 Sep 2026 14:00:00 +0000</pubDate>
+  <description>Episode twenty-six: mental math — the toolkit, drilled out loud. The at-home test gives you a text box, not a calculator, so the skill is estimation and elimination: get to one significant figure fast, kill three answer choices, compute exactly only when two survive. This episode is a drill — I give the technique, then reps; answer in the pause before I do. Review first. China&#x27;s demographic…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/math-01.mp3" length="6807389" type="audio/mpeg"/>
+  <itunes:episode>26</itunes:episode>
+  <itunes:duration>425</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Statistics That Score</title>
+  <link>https://heretoo.social/fsot/listen/math-02.html</link>
+  <guid isPermaLink="false">fsot-audio-math-02</guid>
+  <pubDate>Thu, 17 Sep 2026 15:00:00 +0000</pubDate>
+  <description>Episode twenty-seven: statistics — enough to read any chart, poll, or claim the test throws at you. Review, at speed. Rule of seventy at five percent? Fourteen years to double. Down twenty then up twenty lands at? Ninety-six. Weighted averages lean toward? The bigger group. Three questions. One: when do mean and median disagree, and which should you trust? Two: what does a margin of error…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/math-02.mp3" length="6857544" type="audio/mpeg"/>
+  <itunes:episode>27</itunes:episode>
+  <itunes:duration>429</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Grammar That Scores</title>
+  <link>https://heretoo.social/fsot/listen/eng-01.html</link>
+  <guid isPermaLink="false">fsot-audio-eng-01</guid>
+  <pubDate>Thu, 17 Sep 2026 16:00:00 +0000</pubDate>
+  <description>Episode twenty-eight: English expression — the grammar rules the test actually tests, drilled by ear. Errors you can hear are errors you can fix at speed. Review first. The median survives what? Skew and outliers. Halving a margin of error costs? Four times the sample. Here we go — rule, then reps; call each sentence right or wrong in the pause, and fix it if wrong. Rule one: subject-verb…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/eng-01.mp3" length="6920655" type="audio/mpeg"/>
+  <itunes:episode>28</itunes:episode>
+  <itunes:duration>433</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Paragraph Architecture</title>
+  <link>https://heretoo.social/fsot/listen/eng-02.html</link>
+  <guid isPermaLink="false">fsot-audio-eng-02</guid>
+  <pubDate>Thu, 17 Sep 2026 17:00:00 +0000</pubDate>
+  <description>Episode twenty-nine, the season finale: paragraph architecture — ordering sentences, transitions, and concision, the skills behind every organize-this-passage question. Review; out loud. The cure list for a comma splice? Period, semicolon, conjunction, or subordination. An opening modifier attaches to? The very next noun — which must be the doer. Fewer or less paperwork? Less — paperwork…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/eng-02.mp3" length="6525265" type="audio/mpeg"/>
+  <itunes:episode>29</itunes:episode>
+  <itunes:duration>408</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Deep Dive, Colonies to Constitution</title>
+  <link>https://heretoo.social/fsot/listen/us2-01.html</link>
+  <guid isPermaLink="false">fsot-audio-us2-01</guid>
+  <pubDate>Thu, 17 Sep 2026 18:00:00 +0000</pubDate>
+  <description>Season two. These episodes go deeper — same method, finer grain. Deep dive one: colonies to Constitution — everything under episode one&#x27;s floorboards. Warm-up from the spine; out loud. The Articles&#x27; fatal flaws? No taxing power, no executive, no commerce power, unanimity to amend. Shays&#x27; Rebellion mattered because? It proved the Confederation couldn&#x27;t keep order — the scare that summoned…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us2-01.mp3" length="7815088" type="audio/mpeg"/>
+  <itunes:episode>30</itunes:episode>
+  <itunes:duration>488</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Deep Dive, The Antebellum Engine</title>
+  <link>https://heretoo.social/fsot/listen/us2-02.html</link>
+  <guid isPermaLink="false">fsot-audio-us2-02</guid>
+  <pubDate>Thu, 17 Sep 2026 19:00:00 +0000</pubDate>
+  <description>Deep dive two: the antebellum engine — the society and economy under the political staircase of episode two. Warm-up; out loud. The Northwest Ordinance banned slavery where? Northwest of the Ohio River. Saratoga bought what? The French alliance. Kansas-Nebraska repealed? The Missouri Compromise line. Three questions. One: what did the cotton gin actually change — and why did a labor-saving…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us2-02.mp3" length="6912297" type="audio/mpeg"/>
+  <itunes:episode>31</itunes:episode>
+  <itunes:duration>432</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Deep Dive, War and Reconstruction</title>
+  <link>https://heretoo.social/fsot/listen/us2-03.html</link>
+  <guid isPermaLink="false">fsot-audio-us2-03</guid>
+  <pubDate>Thu, 17 Sep 2026 20:00:00 +0000</pubDate>
+  <description>Deep dive three: the Civil War and Reconstruction at full resolution. Warm-up; out loud. The gin&#x27;s paradox? Labor-saving tech made slavery more profitable. Two-thirds of the railroads lay where? In the North. Seneca Falls met in? 1848. Three questions. One: how close did the Confederacy actually come to winning — and through what door? Two: what did the war do to the American state itself?…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us2-03.mp3" length="7290967" type="audio/mpeg"/>
+  <itunes:episode>32</itunes:episode>
+  <itunes:duration>456</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Deep Dive, Gilded to Progressive</title>
+  <link>https://heretoo.social/fsot/listen/us2-04.html</link>
+  <guid isPermaLink="false">fsot-audio-us2-04</guid>
+  <pubDate>Thu, 17 Sep 2026 21:00:00 +0000</pubDate>
+  <description>Deep dive four: the Gilded Age and the Progressive answer, 1877 to 1917 — the industrial explosion, its casualties, and the reformers who rewired the state. Warm-up; out loud. Redemption meant? The white South&#x27;s recapture of its states — Jim Crow following. The 1862 trio? Homestead, Morrill, Pacific Railway. Du Bois versus Washington? The ballot and higher education now, versus accommodation and…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us2-04.mp3" length="8222180" type="audio/mpeg"/>
+  <itunes:episode>33</itunes:episode>
+  <itunes:duration>514</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Deep Dive, Depression and World War</title>
+  <link>https://heretoo.social/fsot/listen/us2-05.html</link>
+  <guid isPermaLink="false">fsot-audio-us2-05</guid>
+  <pubDate>Thu, 17 Sep 2026 22:00:00 +0000</pubDate>
+  <description>Deep dive five: the Depression anatomized, the New Deal program by program, and the war economy that ended both. Warm-up; out loud. Rockefeller&#x27;s method versus Carnegie&#x27;s? Horizontal — buy the rivals; vertical — own the chain. The Populist platform&#x27;s afterlife? Income tax, direct election, elastic currency — enacted by others. The Platt Amendment leashed? Cuba. Three questions. One: what…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us2-05.mp3" length="7991928" type="audio/mpeg"/>
+  <itunes:episode>34</itunes:episode>
+  <itunes:duration>499</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Deep Dive, Cold War America at Home</title>
+  <link>https://heretoo.social/fsot/listen/us2-06.html</link>
+  <guid isPermaLink="false">fsot-audio-us2-06</guid>
+  <pubDate>Thu, 17 Sep 2026 23:00:00 +0000</pubDate>
+  <description>Deep dive six: Cold War America at home, 1945 to 1989 — the boom, the fear, the movement, and the unraveling. Warm-up; out loud. The Depression&#x27;s four gears? Banks, demand, gold, trade. The GI Bill built? The suburban middle class — unequally, through segregated channels. Withholding began? 1943. Three questions. One: what built the postwar boom, and who was fenced out of it? Two: how did the…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us2-06.mp3" length="8304561" type="audio/mpeg"/>
+  <itunes:episode>35</itunes:episode>
+  <itunes:duration>519</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Region, East Asia</title>
+  <link>https://heretoo.social/fsot/listen/reg-01.html</link>
+  <guid isPermaLink="false">fsot-audio-reg-01</guid>
+  <pubDate>Fri, 18 Sep 2026 00:00:00 +0000</pubDate>
+  <description>Regional deep dive one: East Asia — the history under the headlines of episode nineteen. Warm-up; out loud. The four acids on the New Deal coalition? Vietnam, race, disorder, the seventies economy. Strategic ambiguity governs which strait? Taiwan&#x27;s. China&#x27;s Malacca dilemma? Its energy transits a strait the US Navy could close. Three questions. One: what is the century of humiliation, and why…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/reg-01.mp3" length="7591523" type="audio/mpeg"/>
+  <itunes:episode>36</itunes:episode>
+  <itunes:duration>474</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Region, The Middle East</title>
+  <link>https://heretoo.social/fsot/listen/reg-02.html</link>
+  <guid isPermaLink="false">fsot-audio-reg-02</guid>
+  <pubDate>Fri, 18 Sep 2026 01:00:00 +0000</pubDate>
+  <description>Regional deep dive two: the Middle East — how the Ottoman world became today&#x27;s map, and the four dates that explain the present. Warm-up; out loud. The century of humiliation? 1839 to 1949. The dragons&#x27; recipe? Exports, education, land reform, state-guided credit, American platform. Article Nine? Japan&#x27;s peace clause. Three questions. One: how did lines drawn in 1916 become states, and why do…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/reg-02.mp3" length="7856883" type="audio/mpeg"/>
+  <itunes:episode>37</itunes:episode>
+  <itunes:duration>491</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Region, Europe and Russia</title>
+  <link>https://heretoo.social/fsot/listen/reg-03.html</link>
+  <guid isPermaLink="false">fsot-audio-reg-03</guid>
+  <pubDate>Fri, 18 Sep 2026 02:00:00 +0000</pubDate>
+  <description>Regional deep dive three: Europe and Russia — the union built to end war, and the empire that keeps returning. Warm-up; out loud. Sèvres and Lausanne bracket whose denial? The Kurds&#x27;. 1979&#x27;s triple? Iran, Mecca, Afghanistan. The 2003 lesson? Regime removal without a state plan makes a vacuum. Three questions. One: what is the EU actually — the machine, piece by piece? Two: what happened to the…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/reg-03.mp3" length="7593612" type="audio/mpeg"/>
+  <itunes:episode>38</itunes:episode>
+  <itunes:duration>475</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Region, Africa</title>
+  <link>https://heretoo.social/fsot/listen/reg-04.html</link>
+  <guid isPermaLink="false">fsot-audio-reg-04</guid>
+  <pubDate>Fri, 18 Sep 2026 03:00:00 +0000</pubDate>
+  <description>Regional deep dive four: Africa — fifty-four states, three inheritances, and the century being decided there now. Warm-up; out loud. The Schuman logic? Pool war industries; make war impossible. Russia&#x27;s pattern? Buffer, modernize from above, harden, collapse, repeat. Dayton froze? Bosnia&#x27;s war into a constitution. Three questions. One: what did colonialism actually leave behind — the three…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/reg-04.mp3" length="7387934" type="audio/mpeg"/>
+  <itunes:episode>39</itunes:episode>
+  <itunes:duration>462</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Region, Latin America</title>
+  <link>https://heretoo.social/fsot/listen/reg-05.html</link>
+  <guid isPermaLink="false">fsot-audio-reg-05</guid>
+  <pubDate>Fri, 18 Sep 2026 04:00:00 +0000</pubDate>
+  <description>Regional deep dive five: Latin America — the hemisphere Monroe claimed, the interventions that claim justified, and the neighborhood&#x27;s files today. Warm-up; out loud. Africa&#x27;s three inheritances? Frozen borders, extraction states, commodity economies. The five anchors? Nigeria, Ethiopia, South Africa, DRC, Egypt. Djibouti matters because? Bab el-Mandeb — everyone&#x27;s base watches the strait. Three…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/reg-05.mp3" length="7902484" type="audio/mpeg"/>
+  <itunes:episode>40</itunes:episode>
+  <itunes:duration>494</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Bootcamp, Assumptions</title>
+  <link>https://heretoo.social/fsot/listen/lr-05.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-05</guid>
+  <pubDate>Fri, 18 Sep 2026 05:00:00 +0000</pubDate>
+  <description>Logic bootcamp one: assumptions, the whole hour on the single most valuable question type. Warm-up from the regions; out loud. The two September elevenths? New York 2001; Santiago 1973. Bolívar plowed? The sea — institutions missing, caudillos filling. Now the drill. The method, recited once more, because today we stress-test it: an assumption is the unstated premise the argument cannot live…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-05.mp3" length="6218902" type="audio/mpeg"/>
+  <itunes:episode>41</itunes:episode>
+  <itunes:duration>389</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Bootcamp, Inference</title>
+  <link>https://heretoo.social/fsot/listen/lr-06.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-06</guid>
+  <pubDate>Fri, 18 Sep 2026 06:00:00 +0000</pubDate>
+  <description>Logic bootcamp two: inference — what must be true, and the discipline of knowing exactly as much as the passage says and not one syllable more. The reflex recap; out loud. Between two helpful assumption candidates? Take the weaker — necessary, not grand. Access is not? Accuracy. The inference standard, once, hard: an inference is compelled — if you can imagine any world where the premises hold…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-06.mp3" length="6714602" type="audio/mpeg"/>
+  <itunes:episode>42</itunes:episode>
+  <itunes:duration>420</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Bootcamp, Evidence at Full Strength</title>
+  <link>https://heretoo.social/fsot/listen/lr-07.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-07</guid>
+  <pubDate>Fri, 18 Sep 2026 07:00:00 +0000</pubDate>
+  <description>Logic bootcamp three: strengthen and weaken at full difficulty — competing hypotheses, and the evidence that separates them. Recap; out loud. The overlap minimum? Add percents, subtract one hundred. Cited means? Said, not proved. Today&#x27;s frame upgrades the causal toolkit: every strengthen-weaken item is secretly a contest between the argument&#x27;s story and its best rival. Your job is to find the…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-07.mp3" length="6795267" type="audio/mpeg"/>
+  <itunes:episode>43</itunes:episode>
+  <itunes:duration>425</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Logic Bootcamp, The Final Gauntlet</title>
+  <link>https://heretoo.social/fsot/listen/lr-08.html</link>
+  <guid isPermaLink="false">fsot-audio-lr-08</guid>
+  <pubDate>Fri, 18 Sep 2026 08:00:00 +0000</pubDate>
+  <description>Logic bootcamp four: the final gauntlet — twenty items, test pace, everything mixed: flaws, inferences, assumptions, strengthen-weaken, conclusions. Short beat, answer aloud, my answer follows. This is the last drill; leave nothing in the tank. Go. One. Sanctions preceded the recession, so sanctions caused it. Post hoc. Two. All attachés attended; some attendees were late; so some attachés were…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/lr-08.mp3" length="5299391" type="audio/mpeg"/>
+  <itunes:episode>44</itunes:episode>
+  <itunes:duration>331</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Development Economics</title>
+  <link>https://heretoo.social/fsot/listen/econ-04.html</link>
+  <guid isPermaLink="false">fsot-audio-econ-04</guid>
+  <pubDate>Fri, 18 Sep 2026 09:00:00 +0000</pubDate>
+  <description>Episode forty-five: development economics — why nations escape poverty, why some don&#x27;t, and what the aid business learned the hard way. Warm-up; out loud. The four logic habits? Name the question; hold inferences to must; negate for assumptions; judge causes against rivals and counterfactuals. The dragons&#x27; recipe? Land reform, exports, education, state-guided credit. Effect equals? Outcome minus…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/econ-04.mp3" length="7173939" type="audio/mpeg"/>
+  <itunes:episode>45</itunes:episode>
+  <itunes:duration>448</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Reading the Economic Headlines</title>
+  <link>https://heretoo.social/fsot/listen/econ-05.html</link>
+  <guid isPermaLink="false">fsot-audio-econ-05</guid>
+  <pubDate>Fri, 18 Sep 2026 10:00:00 +0000</pubDate>
+  <description>Episode forty-six: reading the economic headlines — the numbers that move markets and ministries, decoded at drill speed. Warm-up; out loud. Dutch disease? Resource exports inflate the currency; the oil eats the factories. Development is what kind of policy? Stability policy — the Marshall insight. This episode is applied: I read you a headline, you tell me what it means and what it moves, then…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/econ-05.mp3" length="7264635" type="audio/mpeg"/>
+  <itunes:episode>46</itunes:episode>
+  <itunes:duration>454</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>English Gauntlet, Error Spotting</title>
+  <link>https://heretoo.social/fsot/listen/eng-03.html</link>
+  <guid isPermaLink="false">fsot-audio-eng-03</guid>
+  <pubDate>Fri, 18 Sep 2026 11:00:00 +0000</pubDate>
+  <description>Episode forty-seven: the English gauntlet — twenty sentences at speed; call each one clean or flawed, name the flaw, fix it aloud. The rules from episode twenty-eight are all in play: agreement, pronouns, modifiers, parallelism, splices, confusables. Beat, verdict, my answer. Go. One. The committee, along with its advisers, were unable to agree. Flawed — the committee was unable; along with is…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/eng-03.mp3" length="6048792" type="audio/mpeg"/>
+  <itunes:episode>47</itunes:episode>
+  <itunes:duration>378</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>Style, Register, and the Writing That Gets Graded</title>
+  <link>https://heretoo.social/fsot/listen/eng-04.html</link>
+  <guid isPermaLink="false">fsot-audio-eng-04</guid>
+  <pubDate>Fri, 18 Sep 2026 12:00:00 +0000</pubDate>
+  <description>Episode forty-eight: style and register — the judgment layer above grammar, where the test asks not is this correct but is this best. Warm-up; out loud. The number of applicants — singular or plural? Singular — the number is one; a number are many. Demands and recommendations take? The subjunctive — that it be. Here we go. First, register — matching formality to occasion, because the test loves…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/eng-04.mp3" length="6302912" type="audio/mpeg"/>
+  <itunes:episode>48</itunes:episode>
+  <itunes:duration>394</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>The World as of September 2026</title>
+  <link>https://heretoo.social/fsot/listen/ca-01.html</link>
+  <guid isPermaLink="false">fsot-audio-ca-01</guid>
+  <pubDate>Fri, 18 Sep 2026 13:00:00 +0000</pubDate>
+  <description>Episode forty-nine: the world as of September 2026 — the year&#x27;s events, wired into the frames you&#x27;ve built. Two cautions. First, this episode is dated by design: it&#x27;s current as of mid-September 2026; skim reputable coverage in the final week before your test. Second, where episodes nineteen and twenty described early 2026, this one updates them — the board has moved. Start with the hemisphere,…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/ca-01.mp3" length="6805299" type="audio/mpeg"/>
+  <itunes:episode>49</itunes:episode>
+  <itunes:duration>425</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+</channel>
+</rss>

@@ -18,7 +18,11 @@
 // v131 shell and the old bundles it pointed at from devices already stuck
 // on them. Bumping is also what makes browsers install a new worker
 // rather than keeping the cached one.
-const VERSION = 'heretoo-v132';
+// v133: /fsot/ static pages (study guide + audio course) are excluded from
+// the shell cache. Every successful navigation used to overwrite SHELL_KEY;
+// a visit to /fsot/ would have made a study-guide page the offline fallback
+// for the whole app.
+const VERSION = 'heretoo-v133';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSETS_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;
@@ -120,7 +124,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith((async () => {
       try {
         const res = await fetch(req);
-        if (res && res.ok) {
+        // /fsot/ pages are real static documents, not the SPA shell. Caching
+        // one under SHELL_KEY would make it the app's offline fallback.
+        const isAppShell = !new URL(req.url).pathname.startsWith('/fsot/');
+        if (res && res.ok && isAppShell) {
           const forCache = res.clone();
           const forParse = res.clone();
           event.waitUntil((async () => {
