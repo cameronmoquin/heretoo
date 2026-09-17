@@ -250,6 +250,26 @@ create policy loft_public_requires_human on public.loft_posts
   as restrictive for insert to authenticated
   with check (public.is_verified_human());
 
+-- COMMENTS ARE THE SQUARE'S OTHER HALF. Gating only the authoring of
+-- public posts would have left the reply box beside every one of them
+-- wide open: comments_insert (083) asks for authorship, a non-guest and
+-- an un-disabled thread, and nothing else. A bot farm that cannot write
+-- a public post can still write its real @handle under every public
+-- post on the platform, which is the same square by another door.
+-- Scoped to comments ON public posts; cohort and DM threads are
+-- untouched, so nothing a member says in private needs a verdict.
+drop policy if exists comments_public_requires_human on public.comments;
+create policy comments_public_requires_human on public.comments
+  as restrictive for insert to authenticated
+  with check (
+    public.is_verified_human()
+    or not exists (
+      select 1 from public.posts p
+      where p.id = comments.post_id
+        and p.visibility = 'public'
+    )
+  );
+
 
 -- ── 6. The invite vouch ───────────────────────────────────────────────
 -- Fires when a seed invite is consumed. Every condition is load-bearing:

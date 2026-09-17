@@ -89,6 +89,16 @@ export default async (req: Request) => {
   const uid = userData?.user?.id;
   if (userErr || !uid) return json(401, { error: 'Not signed in' });
 
+  // A GUEST NEVER VERIFIES. Migration 098 states this as an invariant
+  // and enforces it on the invite door; this is the other door, and
+  // without the same test it was the way around it. Anonymous sessions
+  // come in through /add and are fenced out of every public surface by
+  // 083 and 085 on purpose — handing one a verified stamp would walk it
+  // straight back in under a real-looking name.
+  if ((userData?.user as any)?.is_anonymous === true) {
+    return json(200, { ok: false, reason: 'guest' });
+  }
+
   // Already through either door: idempotent yes.
   const { data: already } = await admin
     .from('human_verifications')
@@ -258,7 +268,12 @@ export function readExifDate(buf: Buffer): { taken: Date; offsetKnown: boolean }
       dateStr = sub.get(0x9003);
       offsetStr = sub.get(0x9011);
     }
-    dateStr = dateStr ?? ifd0.out.get(0x0132);
+    // `||`, not `??`. The EXIF spec lets an unknown DateTimeOriginal be
+    // written as blanks or NULs, and several export paths do exactly
+    // that while leaving IFD0's DateTime correct. Those trim to '',
+    // which is not nullish — so `??` kept the empty string and refused
+    // a photo that was carrying a perfectly good timestamp one tag over.
+    dateStr = dateStr || ifd0.out.get(0x0132);
     if (!dateStr) return null;
 
     // "YYYY:MM:DD HH:MM:SS"

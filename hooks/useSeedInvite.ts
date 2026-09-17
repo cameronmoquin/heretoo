@@ -13,6 +13,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { refreshVerified } from './useAuth';
+import { useAuthStore } from '../stores/authStore';
 
 export interface SeedInvitePreview {
   token: string;
@@ -83,6 +85,12 @@ export function useAcceptSeedInvite() {
       qc.invalidateQueries({ queryKey: ['families'] });
       qc.invalidateQueries({ queryKey: ['network-stats'] });
       qc.invalidateQueries({ queryKey: ['seed-invite'] });
+      // Consuming a seed invite is the invite door: a database trigger
+      // (098) just stamped this account verified, and no response says
+      // so. Without this re-read the store keeps the `false` it cached
+      // at sign-in and the composer refuses Public to someone who was
+      // verified seconds ago.
+      void refreshCallerVerified();
     },
   });
 }
@@ -104,6 +112,16 @@ export function useAcceptMessageInvite() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['threads'] });
+      // Same door, guest variant. A guest is never stamped (098 checks
+      // is_anonymous), so this usually confirms `false` — which is the
+      // right answer to cache, and the call costs one small read.
+      void refreshCallerVerified();
     },
   });
+}
+
+/** Re-read the caller's verdict, if there is a caller. */
+function refreshCallerVerified() {
+  const uid = useAuthStore.getState().user?.id;
+  return uid ? refreshVerified(uid) : Promise.resolve(null);
 }

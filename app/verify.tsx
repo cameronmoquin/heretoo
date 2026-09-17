@@ -3,9 +3,15 @@
  *
  * A new account reaches verified_human through one of two doors:
  *
- *   invite   a current user vouched for them (crew code, /add link,
- *            accepted connection). The DB triggers from migration 098
- *            stamp this automatically; this screen just notices.
+ *   invite   a member sent them a personal invite (/add) and they
+ *            consumed it. Migration 098 stamps that from a trigger on
+ *            seed_invites, so nothing in the response says it happened
+ *            — this screen re-reads on mount to notice.
+ *
+ *            A COHORT INVITE CODE IS NOT THIS. Every cohort's standing
+ *            code is readable by any signed-in account, so joining with
+ *            one proves nothing and 098 refuses to vouch on it. The
+ *            copy below says so; keep the two in step.
  *
  *   selfie   a photo whose camera timestamp sits within 24 hours of
  *            now, judged by /api/verify-selfie. ONLY THE HEAD OF THE
@@ -47,6 +53,7 @@ const FAIL_COPY: Record<string, string> = {
   out_of_window: 'That photo was taken more than 24 hours ago. Take a new one.',
   rate_limited: 'Too many tries. Wait an hour and try again.',
   confirm_failed: 'Your photo checked out, but we could not confirm it just now. Reload this page — you may already be verified.',
+  guest: 'This is a guest session. Make an account first, then verify it.',
 };
 
 export default function VerifyScreen() {
@@ -209,8 +216,8 @@ export default function VerifyScreen() {
               <View style={s.inviteRow}>
                 <Ionicons name="mail-open-outline" size={14} color={Colors.textSecondary} />
                 <Text style={s.inviteText}>
-                  Have an invite link? Opening it verifies you — no selfie
-                  needed.
+                  If a member sent you a personal invite, opening it verifies
+                  you. A shared cohort code does not.
                 </Text>
               </View>
 

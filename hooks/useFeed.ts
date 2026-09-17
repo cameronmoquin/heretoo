@@ -184,9 +184,22 @@ export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
       }
       return posts;
     },
-    getNextPageParam: (lastPage, allPages) => {
-      if ((lastPage as any[]).length < PAGE_SIZE) return undefined;
-      return (allPages as any[][]).flat().length;
+    // TWO THINGS THAT LOOK LIKE ONE. A page can come back shorter than
+    // PAGE_SIZE for two unrelated reasons: the stream ended, or rows
+    // were dropped AFTER fetching (community-flagged posts, above). The
+    // old test read both as "ended", so a single flagged row inside the
+    // first twenty stopped the feed at nineteen posts forever — on the
+    // lens the app now opens to. And the old offset counted SURVIVING
+    // rows, so every drop slid the window backwards and re-served rows
+    // already on screen.
+    //
+    // Only an EMPTY page ends the stream now, and the offset walks by
+    // the number of rows the SERVER was asked for, which filtering
+    // cannot change. The cost is one extra request at the tail; the
+    // alternative was a feed that silently stopped.
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if ((lastPage as any[]).length === 0) return undefined;
+      return ((lastPageParam as number) ?? 0) + PAGE_SIZE;
     },
     initialPageParam: 0,
   });
