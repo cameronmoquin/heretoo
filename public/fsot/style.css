@@ -34,6 +34,28 @@ ul.toc .t { font-family:'Syne',sans-serif; font-weight:600; font-size:.98rem; }
 ul.toc .d { color:var(--dim); font-size:.88rem; }
 ol.seq { margin:10px 0 18px 1.4em; }
 ol.seq li { margin:4px 0; }
+details.seqfull { margin-top:14px; }
+details.seqfull summary { font-family:'Syne',sans-serif; font-size:.85rem; color:var(--dim);
+  cursor:pointer; letter-spacing:.05em; }
+/* drill */
+#drill .part { font-family:'Syne',sans-serif; font-size:.78rem; color:var(--dim);
+  letter-spacing:.1em; text-transform:uppercase; margin:14px 0 8px; }
+#drill .row { min-height:2.2em; border:1px dashed var(--line); padding:8px 10px; margin:10px 0;
+  font-size:.92rem; line-height:1.8; }
+#drill .row .wrong { color:var(--accent); }
+#drill .chip { display:block; width:100%; text-align:left; background:none; border:1px solid var(--line);
+  color:var(--ink); font:inherit; font-size:.95rem; padding:10px 14px; margin:8px 0; cursor:pointer; }
+#drill .chip:hover:not(:disabled) { border-color:var(--ink); }
+#drill .chip:disabled { opacity:.45; cursor:default; }
+#drill .chip.ok { border-color:#4a7c59; }
+#drill .chip.bad { border-color:var(--accent); }
+#drill .chip b { display:inline-block; min-width:1.6em; color:var(--dim); font-weight:600; }
+#drill .ctl { display:flex; gap:10px; margin-top:12px; }
+#drill .ctl button { font-family:'Syne',sans-serif; font-weight:600; font-size:.9rem;
+  background:none; border:1px solid var(--ink); color:var(--ink); padding:9px 16px; cursor:pointer; }
+#drill .ctl button:disabled { opacity:.4; cursor:default; }
+#drill .ctl button.primary { background:var(--ink); color:var(--bg); }
+#drill .score { font-family:'Syne',sans-serif; font-weight:700; font-size:1.3rem; margin:12px 0 4px; }
 .box { border:1px solid var(--line); padding:16px 18px; margin:26px 0; }
 .box .h { font-family:'Syne',sans-serif; font-weight:600; font-size:.85rem;
   letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:8px; }
