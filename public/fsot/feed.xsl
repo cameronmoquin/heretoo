@@ -17,7 +17,7 @@
 <div class="wrap">
 <header class="site">
 <a class="back" href="https://heretoo.social/">&#8592; HereToo</a>
-<a class="brand" href="/fsot/">FSOT Study Guide</a>
+<a class="brand" href="/fsot/">FSOT &amp; OMST Prep</a>
 </header>
 <nav class="crumbs"><a href="/fsot/">FSOT</a> / <a href="/fsot/listen/">Audio course</a> / Feed</nav>
 <h1><xsl:value-of select="/rss/channel/title"/></h1>
