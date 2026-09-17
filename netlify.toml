@@ -98,6 +98,14 @@
 # screen. 302 — the growth model is being redesigned and a cached 301
 # would outlive whatever replaces it. /sow is NOT retired: messenger
 # invites ride it.
+# /sow renamed /add (Sept 2026) — the invite door sheds the planting
+# metaphor. Links already sent by text and email carry /sow/<token>;
+# they walk through unchanged.
+[[redirects]]
+  from = "/sow/*"
+  to = "/add/:splat"
+  status = 302
+
 [[redirects]]
   from = "/family"
   to = "/"

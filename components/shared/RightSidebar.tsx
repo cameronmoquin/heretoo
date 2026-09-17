@@ -5,7 +5,7 @@
  *   - Web platform
  *   - Viewport ≥1280px (real empty space outside the centered feed)
  *   - User is signed in
- *   - Not on an auth-flow page (welcome / profile-setup / join / sow)
+ *   - Not on an auth-flow page (welcome / profile-setup / add)
  *
  * Pinned absolutely to the viewport's right edge so it doesn't affect
  * the layout / width of any page underneath. Each page's centered
@@ -34,7 +34,7 @@ export function RightSidebar() {
     '/profile-setup',
     '/reset-password',
     '/join/',
-    '/sow/',
+    '/add/',
     '/version',
   ];
   const visible =

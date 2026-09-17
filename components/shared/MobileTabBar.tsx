@@ -46,7 +46,7 @@ const HIDE_ON = [
   // would otherwise render over the password form.
   '/reset-password',
   '/join/',
-  '/sow/',
+  '/add/',
   '/version',
 ];
 

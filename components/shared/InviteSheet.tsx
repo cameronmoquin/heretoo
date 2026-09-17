@@ -37,7 +37,7 @@ function inviteUrl(token: string): string {
     typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
       : 'https://heretoo.social';
-  return `${origin}/sow/${token}`;
+  return `${origin}/add/${token}`;
 }
 
 function inviteText(name: string, token: string): string {

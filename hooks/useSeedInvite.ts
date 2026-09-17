@@ -5,7 +5,7 @@
  * Sponsor flow: tap "Plant a tree" → optionally write a note + suggest
  * a family name → generate a one-time token → share the link.
  *
- * Recipient flow: open /sow/<TOKEN> → sign up if needed → name their
+ * Recipient flow: open /add/<TOKEN> → sign up if needed → name their
  * new family → accept. Behind the scenes the RPC creates the family
  * with them as owner AND inserts an accepted `connections` row to the
  * sponsor so the two trees see each other in the network graph.

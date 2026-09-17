@@ -5,7 +5,7 @@
  *   - Web platform
  *   - Authenticated session
  *   - Viewport ≥1024px (240px sidebar + 600px feed + gutters fits)
- *   - NOT on auth-flow pages (welcome / profile-setup / join / sow)
+ *   - NOT on auth-flow pages (welcome / profile-setup / add)
  *
  * Slots: Feed · Messages (with unread badge) ·
  * Music (with active station + play state) · Profile · Sign out.
@@ -33,7 +33,7 @@ const HIDE_ON_PATHS = [
   '/profile-setup',
   '/reset-password',
   '/join/',
-  '/sow/',
+  '/add/',
   '/version',
 ];
 

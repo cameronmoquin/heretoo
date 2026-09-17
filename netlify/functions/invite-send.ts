@@ -4,7 +4,7 @@
  * POST { token, email } with the caller's JWT. The token is a seed
  * invite the caller created; only its sponsor can mail it, so nobody
  * can aim someone else's invitation. The email says who invites and
- * carries the one door: /sow/<token>.
+ * carries the one door: /add/<token>.
  *
  * Graceful when RESEND_API_KEY is unset: answers 503 and the client
  * falls back to the device's own mail composer. Nothing is lost —
@@ -79,7 +79,7 @@ export default async (req: Request, _ctx: Context) => {
   }
 
   const name = invite.sponsor_display_name || invite.sponsor_handle || 'Someone';
-  const link = `https://heretoo.social/sow/${token}`;
+  const link = `https://heretoo.social/add/${token}`;
   const subject = `${name} sent you a message on HereToo.`;
 
   const bodyHtml =

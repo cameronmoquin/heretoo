@@ -1,5 +1,5 @@
 /**
- * Founding-seed landing page — `/sow/<TOKEN>`.
+ * Invitation landing page — `/add/<TOKEN>`.
  *
  * Sponsor (someone already on HereToo) sent the recipient this link
  * to "plant a tree" with them — i.e. start their OWN crew on
@@ -40,7 +40,7 @@ import { Spacing, Radius } from '../../constants/design';
 
 const PENDING_KEY = 'heretoo:pending_seed_token';
 
-export default function SowPlant() {
+export default function AddScreen() {
   const s = makeStyles();
   const { token } = useLocalSearchParams<{ token: string }>();
   const userId = useAuthStore((st) => st.user?.id);
@@ -159,8 +159,8 @@ export default function SowPlant() {
     return (
       <SafeAreaView style={s.root}>
         <View style={s.card}>
-          <Ionicons name="leaf-outline" size={36} color={Colors.textMuted} />
-          <Text style={s.title}>Seed not found</Text>
+          <Ionicons name="mail-open-outline" size={36} color={Colors.textMuted} />
+          <Text style={s.title}>Invite not found</Text>
           <Text style={s.sub}>
             That invite is invalid or has expired. Ask whoever sent it
             for a fresh one.
@@ -178,7 +178,7 @@ export default function SowPlant() {
       <SafeAreaView style={s.root}>
         <View style={s.card}>
           <Ionicons name="checkmark-done" size={36} color={Colors.success} />
-          <Text style={s.title}>Seed already planted</Text>
+          <Text style={s.title}>Invite already used</Text>
           <Text style={s.sub}>This invite has already been used.</Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
             <Text style={s.ctaText}>Go to HereToo</Text>
@@ -193,7 +193,7 @@ export default function SowPlant() {
       <SafeAreaView style={s.root}>
         <View style={s.card}>
           <Ionicons name="time-outline" size={36} color={Colors.textMuted} />
-          <Text style={s.title}>Seed expired</Text>
+          <Text style={s.title}>Invite expired</Text>
           <Text style={s.sub}>Ask the person who sent it for a new link.</Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
             <Text style={s.ctaText}>Go to HereToo</Text>
@@ -219,7 +219,7 @@ export default function SowPlant() {
                 size={64}
 
               />
-              <Text style={s.eyebrow}>A seed from</Text>
+              <Text style={s.eyebrow}>An invitation from</Text>
               <Text style={s.sponsor}>
                 {invite.sponsor_display_name ?? `@${invite.sponsor_handle ?? 'someone'}`}
               </Text>
@@ -302,7 +302,7 @@ export default function SowPlant() {
                 >
                   <Text style={s.ctaText}>
                     {busy === 'auth' ? 'Setting up your account…' :
-                     busy === 'plant' ? 'Planting your tree…' :
+                     busy === 'plant' ? 'Coming in…' :
                      mode === 'signup' ? 'Create account & plant tree' : 'Sign in & plant tree'}
                   </Text>
                 </TouchableOpacity>
