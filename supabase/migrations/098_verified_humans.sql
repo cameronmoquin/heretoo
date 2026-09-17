@@ -339,16 +339,50 @@ create trigger comments_guard_post_id
   before update of post_id on public.comments
   for each row execute function public.guard_comment_post_id();
 
--- FLAGS ARE A PUBLIC-SQUARE WRITE TOO. Three distinct flaggers hide a
--- post from every reader on the platform (active_flagged_posts, 024),
--- and flags_self_insert asks only that the flagger is themselves — no
--- guest ban, no verification. That hands the exact accounts this file
--- exists to exclude a one-request lever over what everyone else sees,
--- and it is cheaper to pull than writing a post. Gate it the same way.
+-- FLAGGING IS A PUBLIC-SQUARE LEVER TOO, and it is the cheapest one on
+-- the platform: three distinct flaggers hide a post from every reader
+-- (active_flagged_posts, 024), while flags_self_insert asks only that
+-- the flagger is themselves — no guest ban, no verification. A bot farm
+-- that cannot write a single public post could still silence any post
+-- in the square for three requests.
+--
+-- THE FIX IS ON THE COUNT, NOT ON THE REPORT. Gating the INSERT was the
+-- first instinct and it is the wrong one: reporting abuse is a safety
+-- control, and the person most likely to need it is exactly the new
+-- account that has not verified yet. Nobody should have to prove
+-- themselves to say "this is hate speech". So anyone may still file a
+-- flag, a moderator still sees every one of them, and only a VERIFIED
+-- flagger's report counts toward the automatic hide. Reporting stays
+-- open; the lever closes.
+--
+-- Column names and types are unchanged, so every existing reader —
+-- useFeed's per-page filter and 094's get_unifying_feed, which joins
+-- this view before LIMIT/OFFSET — keeps working untouched.
+create or replace view public.active_flagged_posts as
+  select post_id, count(distinct flagger_id) as flag_count
+  from public.content_flags f
+  where post_id is not null
+    and (decision is null or decision = 'uphold')
+    and exists (
+      select 1 from public.human_verifications hv where hv.user_id = f.flagger_id
+    )
+  group by post_id
+  having count(distinct flagger_id) >= 3;
+
+create or replace view public.active_flagged_comments as
+  select comment_id, count(distinct flagger_id) as flag_count
+  from public.content_flags f
+  where comment_id is not null
+    and (decision is null or decision = 'uphold')
+    and exists (
+      select 1 from public.human_verifications hv where hv.user_id = f.flagger_id
+    )
+  group by comment_id
+  having count(distinct flagger_id) >= 3;
+
+-- The first draft of this section gated the INSERT instead. If it was
+-- ever applied, take it back off — it would refuse abuse reports.
 drop policy if exists flags_require_human on public.content_flags;
-create policy flags_require_human on public.content_flags
-  as restrictive for insert to authenticated
-  with check (public.is_verified_human());
 
 
 -- ── 6. The invite vouch ───────────────────────────────────────────────
