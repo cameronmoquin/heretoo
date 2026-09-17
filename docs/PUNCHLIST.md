@@ -249,8 +249,47 @@ Honest limits, told to Cameron: EXIF is forgeable and some phone
 upload paths strip it — this is a bot speed bump, not a wall. The
 selfie door is web-only (native points to the browser or an invite).
 
+### H2 — The first draft of 098 was withdrawn unrun
+
+An adversarial audit (114 agents, 8 attack dimensions, every claim put
+through 3 refutation lenses) found 27 real defects in the first draft,
+10 of them critical. It was never run. What it would have done:
+
+  - REOPENED TWO PROVEN HOLES. It rebuilt posts_insert from 065 and
+    loft_posts_insert from 036/044, but the LIVE policies are 083's and
+    085's. Rebasing silently deleted 083's `not uid_is_guest()` ban and
+    085's binding of loft pseudonym to the author's own handle — holes
+    those files say they proved with live probes and closed.
+    THE LESSON, now written into 098's header: never rewrite another
+    migration's policy to add a condition. Add a RESTRICTIVE policy.
+  - SELF-SETTABLE GATE. It stored the flag on profiles. profiles_update
+    (001) has no with-check and no column list, and nothing has ever
+    revoked the table-level UPDATE grant, so one PATCH of
+    {"verified_human":true} opened every door.
+  - SELF-SERVE VOUCH. It trusted accepted `connections` rows (conn_insert
+    never looks at status) and active `family_members` rows (fm_owner_all
+    is FOR ALL with USING only). Both were one request from outside.
+  - EXIF DoS. `/\0+$/` over an attacker-sized NUL run: measured at
+    13,237ms for one 200KB run, times up to 65,535 IFD entries.
+
+The second draft fixes all of it: restrictive policies, the verdict in
+its own unwritable table (human_verifications), the vouch anchored on
+seed_invites.used_by (the one row a stranger cannot forge), guests
+excluded, and the parser bounded to 64-byte values / 256 entries.
+
 - [ ] Cameron reviews all /verify + composer copy (H copy rule).
+- [ ] DECISION FOR CAMERON: the legacy cutoff moved to 2026-08-05, the
+      day open registration shipped. Accounts created in the six weeks
+      since then are NOT grandfathered — they must use an invite or a
+      selfie. The first draft's claim that "the platform was invite-only
+      its whole life" was simply false.
+- [ ] DECISION FOR CAMERON: a crew invite code does NOT verify anyone,
+      because families_invite_lookup (001) is `for select using (true)`
+      — every crew's standing code is readable by any signed-in account.
+      Only a seed invite (/add) is a real vouch.
+- [ ] PRE-EXISTING, NOT FROM THIS CHANGE: those world-readable crew
+      invite codes are a hole in their own right. Cohort rooms are
+      retired from the UI so nothing surfaces them today, but the codes
+      are still live and readable. Fix when cohorts resurface.
 - [ ] Verified badge display? (not built — decide if the feed should
       show a mark.)
-- [ ] Public lens pagination rides the mixed ranked query; if public
-      volume outgrows it, give the lens its own public-only query.

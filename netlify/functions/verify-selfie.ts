@@ -45,6 +45,29 @@ const MAX_ATTEMPTS_PER_HOUR = 5;
  *  function can never become an accidental photo upload endpoint. */
 const MAX_BYTES = 1_200_000;
 
+/**
+ * Bounds on what the EXIF walk will do with attacker-supplied numbers.
+ * Both exist because every size in a TIFF header is chosen by whoever
+ * uploaded the file, and this parser runs server-side.
+ *
+ * MAX_ASCII_LEN: the values read here are "YYYY:MM:DD HH:MM:SS" (20
+ *   bytes) and "+HH:MM" (7). The entry count field is a full uint32, so
+ *   without a cap one entry can name the ENTIRE buffer as its string —
+ *   a megabyte-long allocation per entry, and a NUL-run trim over it
+ *   that backtracks quadratically.
+ * MAX_IFD_ENTRIES: the entry count is a uint16, so a crafted IFD can
+ *   claim 65,535 entries. Real IFDs hold a few dozen.
+ */
+const MAX_ASCII_LEN = 64;
+const MAX_IFD_ENTRIES = 256;
+
+/** Reject timestamps outside this range before they reach Postgres. A
+ *  crafted "0000:01:01" with a +14:00 offset serializes to a negative
+ *  extended year, which timestamptz refuses — and a refused ledger
+ *  insert is a rate limit that silently stops counting. */
+const MIN_EXIF_MS = Date.UTC(2000, 0, 1);
+const MAX_EXIF_MS = Date.UTC(2100, 0, 1);
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
     status,
@@ -67,12 +90,12 @@ export default async (req: Request) => {
   if (userErr || !uid) return json(401, { error: 'Not signed in' });
 
   // Already through either door: idempotent yes.
-  const { data: prof } = await admin
-    .from('profiles')
-    .select('verified_human')
-    .eq('id', uid)
-    .single();
-  if (prof?.verified_human) return json(200, { ok: true, already: true });
+  const { data: already } = await admin
+    .from('human_verifications')
+    .select('user_id')
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (already) return json(200, { ok: true, already: true });
 
   // ── Rate limit ──────────────────────────────────────────────────────
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -121,19 +144,31 @@ export default async (req: Request) => {
   const { verdict, reason, taken } = verdictOf();
 
   // ── Ledger, then stamp. Never the pixels. ───────────────────────────
-  await admin.from('verification_attempts').insert({
+  // The ledger IS the rate limit, so a failed write is not a detail to
+  // swallow: it would leave the counter at zero forever and hand an
+  // attacker unlimited attempts. Fail the request instead.
+  //
+  // The timestamp is clamped because it comes from the uploaded file.
+  // "0000:01:01" with a +14:00 offset serializes to a negative extended
+  // year that Postgres rejects, which is exactly how a crafted photo
+  // would have disabled the counter.
+  const takenMs = taken ? taken.getTime() : null;
+  const storable = takenMs !== null && takenMs >= MIN_EXIF_MS && takenMs < MAX_EXIF_MS;
+  const { error: ledgerErr } = await admin.from('verification_attempts').insert({
     user_id: uid,
     verdict,
     reason,
-    exif_taken_at: taken ? taken.toISOString() : null,
+    exif_taken_at: storable ? taken!.toISOString() : null,
   });
+  if (ledgerErr) return json(500, { error: 'Could not record the attempt' });
 
   if (verdict === 'pass') {
+    // The ONLY writer of this table that is not a database trigger.
+    // It has no write policy for any user role, so this succeeds by
+    // virtue of the service role bypassing RLS and by nothing else.
     const { error: stampErr } = await admin
-      .from('profiles')
-      .update({ verified_human: true, verified_via: 'selfie', verified_at: new Date().toISOString() })
-      .eq('id', uid)
-      .eq('verified_human', false);
+      .from('human_verifications')
+      .upsert({ user_id: uid, via: 'selfie' }, { onConflict: 'user_id', ignoreDuplicates: true });
     if (stampErr) return json(500, { error: 'Could not record verification' });
     return json(200, { ok: true });
   }
@@ -149,6 +184,20 @@ export default async (req: Request) => {
  * malformed bytes must produce a verdict, never a crash.
  * Exported for the unit test alone.
  */
+/**
+ * Strip trailing NULs and surrounding whitespace in a single linear
+ * scan. The obvious `/\0+$/` does the same thing until the NUL run does
+ * NOT reach the end of the string, at which point the regex engine
+ * retries from every position in the run — quadratic, over a string
+ * whose length the uploader chose. MAX_ASCII_LEN already bounds this to
+ * 64 bytes; this keeps the cost linear no matter who edits that later.
+ */
+function trimNuls(s: string): string {
+  let end = s.length;
+  while (end > 0 && s.charCodeAt(end - 1) === 0) end--;
+  return s.slice(0, end).trim();
+}
+
 export function readExifDate(buf: Buffer): { taken: Date; offsetKnown: boolean } | null {
   try {
     // Walk JPEG segments to APP1/"Exif\0\0".
@@ -182,7 +231,7 @@ export function readExifDate(buf: Buffer): { taken: Date; offsetKnown: boolean }
       let exifPtr = 0;
       const abs = tiff + ifdOff;
       if (abs + 2 > buf.length) return { out, exifPtr };
-      const n = u16(abs);
+      const n = Math.min(u16(abs), MAX_IFD_ENTRIES);
       for (let i = 0; i < n; i++) {
         const e = abs + 2 + i * 12;
         if (e + 12 > buf.length) break;
@@ -191,9 +240,12 @@ export function readExifDate(buf: Buffer): { taken: Date; offsetKnown: boolean }
         const cnt = u32(e + 4);
         if (tag === 0x8769) { exifPtr = u32(e + 8); continue; }
         if (!wanted.includes(tag) || type !== 2) continue; // ASCII only
+        // A timestamp is 20 bytes. Anything claiming more is either
+        // broken or hostile, and reading it is the whole attack.
+        if (cnt === 0 || cnt > MAX_ASCII_LEN) continue;
         const valOff = cnt <= 4 ? e + 8 : tiff + u32(e + 8);
-        if (valOff + cnt > buf.length) continue;
-        out.set(tag, buf.toString('ascii', valOff, valOff + cnt).replace(/\0+$/, '').trim());
+        if (valOff < 0 || valOff + cnt > buf.length) continue;
+        out.set(tag, trimNuls(buf.toString('ascii', valOff, valOff + cnt)));
       }
       return { out, exifPtr };
     };

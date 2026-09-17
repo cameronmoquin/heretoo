@@ -13,6 +13,44 @@ import { MOCK_USER } from '../lib/mock-data';
 import { useAuthStore } from '../stores/authStore';
 import type { Profile } from '../stores/authStore';
 
+/**
+ * Read the caller's verified-human verdict into the store.
+ *
+ * The verdict is a ROW IN public.human_verifications, not a column on
+ * profiles — the table has a read-own policy and no write policy at
+ * all, so this is the only way a client can learn it and there is no
+ * way for a client to change it.
+ *
+ * On any error the verdict is left UNKNOWN (null) rather than false.
+ * A missing table (the migration has not run yet), an expired token or
+ * a network blip must not read as "this person failed verification":
+ * the RLS gate is the real wall, and a false negative here would take
+ * the public composer away from someone who is verified.
+ *
+ * Exported because /verify needs to re-ask after the invite door — the
+ * vouch is stamped by a database trigger, so nothing tells the client.
+ */
+export async function refreshVerified(userId: string): Promise<boolean | null> {
+  const { setVerified } = useAuthStore.getState();
+  try {
+    const { data, error } = await supabase
+      .from('human_verifications')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) {
+      setVerified(null);
+      return null;
+    }
+    const v = !!data;
+    setVerified(v);
+    return v;
+  } catch {
+    setVerified(null);
+    return null;
+  }
+}
+
 export function useAuth() {
   const {
     session, user, profile, isLoading, hasCompletedSetup,
@@ -80,6 +118,10 @@ export function useAuth() {
       .single();
     if (data) setProfile(data as Profile);
     setLoading(false);
+
+    // The public-posting gate. Its own round trip because it is its own
+    // table — see refreshVerified. Never awaited into the boot path.
+    void refreshVerified(userId);
 
     // Silent timezone backfill — runs once per session, on first
     // profile fetch. The daily-digest scheduled function reads this

@@ -46,11 +46,12 @@
  *      direct_recipient_id ride the insert only when the author picks
  *      them, so a plain drop lands on an old schema. useUpload turns a
  *      missing column into a sentence.
- *   2. The verified gate reads profile.verified_human === false, never
- *      falsy: undefined means migration 098 has not run, and gating on
- *      falsy would lock every verified person out of public the moment
- *      the client ships ahead of the SQL. RLS is the real wall either
- *      way — this gate exists to say WHY before the insert bounces.
+ *   2. The verified gate reads authStore.verified === false, never
+ *      falsy: null means NOT YET KNOWN (booting, a failed read, or the
+ *      migration has not run), and gating on falsy would lock every
+ *      verified person out of public the moment a read hiccups. RLS is
+ *      the real wall either way — this gate exists to say WHY before
+ *      the insert bounces.
  *
  * Destination resets to the default after every send and on collapse.
  */
@@ -102,8 +103,8 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const { data: families } = useMyFamilies();
   const userId = useAuthStore((st) => st.user?.id);
   const myProfile = useAuthStore((st) => st.profile);
-  // === false on purpose: undefined means pre-098 database. See seam 2.
-  const unverified = (myProfile as any)?.verified_human === false;
+  // === false on purpose: null means NOT YET KNOWN. See seam 2.
+  const unverified = useAuthStore((st) => st.verified) === false;
   const isFamilyScoped = !!familyId;
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
   const [expanded, setExpanded] = useState(false);

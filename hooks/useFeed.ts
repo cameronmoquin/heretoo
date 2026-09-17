@@ -38,11 +38,29 @@ export type FeedTab = 'for_you' | 'connections';
  *   nowhere the author was looking. RLS already limits family rows to
  *   crews the viewer belongs to, so no extra filter is needed here.
  */
-export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
+/**
+ * Which stream the feed query pulls.
+ *
+ *   all     the ranked mixed stream (get_unifying_feed)
+ *   crew    cohort drops, newest first
+ *   public  THE PUBLIC SQUARE, newest first, filtered SERVER-SIDE
+ *
+ * 'public' exists because the Public lens used to be a client-side
+ * filter over the ranked stream, and a ranked stream is not a filtered
+ * one: a viewer in a busy cohort could take a whole 20-row page of crew
+ * drops and see an empty public square, while the list quietly asked
+ * for page after page trying to find rows that lens would show. Asking
+ * the server for public rows returns twenty public rows.
+ */
+export type FeedScope = 'all' | 'crew' | 'public';
+
+export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
   const userId = useAuthStore((s) => s.user?.id);
+  const crewOnly = scope === 'crew';
+  const publicOnly = scope === 'public';
 
   return useInfiniteQuery({
-    queryKey: ['feed', tab, crewOnly ? 'crew' : 'all', userId],
+    queryKey: ['feed', tab, scope, userId],
     queryFn: async ({ pageParam = 0 }) => {
       if (DEV_MODE) {
         return MOCK_POSTS.slice(pageParam, pageParam + PAGE_SIZE);
@@ -71,6 +89,25 @@ export function useFeed(tab: FeedTab = 'for_you', crewOnly = false) {
           // instrument with their own tab, and the feed is not the third
           // place they show up. Without this the two lenses disagreed.
           .eq('kind', 'post')
+          .order('created_at', { ascending: false })
+          .range(pageParam, pageParam + PAGE_SIZE - 1);
+        if (error) throw error;
+        raw = (data ?? []) as any[];
+      } else if (publicOnly) {
+        // The public square. Newest first rather than ranked: this is
+        // the front door, and a newcomer's first submission being
+        // outranked into invisibility by an older post with one heart
+        // is the exact failure the freshness bonus in 094 was added to
+        // patch. RLS already exposes every public row to every viewer
+        // (posts_read, 074), so no reach clause belongs here.
+        const { data, error } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            author:profiles!author_id(id, handle, display_name, avatar_path),
+            media:post_media(*)
+          `)
+          .eq('visibility', 'public')
           .order('created_at', { ascending: false })
           .range(pageParam, pageParam + PAGE_SIZE - 1);
         if (error) throw error;

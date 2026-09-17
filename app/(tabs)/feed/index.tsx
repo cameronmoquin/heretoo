@@ -53,7 +53,7 @@ export default function FeedHomeScreen() {
   const activeTab = useFeedStore((s) => s.activeTab);
   const filter = useFeedStore((s) => s.filter);
   const setFilter = useFeedStore((s) => s.setFilter);
-  const feed = useFeed(activeTab, filter === 'crew');
+  const feed = useFeed(activeTab, filter === 'crew' ? 'crew' : filter === 'public' ? 'public' : 'all');
   useFeedRealtime(activeTab);
   const toggleHeart = useToggleHeart();
 

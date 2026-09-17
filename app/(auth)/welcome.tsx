@@ -37,6 +37,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
+import { refreshVerified } from '../../hooks/useAuth';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
 import { HereTooLogo, HereTooMark } from '../../components/shared/Logo';
@@ -211,12 +212,17 @@ export default function WelcomeScreen() {
         }
       }
 
-      // An invited signup is vouched — the join above stamps
-      // verified_human via the 098 triggers. A walk-in has no vouch
-      // yet, so their first stop is the verification gate: an invite
-      // link or a fresh selfie. They can skip into the feed from
-      // there and browse; posting in public is what waits.
-      router.replace((code ? '/(tabs)/feed' : '/verify') as any);
+      // Route on the OUTCOME of the vouch, not on the presence of a
+      // code. A crew code is not a vouch at all — every crew's code is
+      // readable by any signed-in account, so 098 does not verify on
+      // it — and even a genuine seed invite can fail to apply (the
+      // join above is deliberately non-fatal). Asking the server who
+      // it thinks this account is costs one round trip and is the only
+      // answer that cannot be wrong. Unknown is treated as verified:
+      // the gate is RLS's job, and sending a verified person to a
+      // verification screen is the worse mistake.
+      const verified = await refreshVerified(userId);
+      router.replace((verified === false ? '/verify' : '/(tabs)/feed') as any);
     } catch (err: any) {
       setErrorMsg(err?.message ?? 'Could not create account. Try again.');
     } finally {

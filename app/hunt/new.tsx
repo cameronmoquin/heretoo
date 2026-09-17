@@ -27,6 +27,7 @@ import {
   huntScopeFor, huntUrl, type HuntDestination,
 } from '../../hooks/useHunt';
 import { useMyFamilies, useMyConnections } from '../../hooks/useFamily';
+import { useAuthStore } from '../../stores/authStore';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { HuntMap } from '../../components/hunt/HuntMap';
 import { showAlert } from '../../lib/alert';
@@ -99,6 +100,8 @@ export default function HuntNew() {
   const people = peopleRaw ?? [];
   const hasCrew = crews.length > 0;
   const hasPeople = people.length > 0;
+  // === false only: null means not yet known. Same rule as the composer.
+  const unverified = useAuthStore((s) => s.verified) === false;
 
   // Crew and DM are destinations, not permissions. When you belong to no
   // crew, crew is simply not on the row, and the choice falls to public.
@@ -148,6 +151,18 @@ export default function HuntNew() {
 
   const onDrop = async () => {
     if (!placed || !file) return;
+    // A deaddrop announces itself with a feed card, and when the author
+    // has no crew and no connections that card is PUBLIC — which is
+    // exactly the unverified walk-in. Say so before they place a pin,
+    // upload a payload and then meet a policy error on the last step.
+    if (dest === 'public' && unverified) {
+      showAlert(
+        'Verify first',
+        'A public deaddrop needs a verified account. It takes a minute.',
+      );
+      router.push('/verify' as any);
+      return;
+    }
     try {
       const id = genId();
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();

@@ -168,12 +168,12 @@ export function FeedList({
   const items = useMemo<FeedItem[]>(() => {
     // Single-source views. Full density, newest first, no cap.
     //
-    // The Public lens is everything public: named public posts (the
-    // submits and drops the composer writes there since migration 074)
-    // interleaved with the loft's pseudonymous cards, one stream,
-    // newest first. Before this it showed the loft alone, and a person
-    // who posted publicly could not find their own post under the chip
-    // that said Public.
+    // The Public lens is everything public: named public submissions
+    // interleaved with the loft's legacy pseudonymous cards, one
+    // stream, newest first. `posts` already arrives filtered to public
+    // rows by useFeed's 'public' scope; the filter below is kept as a
+    // guard so a future scope change cannot leak a crew drop into the
+    // square.
     if (onlyLoft) {
       const pub: FeedItem[] = posts
         .filter((p) => p.visibility === 'public')
@@ -358,12 +358,17 @@ export function FeedList({
         // recycling a post view into a post view.
         getItemType={itemType}
         ListFooterComponent={showArtChrome ? ListFooter : undefined}
-        // Pagination belongs to the post query. News is the only lens
-        // with no posts in it; every other lens draws on the post
-        // stream — Public and Drops filter it, so loading more pages
-        // grows what they can show. This lens is the front door now;
-        // capping it at page one would end the public feed at ~20 rows.
-        onEndReached={!onlyNews && hasMore ? onLoadMore : undefined}
+        // Pagination belongs to the lenses whose QUERY matches what
+        // they render. 'all', 'crew' and 'public' each pull a
+        // server-side stream of exactly their own rows (useFeed's
+        // scope), so another page always brings rows this column can
+        // show. The other two must not page: 'news' holds no posts at
+        // all, and 'drops' is still a client-side filter over the
+        // ranked stream, so a page can add zero rows here — and
+        // FlashList resets its end-reached latch whenever `data`
+        // changes identity, which would fire this again immediately.
+        // That is a fetch loop, not pagination.
+        onEndReached={!onlyNews && !onlyDrops && hasMore ? onLoadMore : undefined}
         onEndReachedThreshold={0.6}
         refreshControl={
           <RefreshControl

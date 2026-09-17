@@ -23,13 +23,14 @@
  * wall in front of the app; it is the door in front of posting.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Platform, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { supabase } from '../lib/supabase';
-import { useAuthStore, type Profile } from '../stores/authStore';
+import { refreshVerified } from '../hooks/useAuth';
+import { useAuthStore } from '../stores/authStore';
 import { Button } from '../components/shared/Button';
 import { Eyebrow } from '../components/shared/Eyebrow';
 import { Colors } from '../constants/colors';
@@ -45,26 +46,41 @@ const FAIL_COPY: Record<string, string> = {
   no_timestamp: 'That photo carries no camera timestamp. Take a fresh one with your camera app and upload the original file.',
   out_of_window: 'That photo was taken more than 24 hours ago. Take a new one.',
   rate_limited: 'Too many tries. Wait an hour and try again.',
+  confirm_failed: 'Your photo checked out, but we could not confirm it just now. Reload this page — you may already be verified.',
 };
 
 export default function VerifyScreen() {
   const s = makeStyles();
-  const profile = useAuthStore((st) => st.profile);
-  const setProfile = useAuthStore((st) => st.setProfile);
   const userId = useAuthStore((st) => st.user?.id);
+  const session = useAuthStore((st) => st.session);
+  const isLoading = useAuthStore((st) => st.isLoading);
+  const verified = useAuthStore((st) => st.verified) === true;
   const [stage, setStage] = useState<Stage>('idle');
   const [failReason, setFailReason] = useState<string | null>(null);
   // The DOM input outlives renders; one per mount.
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const verified = !!(profile as any)?.verified_human;
-
-  /** Re-pull the profile so the fresh stamp lands in the store. */
-  const refreshProfile = async () => {
+  // Re-ask on arrival. The invite door is stamped by a database trigger
+  // when a seed invite is consumed — no response carries that news, and
+  // the store still holds whatever was true at sign-in. Without this,
+  // someone who just accepted an invite lands on a screen telling them
+  // to take a selfie they do not need, and the header's claim that this
+  // screen "just notices" the invite door is a lie.
+  useEffect(() => {
     if (!userId) return;
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data) setProfile(data as Profile);
-  };
+    void refreshVerified(userId);
+  }, [userId]);
+
+  // Auth gate. This screen sits at the root, outside the (tabs) group,
+  // so it inherits no guard — and without one a signed-out visitor met
+  // the full gate and an Upload button that could only ever fail
+  // ("Not signed in", surfaced as a generic error). Verification is an
+  // act performed BY an account; there is nothing here for someone who
+  // does not have one yet. Wait out the session restore first, or a
+  // reload on this URL bounces a signed-in user to the door.
+  if (!isLoading && !session) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
 
   const sendHead = async (file: File) => {
     setStage('checking');
@@ -82,8 +98,17 @@ export default function VerifyScreen() {
       });
       const out = await res.json().catch(() => ({}));
       if (res.ok && out?.ok) {
-        await refreshProfile();
-        setStage('idle');
+        // Confirm it before claiming it. This screen has no success
+        // state of its own — it reads the store — so if the re-read
+        // fails we would otherwise repaint the identical gate and the
+        // user would have no idea whether their selfie counted.
+        const now = userId ? await refreshVerified(userId) : null;
+        if (now === true) {
+          setStage('idle');
+          return;
+        }
+        setFailReason('confirm_failed');
+        setStage('failed');
         return;
       }
       setFailReason(typeof out?.reason === 'string' ? out.reason : 'error');
