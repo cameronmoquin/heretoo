@@ -262,16 +262,43 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.visibility = 'public'
-     and old.visibility is distinct from 'public'
-     -- auth.uid() is null for the service role and the SQL editor. RLS
-     -- already bars anon from writing posts at all, so a null uid here
-     -- cannot be an ordinary user.
-     and auth.uid() is not null
-     and not public.is_verified_human(auth.uid()) then
+  -- auth.uid() is null for the service role and the SQL editor. RLS
+  -- already bars anon from writing posts at all, so a null uid here
+  -- cannot be an ordinary user.
+  if new.visibility is distinct from 'public'
+     or old.visibility is not distinct from 'public'
+     or auth.uid() is null then
+    return new;
+  end if;
+
+  if not public.is_verified_human(auth.uid()) then
     raise exception 'Public submissions need a verified account.'
       using errcode = 'check_violation';
   end if;
+
+  -- THE REPLIES CAME IN UNDER A DIFFERENT RULE. comments_public_requires
+  -- _human judges a comment against the post's visibility AT INSERT
+  -- TIME, so every reply written while this post was private was never
+  -- asked for a verdict. Carrying them all into the square on a single
+  -- PATCH is a laundering route for exactly the accounts the gate
+  -- excludes: one verified host seats unverified accounts in a cohort
+  -- (fm_owner_all is FOR ALL with USING only — see the header), lets
+  -- them reply to a cohort post, then flips the post public and every
+  -- one of those handles lands in public at once.
+  --
+  -- Refusing costs nothing real: no client path changes a post's
+  -- visibility at all today. The only caller is someone doing it by
+  -- hand over REST.
+  if exists (
+    select 1
+    from public.comments c
+    where c.post_id = new.id
+      and not public.is_verified_human(c.author_id)
+  ) then
+    raise exception 'This has replies from accounts that are not verified, so it cannot be made public.'
+      using errcode = 'check_violation';
+  end if;
+
   return new;
 end
 $$;
