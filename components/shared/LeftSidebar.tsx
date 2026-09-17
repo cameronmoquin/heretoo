@@ -119,16 +119,6 @@ export function LeftSidebar() {
         active={onFeed}
         onPress={() => router.replace('/(tabs)/feed' as any)}
       />
-      {/* The Journal, directly under the door of the house. Filled lock
-          at all times: the room's weight in the rail matches its weight
-          in the platform's argument. Memoir's row is gone — the room is
-          retired (data kept; punch list holds it). */}
-      <NavRow
-        icon="lock-closed"
-        label="Journal"
-        active={onJournal}
-        onPress={() => router.push('/journal' as any)}
-      />
       {/* Give is off every shelf — donations sit in regulatory
           territory a lemonade stand stays out of. The route survives;
           no door points at it. */}
@@ -167,6 +157,30 @@ export function LeftSidebar() {
       {/* Crew quick-list removed. It was redundant with the Room hearth
           swatches and the /family list page. The Crews nav row above
           opens that list when needed. */}
+
+      <View style={s.divider} />
+
+      {/* Anti-social — the rooms that end with you, matching the mobile
+          hallway's second shelf. The Journal keeps its filled lock: the
+          room's weight in the rail matches its weight in the platform's
+          argument. Memoir's row is gone — the room is retired (data
+          kept; punch list holds it). FSOT Prep is the static study
+          guide + audio course at /fsot/, outside the SPA, so its row
+          does a full navigation rather than a router push. */}
+      <Text style={s.sectionLabel}>Anti-social</Text>
+      <NavRow
+        icon="lock-closed"
+        label="Journal"
+        active={onJournal}
+        onPress={() => router.push('/journal' as any)}
+      />
+      <NavRow
+        icon="school-outline"
+        label="FSOT Prep"
+        sub="Study guide & audio course"
+        active={false}
+        onPress={() => { if (typeof window !== 'undefined') window.location.assign('/fsot/'); }}
+      />
 
       <View style={s.divider} />
 

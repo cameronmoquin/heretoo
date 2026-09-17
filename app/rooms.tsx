@@ -11,7 +11,7 @@
 
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -29,6 +29,10 @@ interface Door {
   /** The heavy tile. Filled icon, primary fill, bold label — one door
    *  per shelf at most, or weight stops meaning anything. */
   accent?: boolean;
+  /** A door out of the SPA. /fsot/ is a static site served beside the
+   *  app; the client router would 404 it, so the door does a full
+   *  navigation on web and opens the browser on native. */
+  external?: boolean;
 }
 
 export default function RoomsScreen() {
@@ -51,11 +55,6 @@ export default function RoomsScreen() {
    * only moves shelf if what it does to a person changes.
    */
   const apps: Door[] = [
-    // The Journal leads. It is the room the platform's whole privacy
-    // argument lives in, and it reads first with the heaviest tile so
-    // its weight against the other doors says so. Memoir's door is
-    // gone — the room is retired (data kept; punch list holds it).
-    { icon: 'lock-closed', label: 'Journal', route: '/journal', accent: true },
     { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
     // Feed has no door either — it is the home tab, one tap away always.
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
@@ -70,7 +69,13 @@ export default function RoomsScreen() {
     // tab bar already carries it; one door per place.
   ];
 
+  // The rooms that end with you. The Journal leads — it is the room the
+  // platform's whole privacy argument lives in, and it keeps the heavy
+  // tile it carried on the Apps shelf. FSOT Prep is the static study
+  // guide + audio course at /fsot/, outside the SPA.
   const antisocial: Door[] = [
+    { icon: 'lock-closed', label: 'Journal', route: '/journal', accent: true },
+    { icon: 'school', label: 'FSOT Prep', route: '/fsot/', external: true },
   ];
 
   return (
@@ -119,7 +124,14 @@ function Grid({ doors, s }: { doors: Door[]; s: ReturnType<typeof makeStyles> })
         <TouchableOpacity
           key={d.route}
           style={[s.door, d.accent && s.doorAccent]}
-          onPress={() => router.push(d.route as any)}
+          onPress={() => {
+            if (d.external) {
+              if (Platform.OS === 'web') (window as any).location.assign(d.route);
+              else Linking.openURL(`https://heretoo.social${d.route}`).catch(() => {});
+            } else {
+              router.push(d.route as any);
+            }
+          }}
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel={d.label}
