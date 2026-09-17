@@ -229,6 +229,14 @@ create policy posts_public_requires_human on public.posts
 drop policy if exists posts_public_requires_human_upd on public.posts;
 create policy posts_public_requires_human_upd on public.posts
   as restrictive for update to authenticated
+  -- `using (true)` is explicit on purpose. USING decides which EXISTING
+  -- rows an UPDATE may target, and this policy has no opinion about
+  -- that — its only job is what the row may BECOME. Leaving USING off
+  -- and trusting it to mean "no restriction" is a bet on a default;
+  -- were it ever read as false, a restrictive policy would silently
+  -- block every post edit on the platform. Say the harmless thing out
+  -- loud instead.
+  using (true)
   with check (
     visibility is distinct from 'public'
     or public.is_verified_human()
