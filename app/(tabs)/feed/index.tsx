@@ -73,7 +73,13 @@ export default function FeedHomeScreen() {
   // memo. A fresh array identity every render defeats that memo and makes
   // FlashList re-diff the whole stream on every theme toggle, resize, and
   // heart mutation.
-  const posts = React.useMemo(() => feed.data?.pages.flat() ?? [], [feed.data]);
+  // Flagged rows ride the pages so page LENGTH stays honest for
+  // pagination (see useFeed's marker); they are dropped here, where the
+  // column is actually assembled.
+  const posts = React.useMemo(
+    () => (feed.data?.pages.flat() ?? []).filter((p: any) => !p?.hidden_by_flags),
+    [feed.data],
+  );
 
   return (
     /* Opaque and full-bleed. The tab you are NOT on stays mounted at

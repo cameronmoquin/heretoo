@@ -62,6 +62,11 @@ export default function VerifyScreen() {
   const session = useAuthStore((st) => st.session);
   const isLoading = useAuthStore((st) => st.isLoading);
   const verified = useAuthStore((st) => st.verified) === true;
+  // Both doors refuse an anonymous session — the vouch trigger returns
+  // early on uid_is_guest() and verify-selfie answers reason:'guest'.
+  // Showing a guest the two-doors screen is a dead end with no way
+  // forward on it, so the screen says the true thing instead.
+  const isGuest = useAuthStore((st) => (st.user as any)?.is_anonymous === true);
   const [stage, setStage] = useState<Stage>('idle');
   const [failReason, setFailReason] = useState<string | null>(null);
   // The DOM input outlives renders; one per mount.
@@ -166,15 +171,40 @@ export default function VerifyScreen() {
                 style={s.cta}
               />
             </>
+          ) : isGuest ? (
+            <>
+              <Ionicons name="person-outline" size={40} color={Colors.textPrimary} style={s.icon} />
+              <Eyebrow>Guest</Eyebrow>
+              <Text style={s.title}>You're here as a guest</Text>
+              <Text style={s.body}>
+                A guest can read and message. Posting in public needs an
+                account of your own — make one, then verify it.
+              </Text>
+              <Button
+                title="Make an account"
+                onPress={() => router.push('/(auth)/welcome' as any)}
+                variant="primary"
+                size="lg"
+                style={s.cta}
+              />
+              <TouchableOpacity
+                onPress={() => router.replace('/(tabs)/feed' as any)}
+                style={s.laterBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Back to the feed"
+              >
+                <Text style={s.laterText}>Back to the feed</Text>
+              </TouchableOpacity>
+            </>
           ) : (
             <>
               <Ionicons name="finger-print-outline" size={40} color={Colors.textPrimary} style={s.icon} />
               <Eyebrow>One-time check</Eyebrow>
               <Text style={s.title}>Verify your account</Text>
               <Text style={s.body}>
-                Posting in public needs a verified account. Two ways in: an
-                invite from a current member, or a selfie taken within the
-                last 24 hours.
+                Posting and replying in public need a verified account. Two
+                ways in: an invite from a verified member, or a selfie taken
+                within the last 24 hours.
               </Text>
 
               {Platform.OS === 'web' ? (
@@ -216,8 +246,8 @@ export default function VerifyScreen() {
               <View style={s.inviteRow}>
                 <Ionicons name="mail-open-outline" size={14} color={Colors.textSecondary} />
                 <Text style={s.inviteText}>
-                  If a member sent you a personal invite, opening it verifies
-                  you. A shared cohort code does not.
+                  A personal invite from a verified member verifies you when
+                  you open it. A shared cohort code does not.
                 </Text>
               </View>
 

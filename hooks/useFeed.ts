@@ -177,9 +177,18 @@ export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
           .from('active_flagged_posts')
           .select('post_id')
           .in('post_id', postIds);
+        // MARKED, NOT REMOVED. Dropping rows here shortens the page,
+        // and the page length is what pagination reads to decide the
+        // stream has ended — so a window where every row happened to be
+        // flagged would end the feed permanently, which is a lever a
+        // flagging campaign could pull on purpose. The row is tagged
+        // instead and skipped where the column is assembled, so the
+        // page keeps the length the server actually returned.
         const hidden = new Set((flagged ?? []).map((r: any) => r.post_id));
         if (hidden.size > 0) {
-          posts = posts.filter((p) => !hidden.has(p.id) || p.author_id === userId);
+          posts = posts.map((p) =>
+            hidden.has(p.id) && p.author_id !== userId ? { ...p, hidden_by_flags: true } : p,
+          );
         }
       }
       return posts;

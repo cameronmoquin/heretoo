@@ -16,7 +16,7 @@ import {
 import { MOBILE_TAB_BAR_HEIGHT } from '../../../components/shared/MobileTabBar';
 import { shouldShowLeftSidebar } from '../../../components/shared/LeftSidebar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../../lib/supabase';
@@ -47,6 +47,7 @@ export default function PostDetail() {
   // tap themselves.
   const { postId, focus } = useLocalSearchParams<{ postId: string; focus?: string }>();
   const userId = useAuthStore((st) => st.user?.id);
+  const verified = useAuthStore((st) => st.verified);
   // Reserve the mobile tab bar height so the comment composer isn't
   // hidden under the fixed bottom nav.
   const { width: vw } = useWindowDimensions();
@@ -128,11 +129,24 @@ export default function PostDetail() {
   // component.)
   const sealed = !!(post as any).destruct_on_view && !isOwner && !revealed;
   const commentsDisabled = !!post.comments_disabled;
+  // A reply to a public post IS public speech, and migration 098 gates
+  // it exactly like authoring one. Without this the reply box stays
+  // live, the optimistic comment paints and then vanishes, and the
+  // person reads a raw Postgres policy string for a rule nothing ever
+  // told them about. Same gate, same door, as the composer.
+  // === false only: null means not yet known.
+  const replyNeedsVerification =
+    verified === false && (post as any).visibility === 'public';
   const totalCount: number = post.comment_count ?? countTree(comments ?? []);
 
   const submitComment = () => {
     const body = draft.trim();
     if (!body) return;
+    if (replyNeedsVerification) {
+      showAlert('Verify first', 'Replying in public needs a verified account.');
+      router.push('/verify' as any);
+      return;
+    }
     setSubmitErr(null);
     addComment.mutate(
       { postId, body, parentCommentId: replyTo?.id },
@@ -346,10 +360,15 @@ export default function PostDetail() {
                 style={[s.composerSend, (!draft.trim() || addComment.isPending) && { opacity: 0.4 }]}
                 onPress={submitComment}
                 disabled={!draft.trim() || addComment.isPending}
+                accessibilityLabel={replyNeedsVerification ? 'Verify to reply in public' : 'Send'}
               >
                 {addComment.isPending
                   ? <ActivityIndicator size="small" color={Colors.onPrimary} />
-                  : <Ionicons name="send" size={18} color={Colors.onPrimary} />}
+                  : <Ionicons
+                      name={replyNeedsVerification ? 'lock-closed' : 'send'}
+                      size={18}
+                      color={Colors.onPrimary}
+                    />}
               </TouchableOpacity>
             </View>
           </View>

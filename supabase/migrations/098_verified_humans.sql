@@ -53,10 +53,17 @@
 --            handed over its token; accepting it consumes the row.
 --            seed_self_rw (013) scopes both USING and WITH CHECK to
 --            `sponsor_id = auth.uid()`, so nobody can mint an invite in
---            someone else's name or touch someone else's row, and
---            used_by is only ever set by the SECURITY DEFINER accept
---            functions, which demand the token. That makes used_by a
---            real vouch.
+--            someone else's name or touch someone else's row.
+--
+--            THAT IS NOT ENOUGH ON ITS OWN, and an earlier draft of
+--            this header claimed it was. seed_self_rw carries no column
+--            list, so a sponsor CAN write used_by directly — one
+--            verified account could stamp any number of profiles that
+--            never saw an invite. The trigger therefore also requires
+--            that the person being stamped is the person making the
+--            request (used_by = auth.uid()), which the accept RPCs
+--            satisfy because the invitee calls them and a forging
+--            sponsor cannot.
 --
 --            A CREW INVITE CODE IS NOT A VOUCH, deliberately.
 --            families_invite_lookup (001) is `for select using (true)`,
@@ -223,24 +230,56 @@ create policy posts_public_requires_human on public.posts
     or public.is_verified_human()
   );
 
--- UPDATE too, or the gate is one PATCH wide: insert a legal 'private'
--- row, then flip it to 'public'. 066 closed this same maneuver for crew
--- rows and wrote down why; it applies here unchanged.
+-- THE UPDATE SIDE IS A TRIGGER, NOT A POLICY, and that is the whole
+-- lesson of this section.
+--
+-- The gate must still cover UPDATE, or it is one PATCH wide: insert a
+-- legal 'private' row, then flip it to 'public' (066 closed this same
+-- maneuver for cohort rows). But a WITH CHECK sees ONLY THE NEW ROW, so
+-- a policy cannot tell a row BECOMING public from a row that was
+-- ALREADY public — it refuses both. That is not a gate, it is a freeze,
+-- and it lands on real people:
+--
+--   - An author who posted publicly before this ran and has not
+--     verified could no longer toggle comments on their own post, which
+--     is the only moderation control they have over it.
+--   - Every heart on such a post would ABORT, not silently fail.
+--     bump_heart_count (060) is plain plpgsql with no SECURITY DEFINER,
+--     so its UPDATE is checked against the hearter's own rights, and a
+--     WITH CHECK violation raises rather than filtering — taking the
+--     whole reaction INSERT down with it.
+--
+-- A trigger sees OLD and NEW and can name the transition exactly.
+-- `before update of visibility` narrows it further: an UPDATE that
+-- never mentions visibility — every counter bump, every toggle — does
+-- not even fire it.
 drop policy if exists posts_public_requires_human_upd on public.posts;
-create policy posts_public_requires_human_upd on public.posts
-  as restrictive for update to authenticated
-  -- `using (true)` is explicit on purpose. USING decides which EXISTING
-  -- rows an UPDATE may target, and this policy has no opinion about
-  -- that — its only job is what the row may BECOME. Leaving USING off
-  -- and trusting it to mean "no restriction" is a bet on a default;
-  -- were it ever read as false, a restrictive policy would silently
-  -- block every post edit on the platform. Say the harmless thing out
-  -- loud instead.
-  using (true)
-  with check (
-    visibility is distinct from 'public'
-    or public.is_verified_human()
-  );
+
+create or replace function public.guard_public_transition()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.visibility = 'public'
+     and old.visibility is distinct from 'public'
+     -- auth.uid() is null for the service role and the SQL editor. RLS
+     -- already bars anon from writing posts at all, so a null uid here
+     -- cannot be an ordinary user.
+     and auth.uid() is not null
+     and not public.is_verified_human(auth.uid()) then
+    raise exception 'Public submissions need a verified account.'
+      using errcode = 'check_violation';
+  end if;
+  return new;
+end
+$$;
+
+drop trigger if exists posts_guard_public_transition on public.posts;
+create trigger posts_guard_public_transition
+  before update of visibility on public.posts
+  for each row execute function public.guard_public_transition();
 
 -- The pseudonymous square is a public surface too. The composer no
 -- longer writes here, but the REST door stays open and a bot does not
@@ -270,6 +309,47 @@ create policy comments_public_requires_human on public.comments
     )
   );
 
+-- And the UPDATE half, which the gate above cannot reach. The live
+-- comments_update_self (083) re-checks authorship and nothing else — no
+-- column list — so without this an unverified account could comment on
+-- its OWN private post, where the gate passes, and then PATCH post_id
+-- onto any public post. Same two-statement maneuver as the posts gate
+-- above, on the surface this file calls the square's other half.
+--
+-- Stated as an invariant rather than a verification check, because it
+-- is one: a comment belongs to the post it was written under, and
+-- moving it is never a legitimate edit for anybody, verified or not.
+create or replace function public.guard_comment_post_id()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.post_id is distinct from old.post_id then
+    raise exception 'A comment cannot be moved to another post.'
+      using errcode = 'check_violation';
+  end if;
+  return new;
+end
+$$;
+
+drop trigger if exists comments_guard_post_id on public.comments;
+create trigger comments_guard_post_id
+  before update of post_id on public.comments
+  for each row execute function public.guard_comment_post_id();
+
+-- FLAGS ARE A PUBLIC-SQUARE WRITE TOO. Three distinct flaggers hide a
+-- post from every reader on the platform (active_flagged_posts, 024),
+-- and flags_self_insert asks only that the flagger is themselves — no
+-- guest ban, no verification. That hands the exact accounts this file
+-- exists to exclude a one-request lever over what everyone else sees,
+-- and it is cheaper to pull than writing a post. Gate it the same way.
+drop policy if exists flags_require_human on public.content_flags;
+create policy flags_require_human on public.content_flags
+  as restrictive for insert to authenticated
+  with check (public.is_verified_human());
+
 
 -- ── 6. The invite vouch ───────────────────────────────────────────────
 -- Fires when a seed invite is consumed. Every condition is load-bearing:
@@ -292,6 +372,18 @@ begin
   end if;
 
   if tg_op = 'UPDATE' and old.used_by is not null then
+    return new;
+  end if;
+
+  -- THE VOUCH STAMPS THE PERSON MAKING THE REQUEST, NEVER A THIRD PARTY.
+  -- seed_self_rw (013) is FOR ALL scoped to sponsor_id with no column
+  -- list, so a sponsor can write used_by themselves — meaning one
+  -- verified account could otherwise stamp an unlimited number of
+  -- profiles that never saw an invite, with no token and no acceptance,
+  -- in a loop. In the real flow the accept RPCs are called BY the
+  -- invitee, so auth.uid() is used_by and this holds; in the forged one
+  -- the sponsor is the caller and it does not.
+  if new.used_by is distinct from auth.uid() then
     return new;
   end if;
 
