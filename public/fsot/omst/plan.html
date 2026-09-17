@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMST study plan — the weeks before the test</title>
+<meta name="description" content="A dated study plan for the Foreign Service Office Management Specialist Test, built on spacing, interleaving and retrieval practice.">
+<link rel="canonical" href="https://heretoo.social/fsot/omst/plan.html">
+<meta property="og:site_name" content="FSOT &amp; OMST Prep">
+<meta property="og:type" content="website">
+<meta property="og:title" content="OMST study plan — the weeks before the test">
+<meta property="og:description" content="A dated study plan for the Foreign Service Office Management Specialist Test, built on spacing, interleaving and retrieval practice.">
+<meta property="og:url" content="https://heretoo.social/fsot/omst/plan.html">
+<meta property="og:image" content="https://heretoo.social/fsot/icon.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/fsot/icon.png">
+<link rel="stylesheet" href="/fsot/fonts.css">
+<link rel="stylesheet" href="/fsot/style.css">
+
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+<a class="back" href="https://heretoo.social/">&larr; HereToo</a>
+<a class="brand" href="/fsot/">FSOT &amp; OMST Prep</a>
+</header>
+<nav class="crumbs"><a href="/fsot/">FSOT</a> / <a href="/fsot/omst/">OMST</a> / Plan</nav>
+<h1>The plan to 19 October</h1>
+<p class="lede">31 days. You may take the OMST once in any twelve-month period, so this is
+built to finish before you sit it, not to peak on the day.</p>
+<div class="box"><div class="h">Phase 1 — Method · Thu 17 Sep to Sun 27 Sep</div><p>Listen to the six method episodes in order, then the two drill episodes. Work questions untimed and read every explanation, including on the ones you got right: situational judgment is full of items you can get right by instinct once and wrong by instinct twice.</p></div><div class="box"><div class="h">Phase 2 — Timed sections · Sun 27 Sep to Thu 8 Oct</div><p>Switch to the clock, one section at a time, and alternate between them rather than blocking. Interleaved practice feels worse and tests better. Thirty situational items in thirty-five minutes; twenty-four reading items in thirty; English under time, fast, because English is where you bank the minutes you spend on passages.</p></div><div class="box"><div class="h">Phase 3 — Rehearsal · Thu 8 Oct to Fri 16 Oct</div><p>Two full rehearsals at the real hour, late afternoon, sitting the whole paper without stopping. Sort every wrong answer into three piles: did not know it, misread the stem, got it to two and chose wrong. Replay the method episodes once each.</p></div><div class="box"><div class="h">Phase 4 — Taper · Fri 16 Oct to Sun 18 Oct</div><p>Nothing new. Confirm the test centre address and the trip at that hour, lay out your identification, one light pass over the method, and sleep.</p></div>
+
+<h2>The three rules underneath it</h2>
+<article>
+<p><strong>Space it.</strong> Four half-hour sessions across four days beat one four-hour session,
+by a wide margin, for anything you need to still have a week later. This is the most replicated
+finding in the study of memory and the one study plans most often ignore.</p>
+<p><strong>Interleave it.</strong> Mixing the three sections produces worse practice sessions and
+better test performance. Blocked practice feels more productive while you are doing it, which is
+exactly why people choose it.</p>
+<p><strong>Retrieve, don't reread.</strong> Answering out loud in the pauses is the whole point of
+the audio episodes. Listening without answering is roughly half the value.</p>
+</article>
+
+<h2>What to use</h2>
+<ul class="toc">
+<li><a href="/fsot/omst/"><span class="t">The OMST track</span><br>
+<span class="d">Nine audio episodes and three written lessons.</span></a></li>
+<li><a href="https://fsot-trainer.netlify.app"><span class="t">The practice app</span><br>
+<span class="d">296 questions across the three OMST sections, with spaced repetition and the
+rehearsal papers under Timed exams.</span></a></li>
+</ul>
+<footer class="site">
+<p><a href="https://heretoo.social/">HereToo</a> · <a href="/fsot/guide/">Study guide</a> ·
+<a href="/fsot/listen/">Audio course</a> · <a href="/fsot/omst/">OMST</a> ·
+<a href="https://fsot-trainer.netlify.app">Practice app</a> · <a href="/fsot/subscribe/">Subscribe</a></p>
+</footer>
+</div>
+
+<script>
+(function(){
+  // sendBeacon always sends credentials, which Supabase's wildcard CORS
+  // rejects; fetch with credentials omitted + keepalive works everywhere.
+  window.fsotHit = function(ev, ep) {
+    try {
+      fetch('https://rhvidcltwftwhhttelms.supabase.co/rest/v1/fsot_hits', { method:'POST', keepalive:true,
+        mode:'cors', credentials:'omit',
+        headers: { 'apikey':'sb_publishable_FmUWdnA1auknsOE8lByolQ_aCnOv-Bc', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+        body: JSON.stringify({ page: location.pathname, event: ev, episode: ep || null,
+          ref: ev === 'view' ? (document.referrer || null) : null }) }).catch(function(){});
+    } catch (e) {}
+  };
+  window.fsotHit('view', null);
+})();
+</script>
+</body>
+</html>

@@ -617,5 +617,38 @@
   <itunes:duration>462</itunes:duration>
   <itunes:explicit>false</itunes:explicit>
 </item>
+<item>
+  <title>OMST, Situational Judgment Drills Two</title>
+  <link>https://heretoo.social/fsot/listen/omst-07.html</link>
+  <guid isPermaLink="false">fsot-audio-omst-07</guid>
+  <pubDate>Fri, 18 Sep 2026 20:00:00 +0000</pubDate>
+  <description>OMST episode seven: twelve more situational judgment scenarios, in areas the first drill did not touch. Crisis, technology, travel, written communication, onboarding, and coordination across time zones. Same format: scene, silence, answer aloud, then the reasoning. The method underneath, once, fast: who owns the decision; what category; cut the rule-breakers; cut the passive; act withinâ€¦</description>
+  <enclosure url="https://heretoo.social/fsot/audio/omst-07.mp3" length="8443742" type="audio/mpeg"/>
+  <itunes:episode>56</itunes:episode>
+  <itunes:duration>528</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>OMST, Reading Comprehension By Ear</title>
+  <link>https://heretoo.social/fsot/listen/omst-08.html</link>
+  <guid isPermaLink="false">fsot-audio-omst-08</guid>
+  <pubDate>Fri, 18 Sep 2026 21:00:00 +0000</pubDate>
+  <description>OMST episode eight: reading comprehension, drilled by ear. A warning about the format first, because it matters. On the real test you will have the passage in front of you and can reread any line. Here you cannot, so listening is harder than reading will be. That is deliberate: if you can hold a passage&#x27;s structure in your head from hearing it twice, holding it with the text in front of you isâ€¦</description>
+  <enclosure url="https://heretoo.social/fsot/audio/omst-08.mp3" length="8178755" type="audio/mpeg"/>
+  <itunes:episode>57</itunes:episode>
+  <itunes:duration>511</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
+<item>
+  <title>OMST, The Dress Rehearsal</title>
+  <link>https://heretoo.social/fsot/listen/omst-09.html</link>
+  <guid isPermaLink="false">fsot-audio-omst-09</guid>
+  <pubDate>Fri, 18 Sep 2026 22:00:00 +0000</pubDate>
+  <description>OMST episode nine, the last one: the dress rehearsal, and the plan for the days you have left. Review first; out loud. What category outranks urgent work? Safety and security. Considered is not the same as? Approved. The two questions every situational item asks? Who owns this decision, and how fast does it need to move. This episode has one job: to convert what you know into what you can do atâ€¦</description>
+  <enclosure url="https://heretoo.social/fsot/audio/omst-09.mp3" length="7999868" type="audio/mpeg"/>
+  <itunes:episode>58</itunes:episode>
+  <itunes:duration>500</itunes:duration>
+  <itunes:explicit>false</itunes:explicit>
+</item>
 </channel>
 </rss>
