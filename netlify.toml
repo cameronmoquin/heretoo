@@ -136,6 +136,18 @@
   to = "/messages/:splat"
   status = 301
 
+# FSOT audio: proxied from the trainer site so the visible URL stays
+# heretoo.social. The files themselves live on fsot-trainer (static, no
+# SPA fallback) because this site's expo deploy pipeline repeatedly
+# dropped the 340MB gitignored audio dir — and the fallback below then
+# served HTML in the MP3s' place, which browsers cached. A 200 rewrite
+# to an absolute URL streams the bytes server-side; range requests pass
+# through, so seeking and resume work.
+[[redirects]]
+  from = "/fsot/audio/*"
+  to = "https://fsot-trainer.netlify.app/audio/:splat"
+  status = 200
+
 # SPA fallback
 [[redirects]]
   from = "/*"
