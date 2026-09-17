@@ -191,3 +191,25 @@ the sibling surface.
 - [ ] Figure dossiers: era, offices, voice notes; facts only from the
       bank. Cameron approves the voice rules before the first post.
 - [ ] Retire or keep post-shakespeare + the insults room: Cameron's call.
+
+## G — Cohorts: rooms removed, graph internal (2026-09-17)
+
+Cameron: the cohorts section carried scraps of long-abandoned versions
+of the platform (crew chat, subjects panels, rename and wallpaper
+votes, statures). All of it is gone from the surface: app/family/*,
+components/family, components/subjects, PlantTreeModal, the profile's
+cohort section and cohort quick actions, the mutual-cohorts block on
+/u/[handle]. /family* 302s to the feed.
+
+THE WIRING SURVIVES WHOLE, deliberately: families / family_members /
+statures tables, every RLS policy, family_network_reach (the 3-hop
+network that defines connections and DM gating), the feed's Cohort
+lens, the composer's cohort destination for existing members, and
+/sow — messenger invites ride it. No migration ran; nothing in the
+database moved. The cohort is an internal structure until the new
+method for growing the network is designed.
+
+- [ ] Design the new growth model (replaces cohort create/join/sow
+      sponsorship as the way in).
+- [ ] Then: either resurface cohorts under the new model or migrate the
+      graph to whatever replaces it.

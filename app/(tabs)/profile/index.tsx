@@ -1,12 +1,13 @@
 /**
  * Profile — the user's launchpad.
  *
- * Replaces the bare avatar+sign-out screen with a proper hub:
+ * The user's launchpad:
  *   - Header: avatar + display name + handle + bio + edit
- *   - Network stats card (people / crews)
- *   - Crews list (tap to enter)
- *   - Quick actions (compose post, find crew by code, theme toggle)
- *   - Settings & sign-out at the bottom
+ *   - Quick actions
+ *   - Network count (people in reach)
+ *   - Style (gallery, wallpaper, radio), own public posts, sign out
+ * The cohorts section is gone (2026-09-17); the graph is internal
+ * wiring only until the new growth model exists.
  *
  * Mobile: this is now the centerpiece of the bottom nav. Desktop: same
  * page, just framed by the sidebar.
@@ -22,9 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../hooks/useAuth';
-import {
-  useMyFamilies, useMyNetworkStats,
-} from '../../../hooks/useFamily';
+import { useMyNetworkStats } from '../../../hooks/useFamily';
 import { useToggleHeart } from '../../../hooks/useFeed';
 import { PostCard } from '../../../components/feed/PostCard';
 import { showConfirm } from '../../../lib/alert';
@@ -40,7 +39,6 @@ import { Vocab } from '../../../constants/vocab';
 export default function OwnProfileScreen() {
   const s = makeStyles();
   const { profile, signOut } = useAuth();
-  const { data: families } = useMyFamilies();
   const { data: stats } = useMyNetworkStats();
   const toggleHeart = useToggleHeart();
 
@@ -100,65 +98,14 @@ export default function OwnProfileScreen() {
           />
         </View>
 
-        {/* ── Crews ── */}
-        <View style={s.section}>
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Your {Vocab.groupPlural}</Text>
-            <TouchableOpacity onPress={() => router.push('/family' as any)}>
-              <Text style={s.sectionLink}>See all →</Text>
-            </TouchableOpacity>
-          </View>
-          {/* No role pill. The cohort row is the cohort's name and a way
-              into it; what your standing is called inside it was a second
-              control competing with that, on a screen that is meant to be
-              a launchpad. Removed on request along with the picker it
-              opened. useMyStatures / useUpdateMyStature still exist for
-              wherever roles are genuinely edited. */}
-          {(families ?? []).slice(0, 4).map((f: any) => {
-            return (
-              <View key={f.id} style={s.familyRow}>
-                <TouchableOpacity
-                  style={s.familyIcon}
-                  onPress={() => router.push(`/family/${f.id}` as any)}
-                  activeOpacity={0.7}
-                >
-                  {f.cover_path ? (
-                    <Image source={{ uri: mediaPathToUrl(f.cover_path) }} style={s.familyIconImg} />
-                  ) : (
-                    <Ionicons name="people" size={18} color={Colors.primary} />
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() => router.push(`/family/${f.id}` as any)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={s.familyName}>{f.name}</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-          {(!families || families.length === 0) && (
-            <View style={s.emptyFamilies}>
-              <Text style={s.emptyText}>You're not in {Vocab.groupWithArticle} yet.</Text>
-              <View style={s.emptyBtnRow}>
-                <Button
-                  title={`Start ${Vocab.groupWithArticle}`}
-                  size="sm"
-                  style={s.primaryBtn}
-                  onPress={() => router.push('/family/new' as any)}
-                />
-                <Button
-                  title="Have a code"
-                  variant="ghost"
-                  size="sm"
-                  style={s.altBtn}
-                  onPress={() => router.push('/family/join' as any)}
-                />
-              </View>
-            </View>
-          )}
-        </View>
+        {/* The cohorts section is gone (2026-09-17). The old rooms —
+            chat, subjects, rename votes, statures — were scraps of
+            abandoned versions of this platform, and the growth model
+            they served is being rethought. The GRAPH survives intact
+            as internal wiring: memberships still scope the feed, reach
+            still makes the network, nothing in the database moved.
+            There is simply no room to walk into until the new method
+            for growing the network exists. */}
 
         {/* ── Quick actions ── */}
         <View style={s.section}>
@@ -177,22 +124,6 @@ export default function OwnProfileScreen() {
             icon="notifications-outline"
             label="Notifications & email"
             onPress={() => router.push('/(tabs)/profile/notifications' as any)}
-          />
-          <ActionRow
-            icon="key-outline"
-            label={`Join ${Vocab.groupWithArticle} with a code`}
-            onPress={() => router.push('/family/join' as any)}
-          />
-          {/* This row used to open the seed-invite modal, which does not
-              start a cohort — it mints a link so someone ELSE can start
-              theirs. The label said "Plant a tree with a friend", so the
-              row was both fluffy and inaccurate. It now does the thing
-              its name says. The sponsor flow itself is untouched; it is
-              simply no longer reachable from this screen. */}
-          <ActionRow
-            icon="people-outline"
-            label={`Start a new ${Vocab.group}`}
-            onPress={() => router.push('/family/new' as any)}
           />
           {/* Dark theme toggle removed for now — light-only while we
               dial in the polish pass. */}
@@ -215,16 +146,6 @@ export default function OwnProfileScreen() {
               <Text style={s.statValue}>{stats.reachable_profiles}</Text>
               <Text style={s.statLabel}>People in network</Text>
             </TouchableOpacity>
-            <View style={s.statDivider} />
-            <View style={s.statBlock}>
-              <Text style={s.statValue}>{stats.reachable_families}</Text>
-              <Text style={s.statLabel}>{Vocab.GroupPlural} connected</Text>
-            </View>
-            <View style={s.statDivider} />
-            <View style={s.statBlock}>
-              <Text style={s.statValue}>{stats.direct_family_count}</Text>
-              <Text style={s.statLabel}>Your {Vocab.groupPlural}</Text>
-            </View>
           </View>
         )}
 
@@ -316,38 +237,9 @@ function makeStyles() { return StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
     padding: 14, gap: Spacing.xs,
   },
-  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary, textTransform: 'uppercase', letterSpacing: 1.2 },
-  sectionLink: {
-    fontSize: Type.caption.size, color: Colors.primary, fontWeight: '600',
-  },
 
-  familyRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: Spacing.xs,
-  },
-  familyIcon: {
-    width: 36, height: 36, borderRadius: Radius.xs,
-    backgroundColor: Colors.primaryFaint,
-    alignItems: 'center', justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  familyIconImg: { width: '100%', height: '100%' },
-  familyName: {
-    fontSize: Type.ui.size, fontWeight: '600', color: Colors.textPrimary,
-  },
-  familyRole: {
-    fontSize: Type.eyebrow.size, color: Colors.textMuted, marginTop: 1, textTransform: 'capitalize',
-  },
 
-  emptyFamilies: { alignItems: 'center', paddingVertical: Spacing.xs, gap: 10 },
-  emptyText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center' },
-  emptyBtnRow: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap', justifyContent: 'center' },
-  primaryBtn: { borderRadius: Radius.full },
-  altBtn: {
-    borderRadius: Radius.full,
-    backgroundColor: 'transparent', borderWidth: 1, borderColor: Colors.primary,
-  },
 
   actionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

@@ -3,10 +3,10 @@
  *
  * Shows what HereToo wants to surface about another person without
  * giving away anything they haven't already shared:
- *   - Stature avatar (letter + generation + reach), display name, bio
- *   - Mutual crews (where you and they overlap) — tap to enter
+ *   - Avatar, display name, bio
+ *   - Shared connections (their reach intersected with yours)
  *   - Recent public posts (RLS already filters out anything they've
- *     scoped to crew or connections-only that you can't see)
+ *     scoped to connections-only that you can't see)
  *   - "Send message" button — opens a thread, with the >3-hop
  *     approval gate handled by useOpenThread
  *
@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
-import { useMyFamilies, useMyConnections } from '../../hooks/useFamily';
+import { useMyConnections } from '../../hooks/useFamily';
 import { useOpenThread } from '../../hooks/useChat';
 import { StatureAvatar } from '../../components/shared/StatureAvatar';
 import { PostCard } from '../../components/feed/PostCard';
@@ -75,28 +75,9 @@ export default function UserProfile() {
     },
     enabled: !!profile?.id,
   });
-
-  // 3. Mutual crews = both you and them are active members.
-  const { data: myFamilies } = useMyFamilies();
-  const { data: theirFamilyIds } = useQuery({
-    queryKey: ['their-families', profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return new Set<string>();
-      const { data, error } = await supabase
-        .from('family_members')
-        .select('family_id')
-        .eq('profile_id', profile.id)
-        .eq('status', 'active');
-      if (error) throw error;
-      return new Set((data ?? []).map((r: any) => r.family_id as string));
-    },
-    enabled: !!profile?.id,
-  });
-
-  const mutualFamilies = useMemo(
-    () => (myFamilies ?? []).filter((f: any) => theirFamilyIds?.has(f.id)),
-    [myFamilies, theirFamilyIds],
-  );
+  // Cohort rooms are retired (2026-09-17); the graph is internal
+  // wiring now, so this page shows shared CONNECTIONS (reach) and
+  // nothing that would walk into a room that no longer exists.
 
   // 4. Shared connections — their 3-hop reach intersected with yours.
   // Nobody outside your own reach ever appears, so this shows nothing
@@ -187,31 +168,6 @@ export default function UserProfile() {
             />
           )}
         </View>
-
-        {/* Mutual crews */}
-        {mutualFamilies.length > 0 && (
-          <View style={s.section}>
-            <Eyebrow>Mutual {Vocab.groupPlural}</Eyebrow>
-            {mutualFamilies.map((f: any) => (
-              <TouchableOpacity
-                key={f.id}
-                style={s.familyRow}
-                onPress={() => router.push(`/family/${f.id}` as any)}
-                activeOpacity={0.7}
-              >
-                <View style={s.familyIcon}>
-                  {f.cover_path ? (
-                    <Image source={{ uri: mediaPathToUrl(f.cover_path) }} style={s.familyIconImg} />
-                  ) : (
-                    <Ionicons name="people" size={16} color={Colors.primary} />
-                  )}
-                </View>
-                <Text style={s.familyName}>{f.name}</Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
 
         {/* Shared connections — the graph read from their side. Their
             3-hop reach intersected with yours, so nobody outside your

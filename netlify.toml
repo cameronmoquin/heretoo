@@ -93,6 +93,21 @@
 # /letter and /letter/claim/<token> links; they land on the feed rather
 # than a dead screen. 302 deliberately — the feature's replacement is
 # undecided, and a cached 301 would outlive the decision.
+# Cohort rooms retired (Sept 2026). Old invite cards, join codes, and
+# emails carry /family links; they land on the feed rather than a dead
+# screen. 302 — the growth model is being redesigned and a cached 301
+# would outlive whatever replaces it. /sow is NOT retired: messenger
+# invites ride it.
+[[redirects]]
+  from = "/family"
+  to = "/"
+  status = 302
+
+[[redirects]]
+  from = "/family/*"
+  to = "/"
+  status = 302
+
 [[redirects]]
   from = "/letter"
   to = "/"

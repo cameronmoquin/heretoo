@@ -22,7 +22,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useUnreadCount } from '../../hooks/useChat';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
-import { useMyFamilies } from '../../hooks/useFamily';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 import { isKioskBuild } from '../../modules/heretoo-kiosk';
 import { HereTooLogo, HereTooMark } from './Logo';
@@ -53,7 +52,6 @@ export function LeftSidebar() {
   const session = useAuthStore((s) => s.session);
   const { width } = useWindowDimensions();
   const { data: unread } = useUnreadCount();
-  const { data: families } = useMyFamilies();
   const radioPlaying = useRadio((s) => s.playing);
   const radioToggle = useRadio((s) => s.toggle);
   const station = useActiveStation();
