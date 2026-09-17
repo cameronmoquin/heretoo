@@ -303,6 +303,37 @@ LESSON: re-audit the REWRITE. Five of these six existed only in the
 second draft. A fix is new code and deserves the same suspicion as the
 code it replaced.
 
+A THIRD ROUND over those fixes found fourteen more (commit 8274bce).
+The worst was not a hole but a FREEZE, and it is the subtlest thing in
+this whole change:
+
+  A restrictive UPDATE policy cannot gate a transition. Its WITH CHECK
+  sees only the NEW row, so "becoming public" and "already public" look
+  identical to it and it refuses both. An unverified author who posted
+  publicly before the migration would have lost the comments toggle on
+  their own post, and every heart on it would have ABORTED — because
+  bump_heart_count (060) is plain plpgsql with no SECURITY DEFINER, so
+  its UPDATE is checked against the hearter's rights, and a WITH CHECK
+  violation raises rather than filtering, taking the reaction INSERT
+  down with it. Transitions need a TRIGGER, which can see OLD and NEW.
+
+Also closed that round: the comments gate was INSERT-only (post_id
+could be PATCHed onto a public post); the vouch did not require the
+token handoff (seed_self_rw has no column list, so a sponsor can write
+used_by and stamp unlimited profiles — now the trigger stamps only the
+caller); the comment composer had no client gate; and flagged rows
+shortened pages, which is what pagination reads to decide a stream
+ended.
+
+FLAGGING — a decision worth keeping: gating the content_flags INSERT
+was wrong and was reverted. Reporting abuse is a safety control and the
+account most likely to need it is the new unverified one. The lever is
+not the report, it is the automatic hide (3 flaggers remove a post for
+everyone), so active_flagged_posts / active_flagged_comments now count
+only VERIFIED flaggers. Anyone may report; a moderator sees all of it.
+No flagging UI exists yet — when one is built, it needs no verified
+gate.
+
 - [ ] Cameron reviews all /verify + composer copy (H copy rule).
 - [ ] DECISION FOR CAMERON: the legacy cutoff moved to 2026-08-05, the
       day open registration shipped. Accounts created in the six weeks
