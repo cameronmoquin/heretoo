@@ -94,6 +94,25 @@
 
 begin;
 
+-- ── 0. Refuse to run on a database missing what this file leans on ────
+-- The vouch calls uid_is_guest() (083) and hangs on seed_invites (013).
+-- If either is absent, the failure would not be this file erroring —
+-- it would be invite acceptance breaking later, at the one moment a
+-- new member is trying to get in. Fail here instead, loudly.
+do $$
+begin
+  if to_regprocedure('public.uid_is_guest()') is null then
+    raise exception
+      'public.uid_is_guest() does not exist, so migration 083 has not run here. The vouch below depends on it to keep anonymous sessions out. Run 083 first.';
+  end if;
+
+  if to_regclass('public.seed_invites') is null then
+    raise exception
+      'public.seed_invites does not exist, so migration 013 has not run here. It is the only row this file will accept as a vouch. Run 013 first.';
+  end if;
+end$$;
+
+
 -- ── 1. The verdict table. Nothing with a user JWT can write it. ───────
 -- One row per verified human. The absence of a row IS unverified, so
 -- there is no flag to flip and no false value to forge.
