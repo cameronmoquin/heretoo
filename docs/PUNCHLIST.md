@@ -277,6 +277,32 @@ its own unwritable table (human_verifications), the vouch anchored on
 seed_invites.used_by (the one row a stranger cannot forge), guests
 excluded, and the parser bounded to 64-byte values / 256 entries.
 
+THE AUDIT WAS THEN RE-RUN AGAINST THE SECOND DRAFT and found six more,
+all fixed (commit a5f9e60). Worth keeping because they are the defects
+a rewrite introduces rather than inherits:
+
+  - The selfie door never tested is_anonymous. 098 enforces "a guest
+    never verifies" on the invite door only, so the OTHER door was the
+    way around the invariant the file itself states.
+  - COMMENTS WERE UNGATED. Gating who may author a public post while
+    leaving the reply box beside it open is not a gate — a bot farm
+    puts its real handle under every post in the square instead. Now
+    restrictive, scoped to comments on public posts.
+  - /verify's copy promised a cohort invite link would verify you,
+    which 098 deliberately refuses. The screen contradicted the SQL.
+  - Consuming an invite in-app did not refresh the store, so the
+    composer refused Public to someone verified seconds earlier.
+  - The default Public lens stopped paginating forever if one post in a
+    page was community-flagged (rows are dropped after fetching, and a
+    short page read as an exhausted stream); the offset also counted
+    surviving rows, sliding the window back over rows already shown.
+  - A blank-but-present DateTimeOriginal suppressed the IFD0 fallback,
+    because `??` does not fall through on an empty string.
+
+LESSON: re-audit the REWRITE. Five of these six existed only in the
+second draft. A fix is new code and deserves the same suspicion as the
+code it replaced.
+
 - [ ] Cameron reviews all /verify + composer copy (H copy rule).
 - [ ] DECISION FOR CAMERON: the legacy cutoff moved to 2026-08-05, the
       day open registration shipped. Accounts created in the six weeks
