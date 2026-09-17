@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="feed.xsl"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
 <title>FSOT Audio Course</title>
@@ -16,10 +17,10 @@
   <link>https://heretoo.social/fsot/listen/us-01.html</link>
   <guid isPermaLink="false">fsot-audio-us-01</guid>
   <pubDate>Wed, 16 Sep 2026 13:00:00 +0000</pubDate>
-  <description>Welcome to the FSOT audio course. This is episode one: the Founders&#x27; Republic, 1789 to 1825. Five presidents, one question asked over and over: how strong should the national government be? Hold that question in mind, because almost every fact in this era is an answer to it. The five presidents, in order: Washington, Adams, Jefferson, Madison, Monroe. The mnemonic: Will A Jolly Man Make. Before…</description>
-  <enclosure url="https://heretoo.social/fsot/audio/us-01.mp3" length="7428893" type="audio/mpeg"/>
+  <description>Welcome to the FSOT audio course. This is episode one: the Founders&#x27; Republic, 1789 to 1825. Five presidents, one question asked over and over: how strong should the national government be? Hold that question in mind, because almost every fact in this era is an answer to it. The five presidents, in order: Washington, Adams, Jefferson, Madison, Monroe. Use the traditional schoolroom mnemonic, and…</description>
+  <enclosure url="https://heretoo.social/fsot/audio/us-01.mp3" length="7728569" type="audio/mpeg"/>
   <itunes:episode>1</itunes:episode>
-  <itunes:duration>464</itunes:duration>
+  <itunes:duration>483</itunes:duration>
   <itunes:explicit>false</itunes:explicit>
 </item>
 <item>
