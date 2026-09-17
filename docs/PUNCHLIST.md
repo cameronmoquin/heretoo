@@ -325,6 +325,17 @@ caller); the comment composer had no client gate; and flagged rows
 shortened pages, which is what pagination reads to decide a stream
 ended.
 
+A FOURTH ROUND found ONE defect and refuted seven — the convergence
+that says to stop (27 → 6 → 14 → 1). The survivor was a laundering
+route: comments_public_requires_human judges a comment against the
+post's visibility AT INSERT TIME, so replies written while a post was
+private were never asked for a verdict, and the transition trigger only
+checked the actor doing the flip. One verified account could seat
+unverified accounts in a cohort it owns, collect their replies on a
+cohort post, then flip it public and land every one of those handles in
+the square at once. The transition now also refuses a post carrying
+replies from unverified authors.
+
 FLAGGING — a decision worth keeping: gating the content_flags INSERT
 was wrong and was reverted. Reporting abuse is a safety control and the
 account most likely to need it is the new unverified one. The lever is
