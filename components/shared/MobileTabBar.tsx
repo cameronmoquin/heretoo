@@ -47,6 +47,9 @@ const HIDE_ON = [
   '/reset-password',
   '/join/',
   '/add/',
+  // The verification gate is an auth step; the bar under it would
+  // offer four exits from a screen whose whole point is its one CTA.
+  '/verify',
   '/version',
 ];
 

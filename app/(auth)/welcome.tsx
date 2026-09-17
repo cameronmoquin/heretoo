@@ -211,7 +211,12 @@ export default function WelcomeScreen() {
         }
       }
 
-      router.replace('/(tabs)/feed' as any);
+      // An invited signup is vouched — the join above stamps
+      // verified_human via the 098 triggers. A walk-in has no vouch
+      // yet, so their first stop is the verification gate: an invite
+      // link or a fresh selfie. They can skip into the feed from
+      // there and browse; posting in public is what waits.
+      router.replace((code ? '/(tabs)/feed' : '/verify') as any);
     } catch (err: any) {
       setErrorMsg(err?.message ?? 'Could not create account. Try again.');
     } finally {

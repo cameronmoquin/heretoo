@@ -10,6 +10,16 @@ export interface Profile {
   avatar_path: string | null;
   phone_e164: string | null;
   phone_verified: boolean;
+  /**
+   * The bot gate (migration 098). True once vouched by an invite, a
+   * passing selfie check, or the legacy grandfather. Gates public
+   * posting. UNDEFINED MEANS THE MIGRATION HAS NOT RUN, not that the
+   * user failed it — gate only on === false, or shipping the client
+   * ahead of the SQL locks every verified person out of public.
+   */
+  verified_human?: boolean;
+  verified_via?: 'invite' | 'selfie' | 'legacy' | null;
+  verified_at?: string | null;
   created_at: string;
   updated_at: string;
 }

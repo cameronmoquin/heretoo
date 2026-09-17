@@ -67,6 +67,9 @@ interface FeedState {
 export const useFeedStore = create<FeedState>((set) => ({
   activeTab: 'for_you',
   setActiveTab: (activeTab) => set({ activeTab }),
-  filter: 'all',
+  // The feed OPENS TO THE PUBLIC SQUARE (Sept 2026) — named, verified
+  // public submissions plus the loft's legacy cards. Not persisted on
+  // purpose: every launch starts public; the other lenses are one tap.
+  filter: 'public',
   setFilter: (filter) => set({ filter }),
 }));

@@ -35,6 +35,7 @@ export function RightSidebar() {
     '/reset-password',
     '/join/',
     '/add/',
+    '/verify',
     '/version',
   ];
   const visible =

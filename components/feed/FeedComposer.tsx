@@ -5,10 +5,13 @@
  * could tell apart — the author included — so the destination now
  * carries the rules and every option shows:
  *
- *   PUBLIC  text only and anonymous, always. Rides loft_posts —
- *           pseudonymous byline, 1200 characters. The named public
- *           submit is gone; a name in public was the doctrine
- *           violation, not a feature.
+ *   PUBLIC  a named posts row, visibility='public', media welcome.
+ *           SIGNED AND VERIFIED (Sept 2026): the anonymity doctrine is
+ *           reversed. Public posting requires verified_human
+ *           (migration 098) — an invite vouch or a passing selfie
+ *           check — and carries the author's real handle. The
+ *           pseudonymous loft no longer takes new drops from here;
+ *           its old cards still render in the Public lens.
  *   COHORT  full privileges: media, destroy-after-viewing. posts,
  *           visibility='family'. One: used automatically. Several:
  *           picked. None: off.
@@ -43,15 +46,15 @@
  *      direct_recipient_id ride the insert only when the author picks
  *      them, so a plain drop lands on an old schema. useUpload turns a
  *      missing column into a sentence.
- *   2. Public rides loft_posts, which has a body column and nothing
- *      else. No media, no burn. Switching to Public clears both and says
- *      so first.
+ *   2. The verified gate reads profile.verified_human === false, never
+ *      falsy: undefined means migration 098 has not run, and gating on
+ *      falsy would lock every verified person out of public the moment
+ *      the client ships ahead of the SQL. RLS is the real wall either
+ *      way — this gate exists to say WHY before the insert bounces.
  *
  * Destination resets to the default after every send and on collapse.
  */
 
-/** Mirrors loft_posts: check (length(body) between 1 and 1200). */
-const LOFT_MAX = 1200;
 const CREW_MAX = 2000;
 
 type Destination = 'public' | 'crew' | 'dm';
@@ -62,9 +65,9 @@ import {
   ScrollView, Image, Modal, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useUpload } from '../../hooks/useUpload';
 import { useMyConnections, useMyFamilies, useFamilyMembersWithProfiles } from '../../hooks/useFamily';
-import { useLoftHandle, useCreateLoftPost, useRegenerateLoftHandle } from '../../hooks/useLoft';
 import { useAuthStore } from '../../stores/authStore';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { TwoWayCapture, type CapturedAsset } from '../upload/TwoWayCapture';
@@ -98,6 +101,9 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const { data: connections } = useMyConnections();
   const { data: families } = useMyFamilies();
   const userId = useAuthStore((st) => st.user?.id);
+  const myProfile = useAuthStore((st) => st.profile);
+  // === false on purpose: undefined means pre-098 database. See seam 2.
+  const unverified = (myProfile as any)?.verified_human === false;
   const isFamilyScoped = !!familyId;
   const [postKind, setPostKind] = useState<'post' | 'update'>('post');
   const [expanded, setExpanded] = useState(false);
@@ -134,10 +140,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // gone). Off by default: the canon contribution stays. Every
   // destination honors it, public included (089).
   const [expire24h, setExpire24h] = useState(false);
-  // Public is the loft, always. Anonymous and text-only is what public
-  // MEANS here; the named public submit was the exception, and it died
-  // with the fork.
-  const isLoft = isPublic;
 
   // Which crew. Pinned when the composer is crew-scoped. Automatic when
   // the author has exactly one. Picked when they have several.
@@ -179,10 +181,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // The burn. Off by default, every time.
   const [destruct, setDestruct] = useState(false);
 
-  const { data: loftHandle, refetch: refetchLoftHandle } = useLoftHandle();
-  const regenerateLoftHandle = useRegenerateLoftHandle();
-  const createLoftPost = useCreateLoftPost();
-
   const [body, setBody] = useState('');
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set());
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
@@ -201,50 +199,25 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
 
   const hasMedia = upload.selectedAssets.length > 0;
   const trimmedLen = body.trim().length;
-  const overLoftLimit = isLoft && trimmedLen > LOFT_MAX;
   const isUploading = upload.stage === 'uploading' || upload.stage === 'creating_post';
   // createPost.isPending is in here on purpose. Without it the button
   // re-enables between stages and a second tap sends a second drop.
-  const isSending = isUploading || upload.createPost.isPending || createLoftPost.isPending;
+  const isSending = isUploading || upload.createPost.isPending;
 
-  // Public needs a body inside 1..1200 and a claimed pseudonym. It can
-  // never be satisfied by media alone; loft posts carry no media. Crew
-  // and DM need a named destination.
+  // Every destination needs a payload. Public also needs the verified
+  // stamp; crew and DM need a named destination.
   const hasPayload = trimmedLen > 0 || hasMedia;
   const canPost = isPublic
-    ? trimmedLen > 0 && !overLoftLimit && !!loftHandle
+    ? hasPayload && !unverified
     : isCrew
       ? hasPayload && !!activeCrewId
       : hasPayload && !!dmChoice;
 
-  /**
-   * Pseudonym claim. Lifted unchanged from the /loft screen: roll a
-   * handle, and if the RPC fails, refetch as the fallback path before
-   * surfacing the error.
-   */
-  const claimPseudonym = async () => {
-    try {
-      await regenerateLoftHandle.mutateAsync();
-    } catch (e: any) {
-      await refetchLoftHandle();
-      if (e?.message) {
-        showAlert('Could not generate a pseudonym', e.message);
-      }
-    }
-  };
-
-  // Switching to Public drops attachments and the burn, so say so before
-  // it happens. loft_posts stores a body and nothing else; carrying
-  // either along would discard it silently at insert time.
+  // Public keeps only the burn off: destroy-after-viewing means the
+  // FIRST passerby wipes it, which in public is destruction on arrival.
   const switchDestination = (next: Destination) => {
     if (next === destinationChoice) return;
-    if (next === 'public' && (hasMedia || destruct)) {
-      const lost = [hasMedia ? 'Attachments' : null, destruct ? 'Self-destruct' : null]
-        .filter(Boolean).join(' and ');
-      showAlert(`${lost} removed`, `Public ${Vocab.postPlural} are text, unsigned.`);
-      if (hasMedia) upload.reset();
-      setDestruct(false);
-    }
+    if (next === 'public' && destruct) setDestruct(false);
     setDestinationChoice(next);
     // A destination with several candidates asks immediately rather than
     // leaving a disabled send button with nothing to press.
@@ -294,34 +267,13 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     setTaggedIds(next);
   };
 
-  /** Public path. Validates against the DB constraint before the
-   *  insert so the user reads a sentence instead of a Postgres error. */
-  const handlePublicPost = async () => {
-    const text = body.trim();
-    if (text.length < 1) {
-      showAlert(`Nothing to ${Vocab.postVerb}`, 'Write something first.');
-      return;
-    }
-    if (text.length > LOFT_MAX) {
-      showAlert('Too long', `Public ${Vocab.postPlural} stop at ${LOFT_MAX} characters. Yours is ${text.length}.`);
-      return;
-    }
-    if (!loftHandle) {
-      showAlert('No pseudonym yet', 'Claim one first.');
-      return;
-    }
-    try {
-      await createLoftPost.mutateAsync({ body: text, expire24h });
-      resetComposer();
-    } catch (e: any) {
-      showAlert(`Could not ${Vocab.postVerb}`, e?.message ?? 'Try again.');
-    }
-  };
-
   const handlePost = async () => {
-    // Public IS the loft. Anonymous, text-only; there is no named
-    // public path any more.
-    if (isPublic) return handlePublicPost();
+    // Public is a named posts row now, same pipe as crew and DM. The
+    // verified gate sits in canPost; this is the belt to that brace.
+    if (isPublic && unverified) {
+      router.push('/verify' as any);
+      return;
+    }
     if (isCrew && !activeCrewId) {
       showAlert(`Pick a ${Vocab.group}`, `This ${Vocab.post} needs a destination.`);
       return;
@@ -349,8 +301,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
 
       await upload.createPost.mutateAsync({
         body: body.trim(),
-        // Public submit is a named posts row that persists — the loft
-        // handles the public DROP before this function is reached.
         visibility: isDM ? 'direct' : isPublic ? 'public' : 'family',
         familyId: isCrew ? activeCrewId! : undefined,
         directRecipientId: isDM ? dmChoice! : undefined,
@@ -430,7 +380,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
             disabled={!canPost || isSending}
             activeOpacity={0.85}
             accessibilityLabel={
-              isPublic ? 'Submit to Public. Text only, unsigned'
+              isPublic ? 'Submit to Public, signed with your name'
                 : isDM ? `Submit to ${dmRecipient?.display_name ?? dmRecipient?.handle ?? 'one person'}`
                   : isUpdate ? 'Send update'
                     : `Submit to ${activeCrew?.name ?? `this ${Vocab.group}`}`
@@ -455,7 +405,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           label="Public"
           selected={isPublic}
           onPress={() => switchDestination('public')}
-          accessibilityLabel="Submit to Public. Text only, unsigned"
+          accessibilityLabel="Submit to Public, signed with your name"
         />
         <DestBtn
           icon="people-outline"
@@ -532,43 +482,32 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         </TouchableOpacity>
       )}
 
-      {/* Which pseudonym carries the drop. Identity disclosure, shown
-          before the send. Also the claim flow when there is no handle
-          yet, same two paths the /loft sub-bar had. */}
-      {isLoft && (
+      {/* Identity disclosure, shown before the send. Public carries the
+          author's real handle now — the reversal of the old pseudonym
+          row this block replaced. An unverified account gets the WHY
+          and the door instead of a dead button. */}
+      {isPublic && (
         <View style={s.bylineRow}>
-          <Ionicons name="eye-off-outline" size={14} color={Colors.textSecondary} />
-          {loftHandle ? (
+          {unverified ? (
             <>
-              <Text style={s.bylineText}>
-                You are <Text style={s.bylineHandle}>{loftHandle}</Text>
-              </Text>
+              <Ionicons name="finger-print-outline" size={14} color={Colors.textSecondary} />
+              <Text style={s.bylineText}>Public needs a verified account.</Text>
               <TouchableOpacity
-                onPress={() => regenerateLoftHandle.mutate()}
-                disabled={regenerateLoftHandle.isPending}
+                onPress={() => router.push('/verify' as any)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityLabel="Change pseudonym"
+                accessibilityLabel="Verify your account"
               >
-                <Text style={s.bylineLink}>
-                  {regenerateLoftHandle.isPending ? 'rolling…' : 'change pseudonym'}
-                </Text>
+                <Text style={s.bylineLink}>verify now</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
+              <Ionicons name="earth-outline" size={14} color={Colors.textSecondary} />
               <Text style={s.bylineText}>
-                You are <Text style={s.bylineHandle}>unnamed</Text>
-              </Text>
-              <TouchableOpacity
-                onPress={claimPseudonym}
-                disabled={regenerateLoftHandle.isPending}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityLabel="Get a pseudonym"
-              >
-                <Text style={s.bylineLink}>
-                  {regenerateLoftHandle.isPending ? 'rolling…' : 'get a pseudonym'}
+                You are <Text style={s.bylineHandle}>
+                  {myProfile?.display_name ?? (myProfile?.handle ? `@${myProfile.handle}` : 'you')}
                 </Text>
-              </TouchableOpacity>
+              </Text>
             </>
           )}
         </View>
@@ -631,77 +570,68 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
       )}
 
       <TextInput
-        style={[s.input, overLoftLimit && s.inputOver]}
+        style={s.input}
         accessibilityLabel={`${Vocab.Post} body`}
         value={body}
         onChangeText={setBody}
         multiline
-        maxLength={isLoft ? LOFT_MAX : CREW_MAX}
+        maxLength={CREW_MAX}
         textAlignVertical="top"
       />
 
       <View style={s.actionRow}>
-        {/* Media and tagging are off on Public. loft_posts has a body
-            column and no media table, and an @handle in a pseudonymous
-            drop undoes the pseudonym. */}
-        {!isLoft && (
-          <>
-            <ActionBtn
-              icon="image-outline"
-              label={hasMedia && upload.selectedAssets[0]?.type !== 'video' ? `${upload.selectedAssets.length} photo${upload.selectedAssets.length === 1 ? '' : 's'}` : 'Photo'}
-              onPress={() => upload.pickPhotos()}
-            />
-            <ActionBtn
-              icon="videocam-outline"
-              label="Video"
-              onPress={() => upload.pickVideo()}
-            />
-            <ActionBtn
-              icon="camera-outline"
-              label="One-Way"
-              onPress={() => setOneWayOpen(true)}
-            />
-            <ActionBtn
-              icon="sync-outline"
-              label="Two-Way"
-              onPress={() => setTwoWayOpen(true)}
-            />
-            <ActionBtn
-              icon="at-outline"
-              label="Tag"
-              onPress={() => { setTagSearch(''); setTagPickerOpen(true); }}
-            />
-          </>
-        )}
+        {/* Every destination takes media and tags now. Public rides the
+            same posts row as crew since the loft write path retired. */}
+        <ActionBtn
+          icon="image-outline"
+          label={hasMedia && upload.selectedAssets[0]?.type !== 'video' ? `${upload.selectedAssets.length} photo${upload.selectedAssets.length === 1 ? '' : 's'}` : 'Photo'}
+          onPress={() => upload.pickPhotos()}
+        />
+        <ActionBtn
+          icon="videocam-outline"
+          label="Video"
+          onPress={() => upload.pickVideo()}
+        />
+        <ActionBtn
+          icon="camera-outline"
+          label="One-Way"
+          onPress={() => setOneWayOpen(true)}
+        />
+        <ActionBtn
+          icon="sync-outline"
+          label="Two-Way"
+          onPress={() => setTwoWayOpen(true)}
+        />
+        <ActionBtn
+          icon="at-outline"
+          label="Tag"
+          onPress={() => { setTagSearch(''); setTagPickerOpen(true); }}
+        />
         {/* Voice-to-text — speak instead of type. Appends transcribed
             text to the existing body so users can dictate then tweak. */}
         <MicInputButton
           size={16}
           onText={(t) => setBody((b) => (b ? `${b} ${t}`.trim() : t))}
         />
-        {hasMedia && !isLoft && (
+        {hasMedia && (
           <TouchableOpacity onPress={() => upload.reset()} style={s.clearBtn}>
             <Text style={s.clearBtnText}>Clear</Text>
           </TouchableOpacity>
         )}
-        {isLoft && (
-          <Text style={[s.charCount, overLoftLimit && s.charCountOver]}>
-            {LOFT_MAX - trimmedLen}
-          </Text>
-        )}
       </View>
 
       {/* The burn. Off every time the composer opens, because a drop
-          nobody can go back to is not a default. Public rides loft_posts,
-          which has no burn column, so the control is inert there. */}
+          nobody can go back to is not a default. Inert on Public: the
+          first passerby's view would wipe it, and in public that is
+          destruction on arrival, not an instrument. */}
       <TouchableOpacity
-        style={[s.burnBtn, destruct && s.burnBtnOn, isLoft && s.burnBtnOff]}
+        style={[s.burnBtn, destruct && s.burnBtnOn, isPublic && s.burnBtnOff]}
         onPress={() => setDestruct((v) => !v)}
-        disabled={isLoft}
+        disabled={isPublic}
         activeOpacity={0.7}
         accessibilityRole="switch"
         accessibilityLabel="Destroy after viewing"
-        accessibilityState={{ checked: destruct, disabled: isLoft }}
+        accessibilityState={{ checked: destruct, disabled: isPublic }}
       >
         <Ionicons
           name={destruct ? 'flame' : 'flame-outline'}
@@ -716,7 +646,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         />
       </TouchableOpacity>
 
-      {hasMedia && !isLoft && (
+      {hasMedia && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbStrip}>
           {upload.selectedAssets.map((a, i) => (
             <Image key={a.uri + i} source={{ uri: a.uri }} style={s.thumb} />
@@ -724,7 +654,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         </ScrollView>
       )}
 
-      {taggedList.length > 0 && !isLoft && (
+      {taggedList.length > 0 && (
         <View style={s.taggedRow}>
           {taggedList.map((c) => (
             <TouchableOpacity
@@ -1233,9 +1163,6 @@ function makeStyles() { return StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  charCount: { marginLeft: 'auto', fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
-  charCountOver: { color: Colors.error },
-
   kindRow: {
     flexDirection: 'row', gap: 6,
     backgroundColor: Colors.surfaceLight, borderRadius: Radius.full,
@@ -1268,7 +1195,6 @@ function makeStyles() { return StyleSheet.create({
     fontSize: 15, color: Colors.textPrimary,
     minHeight: 48, lineHeight: 22,    // was 80; multiline still grows naturally
   },
-  inputOver: { borderColor: Colors.error },
 
   actionRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   actionBtn: {

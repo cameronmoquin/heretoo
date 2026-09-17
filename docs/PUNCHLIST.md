@@ -213,3 +213,44 @@ method for growing the network is designed.
       sponsorship as the way in).
 - [ ] Then: either resurface cohorts under the new model or migrate the
       graph to whatever replaces it.
+
+## H — Verified humans, public-first feed (2026-09-17)
+
+The anonymity doctrine is REVERSED per Cameron: the public feed now
+requires a verified identity, and the feed opens to the Public lens.
+Multi-cohort membership needed no work — family_members was always
+many-to-many; only the removed UI hid it.
+
+The gate (migration 098): profiles.verified_human, stamped three ways.
+LEGACY — every account existing before 2026-09-18 (invite-era, bots
+included). INVITE — DB triggers on connections(accepted) and
+family_members(active) stamp the newcomer when the counterpart/crew is
+already verified, so every invite door present and future vouches, and
+two unverified accounts cannot vouch each other. SELFIE —
+/api/verify-selfie reads the EXIF timestamp of an uploaded selfie IN
+MEMORY and discards the bytes; within 24h of the application passes
+(±14h slack when the camera wrote no timezone). NOTHING IS STORED —
+no bucket, no file; the ledger (verification_attempts) holds verdicts
+and timestamps only, and feeds a 5/hour rate limit. The selfie is not
+a profile picture; users add one separately.
+
+RLS: posts_insert public branch, posts_author_update (closes the
+insert-private-then-flip-public bypass), and loft_posts_insert all
+demand verified_human. Reading is ungated — unverified accounts browse
+everything. Service-role writers (faculty) bypass RLS as always.
+
+Composer: Public is a NAMED posts row now — media, tags, 2000 chars,
+signed byline; unverified sees "verify now" → /verify. The loft write
+path retired from the composer (write door verified-only at RLS);
+legacy loft cards still render in the Public lens. Walk-in signups
+(no invite) land on /verify; they can skip in and browse.
+
+Honest limits, told to Cameron: EXIF is forgeable and some phone
+upload paths strip it — this is a bot speed bump, not a wall. The
+selfie door is web-only (native points to the browser or an invite).
+
+- [ ] Cameron reviews all /verify + composer copy (H copy rule).
+- [ ] Verified badge display? (not built — decide if the feed should
+      show a mark.)
+- [ ] Public lens pagination rides the mixed ranked query; if public
+      volume outgrows it, give the lens its own public-only query.

@@ -34,6 +34,7 @@ const HIDE_ON_PATHS = [
   '/reset-password',
   '/join/',
   '/add/',
+  '/verify',
   '/version',
 ];
 

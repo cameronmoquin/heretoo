@@ -300,9 +300,10 @@ export function FeedList({
   // In a single-source view the post query says nothing about whether
   // there is anything to show. Gate on the source being rendered, or a
   // news-only column with an empty crew feed would report Empty while
-  // holding sixty headlines.
+  // holding sixty headlines. The Public lens draws on BOTH queries now
+  // (named public posts + loft), so it waits for both.
   const gateLoading =
-    onlyLoft ? loftLoading
+    onlyLoft ? (loftLoading || isLoading)
     : onlyNews ? newsLoading
     : onlyDrops ? isLoading
     : isLoading;
@@ -357,9 +358,12 @@ export function FeedList({
         // recycling a post view into a post view.
         getItemType={itemType}
         ListFooterComponent={showArtChrome ? ListFooter : undefined}
-        // Pagination belongs to the post query. A single-source column
-        // has no more posts to ask for.
-        onEndReached={!single && hasMore ? onLoadMore : undefined}
+        // Pagination belongs to the post query. News is the only lens
+        // with no posts in it; every other lens draws on the post
+        // stream — Public and Drops filter it, so loading more pages
+        // grows what they can show. This lens is the front door now;
+        // capping it at page one would end the public feed at ~20 rows.
+        onEndReached={!onlyNews && hasMore ? onLoadMore : undefined}
         onEndReachedThreshold={0.6}
         refreshControl={
           <RefreshControl
