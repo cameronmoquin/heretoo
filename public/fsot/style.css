@@ -4,10 +4,14 @@
 body { background:var(--bg); color:var(--ink); font:400 1.06rem/1.65 'Source Serif 4', Georgia, serif;
   -webkit-font-smoothing:antialiased; }
 .wrap { max-width:680px; margin:0 auto; padding:0 16px 80px; }
-header.site { padding:28px 0 8px; }
+header.site { padding:28px 0 8px; display:flex; justify-content:space-between;
+  align-items:baseline; gap:12px; }
 header.site a.brand { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem;
   letter-spacing:.12em; text-transform:uppercase; color:var(--dim); text-decoration:none; }
 header.site a.brand:hover { color:var(--ink); }
+header.site a.back { font-family:'Syne',sans-serif; font-weight:600; font-size:.85rem;
+  color:var(--dim); text-decoration:none; }
+header.site a.back:hover { color:var(--ink); }
 nav.crumbs { font-family:'Syne',sans-serif; font-size:.8rem; letter-spacing:.05em;
   margin:18px 0 0; color:var(--dim); }
 nav.crumbs a { color:var(--dim); text-decoration:none; }
