@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FSOT and OMST study plan — the weeks before both tests</title>
+<meta name="description" content="A dated plan for the Foreign Service FSOT and OMST taken five days apart: what carries over between them, what does not, and how to sequence the weeks.">
+<link rel="canonical" href="https://heretoo.social/fsot/plan.html">
+<meta property="og:site_name" content="FSOT &amp; OMST Prep">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FSOT and OMST study plan — the weeks before both tests">
+<meta property="og:description" content="A dated plan for the Foreign Service FSOT and OMST taken five days apart: what carries over between them, what does not, and how to sequence the weeks.">
+<meta property="og:url" content="https://heretoo.social/fsot/plan.html">
+<meta property="og:image" content="https://heretoo.social/fsot/icon.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/fsot/icon.png">
+<link rel="stylesheet" href="/fsot/fonts.css">
+<link rel="stylesheet" href="/fsot/style.css">
+
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+<a class="back" href="https://heretoo.social/">&larr; HereToo</a>
+<a class="brand" href="/fsot/">FSOT &amp; OMST Prep</a>
+</header>
+<nav class="crumbs"><a href="/fsot/">FSOT</a> / Plan</nav>
+<h1>The plan to both tests</h1>
+<p class="lede" id="lede">Two tests, five days apart.</p>
+<div class="box" data-phase="0"><div class="h">Foundation<span class="when"></span></div><p>Weighted to the FSOT, because job knowledge is the largest body of material and it expires on the 14th. Work the history, government, economics and world affairs episodes and questions. Keep English going the whole way through: it is the one section both tests score. And run two situational judgment sessions a week even now, so the section you have never practised is not cold when you reach it.</p></div><div class="box" data-phase="1"><div class="h">FSOT rehearsal<span class="when"></span></div><p>Timed papers on the clock: Job Knowledge 30 in 30, Logical Reasoning 30 in 60, English 30 in 45. Review the wrong answers rather than taking more papers. Keep one situational judgment session a week ticking over, and refresh the current affairs episode in this window, since it is dated and the FSOT asks about the world as it is.</p></div><div class="box" data-phase="2"><div class="h">FSOT<span class="when"></span></div><p>Test day. Afterwards, put it down: the OMST is scored separately, and carrying one test into the next is how one bad morning becomes two.</p></div><div class="box" data-phase="3"><div class="h">Pure OMST<span class="when"></span></div><p>Five days, one job. Switch the app&#x27;s question set to OMST only so sessions stop serving job knowledge. Work the nine OMST episodes, situational judgment and reading papers daily, and sit two full rehearsals at the real hour, late afternoon. Nothing new after the 17th.</p></div><div class="box" data-phase="4"><div class="h">OMST<span class="when"></span></div><p>Test day, five in the afternoon. One attempt in twelve months, so the preparation is finished before you walk in.</p></div>
+
+<h2>What carries over, and what does not</h2>
+<article>
+<p><strong>English expression</strong> is scored on both, so it is the best hour you can spend all
+month. <strong>Job knowledge</strong> — history, government, economics, world affairs, geography,
+math — is FSOT only and stops mattering on the 14th. <strong>Logical reasoning</strong> is FSOT
+only, but its habits transfer to OMST reading comprehension, because both turn on holding an
+inference to <em>must be true</em>. <strong>Situational judgment</strong> and <strong>reading
+comprehension</strong> are OMST only; situational judgment was cut from the FSOT in October 2025.</p>
+</article>
+
+<h2>The three rules underneath it</h2>
+<article>
+<p><strong>Space it.</strong> Four half-hour sessions across four days beat one four-hour session,
+by a wide margin, for anything you need to still have a week later.</p>
+<p><strong>Interleave it.</strong> Mixing sections produces worse practice sessions and better test
+performance. Blocked practice feels more productive while you are doing it, which is exactly why
+people choose it.</p>
+<p><strong>Retrieve, don't reread.</strong> Answering out loud in the pauses is the whole point of
+the audio episodes. Listening without answering is roughly half the value.</p>
+</article>
+
+<h2>What to use</h2>
+<ul class="toc">
+<li><a href="/fsot/listen/"><span class="t">The audio course</span><br>
+<span class="d">58 episodes: the FSOT spine and deep dives, the logic bootcamps, and the nine OMST
+episodes.</span></a></li>
+<li><a href="/fsot/omst/"><span class="t">The OMST track</span><br>
+<span class="d">What is on that test, and only the material that serves it.</span></a></li>
+<li><a href="https://fsot-trainer.netlify.app"><span class="t">The practice app</span><br>
+<span class="d">1,205 questions. The home screen toggles between Everything and OMST only —
+switch it on the 15th.</span></a></li>
+</ul>
+
+<script>
+(function () {
+  // FSOT 14 Oct 2026; OMST 19 Oct 2026, 17:00 America/New_York.
+  var FSOT = new Date(2026, 9, 14);
+  var OMST = new Date(2026, 9, 19);
+  var DAY = 86400000;
+  var mid = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+  var now = mid(new Date());
+  var days = function (to) { return Math.round((mid(to) - now) / DAY); };
+  var resolve = function (tok) {
+    var base = tok.indexOf('omst') === 0 ? OMST : tok.indexOf('fsot') === 0 ? FSOT : now;
+    var m = /([+-])(\d+)$/.exec(tok);
+    return new Date(base.getTime() + (m ? (m[1] === '-' ? -1 : 1) * (+m[2]) * DAY : 0));
+  };
+  var fmt = function (d) {
+    return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  var say = function (n, label) {
+    return n > 0 ? n + (n === 1 ? ' day' : ' days') + ' to the ' + label
+         : n === 0 ? label + ' is today' : null;
+  };
+  var parts = [say(days(FSOT), 'FSOT'), say(days(OMST), 'OMST')].filter(Boolean);
+  document.getElementById('lede').textContent = parts.length
+    ? parts.join(' \u00b7 ') + '. English is the only section both tests score; job knowledge is '
+      + 'FSOT only, and situational judgment is OMST only.'
+    : 'Both tests are behind you.';
+  [{"name": "Foundation", "a": "today", "b": "fsot-9"}, {"name": "FSOT rehearsal", "a": "fsot-9", "b": "fsot-1"}, {"name": "FSOT", "a": "fsot", "b": "fsot"}, {"name": "Pure OMST", "a": "fsot+1", "b": "omst-1"}, {"name": "OMST", "a": "omst", "b": "omst"}].forEach(function (p, i) {
+    var box = document.querySelector('[data-phase="' + i + '"]');
+    if (!box) return;
+    var a = resolve(p.a), b = resolve(p.b);
+    if (b < now) box.style.opacity = '.4';
+    box.querySelector('.when').textContent =
+      ' \u00b7 ' + (fmt(a) === fmt(b) ? fmt(a) : fmt(a) + ' to ' + fmt(b));
+  });
+})();
+</script>
+<footer class="site">
+<p><a href="https://heretoo.social/">HereToo</a> · <a href="/fsot/guide/">Study guide</a> ·
+<a href="/fsot/listen/">Audio course</a> · <a href="/fsot/omst/">OMST</a> ·
+<a href="https://fsot-trainer.netlify.app">Practice app</a> · <a href="/fsot/subscribe/">Subscribe</a></p>
+</footer>
+</div>
+
+<script>
+(function(){
+  // sendBeacon always sends credentials, which Supabase's wildcard CORS
+  // rejects; fetch with credentials omitted + keepalive works everywhere.
+  window.fsotHit = function(ev, ep) {
+    try {
+      fetch('https://rhvidcltwftwhhttelms.supabase.co/rest/v1/fsot_hits', { method:'POST', keepalive:true,
+        mode:'cors', credentials:'omit',
+        headers: { 'apikey':'sb_publishable_FmUWdnA1auknsOE8lByolQ_aCnOv-Bc', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+        body: JSON.stringify({ page: location.pathname, event: ev, episode: ep || null,
+          ref: ev === 'view' ? (document.referrer || null) : null }) }).catch(function(){});
+    } catch (e) {}
+  };
+  window.fsotHit('view', null);
+})();
+</script>
+</body>
+</html>
