@@ -26,9 +26,9 @@
 </header>
 <nav class="crumbs"><a href="/fsot/">FSOT</a> / <a href="/fsot/omst/">OMST</a> / Plan</nav>
 <h1>The plan to 19 October</h1>
-<p class="lede">31 days. You may take the OMST once in any twelve-month period, so this is
-built to finish before you sit it, not to peak on the day.</p>
-<div class="box"><div class="h">Phase 1 — Method · Thu 17 Sep to Sun 27 Sep</div><p>Listen to the six method episodes in order, then the two drill episodes. Work questions untimed and read every explanation, including on the ones you got right: situational judgment is full of items you can get right by instinct once and wrong by instinct twice.</p></div><div class="box"><div class="h">Phase 2 — Timed sections · Sun 27 Sep to Thu 8 Oct</div><p>Switch to the clock, one section at a time, and alternate between them rather than blocking. Interleaved practice feels worse and tests better. Thirty situational items in thirty-five minutes; twenty-four reading items in thirty; English under time, fast, because English is where you bank the minutes you spend on passages.</p></div><div class="box"><div class="h">Phase 3 — Rehearsal · Thu 8 Oct to Fri 16 Oct</div><p>Two full rehearsals at the real hour, late afternoon, sitting the whole paper without stopping. Sort every wrong answer into three piles: did not know it, misread the stem, got it to two and chose wrong. Replay the method episodes once each.</p></div><div class="box"><div class="h">Phase 4 — Taper · Fri 16 Oct to Sun 18 Oct</div><p>Nothing new. Confirm the test centre address and the trip at that hour, lay out your identification, one light pass over the method, and sleep.</p></div>
+<p class="lede" id="lede">You may take the OMST once in any twelve-month period, so this is built to
+finish before you sit it, not to peak on the day.</p>
+<div class="box" data-phase="0"><div class="h">Phase 1 — Method<span class="when"></span></div><p>Listen to the six method episodes in order, then the two drill episodes. Work questions untimed and read every explanation, including on the ones you got right: situational judgment is full of items you can get right by instinct once and wrong by instinct twice.</p></div><div class="box" data-phase="1"><div class="h">Phase 2 — Timed sections<span class="when"></span></div><p>Switch to the clock, one section at a time, and alternate between them rather than blocking. Interleaved practice feels worse and tests better. Thirty situational items in thirty-five minutes; twenty-four reading items in thirty; English under time, fast, because English is where you bank the minutes you spend on passages.</p></div><div class="box" data-phase="2"><div class="h">Phase 3 — Rehearsal<span class="when"></span></div><p>Two full rehearsals at the real hour, late afternoon, sitting the whole paper without stopping. Sort every wrong answer into three piles: did not know it, misread the stem, got it to two and chose wrong. Replay the method episodes once each.</p></div><div class="box" data-phase="3"><div class="h">Phase 4 — Taper<span class="when"></span></div><p>Nothing new. Confirm the test centre address and the trip at that hour, lay out your identification, one light pass over the method, and sleep.</p></div>
 
 <h2>The three rules underneath it</h2>
 <article>
@@ -47,9 +47,41 @@ the audio episodes. Listening without answering is roughly half the value.</p>
 <li><a href="/fsot/omst/"><span class="t">The OMST track</span><br>
 <span class="d">Nine audio episodes and three written lessons.</span></a></li>
 <li><a href="https://fsot-trainer.netlify.app"><span class="t">The practice app</span><br>
-<span class="d">296 questions across the three OMST sections, with spaced repetition and the
-rehearsal papers under Timed exams.</span></a></li>
+<span class="d">296 questions across the three OMST sections. Switch the question set to
+<em>OMST only</em> on the home screen so sessions stop serving job knowledge.</span></a></li>
 </ul>
+
+<script>
+(function () {
+  // Test day: 19 October 2026, 17:00 America/New_York (EDT, UTC-4).
+  var TEST = new Date(Date.UTC(2026, 9, 19, 21, 0, 0));
+  var PHASES = [{"name": "Phase 1 \u2014 Method", "a": 0.0, "b": 0.31, "what": "Listen to the six method episodes in order, then the two drill episodes. Work questions untimed and read every explanation, including on the ones you got right: situational judgment is full of items you can get right by instinct once and wrong by instinct twice."}, {"name": "Phase 2 \u2014 Timed sections", "a": 0.31, "b": 0.69, "what": "Switch to the clock, one section at a time, and alternate between them rather than blocking. Interleaved practice feels worse and tests better. Thirty situational items in thirty-five minutes; twenty-four reading items in thirty; English under time, fast, because English is where you bank the minutes you spend on passages."}, {"name": "Phase 3 \u2014 Rehearsal", "a": 0.69, "b": 0.94, "what": "Two full rehearsals at the real hour, late afternoon, sitting the whole paper without stopping. Sort every wrong answer into three piles: did not know it, misread the stem, got it to two and chose wrong. Replay the method episodes once each."}, {"name": "Phase 4 \u2014 Taper", "a": 0.94, "b": 1.0, "what": "Nothing new. Confirm the test centre address and the trip at that hour, lay out your identification, one light pass over the method, and sleep."}];
+  var DAY = 86400000;
+  var now = new Date();
+  // Count whole calendar days, not elapsed hours: an afternoon test is
+  // still "31 days away" on the morning 31 dates earlier, and rounding
+  // hours up put the final phase a day past the test itself.
+  var midnight = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+  var d0 = midnight(now), dT = midnight(TEST);
+  var left = Math.max(0, Math.round((dT - d0) / DAY));
+  var fmt = function (d) {
+    return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  var lede = document.getElementById('lede');
+  if (left === 0) lede.textContent = 'Today is the day. Nothing new — trust the method and read every stem twice.';
+  else lede.textContent = left + (left === 1 ? ' day' : ' days') + ' to go. You may take the OMST once in any '
+    + 'twelve-month period, so this is built to finish before you sit it, not to peak on the day.';
+  PHASES.forEach(function (p, i) {
+    var box = document.querySelector('[data-phase="' + i + '"]');
+    if (!box) return;
+    var s0 = new Date(d0.getTime() + Math.round(p.a * left) * DAY);
+    var s1 = new Date(Math.min(d0.getTime() + Math.round(p.b * left) * DAY, dT.getTime()));
+    var when = fmt(s0) === fmt(s1) ? fmt(s0) : fmt(s0) + ' to ' + fmt(s1);
+    box.querySelector('.when').textContent = left === 0 ? '' : ' · ' + when;
+    if (left === 0) box.style.opacity = i === PHASES.length - 1 ? '1' : '.5';
+  });
+})();
+</script>
 <footer class="site">
 <p><a href="https://heretoo.social/">HereToo</a> · <a href="/fsot/guide/">Study guide</a> ·
 <a href="/fsot/listen/">Audio course</a> · <a href="/fsot/omst/">OMST</a> ·
