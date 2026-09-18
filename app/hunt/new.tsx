@@ -158,7 +158,7 @@ export default function HuntNew() {
     if (dest === 'public' && unverified) {
       showAlert(
         'Verify first',
-        'A public deaddrop needs a verified account. It takes a minute.',
+        'A public deaddrop needs a verified account.',
       );
       router.push('/verify' as any);
       return;

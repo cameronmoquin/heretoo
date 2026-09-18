@@ -10,8 +10,7 @@
  *
  *            A COHORT INVITE CODE IS NOT THIS. Every cohort's standing
  *            code is readable by any signed-in account, so joining with
- *            one proves nothing and 098 refuses to vouch on it. The
- *            copy below says so; keep the two in step.
+ *            one proves nothing and 098 refuses to vouch on it.
  *
  *   selfie   a photo whose camera timestamp sits within 24 hours of
  *            now, judged by /api/verify-selfie. ONLY THE HEAD OF THE
@@ -176,10 +175,6 @@ export default function VerifyScreen() {
               <Ionicons name="person-outline" size={40} color={Colors.textPrimary} style={s.icon} />
               <Eyebrow>Guest</Eyebrow>
               <Text style={s.title}>You're here as a guest</Text>
-              <Text style={s.body}>
-                A guest can read and message. Posting in public needs an
-                account of your own — make one, then verify it.
-              </Text>
               <Button
                 title="Make an account"
                 onPress={() => router.push('/(auth)/welcome' as any)}
@@ -201,34 +196,18 @@ export default function VerifyScreen() {
               <Ionicons name="finger-print-outline" size={40} color={Colors.textPrimary} style={s.icon} />
               <Eyebrow>One-time check</Eyebrow>
               <Text style={s.title}>Verify your account</Text>
-              <Text style={s.body}>
-                Posting and replying in public need a verified account. Two
-                ways in: an invite from a verified member, or a selfie taken
-                within the last 24 hours.
-              </Text>
-
               {Platform.OS === 'web' ? (
-                <>
-                  <Button
-                    title={stage === 'checking' ? 'Checking…' : 'Upload a selfie'}
-                    onPress={pickSelfie}
-                    loading={stage === 'checking'}
-                    disabled={stage === 'checking'}
-                    variant="primary"
-                    size="lg"
-                    style={s.cta}
-                  />
-                  <Text style={s.fine}>
-                    The photo is read for its timestamp and discarded — it is
-                    never stored and never shown. Your profile picture is
-                    separate; add one whenever you like.
-                  </Text>
-                </>
+                <Button
+                  title={stage === 'checking' ? 'Checking…' : 'Upload a selfie'}
+                  onPress={pickSelfie}
+                  loading={stage === 'checking'}
+                  disabled={stage === 'checking'}
+                  variant="primary"
+                  size="lg"
+                  style={s.cta}
+                />
               ) : (
-                <Text style={s.body}>
-                  The selfie check runs on the web — open heretoo.social in a
-                  browser, or use an invite link instead.
-                </Text>
+                <Text style={s.body}>Open heretoo.social in a browser.</Text>
               )}
 
               {stage === 'checking' && (
@@ -243,21 +222,13 @@ export default function VerifyScreen() {
                 </View>
               )}
 
-              <View style={s.inviteRow}>
-                <Ionicons name="mail-open-outline" size={14} color={Colors.textSecondary} />
-                <Text style={s.inviteText}>
-                  A personal invite from a verified member verifies you when
-                  you open it. A shared cohort code does not.
-                </Text>
-              </View>
-
               <TouchableOpacity
                 onPress={() => router.replace('/(tabs)/feed' as any)}
                 style={s.laterBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Skip for now"
               >
-                <Text style={s.laterText}>Not now — look around first</Text>
+                <Text style={s.laterText}>Not now</Text>
               </TouchableOpacity>
             </>
           )}
@@ -302,21 +273,12 @@ function makeStyles() { return StyleSheet.create({
     color: Colors.textSecondary, textAlign: 'center', marginTop: Spacing.xxs,
   },
   cta: { width: '100%', marginTop: Spacing.sm },
-  fine: {
-    fontSize: 12, lineHeight: 17, color: Colors.textMuted,
-    textAlign: 'center', marginTop: Spacing.xs,
-  },
   failBox: {
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1, borderColor: Colors.error, borderRadius: Radius.md,
     padding: Spacing.sm, marginTop: Spacing.sm, width: '100%',
   },
   failText: { color: Colors.error, fontSize: 13, lineHeight: 18, textAlign: 'center' },
-  inviteRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginTop: Spacing.md, paddingHorizontal: Spacing.xs,
-  },
-  inviteText: { flex: 1, fontSize: 12, lineHeight: 17, color: Colors.textSecondary },
   laterBtn: { marginTop: Spacing.sm, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.sm },
   laterText: { fontSize: 13, color: Colors.textMuted, textDecorationLine: 'underline' },
 }); }
