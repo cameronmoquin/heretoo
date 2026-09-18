@@ -1,5 +1,5 @@
 /**
- * /api/hunt-burn — destroy a self-destructing deaddrop after it is found.
+ * /api/hunt-burn — destroy a self-destructing geocache after it is found.
  *
  * Authorized to the finder: the caller must have a hunt_finds row for the
  * cache (proving they reached it). On burn we set the cache inactive and

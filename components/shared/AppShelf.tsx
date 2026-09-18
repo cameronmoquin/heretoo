@@ -45,6 +45,7 @@ import {
 } from '../../constants/kioskApps';
 import { loadAllowlist } from '../../lib/kiosk-allowlist';
 import { getAppInfo, launchApp, type KioskAppInfo } from '../../modules/heretoo-kiosk';
+import { Vocab } from '../../constants/vocab';
 
 /**
  * Tiles that route inside HereToo rather than launching another package.
@@ -52,7 +53,7 @@ import { getAppInfo, launchApp, type KioskAppInfo } from '../../modules/heretoo-
  */
 const ROUTE_TILES = [
   { key: 'heretoo', label: 'HereToo', href: '/(tabs)/feed', icon: 'people-outline' },
-  { key: 'deaddrop', label: 'Deaddrop', href: '/hunt', icon: 'location-outline' },
+  { key: 'deaddrop', label: Vocab.Hunt, href: '/hunt', icon: 'location-outline' },
   { key: 'cipher', label: 'Cipher', href: '/cipher', icon: 'key-outline' },
 ] as const;
 

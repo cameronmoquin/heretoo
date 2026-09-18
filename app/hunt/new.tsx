@@ -1,14 +1,14 @@
 /**
- * /hunt/new — set a deaddrop.
+ * /hunt/new — set a geocache.
  *
- * A deaddrop is a drop with a GPS lock. Take the payload, fix the
+ * A geocache is a drop with a GPS lock. Take the payload, fix the
  * coordinates, choose where it lands, publish. It goes into the feed at
  * the chosen destination like any drop, and stays sealed until the
  * finder physically stands on it.
  *
  * COORDINATES. A live browser fix is used when there is one. When there
  * is not (permission denied, no sensor, no HTTPS), the author sets the
- * pin by tapping the map or typing the pair. A deaddrop still needs
+ * pin by tapping the map or typing the pair. A geocache still needs
  * coordinates, so the requirement stands. The path to them does not
  * depend on the browser saying yes.
  */
@@ -151,14 +151,14 @@ export default function HuntNew() {
 
   const onDrop = async () => {
     if (!placed || !file) return;
-    // A deaddrop announces itself with a feed card, and when the author
+    // A geocache announces itself with a feed card, and when the author
     // has no crew and no connections that card is PUBLIC — which is
     // exactly the unverified walk-in. Say so before they place a pin,
     // upload a payload and then meet a policy error on the last step.
     if (dest === 'public' && unverified) {
       showAlert(
         'Verify first',
-        'A public deaddrop needs a verified account.',
+        `A public ${Vocab.hunt} needs a verified account.`,
       );
       router.push('/verify' as any);
       return;

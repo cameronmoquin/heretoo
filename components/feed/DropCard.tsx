@@ -1,5 +1,5 @@
 /**
- * DropCard: one public deaddrop sitting inline in the feed.
+ * DropCard: one public geocache sitting inline in the feed.
  *
  * Carries the title, the hint, and the pickup count. That is the whole
  * row. Coordinates stay off it, and so does the photo. A drop is sealed
@@ -21,6 +21,7 @@ import { router } from 'expo-router';
 import type { HuntCache } from '../../hooks/useHunt';
 import { Colors } from '../../constants/colors';
 import { Layout, Spacing, Type } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 interface DropCardProps {
   cache: HuntCache;
@@ -43,10 +44,10 @@ export function DropCard({ cache }: DropCardProps) {
       style={s.row}
       onPress={open}
       accessibilityRole="button"
-      accessibilityLabel={`Deaddrop: ${title}. ${pickups}.`}
+      accessibilityLabel={`${Vocab.Hunt}: ${title}. ${pickups}.`}
     >
       <View style={s.metaRow}>
-        <Text style={s.kind}>Deaddrop</Text>
+        <Text style={s.kind}>{Vocab.Hunt}</Text>
         <Text style={s.dot}>·</Text>
         <Text style={s.count}>{pickups}</Text>
         <View style={{ flex: 1 }} />

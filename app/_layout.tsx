@@ -28,6 +28,7 @@ import { KioskGate } from '../components/shared/KioskGate';
 import { KioskHomeButton } from '../components/shared/KioskHomeButton';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
+import { Vocab } from '../constants/vocab';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 2, retry: 2 } },
@@ -149,7 +150,7 @@ function RootLayoutInner() {
         <Stack.Screen name="memoir/print" options={{ title: 'Where to print' }} />
         <Stack.Screen name="babybook/index" options={{ title: 'Babybook' }} />
         <Stack.Screen name="babybook/[id]" options={{ title: 'Babybook' }} />
-        <Stack.Screen name="hunt" options={{ title: 'Deaddrop' }} />
+        <Stack.Screen name="hunt" options={{ title: Vocab.Hunt }} />
         <Stack.Screen name="rooms" options={{ title: 'More' }} />
         <Stack.Screen name="cipher" options={{ title: 'Cipher' }} />
         <Stack.Screen name="news/index" options={{ title: 'News' }} />

@@ -36,7 +36,7 @@ import { Vocab } from '../../../constants/vocab';
 // timer became a per-submission choice (089), expiring stopped being a
 // category, and the lens showed exactly what Public shows. A persisted
 // 'drops' filter from an old session still renders (FeedList treats it
-// as the square); it simply has no chip. The GPS game is the Deaddrop
+// as the square); it simply has no chip. The GPS game is the Geocache
 // app at /hunt and is not a feed lens; its only feed presence is the X
 // card.
 const CHIPS: { key: FeedFilter; label: string }[] = [

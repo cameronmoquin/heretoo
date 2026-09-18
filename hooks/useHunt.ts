@@ -1,7 +1,7 @@
 /**
- * useHunt — data layer for the deaddrop (migrations 052-054, 065).
+ * useHunt — data layer for the geocache (migrations 052-054, 065).
  *
- * A deaddrop is a drop with a GPS lock. Same three destinations any
+ * A geocache is a drop with a GPS lock. Same three destinations any
  * drop has, and one extra rule: the payload stays sealed until the
  * finder physically stands on the coordinates.
  *
@@ -80,7 +80,7 @@ export interface ClaimResult {
   distance_m?: number;
 }
 
-/** Where a deaddrop lands. The same three a drop has. */
+/** Where a geocache lands. The same three a drop has. */
 export type HuntDestination = 'public' | 'crew' | 'dm';
 
 /**
@@ -122,7 +122,10 @@ export function huntDropBody(input: {
   title?: string | null;
   hint?: string | null;
 }): string {
-  const lines: string[] = [`DEADDROP · ${input.shareCode}`];
+  // The wire word, not the display word. Readers match BOTH this and
+  // the retired GEOCACHE so the announcements already in the database
+  // keep rendering as an X instead of turning back into raw text.
+  const lines: string[] = [`GEOCACHE · ${input.shareCode}`];
   const title = input.title?.trim();
   if (title) lines.push(title);
   const hint = input.hint?.trim();
@@ -299,7 +302,7 @@ export function useCreateHuntCache() {
 }
 
 /**
- * Put the deaddrop in the feed.
+ * Put the geocache in the feed.
  *
  * Runs after the cache row is written, so the share code exists. Writes
  * one row into `posts` at the chosen destination (migration 065 opened

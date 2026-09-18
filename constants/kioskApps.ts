@@ -94,7 +94,6 @@ export const KIOSK_DISCLAIMER =
 
 export const KIOSK_BLOCKED_PACKAGES: string[] = [
   'com.sec.android.app.samsungapps', // Galaxy Store
-  'com.android.chrome',
   'com.sec.android.app.sbrowser', // Samsung Internet
   'com.google.android.youtube',
 ];
@@ -119,4 +118,17 @@ export const KIOSK_BLOCKED_PACKAGES: string[] = [
  */
 export const KIOSK_UNHIDE_PACKAGES: string[] = [
   'com.android.vending',
+  // Chrome. Minecraft and LEGO Play both open their sign-in in a Chrome
+  // Custom Tab, and a hidden package cannot host one — the login button
+  // simply does nothing, with no error.
+  //
+  // Un-hidden is still not reachable: Chrome is absent from
+  // KIOSK_ALLOWED_PACKAGES, so lock task refuses to foreground it and it has
+  // no tile. What being visible buys is that it now shows up in the parent
+  // panel's "Choose apps..." picker, so you can permit it for the length of a
+  // sign-in and untick it afterwards.
+  //
+  // Deliberately NOT added to the allowlist permanently. A whitelisted browser
+  // is a browser — every link in HereToo would become a door out.
+  'com.android.chrome',
 ];

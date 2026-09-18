@@ -46,6 +46,7 @@ import { GuestKeepBar } from '../../components/shared/GuestKeepBar';
 import { useStartVideoCall } from '../../hooks/useStartVideoCall';
 import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
 import { useWindowDimensions } from 'react-native';
+import { Vocab } from '../../constants/vocab';
 
 export default function ChatThread() {
   const s = makeStyles();
@@ -682,9 +683,10 @@ function makeStyles() { return StyleSheet.create({
  * (migration 074 wipes the body itself, there is nothing left to show).
  */
 function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
-  // A DEADDROP announcement in a DM is an X, same as in the feed.
+  // A GEOCACHE announcement in a DM is an X, same as in the feed.
   const huntCode = React.useMemo(() => {
-    const m = (post.body ?? '').match(/^DEADDROP · ([A-Z0-9]{6,12})/);
+    // Both prefixes — see PostCard. The old one is still in the data.
+    const m = (post.body ?? '').match(/^(?:GEOCACHE|DEADDROP) · ([A-Z0-9]{6,12})/);
     return m ? m[1] : null;
   }, [post.body]);
   const ds = makeDropStyles();
@@ -720,13 +722,13 @@ function DropBubble({ post, mine, s }: { post: any; mine: boolean; s: any }) {
             <Text style={ds.sealedText}>Sealed. Opens once.</Text>
           </TouchableOpacity>
         ) : huntCode ? (
-          // A deaddrop sent direct. X marks the spot here the same as it
+          // A geocache sent direct. X marks the spot here the same as it
           // does in the feed; the tap opens the run.
           <TouchableOpacity
             onPress={() => router.push(`/hunt/${huntCode}` as any)}
             activeOpacity={0.8}
             style={ds.xWrap}
-            accessibilityLabel={`Deaddrop ${huntCode}`}
+            accessibilityLabel={`${Vocab.Hunt} ${huntCode}`}
           >
             <Text style={ds.xMark}>✕</Text>
           </TouchableOpacity>

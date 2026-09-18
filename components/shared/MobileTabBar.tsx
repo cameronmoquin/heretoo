@@ -26,6 +26,7 @@ import { useUnreadCount } from '../../hooks/useChat';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
 import { shouldShowLeftSidebar } from './LeftSidebar';
+import { Vocab } from '../../constants/vocab';
 
 // Hide on auth + signup paths so they don't compete with the
 // primary CTAs on those screens. Path matching is loose because
@@ -158,7 +159,7 @@ export function MobileTabBar() {
           size={22}
           color={onHunt ? Colors.primary : Colors.textMuted}
         />
-        <Text style={[styles.label, onHunt && styles.labelActive]}>Deaddrop</Text>
+        <Text style={[styles.label, onHunt && styles.labelActive]}>{Vocab.Hunt}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

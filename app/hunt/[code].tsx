@@ -1,5 +1,5 @@
 /**
- * /hunt/[code] — collect a deaddrop.
+ * /hunt/[code] — collect a geocache.
  *
  * Resolves the drop by its share code (works for not-signed-in
  * visitors), then shows the Wayfinder: a needle pointing at the drop,
@@ -27,6 +27,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Type, Heights, Radius } from '../../constants/design';
+import { Vocab } from '../../constants/vocab';
 
 const SCOPE_SIZE = 220;
 
@@ -130,7 +131,7 @@ export default function HuntSeek() {
   if (!cache) {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
-        <ScreenHeader title="Deaddrop" showBack onBack={() => router.replace('/hunt')} style={s.header} />
+        <ScreenHeader title={Vocab.Hunt} showBack onBack={() => router.replace('/hunt')} style={s.header} />
         <Text style={s.notFound}>Nothing filed under “{String(code)}”. Check the code.</Text>
       </SafeAreaView>
     );

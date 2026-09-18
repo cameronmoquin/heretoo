@@ -5,10 +5,13 @@
  *
  * A post is a SUBMISSION (Aug 2026 — Cameron: "Drop a submission
  * should be the canon, so it should change from Drops to
- * submissions"). "Drop" survives in exactly two places: as the verb in
- * the composer's own heading — you drop a submission — and in
- * "Deaddrop", the geocache game, which is a proper name and not this
- * noun. Nothing else in the app calls a post a drop any more.
+ * submissions"). "Drop" now survives in exactly ONE place: as the verb
+ * in the composer's own heading — you drop a submission. Nothing else
+ * in the app calls a post a drop any more.
+ *
+ * The GPS game is a GEOCACHE (Sept 2026). It was "Deaddrop", which
+ * read as espionage; the game is a photo geocache and now says so.
+ * That was also the last thing on the platform still called a drop.
  * If either word ever changes again, it changes here and nowhere else.
  * Screens import Vocab instead of typing the word into a string.
  *
@@ -45,15 +48,21 @@ export const Vocab = {
   groupWithArticle: 'a cohort',
   // "Submission" (Aug 2026). The thing you contribute is a submission;
   // "drop" survives as the VERB of contributing it — the canon phrase is
-  // "Drop a submission" and the button says Submit. This also ends the
-  // drop/Deaddrop collision: Deaddrop (the GPS game) keeps its name and
-  // no longer shares a noun with every post on the platform.
+  // "Drop a submission" and the button says Submit.
   post: 'submission',
   postPlural: 'submissions',
   Post: 'Submission',
   PostPlural: 'Submissions',
   postVerb: 'submit',
   postVerbPast: 'submitted',
+  // "Geocache" (Sept 2026). The key says `hunt` because that is what the
+  // stable side is called — the /hunt routes, hunt_caches, useHunt — and
+  // the value is what a person reads. Two languages, same rule as
+  // family/cohort above.
+  hunt: 'geocache',
+  huntPlural: 'geocaches',
+  Hunt: 'Geocache',
+  HuntPlural: 'Geocaches',
 } as const;
 
 export type VocabKey = keyof typeof Vocab;

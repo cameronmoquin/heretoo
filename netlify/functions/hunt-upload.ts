@@ -1,5 +1,5 @@
 /**
- * /api/hunt-upload — upload a Deaddrop photo using the service role.
+ * /api/hunt-upload — upload a Geocache photo using the service role.
  *
  * Storage RLS on storage.objects is awkward to provision per-project, so
  * the clue/proof photo upload goes through here instead of a direct

@@ -26,6 +26,7 @@ import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
 import { isKioskBuild } from '../../modules/heretoo-kiosk';
 import { HereTooLogo, HereTooMark } from './Logo';
 import { Colors } from '../../constants/colors';
+import { Vocab } from '../../constants/vocab';
 
 const HIDE_ON_PATHS = [
   '/welcome',
@@ -108,7 +109,7 @@ export function LeftSidebar() {
 
       <NavRow
         icon={pathname.startsWith('/hunt') ? 'navigate' : 'navigate-outline'}
-        label="Deaddrop"
+        label={Vocab.Hunt}
         active={pathname.startsWith('/hunt')}
         onPress={() => router.push('/hunt' as any)}
       />

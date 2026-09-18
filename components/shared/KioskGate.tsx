@@ -55,6 +55,11 @@ import {
   KIOSK_UNHIDE_PACKAGES,
 } from '../../constants/kioskApps';
 import { loadAllowlist } from '../../lib/kiosk-allowlist';
+import {
+  isSetupMode,
+  setSetupMode,
+  SETUP_MODE_RESTRICTIONS,
+} from '../../lib/kiosk-setup-mode';
 import { KioskAppPicker } from './KioskAppPicker';
 
 /**
@@ -77,6 +82,8 @@ export function KioskGate() {
   /** How many blocked packages the parent has temporarily restored. */
   const [restored, setRestored] = useState<number | null>(null);
   const [installsOpen, setInstallsOpen] = useState(false);
+  /** Mirrors the persisted latch so the panel and shelf can say so. */
+  const [setup, setSetup] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const taps = useRef<number[]>([]);
@@ -93,6 +100,17 @@ export function KioskGate() {
    */
   const enforce = useCallback(async () => {
     if (!isKioskBuild) return;
+
+    // Setup mode is a latch, not a window. While it is on this does nothing,
+    // so a sign-in or a Play install has as long as it needs instead of being
+    // undone the moment the panel closes.
+    if (await isSetupMode()) {
+      setSetup(true);
+      refresh();
+      return;
+    }
+    setSetup(false);
+
     const allowed = await loadAllowlist();
     await provision(allowed, KIOSK_BLOCKED_PACKAGES);
     // Actively clear the hidden flag on anything that has left the blocked
@@ -337,6 +355,40 @@ export function KioskGate() {
                     {restored === null
                       ? 'Restore Play Store & browsers'
                       : `Restored ${restored} — hidden again on re-lock`}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Setup mode. Everything else in this panel is momentary —
+                    enforce() undoes it on close, on foreground, and on every
+                    cold start. Signing into Google or installing from Play
+                    takes longer than that window, which is why those kept
+                    failing. This one latches until turned off. */}
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (setup) {
+                      await setSetupMode(false);
+                      setSetup(false);
+                      await enforce();
+                    } else {
+                      await setSetupMode(true);
+                      setSetup(true);
+                      await setRestrictions(SETUP_MODE_RESTRICTIONS, false);
+                      await setPackagesHidden(KIOSK_BLOCKED_PACKAGES, false);
+                      const ok = await unlock();
+                      if (!ok) setError('Could not leave lock task.');
+                      else setPanelOpen(false);
+                    }
+                  }}
+                  style={[
+                    styles.btn,
+                    setup ? styles.primaryBtn : styles.ghostBtn,
+                    styles.fullBtn,
+                  ]}
+                >
+                  <Text style={setup ? styles.primaryBtnText : styles.ghostBtnText}>
+                    {setup
+                      ? 'Setup mode is ON — tap to lock the phone again'
+                      : 'Setup mode (stays unlocked until you turn it off)'}
                   </Text>
                 </TouchableOpacity>
 

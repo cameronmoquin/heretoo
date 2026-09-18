@@ -20,6 +20,7 @@ import { useUnreadCount } from '../hooks/useChat';
 import { useRadio, useActiveStation } from '../stores/radioStore';
 import { Colors } from '../constants/colors';
 import { Spacing, Radius, Type, Heights } from '../constants/design';
+import { Vocab } from '../constants/vocab';
 
 interface Door {
   icon: any;
@@ -55,7 +56,7 @@ export default function RoomsScreen() {
    * only moves shelf if what it does to a person changes.
    */
   const apps: Door[] = [
-    { icon: 'navigate', label: 'Deaddrop', route: '/hunt' },
+    { icon: 'navigate', label: Vocab.Hunt, route: '/hunt' },
     // Feed has no door either — it is the home tab, one tap away always.
     { icon: 'chatbubbles', label: 'Messages', route: '/messages', badge: unread && unread > 0 ? (unread > 99 ? '99+' : String(unread)) : undefined },
     // The player had no door on mobile at all. The radio row above is a

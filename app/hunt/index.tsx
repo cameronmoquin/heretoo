@@ -1,5 +1,5 @@
 /**
- * /hunt — the deaddrop board.
+ * /hunt — the geocache board.
  *
  * Set one, or pick an open run to collect. Your own drops list with the
  * destination they landed at plus the share code, so the courier link is
@@ -79,7 +79,7 @@ export default function HuntHome() {
     <SafeAreaView style={s.root} edges={['top']}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <ScreenHeader showBack style={s.header} />
-        <Text style={s.title}>DEADDROP</Text>
+        <Text style={s.title}>{Vocab.Hunt.toUpperCase()}</Text>
 
         <Text style={s.lede}>
           Leave a photo at a fixed set of coordinates. It lands in the feed.

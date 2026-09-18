@@ -16,6 +16,7 @@ import { Colors } from '../constants/colors';
 import { Spacing, Radius, Type } from '../constants/design';
 import { Button } from '../components/shared/Button';
 import { Eyebrow } from '../components/shared/Eyebrow';
+import { Vocab } from '../constants/vocab';
 
 export default function AboutScreen() {
   const s = makeStyles();
@@ -35,9 +36,9 @@ export default function AboutScreen() {
         </View>
 
         <View style={s.huntCard}>
-          <Eyebrow accentColor={Colors.primary}>Deaddrop</Eyebrow>
+          <Eyebrow accentColor={Colors.primary}>{Vocab.Hunt}</Eyebrow>
           <Button
-            title="Open Deaddrop"
+            title={`Open ${Vocab.Hunt}`}
             onPress={() => router.push('/hunt' as any)}
             variant="primary"
             style={s.pillCta}

@@ -189,7 +189,7 @@ export function FeedList({
     // The Drops lens is every LIVE drop the viewer can see, wherever it
     // was sent: ephemeral posts (expires_at set — RLS already dropped the
     // expired ones) plus the loft, whose every card is a 24-hour public
-    // drop by construction. The GPS game is NOT this — Deaddrop lives at
+    // drop by construction. The GPS game is NOT this — Geocache lives at
     // /hunt and its only feed presence is the X announcement card.
     if (onlyDrops) {
       const eph: FeedItem[] = posts

@@ -10,7 +10,7 @@
  * reader find the line that looks like English — which teaches why 25 keys is
  * not security, without anyone having to say so.
  *
- * Pairs with Deaddrop: scramble here, hide the code there.
+ * Pairs with Geocache: scramble here, hide the code there.
  */
 
 import React, { useMemo, useState } from 'react';

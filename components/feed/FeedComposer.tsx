@@ -27,7 +27,7 @@
  * posts.destruct_on_view; the first non-author reading physically wipes
  * the body server-side and the row stays as a redacted tombstone.
  *
- * A DEADDROP is this same drop with a GPS lock on the payload. It lands
+ * A GEOCACHE is this same drop with a GPS lock on the payload. It lands
  * in the feed at the chosen destination like anything else. The physical
  * unlock lives in the hunt screens, not here.
  *

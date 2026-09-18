@@ -84,12 +84,16 @@ export function PostCard({ post, onHeart }: PostCardProps) {
   const isDirect = (post.visibility as string) === 'direct';
   const burns = !!extra.destruct_on_view;
 
-  // A deaddrop announcement is not a text post — it is a spot on a map.
+  // A geocache announcement is not a text post — it is a spot on a map.
   // The card is an X, because X marks it. Tapping goes straight into
   // the hunt; the old behavior pushed the post detail with a raw URL in
   // the body, which is a page about a link about a place.
   const huntCode = React.useMemo(() => {
-    const m = (post.body ?? '').match(/^DEADDROP · ([A-Z0-9]{6,12})/);
+    // GEOCACHE is the retired prefix (renamed to GEOCACHE, Sept 2026).
+    // Every announcement written before that still carries it, so this
+    // matches both — dropping the old one would turn each of those cards
+    // back into a line of raw text reading "DEADDROP · ABC123".
+    const m = (post.body ?? '').match(/^(?:GEOCACHE|DEADDROP) · ([A-Z0-9]{6,12})/);
     return m ? m[1] : null;
   }, [post.body]);
   const huntTitle = React.useMemo(() => {
@@ -215,7 +219,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
       )}
 
       {sealed ? (
-        // The seal. Same device as a deaddrop: the payload is on the row
+        // The seal. Same device as a geocache: the payload is on the row
         // and off the screen until the reader asks for it. The tap writes
         // the post_views row, so it has to be deliberate.
         <View style={s.seal}>
@@ -237,7 +241,7 @@ export function PostCard({ post, onHeart }: PostCardProps) {
         // X marks the spot. Nothing else on the card; the hunt screen
         // holds the compass, the map, and the gate.
         <View style={s.xWrap}>
-          <Text style={s.xMark} accessibilityLabel={`Deaddrop ${huntCode}`}>✕</Text>
+          <Text style={s.xMark} accessibilityLabel={`${Vocab.Hunt} ${huntCode}`}>✕</Text>
           {!!huntTitle && <Text style={s.xTitle} numberOfLines={1}>{huntTitle}</Text>}
         </View>
       ) : (
@@ -894,7 +898,7 @@ function makeStyles() { return StyleSheet.create({
     fontSize: Type.caption.size, lineHeight: Type.caption.lineHeight,
     color: Colors.textSecondary, marginTop: 6,
   },
-  // The deaddrop X. Ink, centred, and the whole card is the door.
+  // The geocache X. Ink, centred, and the whole card is the door.
   xWrap: { alignItems: 'center', paddingVertical: Spacing.lg, gap: 4 },
   xMark: { fontSize: 56, lineHeight: 60, fontWeight: '800', color: Colors.textPrimary },
   xTitle: { fontSize: Type.ui.size, color: Colors.textSecondary },

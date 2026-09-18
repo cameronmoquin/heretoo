@@ -8,7 +8,7 @@
  *
  * The rule: a scroll is not a read. Burning a drop nobody opened is
  * destroying content by accident. So a burning drop lands sealed and the
- * view is recorded on an explicit tap, the same shape as the deaddrop
+ * view is recorded on an explicit tap, the same shape as the geocache
  * seal. Nothing here fires on render, on mount, or on scroll.
  *
  * DEGRADE: migration 065 is run by hand. Until it lands, posts has no
