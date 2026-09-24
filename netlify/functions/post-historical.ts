@@ -18,7 +18,7 @@
  */
 
 import type { Config } from '@netlify/functions';
-import { VOICE_RULES, routeFigure, type Figure } from '../../lib/historical-figures';
+import { VOICE_RULES, routeFigure, FIGURES, BANK_TOPICS, type Figure } from '../../lib/historical-figures';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -121,6 +121,68 @@ async function writePost(figure: Figure, row: any): Promise<string | null> {
   }
 }
 
+/**
+ * How many recent posts count as "just spoken" / "just covered".
+ *
+ * RECENT_TOPICS is one less than the number of topics ON PURPOSE: a
+ * topic waits until every other topic has had a turn, which makes the
+ * curriculum a strict round-robin. At 4 it was not enough — every row
+ * in a fresh bank ties on age, so ties resolved to the same five topics
+ * forever and the last four never appeared at all. Measured: 48 posts,
+ * 5 topics, Geography and Logical Reasoning never once.
+ */
+const RECENT_VOICES = 6;
+const RECENT_TOPICS = 8;
+
+/**
+ * What the faculty has said lately — which voices, and which topics.
+ *
+ * BOTH are needed. Avoiding repeat VOICES alone still drains one topic:
+ * every row in a freshly seeded bank is never-taught, so the same topic
+ * sorts first every wake, and a topic with five qualified narrators
+ * simply cycles those five for its whole block. Measured: forty
+ * consecutive posts, all Economics. Avoiding repeat TOPICS is what
+ * actually moves the curriculum around.
+ *
+ * Read from the posts themselves rather than held in memory, because
+ * this function is serverless and keeps no state between wakes. The
+ * topic rides the slugline the drip writes: "— Name · Topic".
+ */
+async function recentContext(): Promise<{ handles: Set<string>; topics: Set<string> }> {
+  const empty = { handles: new Set<string>(), topics: new Set<string>() };
+  try {
+    const handles = FIGURES.map((f) => f.handle).join(',');
+    const profs = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?handle=in.(${handles})&select=id,handle`,
+      { headers: HEADERS },
+    ).then((r) => r.json());
+    if (!Array.isArray(profs) || profs.length === 0) return empty;
+    const byId = new Map<string, string>(profs.map((p: any) => [p.id, p.handle]));
+    const ids = [...byId.keys()].join(',');
+    const limit = Math.max(RECENT_VOICES, RECENT_TOPICS);
+    const posts = await fetch(
+      `${SUPABASE_URL}/rest/v1/posts?author_id=in.(${ids})` +
+        `&select=author_id,slugline&order=created_at.desc&limit=${limit}`,
+      { headers: HEADERS },
+    ).then((r) => r.json());
+    if (!Array.isArray(posts)) return empty;
+    return {
+      handles: new Set(
+        posts.slice(0, RECENT_VOICES).map((p: any) => byId.get(p.author_id)).filter(Boolean) as string[],
+      ),
+      topics: new Set(
+        posts.slice(0, RECENT_TOPICS)
+          .map((p: any) => String(p.slugline ?? '').split('·').pop()?.trim())
+          .filter((t: string | undefined): t is string => !!t),
+      ),
+    };
+  } catch {
+    // A failed lookup must never stop the drip. Empty sets simply mean
+    // "nothing recent", and selection falls back to oldest-first.
+    return empty;
+  }
+}
+
 export default async () => {
   if (!SUPABASE_URL || !SERVICE_ROLE) {
     return new Response('Missing Supabase credentials', { status: 500 });
@@ -129,22 +191,77 @@ export default async () => {
     return new Response('Dormant: no ANTHROPIC_API_KEY.', { status: 200 });
   }
 
-  // 1. The least-recently-taught fact. Nulls first walks the whole
-  // curriculum before anything repeats.
-  const bankRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/fsot_questions` +
-      `?select=id,topic,subtopic,prompt,options,answer,explanation` +
-      `&order=last_posted_at.asc.nullsfirst&limit=1`,
-    { headers: HEADERS },
-  );
-  const rows = await bankRes.json();
-  const row = Array.isArray(rows) ? rows[0] : null;
-  if (!row) {
+  // 1. ONE CANDIDATE PER TOPIC, each the least-recently-taught of its
+  // own topic.
+  //
+  // THE HAMILTON PROBLEM, and why the obvious fix was not enough. This
+  // began as limit=1. The bank was seeded in one go, so every
+  // last_posted_at was null and the walk ran in insertion order, which
+  // is grouped by topic — and TOPIC_DEFAULTS routes BOTH 'Economics'
+  // and 'Math & Statistics' to Hamilton, neither being era-routable.
+  // The feed ran Hamilton until those topics were exhausted.
+  //
+  // Widening it to a pool of 40 did NOT fix it: the bank holds ~1,205
+  // rows across 9 topics, so a topic block averages over a hundred rows
+  // and a 40-row window usually sits entirely inside one. Tested, and
+  // it still produced runs of four.
+  //
+  // Asking each topic for its own oldest row makes the selection
+  // independent of how the bank is ordered on disk. Nine small queries,
+  // one per topic, and the curriculum still advances oldest-first
+  // because the candidates are sorted by age before the choice.
+  const candidates = (await Promise.all(
+    BANK_TOPICS.map((t) =>
+      fetch(
+        `${SUPABASE_URL}/rest/v1/fsot_questions` +
+          `?select=id,topic,subtopic,prompt,options,answer,explanation,last_posted_at` +
+          `&topic=eq.${encodeURIComponent(t)}` +
+          `&order=last_posted_at.asc.nullsfirst&limit=1`,
+        { headers: HEADERS },
+      )
+        .then((r) => r.json())
+        .then((a) => (Array.isArray(a) ? a[0] ?? null : null))
+        .catch(() => null),
+    ),
+  )).filter(Boolean) as any[];
+
+  if (candidates.length === 0) {
     return new Response('Bank is empty — run bank.sql into fsot_questions.', { status: 200 });
   }
 
-  // 2. Whose record is it?
-  const figure = routeFigure(row);
+  // Oldest first, nulls (never taught) ahead of everything.
+  candidates.sort((a, b) => {
+    const ta = a.last_posted_at ? Date.parse(a.last_posted_at) : -Infinity;
+    const tb = b.last_posted_at ? Date.parse(b.last_posted_at) : -Infinity;
+    return ta - tb;
+  });
+
+  // 2. Whose record is it? Prefer the oldest candidate whose figure has
+  // not just spoken; fall back to the oldest outright so the curriculum
+  // never stalls waiting for variety.
+  const { handles: recent, topics: recentTopics } = await recentContext();
+
+  // Preference order, strongest first. `recent` is passed into
+  // routeFigure so the topic fallback ALSO steps around a voice that
+  // just spoke — otherwise the selector rotates topics while the router
+  // hands several of them straight back to the same name.
+  const rank = (c: any): number => {
+    const f = routeFigure(c, recent);
+    const freshTopic = !recentTopics.has(c.topic);
+    const freshVoice = !recent.has(f.handle);
+    if (freshTopic && freshVoice) return 0;
+    if (freshTopic) return 1;
+    if (freshVoice) return 2;
+    return 3;
+  };
+
+  let row = candidates[0];
+  let best = 4;
+  for (const cand of candidates) {
+    const r = rank(cand);
+    if (r < best) { best = r; row = cand; if (r === 0) break; }
+  }
+  const figure = routeFigure(row, recent);
 
   // 3. The figure's account.
   const authorId = await findOrCreateFigureBot(figure);
@@ -189,5 +306,9 @@ export default async () => {
 };
 
 export const config: Config = {
-  schedule: '0 9,14,19 * * *',
+  // Eight a day across the Eastern waking day (12:00-02:00 UTC is
+  // 8am-10pm ET). Was three at 9/14/19 UTC — 5am, 10am and 3pm Eastern,
+  // so two of the three landed before the audience was up, which is
+  // most of why the feed read as infrequent.
+  schedule: '0 12,14,16,18,20,22,0,2 * * *',
 };

@@ -197,17 +197,58 @@ export const FIGURES: Figure[] = [
 ];
 
 // Topic defaults, when neither names nor years route a row.
-const TOPIC_DEFAULTS: Record<string, string> = {
-  'Economics': 'alexander_hamilton',
-  'US Government': 'james_madison',
-  'US History': 'abraham_lincoln',
-  'World History': 'john_quincy_adams',
-  'World Affairs': 'john_quincy_adams',
-  'Geography': 'john_quincy_adams',
-  'Math & Statistics': 'alexander_hamilton',
-  'Logical Reasoning': 'james_madison',
-  'English Expression': 'abraham_lincoln',
+/**
+ * Who may narrate a topic when nothing else routes it.
+ *
+ * THIS USED TO BE ONE FIGURE PER TOPIC, and that was the real cause of
+ * the long Hamilton runs. Nine topics collapsed onto four names —
+ * Economics AND Math both to Hamilton, Government AND Logic both to
+ * Madison — so even a perfectly rotating selector could only ever
+ * produce four voices, and Hamilton held two ninths of the curriculum.
+ * Measured before the change: 40 consecutive posts, 4 distinct voices.
+ *
+ * Each list is ordered by fit, and every name on it is someone who
+ * demonstrably worked on that subject — this decides who NARRATES a
+ * fact from the bank, never what the fact is, and the record rule still
+ * governs every word they say.
+ */
+const TOPIC_VOICES: Record<string, string[]> = {
+  // Hamilton wrote the Report on Manufactures and founded the Bank;
+  // Jefferson and Madison opposed him on exactly that ground; the
+  // twentieth-century names each owned a defining economic programme.
+  'Economics': ['alexander_hamilton', 'thomas_jefferson', 'franklin_roosevelt', 'ronald_reagan', 'bill_clinton'],
+  // The framers, then the presidents who tested the structure hardest.
+  'US Government': ['james_madison', 'alexander_hamilton', 'thomas_jefferson', 'abraham_lincoln', 'woodrow_wilson'],
+  'US History': ['abraham_lincoln', 'george_washington', 'james_polk', 'theodore_roosevelt', 'william_seward', 'lyndon_johnson'],
+  // Ministers abroad and wartime diplomatists.
+  'World History': ['john_quincy_adams', 'james_monroe', 'woodrow_wilson', 'franklin_roosevelt', 'harry_truman'],
+  // The people who actually ran American foreign policy.
+  'World Affairs': ['john_quincy_adams', 'harry_truman', 'dwight_eisenhower', 'john_kennedy', 'richard_nixon', 'jimmy_carter', 'george_hw_bush'],
+  // Continental expansion and the surveying of it.
+  'Geography': ['john_quincy_adams', 'thomas_jefferson', 'james_polk', 'james_monroe'],
+  'Math & Statistics': ['alexander_hamilton', 'thomas_jefferson', 'james_madison'],
+  // Lawyers and constitutional arguers.
+  'Logical Reasoning': ['james_madison', 'abraham_lincoln', 'thomas_jefferson', 'john_quincy_adams'],
+  // Writers: the Address, the Second Inaugural, the scholar-president.
+  'English Expression': ['abraham_lincoln', 'thomas_jefferson', 'woodrow_wilson', 'john_quincy_adams'],
 };
+
+/**
+ * The bank's topics. Exported because the drip selects ONE candidate PER
+ * TOPIC rather than walking the bank in row order — see post-historical.
+ */
+export const BANK_TOPICS = Object.keys(TOPIC_VOICES);
+
+/**
+ * Pick a narrator for a topic, avoiding voices that have just spoken.
+ * `avoid` is the handles of the last few posts; when every qualified
+ * voice is in it the first is used anyway, so the drip never stalls.
+ */
+export function topicVoice(topic: string, avoid: Set<string> = new Set()): Figure {
+  const list = TOPIC_VOICES[topic] ?? TOPIC_VOICES['World Affairs'];
+  const free = list.find((h) => !avoid.has(h));
+  return figureByHandle(free ?? list[0])!;
+}
 
 export function figureByHandle(handle: string): Figure | undefined {
   return FIGURES.find((f) => f.handle === handle);
@@ -217,7 +258,7 @@ export function figureByHandle(handle: string): Figure | undefined {
  * Route a bank row to the figure who should teach it.
  * Names win, then era years found in the text, then the topic default.
  */
-export function routeFigure(row: { topic: string; prompt: string; explanation?: string | null }): Figure {
+export function routeFigure(row: { topic: string; prompt: string; explanation?: string | null }, avoid: Set<string> = new Set()): Figure {
   const text = `${row.prompt} ${row.explanation ?? ''}`.toLowerCase();
 
   let best: Figure | undefined;
@@ -250,6 +291,5 @@ export function routeFigure(row: { topic: string; prompt: string; explanation?: 
     if (eraPick) return eraPick;
   }
 
-  const fallback = TOPIC_DEFAULTS[row.topic] ?? 'john_quincy_adams';
-  return figureByHandle(fallback)!;
+  return topicVoice(row.topic, avoid);
 }
