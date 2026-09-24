@@ -370,6 +370,33 @@ export function FeedList({
         // That is a fetch loop, not pagination.
         onEndReached={!onlyNews && !onlyDrops && hasMore ? onLoadMore : undefined}
         onEndReachedThreshold={0.6}
+        // THE FEED OPENED IN THE MIDDLE WITHOUT THIS.
+        //
+        // FlashList 2 turns maintainVisibleContentPosition ON BY
+        // DEFAULT — RecyclerViewManager.shouldMaintainVisibleContentPosition
+        // is `!props.maintainVisibleContentPosition?.disabled &&
+        // !horizontal`. It anchors the view to a visible item and holds
+        // that item still whenever the data changes. Right for a chat,
+        // wrong for the first paint of this column: `items` is
+        // assembled from FOUR queries that resolve at different times —
+        // posts, news, the loft, art — and the interleave splices the
+        // secondary cards BETWEEN posts. Those insertions land above
+        // the anchor, so the list scrolls down to keep the anchor
+        // still and the reader arrives mid-feed.
+        //
+        // WHY `disabled` AND NOT autoscrollToTopThreshold, which is the
+        // option that sounds right: that field is declared in
+        // FlashListProps and READ NOWHERE IN THE LIBRARY. Only
+        // autoscrollToBottomThreshold is consumed (useBoundDetection).
+        // Setting the top threshold compiles, type-checks, and does
+        // nothing at all.
+        //
+        // The cost, stated: a post arriving above while someone is
+        // reading can now shift their position, which is the jump the
+        // anchor existed to prevent. Opening at the top is worth more —
+        // the reader meets that on every single load, the shift only
+        // when realtime fires mid-scroll.
+        maintainVisibleContentPosition={{ disabled: true }}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
