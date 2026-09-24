@@ -15,8 +15,6 @@
  *   COHORT  full privileges: media, destroy-after-viewing. posts,
  *           visibility='family'. One: used automatically. Several:
  *           picked. None: off.
- *   DM      same full privileges to one person. posts,
- *           visibility='direct', direct_recipient_id set.
  *
  * NOTHING EXPIRES UNLESS ARMED. The hourglass is one option on every
  * submission, public included (migration 089) — out after a day, off by
@@ -58,7 +56,7 @@
 
 const CREW_MAX = 2000;
 
-type Destination = 'public' | 'crew' | 'dm';
+type Destination = 'public' | 'crew';
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -83,8 +81,8 @@ import { Eyebrow } from '../shared/Eyebrow';
 interface FeedComposerProps {
   /**
    * When set, the crew destination is pinned to this crew and the crew
-   * picker never opens. Public and DM stay reachable; the audiences are
-   * different enough that hiding them would be the guess, not the
+   * picker never opens. Public stays reachable; the two audiences are
+   * different enough that hiding it would be the guess, not the
    * safeguard.
    */
   familyId?: string;
@@ -125,17 +123,14 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // A destination the author cannot reach is never offered and never
   // becomes the live one.
   const crewAvailable = isFamilyScoped || myCrews.length > 0;
-  const dmAvailable = myConnections.length > 0;
   const defaultDestination: Destination = isFamilyScoped ? 'crew' : 'public';
 
   const [destinationChoice, setDestinationChoice] = useState<Destination>(defaultDestination);
   const destination: Destination =
     destinationChoice === 'crew' && !crewAvailable ? 'public'
-      : destinationChoice === 'dm' && !dmAvailable ? 'public'
         : destinationChoice;
   const isPublic = destination === 'public';
   const isCrew = destination === 'crew';
-  const isDM = destination === 'dm';
 
   // Ephemerality is an OPTION now, not a mode (the drop/submit fork is
   // gone). Off by default: the canon contribution stays. Every
@@ -171,14 +166,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     setCrewPickerOpen(true);
   }, [expanded, isFamilyScoped, destination, activeCrewId, myCrews.length]);
 
-  // Which person. DM only. The picker carries a search because a list
-  // of connections outgrows a scroll long before it outgrows a name.
-  const [dmChoice, setDmChoice] = useState<string | null>(null);
-  const [dmPickerOpen, setDmPickerOpen] = useState(false);
-  const [dmSearch, setDmSearch] = useState('');
-  const dmRecipient = myConnections.find((c) => c.id === dmChoice) ?? null;
-  const openDmPicker = () => { setDmSearch(''); setDmPickerOpen(true); };
-
   // The burn. Off by default, every time.
   const [destruct, setDestruct] = useState(false);
 
@@ -206,13 +193,13 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   const isSending = isUploading || upload.createPost.isPending;
 
   // Every destination needs a payload. Public also needs the verified
-  // stamp; crew and DM need a named destination.
+  // stamp; a cohort submission needs a named cohort.
   const hasPayload = trimmedLen > 0 || hasMedia;
   const canPost = isPublic
     ? hasPayload && !unverified
     : isCrew
       ? hasPayload && !!activeCrewId
-      : hasPayload && !!dmChoice;
+      : hasPayload;
 
   // Public keeps only the burn off: destroy-after-viewing means the
   // FIRST passerby wipes it, which in public is destruction on arrival.
@@ -225,7 +212,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     if (next === 'crew' && !isFamilyScoped && myCrews.length > 1 && !crewChoice) {
       setCrewPickerOpen(true);
     }
-    if (next === 'dm' && !dmChoice) openDmPicker();
   };
 
   const resetComposer = () => {
@@ -235,7 +221,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     setPostKind('post');
     setExpire24h(false);
     setDestinationChoice(defaultDestination);
-    setDmChoice(null);
     setDestruct(false);
     setExpanded(false);
     upload.reset();
@@ -269,7 +254,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   };
 
   const handlePost = async () => {
-    // Public is a named posts row now, same pipe as crew and DM. The
+    // Public is a named posts row now, same pipe as a cohort. The
     // verified gate sits in canPost; this is the belt to that brace.
     if (isPublic && unverified) {
       router.push('/verify' as any);
@@ -277,10 +262,6 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
     }
     if (isCrew && !activeCrewId) {
       showAlert(`Pick a ${Vocab.group}`, `This ${Vocab.post} needs a destination.`);
-      return;
-    }
-    if (isDM && !dmChoice) {
-      showAlert('Pick a person', `This ${Vocab.post} needs a destination.`);
       return;
     }
     try {
@@ -302,9 +283,8 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
 
       await upload.createPost.mutateAsync({
         body: body.trim(),
-        visibility: isDM ? 'direct' : isPublic ? 'public' : 'family',
+        visibility: isPublic ? 'public' : 'family',
         familyId: isCrew ? activeCrewId! : undefined,
-        directRecipientId: isDM ? dmChoice! : undefined,
         // Only ride the insert when the author picked it. A plain
         // submission still lands on a schema that predates migration 065.
         destructOnView: !isUpdate && destruct ? true : undefined,
@@ -375,26 +355,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           >
             <Ionicons name="chevron-up" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.postBtn, isPublic && s.postBtnPublic, (!canPost || isSending) && s.postBtnDisabled]}
-            onPress={handlePost}
-            disabled={!canPost || isSending}
-            activeOpacity={0.85}
-            accessibilityLabel={
-              isPublic ? 'Submit to Public, signed with your name'
-                : isDM ? `Submit to ${dmRecipient?.display_name ?? dmRecipient?.handle ?? 'one person'}`
-                  : isUpdate ? 'Send update'
-                    : `Submit to ${activeCrew?.name ?? `this ${Vocab.group}`}`
-            }
-          >
-            {isSending
-              ? <ActivityIndicator color={Colors.onPrimary} size="small" />
-              : (
-                <Text style={s.postBtnText}>
-                  {isUpdate ? 'Send update' : 'Submit'}
-                </Text>
-              )}
-          </TouchableOpacity>
+          
         </View>
       </View>
 
@@ -416,16 +377,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           onPress={() => switchDestination('crew')}
           accessibilityLabel={`Submit to ${activeCrew?.name ?? `one ${Vocab.group}`}`}
         />
-        <DestBtn
-          icon="person-outline"
-          label="DM"
-          selected={isDM}
-          disabled={!dmAvailable}
-          onPress={() => switchDestination('dm')}
-          accessibilityLabel="Submit to one person"
-
-        />
-      </View>
+              </View>
 
       {/* Out after a day — one option on every submission, public
           included (089). Updates are their own instrument. */}
@@ -464,24 +416,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         </TouchableOpacity>
       )}
 
-      {/* Which person. DM only. */}
-      {isDM && (
-        <TouchableOpacity
-          style={s.toRow}
-          onPress={openDmPicker}
-          activeOpacity={0.7}
-          accessibilityLabel="Choose who gets this"
-        >
-          <Ionicons name="person-outline" size={14} color={Colors.textSecondary} />
-          <Text style={s.toLabel}>To:</Text>
-          <Text style={s.toValue} numberOfLines={1}>
-            {dmRecipient
-              ? (dmRecipient.display_name ?? dmRecipient.handle ?? 'Unknown')
-              : 'Pick a person'}
-          </Text>
-          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
-        </TouchableOpacity>
-      )}
+      
 
       {/* Identity disclosure, shown before the send. Public carries the
           author's real handle now — the reversal of the old pseudonym
@@ -647,6 +582,34 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         />
       </TouchableOpacity>
 
+
+      {/* THE SEND, and it is the last thing on the card on purpose.
+          It used to sit in the header, above the destination pills and
+          above the text box — so a person typed at the bottom and then
+          reached back over eight controls to send. Full width, bottom,
+          after the attachments and the burn, in the order the act
+          actually happens: write, attach, arm, send. */}
+      <TouchableOpacity
+        style={[s.sendBtn, isPublic && s.sendBtnPublic, (!canPost || isSending) && s.postBtnDisabled]}
+        onPress={handlePost}
+        disabled={!canPost || isSending}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={
+          isPublic ? 'Submit to Public, signed with your name'
+            : isUpdate ? 'Send update'
+              : `Submit to ${activeCrew?.name ?? `this ${Vocab.group}`}`
+        }
+      >
+        {isSending
+          ? <ActivityIndicator color={Colors.onPrimary} size="small" />
+          : (
+            <Text style={s.sendBtnText}>
+              {isUpdate ? 'Send update' : 'Submit'}
+            </Text>
+          )}
+      </TouchableOpacity>
+
       {hasMedia && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbStrip}>
           {upload.selectedAssets.map((a, i) => (
@@ -758,68 +721,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         </TouchableOpacity>
       </Modal>
 
-      {/* DM picker. One person. Selecting closes it. */}
-      <Modal
-        visible={dmPickerOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDmPickerOpen(false)}
-      >
-        <TouchableOpacity
-          style={s.modalBackdrop}
-          activeOpacity={1}
-          onPress={() => setDmPickerOpen(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={s.modalCard}>
-            <Text style={s.modalTitle}>Send to one person</Text>
-
-            <TextInput
-              style={s.searchInput}
-              accessibilityLabel="Search"
-              placeholder="Search"
-              placeholderTextColor={Colors.textMuted}
-              value={dmSearch}
-              onChangeText={setDmSearch}
-              autoFocus
-            />
-
-            <ScrollView style={{ maxHeight: 360 }}>
-              {myConnections.filter((c) => matchesPerson(c, dmSearch)).map((c) => {
-                const checked = c.id === dmChoice;
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={s.connRow}
-                    onPress={() => { setDmChoice(c.id); setDmPickerOpen(false); }}
-                    activeOpacity={0.7}
-                    accessibilityLabel={`Send to ${c.display_name ?? c.handle ?? 'this person'}`}
-                    accessibilityState={{ selected: checked }}
-                  >
-                    <View style={s.connAvatar}>
-                      {c.avatar_path ? (
-                        <Image source={{ uri: mediaPathToUrl(c.avatar_path) }} style={s.connAvatarImg} />
-                      ) : (
-                        <Text style={s.connAvatarText}>
-                          {(c.display_name ?? c.handle ?? '?').slice(0, 1).toUpperCase()}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={s.connName}>{c.display_name ?? c.handle ?? 'Unknown'}</Text>
-                      {c.handle && <Text style={s.connHandle}>@{c.handle}</Text>}
-                    </View>
-                    <Ionicons
-                      name={checked ? 'checkmark-circle' : 'ellipse-outline'}
-                      size={22}
-                      color={checked ? Colors.primary : Colors.textMuted}
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+      
 
       {/* Recipient picker, for kind='update' only. Restricts the
           update to specific crew members; empty selection means
@@ -1107,22 +1009,25 @@ function makeStyles() { return StyleSheet.create({
   headerRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  postBtn: {
-    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: Radius.full,
+  postBtnDisabled: { opacity: 0.4 },
+  // The send. Full width and bottom-anchored, so it reads as the end of
+  // the act rather than a control competing with the destination pills.
+  sendBtn: {
+    minHeight: 48,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
     backgroundColor: Colors.primary,
   },
-  postBtnDisabled: { opacity: 0.4 },
-  // Public send carries a ring so the button itself reads differently
-  // from the crew send at a glance.
-  postBtnPublic: {
-    borderWidth: 1, borderColor: Colors.textPrimary,
+  sendBtnPublic: { borderWidth: 1, borderColor: Colors.textPrimary },
+  sendBtnText: {
+    color: Colors.onPrimary, fontSize: 15, fontWeight: '700', letterSpacing: 0.2,
   },
-  // White text on the new indigo primary — was '#000' which was fine on
-  // the old gold-toned primary but reads as low-contrast on indigo.
-  postBtnText: { color: Colors.onPrimary, fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
 
-  // Destination radio. Public, Crew, DM. Full-width, all three legible
-  // at rest, so the audience is never a guess.
+  // Destination radio. Public and cohort, both legible at rest, so the
+  // audience is never a guess. DM left in Sept 2026: a message is a
+  // conversation, it lives in Messages, and it was the third of three
+  // choices a person had to make before reaching the text box.
   destRow: {
     flexDirection: 'row', gap: 4,
     backgroundColor: Colors.surfaceLight,
@@ -1177,8 +1082,8 @@ function makeStyles() { return StyleSheet.create({
   kindBtnText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
   kindBtnTextActive: { color: Colors.textPrimary },
 
-  // "To:" row. Crew choice, DM choice, and the update recipient list all
-  // wear the same shape, because they answer the same question.
+  // "To:" row. The cohort choice and the update recipient list wear the
+  // same shape, because they answer the same question.
   toRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: Colors.surfaceLight,
