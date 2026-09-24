@@ -51,13 +51,14 @@ export const ERA_RANGES: Record<ArtEra, [number, number]> = {
  * What's allowed in the between-post slots (banners, inline art slots,
  * sidebar). The same surface eventually serves ads, so this preference
  * is a single dial that controls both:
- *   - 'art_only'    Public-domain artwork only (no ads). Default.
+ *   - 'art_only'    Public-domain artwork only (no ads).
  *   - 'art_and_ads' Mix of art + sponsored placements (where they
  *                   exist; right now there are zero, so behaves like
  *                   art_only until ad inventory lands).
  *   - 'posts_only'  Skip every between-post slot entirely. The
  *                   eventual $5/mo subscription preview.
  */
+/** Default since rule 2 (Sept 2026): 'art_and_ads'. */
 export type FeedMix = 'art_only' | 'art_and_ads' | 'posts_only';
 
 export const FEED_MIX_LABELS: Record<FeedMix, { title: string }> = {
@@ -80,8 +81,23 @@ interface Persisted {
 const STORAGE_KEY = 'heretoo:art-prefs';
 
 /** Bump when the default selection changes and should reach devices
- *  that already have prefs saved. 1 = the poster rule. */
-const RULE_VERSION = 1;
+ *  that already have prefs saved. 1 = the poster rule. 2 = ads carried.
+ *
+ *  RULE 2 (Sept 2026): the default feed mix becomes art_and_ads.
+ *  Ads were ratified in Aug 2026 and the plumbing has been in place
+ *  since — ArtSlot has a Sponsored frame, useArtFeed has the query —
+ *  but the default was art_only, which meant useArtFeed never even
+ *  FETCHED a source='ad' row. An advertisement could be placed
+ *  perfectly and no reader would ever see it.
+ *
+ *  posts_only is preserved on the bump, because that is someone saying
+ *  they want no interleaved pictures at all and it is a stronger
+ *  statement than the default they never touched. art_only is NOT
+ *  preserved, and that is the honest cost of this change: the store
+ *  cannot tell "chose art_only" from "never opened Art preferences",
+ *  so anyone who deliberately picked art-without-ads gets ads back and
+ *  has to say so again. Both are one tap away in Art preferences. */
+const RULE_VERSION = 2;
 
 /**
  * THE POSTER RULE. The gallery is graphic work: WPA silkscreen, vintage
@@ -121,11 +137,16 @@ function loadInitial(): Persisted {
           return {
             schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES],
             mediums: [], sources: [],
-            feedMix: parsed.feedMix === 'art_and_ads' || parsed.feedMix === 'posts_only'
-              ? parsed.feedMix : 'art_only',
+            // posts_only survives the bump; everything else lands on
+            // the new default. See RULE_VERSION for why art_only does
+            // not survive it.
+            feedMix: parsed.feedMix === 'posts_only' ? 'posts_only' : 'art_and_ads',
             ruleVersion: RULE_VERSION,
           };
         }
+        // Already reconciled against this rule: whatever they have is
+        // what they chose, including art_only if they picked it after
+        // the bump.
         const mix: FeedMix =
           parsed.feedMix === 'art_and_ads' || parsed.feedMix === 'posts_only'
             ? parsed.feedMix
@@ -142,7 +163,7 @@ function loadInitial(): Persisted {
       }
     } catch {}
   }
-  return { schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES], mediums: [], sources: [], feedMix: 'art_only', ruleVersion: RULE_VERSION };
+  return { schools: [], eras: [...DEFAULT_ERAS], genres: [...DEFAULT_GENRES], mediums: [], sources: [], feedMix: 'art_and_ads', ruleVersion: RULE_VERSION };
 }
 
 function persist(state: Persisted) {
