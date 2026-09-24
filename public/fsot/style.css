@@ -90,3 +90,21 @@ ul.eps .d { color:var(--dim); font-size:.85rem; }
 ul.eps a.tr { font-family:'Syne',sans-serif; font-size:.78rem; color:var(--dim);
   text-decoration:none; padding:8px; white-space:nowrap; }
 ul.eps a.tr:hover { color:var(--ink); }
+
+/* Report a problem. Quiet by default: a plain line under the page that
+   only becomes a form once somebody means it. Colours come from the
+   variables already defined above so it inherits the guide's palette. */
+.report{margin:28px 0 8px}
+.report-open,.report-send,.report-cancel{
+  font:inherit;font-size:.82rem;color:var(--dim);background:none;
+  border:0;padding:4px 0;cursor:pointer;text-decoration:underline}
+.report-open:hover,.report-send:hover,.report-cancel:hover{color:var(--ink)}
+.report-form{display:flex;flex-direction:column;gap:8px;max-width:46ch}
+.report-form[hidden]{display:none}
+.report-note,.report-contact,.report-target{
+  font:inherit;font-size:.9rem;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:4px;padding:8px}
+.report-note{resize:vertical;min-height:64px}
+.report-row{display:flex;gap:14px;align-items:center}
+.report-send{text-decoration:none;border:1px solid var(--line);border-radius:4px;padding:5px 12px}
+.report-status{font-size:.82rem;color:var(--dim);min-height:1em}
