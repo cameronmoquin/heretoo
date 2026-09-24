@@ -52,6 +52,13 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Advertiser creative. Content at a stable path that only changes when
+# an ad is replaced, so it caches hard.
+[[headers]]
+  for = "/ads/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
 # Assets (fonts, images): cache 1 day
 [[headers]]
   for = "/assets/*"

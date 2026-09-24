@@ -19,53 +19,52 @@
 -- and it is deliberately editorial — someone decides, by hand, one row
 -- at a time.
 --
--- TWO FIELDS THIS FILE CANNOT FILL, and it refuses to run until they
--- are filled:
+-- THE TWO FIELDS THAT ARE A PERSON'S TO DECIDE:
 --
---   storage_path   The image. ArtSlot uses this value directly as the
---                  <Image> uri, so an absolute URL works as well as a
---                  bucket path. IT MUST BE AN IMAGE MICHAEL HAS GIVEN
---                  PERMISSION TO USE. Do not point it at a file lifted
---                  from his site without asking him; it is his work and
---                  the whole premise here is that he is a friend of the
---                  house, not a scraped logo.
+--   storage_path   FILLED. The image is copied to heretoo.social rather
+--                  than hotlinked, and carries no EXIF.
+--   description    FILLED with Michael's own caption for the piece.
+--                  Change it to anything you like before running; the
+--                  guard only refuses a placeholder, not an edit.
 --
---   description    The ad copy. Every user-facing line on this platform
---                  is written by its owner, and an advertisement is the
---                  last place to make an exception. Write it, or ask
---                  Michael for a line and use his.
---
--- The guard at the top raises rather than inserting a placeholder,
--- because a half-filled ad row would render as a live advertisement
--- carrying the word REPLACE_ME to every reader.
+-- The guard raises rather than inserting a placeholder, because a
+-- half-filled ad row would render a live advertisement reading
+-- REPLACE_ME to every reader.
 --
 -- Run BY HAND in the dashboard SQL editor. Idempotent. Atomic.
 -- ════════════════════════════════════════════════════════════════════════
 
 begin;
 
--- ── The two values a person must supply ───────────────────────────────
--- Edit these two lines, then run the file.
+-- ── The two values a person decides ───────────────────────────────────
+-- Both are filled. Edit either before running.
 create temporary table _ad_input on commit drop as
 select
-  'REPLACE_ME_image_url'::text  as storage_path,
-  'REPLACE_ME_ad_copy'::text    as description;
+  -- Hosted on heretoo.social, NOT hotlinked from scudieri.art. Michael
+  -- gave permission for the image; hotlinking would still spend his
+  -- bandwidth on every feed render and break the day he reorganises his
+  -- site. Copied once, resized 3024x4032 -> 900x1200, 117KB, and EXIF
+  -- stripped, because it is a phone photograph and those carry GPS.
+  'https://heretoo.social/ads/jewels-by-deri.jpg'::text as storage_path,
+  -- MICHAEL'S OWN CAPTION for this piece, from his page, not written
+  -- here. Replace it with anything you prefer before running.
+  'Custom platinum wedding band with a 3mm meteorite inlay. The octahedrite iron was sourced from the Aletai meteorite, China.'::text as description;
 
 
 -- ── Refuse to ship a placeholder ──────────────────────────────────────
 do $$
 declare
   img  text;
-  copy text;
+  ad_copy text;
 begin
-  select storage_path, description into img, copy from _ad_input;
+  select storage_path, description into img, ad_copy from _ad_input;
 
   if img like 'REPLACE_ME%' or img is null or btrim(img) = '' then
     raise exception
       'storage_path is still the placeholder. Put the image URL Michael has approved into _ad_input, then re-run. An ad row with no real image renders a broken advertisement.';
   end if;
 
-  if copy like 'REPLACE_ME%' or copy is null or btrim(copy) = '' then
+  if ad_copy like 'REPLACE_ME%' or ad_copy is null or btrim(ad_copy) = '' then
     raise exception
       'description is still the placeholder. The ad copy is written by the owner (or by Michael), never generated. Put the real line into _ad_input, then re-run.';
   end if;
