@@ -68,6 +68,7 @@ import { router } from 'expo-router';
 import { useUpload } from '../../hooks/useUpload';
 import { useMyConnections, useMyFamilies, useFamilyMembersWithProfiles } from '../../hooks/useFamily';
 import { useAuthStore } from '../../stores/authStore';
+import { refreshVerified } from '../../hooks/useAuth';
 import { mediaPathToUrl } from '../../hooks/useUpload';
 import { TwoWayCapture, type CapturedAsset } from '../upload/TwoWayCapture';
 import { OneWayCapture } from '../upload/OneWayCapture';
@@ -260,6 +261,22 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
       router.push('/verify' as any);
       return;
     }
+    // UNKNOWN IS NOT VERIFIED. authStore.verified goes null on any
+    // failed read of human_verifications — a network blip is enough —
+    // and the gate above deliberately only blocks an explicit false, so
+    // that a hiccup never locks a verified person out. The cost is that
+    // an unverified person with a null verdict sails past it, uploads
+    // their photos, and only then meets the RLS refusal. Ask the server
+    // once, before any of that happens. The answer is usually cached
+    // and costs nothing; when it is genuinely unknown it is one small
+    // read against a mistake that wastes an upload.
+    if (isPublic && useAuthStore.getState().verified === null && userId) {
+      const now = await refreshVerified(userId);
+      if (now === false) {
+        router.push('/verify' as any);
+        return;
+      }
+    }
     if (isCrew && !activeCrewId) {
       showAlert(`Pick a ${Vocab.group}`, `This ${Vocab.post} needs a destination.`);
       return;
@@ -316,7 +333,15 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
   // direct camera/photo buttons) to expand into the full composer.
   // Posting volume is low enough that giving the feed back ~200px of
   // vertical real-estate is worth the extra tap to expand.
-  const isQuiet = !expanded && body.length === 0 && !hasMedia && !isSending;
+  // COLLAPSING IS NOT DISCARDING. The chevron used to call
+  // resetComposer, so a person who wrote six hundred words, got
+  // interrupted, and tapped what looks like "put this away" lost all of
+  // it with no confirmation and no undo. It now only closes the card;
+  // the draft survives and the collapsed row shows its first line, so
+  // the work is visibly still there. resetComposer is reserved for a
+  // successful send, where there is nothing left to lose.
+  const isQuiet = !expanded && !isSending;
+  const draftPreview = body.trim().split('\n')[0].slice(0, 80);
   if (isQuiet) {
     return (
       <View style={s.collapsedRow}>
@@ -326,8 +351,17 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
           activeOpacity={0.7}
           accessibilityLabel={`New ${Vocab.post}`}
         >
-          <Ionicons name="create-outline" size={14} color={Colors.textMuted} />
-          <Text style={s.collapsedPlaceholder}>Drop a submission</Text>
+          <Ionicons
+            name={draftPreview || hasMedia ? 'ellipse' : 'create-outline'}
+            size={draftPreview || hasMedia ? 8 : 14}
+            color={draftPreview || hasMedia ? Colors.primary : Colors.textMuted}
+          />
+          <Text
+            style={[s.collapsedPlaceholder, !!draftPreview && s.collapsedDraft]}
+            numberOfLines={1}
+          >
+            {draftPreview || 'Drop a submission'}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.collapsedIcon}
@@ -348,7 +382,7 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
         <Eyebrow>{isUpdate ? 'New update' : 'Drop a submission'}</Eyebrow>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <TouchableOpacity
-            onPress={resetComposer}
+            onPress={() => setExpanded(false)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={s.collapseBtn}
             accessibilityLabel="Collapse composer"
@@ -633,6 +667,15 @@ export function FeedComposer({ familyId, openSignal }: FeedComposerProps = {}) {
             </TouchableOpacity>
           ))}
         </View>
+      )}
+
+      {/* What went wrong, where it went wrong. upload.error has been
+          written on every failure path and rendered on none of them, so
+          picking an over-length video was a silent no-op. This is a
+          validation message — it answers a failure the person just
+          caused — which is the one thing the no-helper-text rule keeps. */}
+      {upload.stage === 'error' && !!upload.error && (
+        <Text style={s.uploadError}>{upload.error}</Text>
       )}
 
       {isUploading && (
@@ -986,9 +1029,12 @@ function makeStyles() { return StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 10,
   },
   collapsedPlaceholder: {
+    flex: 1,
     color: Colors.textMuted,
     fontSize: 14, lineHeight: 18,
   },
+  // An unsent draft reads as the author's own words, not as a prompt.
+  collapsedDraft: { color: Colors.textPrimary },
   collapsedIcon: {
     width: 36, height: 36, borderRadius: Radius.full,
     backgroundColor: Colors.background,
@@ -1143,6 +1189,10 @@ function makeStyles() { return StyleSheet.create({
   },
   taggedChipText: { fontSize: 12, color: Colors.textPrimary, fontWeight: '600' },
 
+  uploadError: {
+    fontSize: 13, lineHeight: 18, color: Colors.error,
+    marginTop: 2,
+  },
   progressContainer: { gap: 4, marginTop: 4 },
   progressBar: {
     height: 4, backgroundColor: Colors.surfaceLight,

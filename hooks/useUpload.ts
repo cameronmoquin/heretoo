@@ -90,11 +90,29 @@ export function useUpload() {
    * Uploads photos to the `posts` bucket and returns storage paths
    * suitable for the post_media.storage_path column.
    */
+  /**
+   * Park the machine on a failure instead of leaving it mid-flight.
+   *
+   * THE DEAD SEND, MEDIA EDITION. uploadPhotos and uploadVideo both set
+   * stage='uploading' and then threw without putting it back. The
+   * composer derives isSending from that stage, so one failed photo
+   * disabled Submit permanently behind a spinner that never stopped —
+   * the same class of bug the composer's own header twice claims to
+   * have closed, relocated to the upload path. Only createPost's
+   * onError ever set stage='error', and createPost never runs when the
+   * upload throws first.
+   */
+  function failUpload(e: unknown): never {
+    const message = e instanceof Error ? e.message : String(e ?? 'Upload failed');
+    setState((s) => ({ ...s, stage: 'error', error: message, progress: 0 }));
+    throw e instanceof Error ? e : new Error(message);
+  }
+
   async function uploadPhotos(assets: ImagePicker.ImagePickerAsset[]): Promise<{ path: string; width?: number; height?: number }[]> {
     const uid = userId;
     if (!uid) throw new Error('Not authenticated');
     if (assets.length === 0) return [];
-    setState((s) => ({ ...s, stage: 'uploading', progress: 0 }));
+    setState((s) => ({ ...s, stage: 'uploading', progress: 0, error: null }));
 
     if (DEV_MODE) {
       return assets.map((a) => ({ path: a.uri, width: a.width, height: a.height }));
@@ -137,20 +155,24 @@ export function useUpload() {
       // Nothing is written to the post yet. Surface the exact failure so
       // the user can retry rather than silently dropping a photo.
       const more = failures.length > 1 ? ` (+${failures.length - 1} more)` : '';
-      throw new Error(`${failures[0]}${more}`);
+      failUpload(new Error(`${failures[0]}${more}`));
     }
     return ok;
   }
 
   async function uploadVideo(asset: ImagePicker.ImagePickerAsset) {
-    setState((s) => ({ ...s, stage: 'uploading', progress: 0 }));
+    setState((s) => ({ ...s, stage: 'uploading', progress: 0, error: null }));
     if (DEV_MODE) {
       setState((s) => ({ ...s, progress: 1 }));
       return { assetId: 'dev', playbackId: 'dev', thumbnailUrl: asset.uri };
     }
-    return uploadVideoToMux(asset.uri, (progress) => {
-      setState((s) => ({ ...s, progress }));
-    });
+    try {
+      return await uploadVideoToMux(asset.uri, (progress) => {
+        setState((s) => ({ ...s, progress }));
+      });
+    } catch (e) {
+      return failUpload(e);
+    }
   }
 
   /**
@@ -432,6 +454,14 @@ export function useUpload() {
  *   23514     check_violation, here the visibility list without 'direct'
  */
 function schemaBehindMessage(error: any, visibility: string): string | null {
+  // 42501 on a public insert is migration 098's restrictive gate: this
+  // account is not verified. Without this branch the person reads
+  // 'new row violates row-level security policy for table "posts"',
+  // which names a policy rather than telling them what to do — and they
+  // read it AFTER their photos have finished uploading.
+  if (error?.code === '42501' && visibility === 'public') {
+    return 'Public submissions need a verified account.';
+  }
   const code = String(error?.code ?? '');
   const text = `${error?.message ?? ''} ${error?.details ?? ''} ${error?.hint ?? ''}`.toLowerCase();
 
