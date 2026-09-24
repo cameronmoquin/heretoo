@@ -49,8 +49,25 @@ export interface Figure {
   name: string;
   /** Lifetime or public-office span the figure speaks from. */
   years: string;
-  /** Era window for routing undated material, [from, to]. */
+  /**
+   * Era window for routing undated material, [from, to].
+   *
+   * THE YEAR OF DEATH IS EXCLUDED when the figure died early in it.
+   * Routing works at year granularity — it pulls a four-digit year out
+   * of the prompt — so a window ending in the death year invites the
+   * figure to narrate events from later that same year. Two live traps
+   * were found this way: Theodore Roosevelt died 6 January 1919 with a
+   * window ending 1919, and the Paris Peace Conference opened twelve
+   * days later; Woodrow Wilson died 3 February 1924 with a window
+   * ending 1924, and the Rogers Act passed that May.
+   */
   era: [number, number];
+  /**
+   * Date of death, or null for the living. Not used by routing — the
+   * era window already encodes the boundary — but kept beside it so the
+   * next person to widen a window can see what they are widening into.
+   */
+  died?: string | null;
   /** One dossier line handed to the model with the voice rules. */
   dossier: string;
   /** Lowercase keywords that route a bank row to this figure. */
@@ -105,7 +122,7 @@ export const FIGURES: Figure[] = [
     bio: `Eleventh President, 1845–1849. ${LABEL}`,
   },
   {
-    handle: 'abraham_lincoln', name: 'Abraham Lincoln', years: '1809–1865', era: [1854, 1865],
+    handle: 'abraham_lincoln', name: 'Abraham Lincoln', years: '1809–1865', died: '1865-04-15', era: [1847, 1865],
     dossier: 'Sixteenth President, 1861–1865. Plain speech raised to scripture; melancholy wit. Signature subjects: the Civil War, emancipation, the Union\'s foreign diplomacy (the Trent affair, keeping Britain out), Gettysburg, the Second Inaugural.',
     claims: ['lincoln', 'civil war', 'emancipation', 'gettysburg', 'trent affair', 'fort sumter', 'appomattox', 'second inaugural', 'thirteenth amendment'],
     bio: `Sixteenth President, 1861–1865. ${LABEL}`,
@@ -117,19 +134,19 @@ export const FIGURES: Figure[] = [
     bio: `Secretary of State, 1861–1869. ${LABEL}`,
   },
   {
-    handle: 'theodore_roosevelt', name: 'Theodore Roosevelt', years: '1858–1919', era: [1898, 1919],
+    handle: 'theodore_roosevelt', name: 'Theodore Roosevelt', years: '1858–1919', died: '1919-01-06', era: [1898, 1918],
     dossier: 'Twenty-sixth President, 1901–1909. Torrential energy, short declarative sentences, delight in the arena. Signature subjects: the Spanish-American War, Panama and the canal, the big stick and his corollary, Portsmouth and the Nobel, the Great White Fleet, conservation.',
     claims: ['theodore roosevelt', 'rough riders', 'panama canal', 'big stick', 'roosevelt corollary', 'portsmouth', 'great white fleet', 'spanish-american', 'muckrak'],
     bio: `Twenty-sixth President, 1901–1909. ${LABEL}`,
   },
   {
-    handle: 'woodrow_wilson', name: 'Woodrow Wilson', years: '1856–1924', era: [1913, 1924],
+    handle: 'woodrow_wilson', name: 'Woodrow Wilson', years: '1856–1924', died: '1924-02-03', era: [1913, 1923],
     dossier: 'Twenty-eighth President, 1913–1921. Professorial, idealistic, brittle. Signature subjects: neutrality and entry into the Great War, the Fourteen Points, Versailles, the League fight he lost, and the record\'s harsher entries — segregation of the civil service stated as done, not defended.',
     claims: ['wilson', 'fourteen points', 'league of nations', 'lusitania', 'zimmermann', 'versailles', 'world war i', 'wwi', 'self-determination'],
     bio: `Twenty-eighth President, 1913–1921. ${LABEL}`,
   },
   {
-    handle: 'franklin_roosevelt', name: 'Franklin D. Roosevelt', years: '1882–1945', era: [1933, 1945],
+    handle: 'franklin_roosevelt', name: 'Franklin D. Roosevelt', years: '1882–1945', died: '1945-04-12', era: [1933, 1945],
     dossier: 'Thirty-second President, 1933–1945. Warm, confident, fireside cadence. Signature subjects: the Depression and New Deal, Lend-Lease and the arsenal of democracy, Pearl Harbor, the wartime conferences — and Executive Order 9066, stated as the internment it was.',
     claims: ['franklin roosevelt', 'fdr', 'new deal', 'lend-lease', 'pearl harbor', 'atlantic charter', 'yalta', 'four freedoms', 'internment', '9066', 'world war ii', 'wwii'],
     bio: `Thirty-second President, 1933–1945. ${LABEL}`,
@@ -198,6 +215,32 @@ export const FIGURES: Figure[] = [
 
 // Topic defaults, when neither names nor years route a row.
 /**
+ * Topics NO historical figure may narrate.
+ *
+ * The OMST's situational-judgment material is a second-person workplace
+ * hypothetical — State's own official scenario reads "You are the OMS in
+ * the Management Section of a medium-size embassy" and has no narrator
+ * at all. There is no figure on this roster who can honestly speak it,
+ * and the router's job here is to refuse rather than to choose: without
+ * this, a new topic string lands, falls past every claim and era test,
+ * hits the fallback, and a president is suddenly doing bad-boss comedy.
+ *
+ * `isFacultyTopic` is the gate the drip checks BEFORE routing. Keeping
+ * it in the data rather than the prompt means the quarantine holds in
+ * both directions — historical-replies filters its source rows by topic
+ * too, so a figure can never be handed one of these as material either.
+ */
+export const NON_FACULTY_TOPICS: string[] = [
+  'Situational Judgment',
+  'Office Management',
+];
+
+/** True when this topic may be spoken by a member of the faculty. */
+export function isFacultyTopic(topic: string): boolean {
+  return !NON_FACULTY_TOPICS.includes(topic);
+}
+
+/**
  * Who may narrate a topic when nothing else routes it.
  *
  * THIS USED TO BE ONE FIGURE PER TOPIC, and that was the real cause of
@@ -244,8 +287,45 @@ export const BANK_TOPICS = Object.keys(TOPIC_VOICES);
  * `avoid` is the handles of the last few posts; when every qualified
  * voice is in it the first is used anyway, so the drip never stalls.
  */
-export function topicVoice(topic: string, avoid: Set<string> = new Set()): Figure {
-  const list = TOPIC_VOICES[topic] ?? TOPIC_VOICES['World Affairs'];
+export function topicVoice(topic: string, avoid: Set<string> = new Set(), year?: number): Figure {
+  let list = TOPIC_VOICES[topic] ?? TOPIC_VOICES['World Affairs'];
+  if (!TOPIC_VOICES[topic]) {
+    // Loud, because the silent version of this is a president narrating
+    // material that is not his. An unknown topic falling through to a
+    // default is how an embassy situational-judgment scenario would end
+    // up in John Quincy Adams's mouth.
+    // eslint-disable-next-line no-console
+    console.warn(`[figures] no voice list for topic "${topic}" — falling back to World Affairs`);
+  }
+  // THE DEAD MAY NOT NARRATE THE FUTURE. Era routing only fires for US
+  // History and US Government, and only when some window contains the
+  // year — so any other year fell straight through to the head of the
+  // topic list. Lincoln heads both US History and English Expression,
+  // so he was being handed 1924, 1945 and 1975. Caught by test, not by
+  // reading the code.
+  //
+  // Only the UPPER bound is enforced. A figure discussing what came
+  // before him is ordinary — Lincoln on the Founding — but nothing
+  // after his death.
+  if (typeof year === 'number' && Number.isFinite(year)) {
+    const alive = list.filter((h) => {
+      const f = figureByHandle(h);
+      if (!f) return false;
+      const d = f.died ? Number(f.died.slice(0, 4)) : null;
+      return d === null || year <= d;
+    });
+    if (alive.length > 0) {
+      list = alive;
+    } else {
+      // Nobody on this list lived to see it. Keep the list rather than
+      // returning nothing, and say so out loud — the real fix is a
+      // roster addition, and a silent wrong voice is worse than a noisy
+      // one.
+      // eslint-disable-next-line no-console
+      console.warn(`[figures] no ${topic} voice outlived ${year} - roster gap`);
+    }
+  }
+
   const free = list.find((h) => !avoid.has(h));
   return figureByHandle(free ?? list[0])!;
 }
@@ -274,10 +354,13 @@ export function routeFigure(row: { topic: string; prompt: string; explanation?: 
   // then. A world-history year does not — the Congress of Vienna is
   // not President Madison's story just because he was in office — so
   // world topics fall through to their default, the working diplomat.
+  // The year is extracted for EVERY topic now, because even where
+  // era routing does not apply the year still decides who is allowed
+  // to speak at all. Narrowest-window era routing stays limited to
+  // the two American topics, exactly as before.
+  const allYears = [...text.matchAll(/\b(1[6-9]\d{2}|20[0-2]\d)\b/g)].map((m) => Number(m[1]));
   const eraRoutable = row.topic === 'US History' || row.topic === 'US Government';
-  const years = eraRoutable
-    ? [...text.matchAll(/\b(1[6-9]\d{2}|20[0-2]\d)\b/g)].map((m) => Number(m[1]))
-    : [];
+  const years = eraRoutable ? allYears : [];
   if (years.length > 0) {
     const y = years[0];
     let eraPick: Figure | undefined;
@@ -291,5 +374,5 @@ export function routeFigure(row: { topic: string; prompt: string; explanation?: 
     if (eraPick) return eraPick;
   }
 
-  return topicVoice(row.topic, avoid);
+  return topicVoice(row.topic, avoid, allYears[0]);
 }

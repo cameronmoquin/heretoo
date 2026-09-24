@@ -18,7 +18,7 @@
  */
 
 import type { Config } from '@netlify/functions';
-import { VOICE_RULES, routeFigure, FIGURES, BANK_TOPICS, type Figure } from '../../lib/historical-figures';
+import { VOICE_RULES, routeFigure, FIGURES, BANK_TOPICS, isFacultyTopic, type Figure } from '../../lib/historical-figures';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -210,8 +210,14 @@ export default async () => {
   // independent of how the bank is ordered on disk. Nine small queries,
   // one per topic, and the curriculum still advances oldest-first
   // because the candidates are sorted by age before the choice.
+  // The faculty never narrates situational-judgment material — see
+  // NON_FACULTY_TOPICS. Filtering the topic list is the quarantine: a
+  // scenario row cannot be selected here at all, so it cannot reach the
+  // router and be handed to whoever the fallback happens to name.
+  const facultyTopics = BANK_TOPICS.filter(isFacultyTopic);
+
   const candidates = (await Promise.all(
-    BANK_TOPICS.map((t) =>
+    facultyTopics.map((t) =>
       fetch(
         `${SUPABASE_URL}/rest/v1/fsot_questions` +
           `?select=id,topic,subtopic,prompt,options,answer,explanation,last_posted_at` +
