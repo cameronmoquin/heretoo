@@ -45,9 +45,9 @@
   // rejects; fetch with credentials omitted + keepalive works everywhere.
   window.fsotHit = function(ev, ep) {
     try {
-      fetch('https://rhvidcltwftwhhttelms.supabase.co/rest/v1/fsot_hits', { method:'POST', keepalive:true,
+      fetch('https://evryruyibfibaplzurik.supabase.co/rest/v1/fsot_hits', { method:'POST', keepalive:true,
         mode:'cors', credentials:'omit',
-        headers: { 'apikey':'sb_publishable_FmUWdnA1auknsOE8lByolQ_aCnOv-Bc', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+        headers: { 'apikey':'sb_publishable_PtGbipIMCzXC4kCBSk2Kvw_G4PuliUg', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
         body: JSON.stringify({ page: location.pathname, event: ev, episode: ep || null,
           ref: ev === 'view' ? (document.referrer || null) : null }) }).catch(function(){});
     } catch (e) {}

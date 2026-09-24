@@ -33,8 +33,8 @@
     failed:      'That did not send. Try again later.',
   };
 
-  var ENDPOINT = 'https://rhvidcltwftwhhttelms.supabase.co/rest/v1/content_reports';
-  var APIKEY = 'sb_publishable_FmUWdnA1auknsOE8lByolQ_aCnOv-Bc';
+  var ENDPOINT = 'https://evryruyibfibaplzurik.supabase.co/rest/v1/content_reports';
+  var APIKEY = 'sb_publishable_PtGbipIMCzXC4kCBSk2Kvw_G4PuliUg';
   var NOTE_MAX = 2000;      // mirrors the column's CHECK
   var CONTACT_MAX = 200;
 
