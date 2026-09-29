@@ -52,9 +52,8 @@ import { Vocab } from '../../constants/vocab';
  * Rendered before the installed apps so the app's own surfaces lead.
  */
 const ROUTE_TILES = [
-  { key: 'heretoo', label: 'HereToo', href: '/(tabs)/feed', icon: 'people-outline' },
+  { key: 'nffga', label: 'NFFGA', href: '/(tabs)/feed', icon: 'people-outline' },
   { key: 'deaddrop', label: Vocab.Hunt, href: '/hunt', icon: 'location-outline' },
-  { key: 'cipher', label: 'Cipher', href: '/cipher', icon: 'key-outline' },
 ] as const;
 
 /**

@@ -23,7 +23,6 @@ import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
 import { MobileTabBar, useMobileTabBarVisible, useMobileTabBarHeight } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
-import { KonamiChimes } from '../components/easter/KonamiChimes';
 import { KioskGate } from '../components/shared/KioskGate';
 import { KioskHomeButton } from '../components/shared/KioskHomeButton';
 import { Colors, setColorMode } from '../constants/colors';
@@ -136,24 +135,9 @@ function RootLayoutInner() {
         */}
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="about" options={{ title: 'About HereToo' }} />
-        <Stack.Screen name="advertise" options={{ title: 'Advertise on HereToo' }} />
         <Stack.Screen name="reset-password" options={{ title: 'Reset password' }} />
-        <Stack.Screen name="give/index" options={{ title: 'Give' }} />
-        <Stack.Screen name="journal" options={{ title: 'Journal' }} />
-        <Stack.Screen name="memoir/index" options={{ title: 'Memoir' }} />
-        <Stack.Screen name="memoir/timeline" options={{ title: 'Timeline' }} />
-        <Stack.Screen name="memoir/book" options={{ title: 'Make the book' }} />
-        <Stack.Screen name="memoir/photos" options={{ title: 'Photographs' }} />
-        <Stack.Screen name="memoir/preview" options={{ title: 'Read it through' }} />
-        <Stack.Screen name="memoir/arrange" options={{ title: 'Arrange' }} />
-        <Stack.Screen name="memoir/print" options={{ title: 'Where to print' }} />
-        <Stack.Screen name="babybook/index" options={{ title: 'Babybook' }} />
-        <Stack.Screen name="babybook/[id]" options={{ title: 'Babybook' }} />
         <Stack.Screen name="hunt" options={{ title: Vocab.Hunt }} />
         <Stack.Screen name="rooms" options={{ title: 'More' }} />
-        <Stack.Screen name="cipher" options={{ title: 'Cipher' }} />
-        <Stack.Screen name="news/index" options={{ title: 'News' }} />
         <Stack.Screen name="version" options={{ presentation: 'modal' }} />
         {/* Launcher home on kiosk devices. Inert elsewhere — the route
             redirects to the feed on any non-kiosk build. */}
@@ -178,7 +162,6 @@ function RootLayoutInner() {
       <UpdateNudge />
       <PWAInstallPrompt />
       <BuildBadge />
-      <KonamiChimes />
     </View>
   );
 }

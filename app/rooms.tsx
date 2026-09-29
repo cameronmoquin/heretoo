@@ -63,7 +63,6 @@ export default function RoomsScreen() {
     // play/pause control and nothing else, and the only route into
     // /music anywhere was a long-press on the desktop sidebar.
     { icon: 'disc', label: 'Music', route: '/music' },
-    { icon: 'pricetag', label: 'Advertise', route: '/advertise' },
     // Give is off the shelf — donations sit inside regulatory territory
     // that a lemonade stand has no business standing in. The /give route
     // still exists; no door points at it. Profile is off because the
@@ -75,8 +74,6 @@ export default function RoomsScreen() {
   // tile it carried on the Apps shelf. FSOT Prep is the static study
   // guide + audio course at /fsot/, outside the SPA.
   const antisocial: Door[] = [
-    { icon: 'lock-closed', label: 'Journal', route: '/journal', accent: true },
-    { icon: 'school', label: 'FSOT Prep', route: '/fsot/', external: true },
   ];
 
   return (
