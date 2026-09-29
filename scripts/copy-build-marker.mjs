@@ -57,6 +57,57 @@ if (existsSync(indexPath)) {
   const OG_IMAGE = 'https://heretoo.social/og-cover.png';
   const URL = 'https://heretoo.social';
 
+  // STRUCTURED DATA. The shell ships zero <a> tags and, until this, zero
+  // machine-readable facts — a crawler could tell that heretoo.social
+  // existed and nothing else about it. schema.org is the vocabulary
+  // Google and Bing actually parse.
+  //
+  // EVERY DATE HERE IS TRUE AND INDEPENDENTLY CHECKABLE, which is the
+  // point, and the reason not to round them to something tidier:
+  //
+  //   foundingDate 2026-04-13   heretoo.social was registered at 03:32
+  //                             UTC (Identity Digital, the .social
+  //                             registry) and the public GitHub repo was
+  //                             created at 11:57 UTC. Two registries,
+  //                             neither of them ours.
+  //   datePublished 2026-04-14  first successful Netlify deploy, 17:20
+  //                             UTC — the first moment the site was built
+  //                             and served to the public. Verify with:
+  //                             curl -s 'https://api.netlify.com/api/v1/
+  //                             sites/heretoo.social/deploys'
+  //
+  // sameAs points at the public repo deliberately: it is a third party's
+  // timestamped record of this name, so a crawler can follow the claim
+  // to someone else's server rather than taking ours.
+  //
+  // Self-declared metadata is weak evidence on its own — anyone can type
+  // a date. It is worth something only while it agrees with the records
+  // above. If these ever stop matching, fix the date here, not there.
+  const JSON_LD = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${URL}/#organization`,
+        name: 'HereToo',
+        url: URL,
+        foundingDate: '2026-04-13',
+        logo: `${URL}/favicon-512.png`,
+        description: DESCRIPTION,
+        sameAs: ['https://github.com/cameronmoquin/heretoo'],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${URL}/#website`,
+        name: 'HereToo',
+        url: URL,
+        datePublished: '2026-04-14',
+        inLanguage: 'en-US',
+        publisher: { '@id': `${URL}/#organization` },
+      },
+    ],
+  });
+
   const headTags = [
     // Icons + manifest. Apple specifically wants PNG for the
     // apple-touch-icon — SVG is technically supported but render
@@ -102,6 +153,8 @@ if (existsSync(indexPath)) {
     `<meta name="twitter:title" content="${TITLE}" />`,
     `<meta name="twitter:description" content="${DESCRIPTION}" />`,
     `<meta name="twitter:image" content="${OG_IMAGE}" />`,
+      // schema.org, last so it reads as the summary of everything above.
+    `<script type="application/ld+json">${JSON_LD}</script>`,
   ].join('\n    ');
 
   // Strip any auto-injected default favicon link first.
@@ -116,10 +169,10 @@ if (existsSync(indexPath)) {
   } else {
     html = html.replace('</head>', `    <title>${TITLE}</title>\n  </head>`);
   }
-  if (!html.includes('property="og:title"')) {
+  if (!html.includes('property="og:title"') || !html.includes('application/ld+json')) {
     html = html.replace('</head>', `    ${headTags}\n  </head>`);
     writeFileSync(indexPath, html);
-    console.log('Injected favicon + OG + Twitter Card tags into dist/index.html');
+    console.log('Injected favicon + OG + Twitter Card + schema.org JSON-LD into dist/index.html');
   } else {
     console.log('Head tags already present in dist/index.html');
   }
