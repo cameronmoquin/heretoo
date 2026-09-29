@@ -287,7 +287,7 @@ export const BANK_TOPICS = Object.keys(TOPIC_VOICES);
  * `avoid` is the handles of the last few posts; when every qualified
  * voice is in it the first is used anyway, so the drip never stalls.
  */
-export function topicVoice(topic: string, avoid: Set<string> = new Set(), year?: number): Figure {
+export function topicVoice(topic: string, avoid: Set<string> = new Set(), year?: number): Figure | null {
   let list = TOPIC_VOICES[topic] ?? TOPIC_VOICES['World Affairs'];
   if (!TOPIC_VOICES[topic]) {
     // Loud, because the silent version of this is a president narrating
@@ -308,21 +308,39 @@ export function topicVoice(topic: string, avoid: Set<string> = new Set(), year?:
   // before him is ordinary — Lincoln on the Founding — but nothing
   // after his death.
   if (typeof year === 'number' && Number.isFinite(year)) {
+    // canSpeakTo, NOT a died-field test. `died` is only filled in for the
+    // handful of figures whose death year sits mid-window (Theodore
+    // Roosevelt, Wilson, Lincoln, FDR), so a plain `died ? ... : null`
+    // check reads every other figure as immortal and passes them every
+    // year on the calendar. That is how a 1991 Antarctic treaty routed
+    // to John Quincy Adams, who died in 1848 — caught by test, not by
+    // reading. canSpeakTo falls back to the era window, which every
+    // figure has.
     const alive = list.filter((h) => {
       const f = figureByHandle(h);
-      if (!f) return false;
-      const d = f.died ? Number(f.died.slice(0, 4)) : null;
-      return d === null || year <= d;
+      return f ? canSpeakTo(f, year) : false;
     });
     if (alive.length > 0) {
       list = alive;
     } else {
-      // Nobody on this list lived to see it. Keep the list rather than
-      // returning nothing, and say so out loud — the real fix is a
-      // roster addition, and a silent wrong voice is worse than a noisy
-      // one.
+      // NOBODY ON THIS LIST LIVED TO SEE IT, SO NOBODY SPEAKS.
+      //
+      // This used to keep the list and hand the row to a dead man
+      // anyway, on the reasoning that a noisy wrong voice beats
+      // silence. That reasoning was wrong, and the feed showed why:
+      // VOICE_RULES tells a figure that anything after their era is
+      // "after my time," so the wrong voice does not simply err — it
+      // produces a post whose whole content is a hedge about not being
+      // able to answer. A feed of those reads as broken.
+      //
+      // Returning null is not a failure. The caller has eight other
+      // candidate rows and will teach one of them instead; the bank is
+      // walked least-recently-taught first, so nothing is lost, only
+      // deferred. A roster addition is still the real fix for a topic
+      // that keeps coming up empty, and the warning says which.
       // eslint-disable-next-line no-console
-      console.warn(`[figures] no ${topic} voice outlived ${year} - roster gap`);
+      console.warn(`[figures] no ${topic} voice outlived ${year} - roster gap, row declined`);
+      return null;
     }
   }
 
@@ -335,15 +353,68 @@ export function figureByHandle(handle: string): Figure | undefined {
 }
 
 /**
- * Route a bank row to the figure who should teach it.
- * Names win, then era years found in the text, then the topic default.
+ * The latest year a row mentions, or null if it names none.
+ *
+ * LATEST, NOT FIRST. The first year in the text is whatever context the
+ * explanation opened with, and explanations routinely set the scene
+ * before arriving at their subject: a row about the 1995 Balkans that
+ * begins "since 1945" is still a row about 1995. Reading the first year
+ * is how Truman ended up narrating the Yugoslav wars. The latest year
+ * is the binding constraint on who could possibly have known about it.
  */
-export function routeFigure(row: { topic: string; prompt: string; explanation?: string | null }, avoid: Set<string> = new Set()): Figure {
-  const text = `${row.prompt} ${row.explanation ?? ''}`.toLowerCase();
+function latestYear(text: string): number | null {
+  const ys = [...text.matchAll(/\b(1[6-9]\d{2}|20[0-2]\d)\b/g)].map((m) => Number(m[1]));
+  return ys.length ? Math.max(...ys) : null;
+}
 
+/**
+ * Could this figure have known about something in this year?
+ *
+ * Only the UPPER bound matters. A figure discussing what came before
+ * them is ordinary — Lincoln on the Founding. Nothing after the era
+ * window closes, and the windows are deliberately set to exclude a
+ * death year the figure did not live far into (see the Figure docs).
+ */
+function canSpeakTo(f: Figure, year: number | null): boolean {
+  if (year === null) return true;
+  const died = f.died ? Number(f.died.slice(0, 4)) : null;
+  const upper = died === null ? f.era[1] : Math.min(f.era[1], died);
+  return year <= upper;
+}
+
+/**
+ * Route a bank row to the figure who should teach it, or to NOBODY.
+ *
+ * Names win, then era years found in the text, then the topic default
+ * — but every one of those is now gated on the figure having been
+ * alive for the row's latest year. Returning null is a real outcome
+ * and the caller must handle it.
+ *
+ * WHY THIS CAN NOW REFUSE. The old version always returned someone.
+ * Worse, its first and strongest test was a keyword match, ungated by
+ * era, so any row containing a word a figure had claimed went to that
+ * figure no matter what century it described. Combined with
+ * VOICE_RULES — which instructs a figure to treat anything after their
+ * era as "after my time" — the result was a feed of posts whose
+ * content was the figure declining to answer. Cameron's words: the
+ * figures are refusing to answer questions that were not relevant in
+ * their time, and you cannot pair random prompts to any figure.
+ *
+ * So the router declines instead, and the drip picks another row.
+ */
+export function routeFigure(row: { topic: string; prompt: string; explanation?: string | null }, avoid: Set<string> = new Set()): Figure | null {
+  const text = `${row.prompt} ${row.explanation ?? ''}`.toLowerCase();
+  const year = latestYear(text);
+
+  // Documented names win — but only among figures who were alive for
+  // it. The era gate is INSIDE this loop deliberately: it used to run
+  // after, as a separate fallback, which meant a keyword match beat
+  // chronology outright and a 1990s row went to whoever had claimed a
+  // word in it.
   let best: Figure | undefined;
   let bestScore = 0;
   for (const f of FIGURES) {
+    if (!canSpeakTo(f, year)) continue;
     const score = f.claims.reduce((n, kw) => n + (text.includes(kw) ? (kw.length > 8 ? 2 : 1) : 0), 0);
     if (score > bestScore) { best = f; bestScore = score; }
   }
@@ -358,15 +429,12 @@ export function routeFigure(row: { topic: string; prompt: string; explanation?: 
   // era routing does not apply the year still decides who is allowed
   // to speak at all. Narrowest-window era routing stays limited to
   // the two American topics, exactly as before.
-  const allYears = [...text.matchAll(/\b(1[6-9]\d{2}|20[0-2]\d)\b/g)].map((m) => Number(m[1]));
   const eraRoutable = row.topic === 'US History' || row.topic === 'US Government';
-  const years = eraRoutable ? allYears : [];
-  if (years.length > 0) {
-    const y = years[0];
+  if (eraRoutable && year !== null) {
     let eraPick: Figure | undefined;
     let width = Infinity;
     for (const f of FIGURES) {
-      if (y >= f.era[0] && y <= f.era[1] && f.era[1] - f.era[0] < width) {
+      if (year >= f.era[0] && year <= f.era[1] && f.era[1] - f.era[0] < width) {
         eraPick = f;
         width = f.era[1] - f.era[0];
       }
@@ -374,5 +442,8 @@ export function routeFigure(row: { topic: string; prompt: string; explanation?: 
     if (eraPick) return eraPick;
   }
 
-  return topicVoice(row.topic, avoid, allYears[0]);
+  // The topic default, which is itself era-filtered and may now be
+  // null. Undated conceptual material — "opportunity cost is" — has
+  // no year, passes every gate, and is fine in anyone's mouth.
+  return topicVoice(row.topic, avoid, year ?? undefined);
 }

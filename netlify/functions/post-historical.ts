@@ -251,8 +251,14 @@ export default async () => {
   // routeFigure so the topic fallback ALSO steps around a voice that
   // just spoke — otherwise the selector rotates topics while the router
   // hands several of them straight back to the same name.
+  // A row nobody can teach ranks below every row somebody can. It is
+  // not an error: the router declines material that falls outside every
+  // living figure's years, and the right response is to teach a
+  // different row this wake, not to hand it to a dead man anyway.
+  const UNTEACHABLE = 9;
   const rank = (c: any): number => {
     const f = routeFigure(c, recent);
+    if (!f) return UNTEACHABLE;
     const freshTopic = !recentTopics.has(c.topic);
     const freshVoice = !recent.has(f.handle);
     if (freshTopic && freshVoice) return 0;
@@ -261,13 +267,26 @@ export default async () => {
     return 3;
   };
 
-  let row = candidates[0];
-  let best = 4;
+  let row: any = null;
+  let best = UNTEACHABLE;
   for (const cand of candidates) {
     const r = rank(cand);
     if (r < best) { best = r; row = cand; if (r === 0) break; }
   }
+
+  // Every candidate was declined. Nine topics all out of era at once is
+  // a roster gap wide enough to name out loud rather than paper over
+  // with a wrong voice; the warnings from topicVoice say which topics.
+  if (!row) {
+    // eslint-disable-next-line no-console
+    console.warn('[post-historical] every candidate row fell outside every figure\'s years; posting nothing this wake');
+    return new Response('No figure can speak to any candidate row. Roster gap.', { status: 200 });
+  }
+
   const figure = routeFigure(row, recent);
+  if (!figure) {
+    return new Response('Router declined the chosen row.', { status: 200 });
+  }
 
   // 3. The figure's account.
   const authorId = await findOrCreateFigureBot(figure);
