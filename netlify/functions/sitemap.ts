@@ -2,7 +2,7 @@
  * /sitemap.xml — generated on demand.
  *
  * Lists the public surfaces only. Authenticated surfaces (the feed,
- * chapters, messages) stay out of the index. Add a public page here
+ * clubs, messages) stay out of the index. Add a public page here
  * when one exists; robots.txt already declares this file.
  */
 

@@ -36,16 +36,16 @@
  */
 
 export const Vocab = {
-  // "Chapter" (Sept 2026, NFFGA). HereToo called the group a cohort;
-  // an association's local group is a chapter. Cameron's call to
-  // confirm — change it here and nowhere else.
-  group: 'chapter',
-  groupPlural: 'chapters',
-  Group: 'Chapter',
-  GroupPlural: 'Chapters',
+  // "Club" (Sept 2026, NFFGA). HereToo called the group a cohort. The
+  // groups here are fire-department-based golf clubs (Cameron,
+  // 2026-09-29), so the word is club. Change it here and nowhere else.
+  group: 'club',
+  groupPlural: 'clubs',
+  Group: 'Club',
+  GroupPlural: 'Clubs',
   member: 'member',
   memberPlural: 'members',
-  groupWithArticle: 'a chapter',
+  groupWithArticle: 'a club',
   // "Submission" (Aug 2026). The thing you contribute is a submission;
   // "drop" survives as the VERB of contributing it — the canon phrase is
   // "Drop a submission" and the button says Submit.
