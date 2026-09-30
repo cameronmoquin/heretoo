@@ -24,7 +24,7 @@ function fakeSecureStore(limit = 2048) {
   };
 }
 
-const KEY = 'sb-heretoo-auth-token';
+const KEY = 'sb-nffga-auth-token';
 
 describe('createChunkedSecureStorage', () => {
   let backend: ReturnType<typeof fakeSecureStore>;

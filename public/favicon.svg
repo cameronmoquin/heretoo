@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  The HereToo mark — twin uprights, a crossbar, one raised stem with a
+  The mark, inherited from the HereToo fork — twin uprights, a crossbar, one raised stem with a
   knob at its top. Drawn once as a family tree; read now as what it
   also always was: a throttle lever pushed forward. Mirrors
-  HereTooMark (components/shared/Logo.tsx). Monochrome brand: ink on a
+  BrandMark (components/shared/Logo.tsx). Monochrome brand: ink on a
   white tile.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">

@@ -36,16 +36,16 @@
  */
 
 export const Vocab = {
-  // "Cohort" (Aug 2026). "Crew" read as themed and went the way of
-  // "family"; plain "group" lasted an hour. Cohort carries the
-  // are-you-intelligent-enough register without costuming anybody.
-  group: 'cohort',
-  groupPlural: 'cohorts',
-  Group: 'Cohort',
-  GroupPlural: 'Cohorts',
+  // "Chapter" (Sept 2026, NFFGA). HereToo called the group a cohort;
+  // an association's local group is a chapter. Cameron's call to
+  // confirm — change it here and nowhere else.
+  group: 'chapter',
+  groupPlural: 'chapters',
+  Group: 'Chapter',
+  GroupPlural: 'Chapters',
   member: 'member',
   memberPlural: 'members',
-  groupWithArticle: 'a cohort',
+  groupWithArticle: 'a chapter',
   // "Submission" (Aug 2026). The thing you contribute is a submission;
   // "drop" survives as the VERB of contributing it — the canon phrase is
   // "Drop a submission" and the button says Submit.

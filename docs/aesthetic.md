@@ -1,7 +1,7 @@
-# HereToo Aesthetic Codex (M10)
+# NFFGA Aesthetic Codex (M10)
 
 This is the working pointer to the canonical numbers. The full prose
-rationale lives in `docs/heretoo-source-of-truth.md` (Milestone 10).
+rationale lives in `docs/nffga-source-of-truth.md` (Milestone 10).
 The runtime values live in `constants/codex.ts`. This file is a
 short index for "where does X live?"
 

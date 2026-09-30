@@ -1,5 +1,5 @@
 /**
- * Persistent "Install HereToo" promo banner — shown at the top of the
+ * Persistent "Install NFFGA" promo banner — shown at the top of the
  * home feed. Different from PWAInstallPrompt (the auto-popup) — this
  * is always visible until dismissed, so users who close the auto-popup
  * or never see it (desktop, etc.) still have a one-tap install path.
@@ -17,7 +17,7 @@ import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
-const STORAGE_KEY = 'heretoo:install-banner-dismissed-at';
+const STORAGE_KEY = 'nffga:install-banner-dismissed-at';
 
 export function InstallAppBanner() {
   const [show, setShow] = useState(false);
@@ -78,14 +78,14 @@ export function InstallAppBanner() {
     } else if (platform === 'ios') {
       // iOS Safari has no API — show instructions
       showAlert(
-        'Install HereToo',
+        'Install NFFGA',
         'In Safari, tap the Share icon (square with up-arrow), then choose "Add to Home Screen".',
       );
     } else {
       // Desktop / browser without prompt — point them to the browser menu
       showAlert(
-        'Install HereToo',
-        'In your browser menu, look for "Install HereToo" or "Install app", usually under the three-dot menu.',
+        'Install NFFGA',
+        'In your browser menu, look for "Install NFFGA" or "Install app", usually under the three-dot menu.',
       );
     }
   };
@@ -100,7 +100,7 @@ export function InstallAppBanner() {
         />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={s.title}>Install HereToo</Text>
+        <Text style={s.title}>Install NFFGA</Text>
       </View>
       <TouchableOpacity style={s.installBtn} onPress={onInstall} activeOpacity={0.85}>
         <Text style={s.installBtnText}>Install</Text>

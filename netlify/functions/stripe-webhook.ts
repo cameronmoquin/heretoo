@@ -1,5 +1,5 @@
 /**
- * /api/stripe-webhook — Stripe → HereToo subscription state sync.
+ * /api/stripe-webhook — Stripe → NFFGA subscription state sync.
  *
  * Source of Truth, Milestone 12. Stripe POSTs every relevant event
  * to this endpoint with a signed `stripe-signature` header. We verify

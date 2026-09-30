@@ -116,7 +116,7 @@ export const Copy = {
 export const BrandMark = {
   faviconPng: { width: 32, height: 32 },
   pwaIcon: { width: 1024, height: 1024 },
-  ogImage: { width: 1200, height: 630, headline: 'HereToo' },
+  ogImage: { width: 1200, height: 630, headline: 'NFFGA' },
   emailHeader: { width: 600, height: 100 },
 } as const;
 

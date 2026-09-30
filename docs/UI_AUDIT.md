@@ -1,4 +1,4 @@
-# HereToo UI Audit and Unification Brief
+# NFFGA UI Audit and Unification Brief
 
 *Panel audit: design tokens, component consistency, social/web trend, mobile UX and accessibility.
 Grounded in the actual codebase (constants/design.ts, constants/colors.ts, constants/generations.ts,
@@ -9,7 +9,7 @@ file and value. This document is the brief the unification work follows.*
 
 ## 1. Verdict
 
-HereToo has a real design system and does not use it. The tokens exist and are, for the most part,
+NFFGA has a real design system and does not use it. The tokens exist and are, for the most part,
 well chosen: `constants/design.ts` ships a coherent `Spacing`, `Radius`, `Type`, `Heights`, and
 `Shadow` set; `constants/colors.ts` ships a warm dark and warm light palette that swaps cleanly
 through `setColorMode`; `constants/generations.ts` ships the skin engine that is supposed to reskin

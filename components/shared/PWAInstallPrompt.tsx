@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { useMobileTabBarVisible, useMobileTabBarHeight } from './MobileTabBar';
 
-const STORAGE_KEY = 'heretoo:pwa-prompt-dismissed-at';
+const STORAGE_KEY = 'nffga:pwa-prompt-dismissed-at';
 
 type Mode = 'hidden' | 'android' | 'ios';
 
@@ -100,7 +100,7 @@ export function PWAInstallPrompt() {
         color={Colors.primary}
       />
       <View style={{ flex: 1 }}>
-        <Text style={styles.title}>Install HereToo</Text>
+        <Text style={styles.title}>Install NFFGA</Text>
         {mode === 'ios' && (
           <Text style={styles.body}>
             Tap the Share icon, then &quot;Add to Home Screen&quot;.

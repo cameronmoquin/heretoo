@@ -5,7 +5,7 @@
  *
  * Why this lives here: the right ⅓ of the desktop layout was empty
  * canvas. A schedule the user can glance at while they're in the feed
- * keeps them in HereToo for plan-coordination ("when's that party?")
+ * keeps them in NFFGA for plan-coordination ("when's that party?")
  * instead of bouncing out to another tab.
  *
  * Storage: the calendar URL goes into profile.style_prefs.calendar_url
@@ -27,7 +27,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
 
-const STORAGE_KEY = 'heretoo:calendar-url';
+const STORAGE_KEY = 'nffga:calendar-url';
 
 /**
  * Detect provider + return an embeddable URL. Users paste either:

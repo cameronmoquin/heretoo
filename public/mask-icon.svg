@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Safari pinned-tab mask icon — single-color silhouette of the HereToo
+  Safari pinned-tab mask icon — single-color silhouette of the NFFGA
   tree mark. Same geometry as public/favicon.svg and the in-app
-  HereTooLogo (components/shared/Logo.tsx) but flat black on transparent
+  NFFGALogo (components/shared/Logo.tsx) but flat black on transparent
   so Safari can tint it with the user's accent color.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">

@@ -6,9 +6,9 @@ This is an observable deploy process, not a magical one. Every deploy can be ver
 
 - **Production branch:** `master`
 - **Work branch:** `develop`
-- **Production URL:** https://heretoo.social
-- **Fallback URL:** https://heretoo.netlify.app
-- **Hosting:** Netlify (project `heretoo`, ID `70a40b9c-a63d-49ea-ae60-f6500bf94804`)
+- **Production URL:** https://nffga.emspcr.app
+- **Fallback URL:** https://nffga.netlify.app
+- **Hosting:** Netlify (project `nffga`, ID `70a40b9c-a63d-49ea-ae60-f6500bf94804`)
 
 Production deploys only come from `master`. Never deploy from `develop` or any feature branch.
 
@@ -26,7 +26,7 @@ git push origin develop
 ### 2. Merge to master when ready to release
 
 ```bash
-# Open PR on GitHub: https://github.com/cameronmoquin/heretoo/compare/master...develop
+# Open PR on GitHub: https://github.com/cameronmoquin/nffga/compare/master...develop
 # Review the diff. Merge.
 git checkout master
 git pull origin master
@@ -50,7 +50,7 @@ npm run verify
 # Prints the deployed commit, branch, buildTime.
 
 # Option 2: visit /version in the app
-# https://heretoo.social/version
+# https://nffga.emspcr.app/version
 
 # Option 3: look at the badge in the bottom-right corner of the app
 # Every screen shows the commit hash.
@@ -111,7 +111,7 @@ Run `npm run deploy:force-clean` — wipes everything, reinstalls, rebuilds, red
 Open DevTools (F12) → Network tab → check "Disable cache" → hard refresh (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac).
 
 For stubborn cache:
-- Close all tabs of heretoo.social
+- Close all tabs of nffga.emspcr.app
 - Browser Settings → Clear browsing data → Cached images and files
 - Try incognito/private window
 
@@ -137,14 +137,14 @@ Client-side query cache. Lives in memory. Gone on page reload. If data looks sta
 If the deployed build is correct but showing wrong data, it is Supabase-side. Check:
 ```bash
 # Confirm you are pointing at the right project
-curl -s https://heretoo.social/_build.txt | grep supabaseUrl
+curl -s https://nffga.emspcr.app/_build.txt | grep supabaseUrl
 ```
 
 ## Build identification
 
 Every deploy puts a commit hash into three places:
 
-1. **`/_build.txt`** — plain text, served at root. `curl https://heretoo.social/_build.txt`
+1. **`/_build.txt`** — plain text, served at root. `curl https://nffga.emspcr.app/_build.txt`
 2. **`/version`** — full debug panel. Includes Supabase URL, runtime info, live connectivity test.
 3. **Bottom-right badge** — tiny monospace commit hash on every screen. Tap to open `/version`.
 

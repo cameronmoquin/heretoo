@@ -467,7 +467,7 @@ async function ingestLoc(target) {
       try {
         const r = await fetchWithRetry(
           `https://www.loc.gov/collections/${col.slug}/?fo=json&c=100&sp=${page}`,
-          { headers: { 'User-Agent': 'heretoo-art-ingest/1.0' } },
+          { headers: { 'User-Agent': 'nffga-art-ingest/1.0' } },
         );
         const j = await r.json();
         rows = j.results ?? [];

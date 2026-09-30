@@ -1,36 +1,19 @@
 /**
- * /sitemap.xml — generated nightly (and on demand).
+ * /sitemap.xml — generated on demand.
  *
- * Source of Truth, Milestone 11. Lists the marketing surfaces only:
- * / and /about. Authenticated surfaces (the Room, family pages,
- * letters, chat) stay out of the index.
- *
- * AND THE STUDY GUIDE'S HUBS. This file used to list three URLs and
- * none of them was /fsot/, while the guide's own 84-URL sitemap was the
- * single discovery path into all 85 of its pages — no internal link
- * either, because web.output "single" ships a React shell with no <a>
- * tags at all. Sitemap-only URLs that nothing links to are the case
- * Google reports as "Discovered – currently not indexed", which is
- * exactly what the guide was. The hubs belong here; the deep pages stay
- * in /fsot/sitemap.xml, which robots.txt already declares.
+ * Lists the public surfaces only. Authenticated surfaces (the feed,
+ * chapters, messages) stay out of the index. Add a public page here
+ * when one exists; robots.txt already declares this file.
  */
 
 import type { Config } from '@netlify/functions';
+import { SITE_URL } from '../../constants/site';
 
-const BASE = 'https://heretoo.social';
+const BASE = SITE_URL;
 
 export default async () => {
   const urls: Array<{ loc: string; lastmod?: string; changefreq?: string; priority?: string }> = [
     { loc: `${BASE}/`, changefreq: 'weekly', priority: '1.0' },
-    { loc: `${BASE}/about`, changefreq: 'monthly', priority: '0.9' },
-    { loc: `${BASE}/advertise`, changefreq: 'monthly', priority: '0.6' },
-    // The study guide. Hubs only — /fsot/sitemap.xml carries the 84
-    // deep pages and is declared separately in robots.txt.
-    { loc: `${BASE}/fsot/`, changefreq: 'weekly', priority: '0.9' },
-    { loc: `${BASE}/fsot/guide/`, changefreq: 'weekly', priority: '0.8' },
-    { loc: `${BASE}/fsot/listen/`, changefreq: 'weekly', priority: '0.8' },
-    { loc: `${BASE}/fsot/omst/`, changefreq: 'weekly', priority: '0.8' },
-    { loc: `${BASE}/fsot/plan.html`, changefreq: 'monthly', priority: '0.7' },
   ];
 
   const xml = [

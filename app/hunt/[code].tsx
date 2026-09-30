@@ -103,7 +103,7 @@ export default function HuntSeek() {
   const onFound = async () => {
     if (!cache || !coords) return;
     if (!signedIn) {
-      showAlert('Sign in to log it', 'Logging a pickup needs a HereToo account. The compass still works.');
+      showAlert('Sign in to log it', 'Logging a pickup needs a NFFGA account. The compass still works.');
       return;
     }
     try {

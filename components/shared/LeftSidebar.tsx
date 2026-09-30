@@ -16,15 +16,15 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Linking, useWindowDimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useUnreadCount } from '../../hooks/useChat';
 import { useRadio, useActiveStation } from '../../stores/radioStore';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
-import { isKioskBuild } from '../../modules/heretoo-kiosk';
-import { HereTooLogo, HereTooMark } from './Logo';
+import { BrandLogo, BrandMark } from './Logo';
+import { CAR56_NAME, CAR56_URL } from '../../constants/site';
 import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
 
@@ -84,7 +84,6 @@ export function LeftSidebar() {
   const onChat = pathname.startsWith('/messages');
   const onProfile = pathname.startsWith('/profile') || pathname.startsWith('/(tabs)/profile');
   const onMusic = pathname.startsWith('/music') || pathname.startsWith('/(tabs)/music');
-  const onJournal = pathname.startsWith('/journal');
 
   return (
     <View style={s.sidebar}>
@@ -97,12 +96,9 @@ export function LeftSidebar() {
         onPress={() => router.push('/feed' as any)}
         activeOpacity={0.7}
       >
-        {/* The lockup: throttle-lever glyph + the spaced wordmark. A
-            hardcoded bold "HereToo" used to sit here beside the new
-            wordmark — the OLD wordmark, never removed when the lockup
-            landed, so the rail wore both and no glyph. */}
-        <HereTooMark size={20} color={Colors.textPrimary} />
-        <HereTooLogo size={38} color={Colors.textPrimary} />
+        {/* The lockup: glyph + the spaced wordmark. */}
+        <BrandMark size={20} color={Colors.textPrimary} />
+        <BrandLogo size={38} color={Colors.textPrimary} />
       </TouchableOpacity>
 
       <View style={s.divider} />
@@ -140,19 +136,14 @@ export function LeftSidebar() {
         onPress={() => router.replace('/(tabs)/profile' as any)}
       />
 
-      {/* The way out. This file's own header has listed a Sign out slot
-          since it was written and never had one — the only sign-out on
-          desktop sat 4,650px down the profile page, past every setting,
-          which is not a way out so much as a rumour of one. Kiosk
-          devices do not get it; that door is the PIN panel. */}
-      {!isKioskBuild && (
-        <NavRow
-          icon="log-out-outline"
-          label="Sign out"
-          active={false}
-          onPress={() => hardSignOutAndRedirect()}
-        />
-      )}
+      {/* The way out. The only other sign-out on desktop sits at the
+          bottom of the profile page, past every setting. */}
+      <NavRow
+        icon="log-out-outline"
+        label="Sign out"
+        active={false}
+        onPress={() => hardSignOutAndRedirect()}
+      />
 
       {/* Crew quick-list removed. It was redundant with the Room hearth
           swatches and the /family list page. The Crews nav row above
@@ -160,26 +151,18 @@ export function LeftSidebar() {
 
       <View style={s.divider} />
 
-      {/* Anti-social — the rooms that end with you, matching the mobile
-          hallway's second shelf. The Journal keeps its filled lock: the
-          room's weight in the rail matches its weight in the platform's
-          argument. Memoir's row is gone — the room is retired (data
-          kept; punch list holds it). FSOT Prep is the static study
-          guide + audio course at /fsot/, outside the SPA, so its row
-          does a full navigation rather than a router push. */}
-      <Text style={s.sectionLabel}>Anti-social</Text>
+      {/* Sister product on the same domain. A door out of the app, so
+          it opens in a new tab on web and the browser on native. */}
+      <Text style={s.sectionLabel}>Also from the firehouse</Text>
       <NavRow
-        icon="lock-closed"
-        label="Journal"
-        active={onJournal}
-        onPress={() => router.push('/journal' as any)}
-      />
-      <NavRow
-        icon="school-outline"
-        label="FSOT Prep"
-        sub="Study guide & audio course"
+        icon="flame-outline"
+        label={CAR56_NAME}
+        sub="Origin-and-cause reports"
         active={false}
-        onPress={() => { if (typeof window !== 'undefined') window.location.assign('/fsot/'); }}
+        onPress={() => {
+          if (Platform.OS === 'web' && typeof window !== 'undefined') window.open(CAR56_URL, '_blank', 'noopener');
+          else Linking.openURL(CAR56_URL).catch(() => {});
+        }}
       />
 
       <View style={s.divider} />

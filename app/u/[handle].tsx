@@ -1,7 +1,7 @@
 /**
  * Other-user profile page — `/u/<handle>`.
  *
- * Shows what HereToo wants to surface about another person without
+ * Shows what NFFGA wants to surface about another person without
  * giving away anything they haven't already shared:
  *   - Avatar, display name, bio
  *   - Shared connections (their reach intersected with yours)
@@ -128,7 +128,7 @@ export default function UserProfile() {
           <Ionicons name="search-outline" size={36} color={Colors.textMuted} />
           <Text style={s.notFoundTitle}>No one with that handle</Text>
           <Text style={s.notFoundSub}>
-            @{cleanHandle} doesn't match anyone on HereToo.
+            @{cleanHandle} doesn't match anyone on NFFGA.
           </Text>
           <Button
             title="Back to feed"

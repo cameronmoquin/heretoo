@@ -61,7 +61,7 @@ export default function ChatList() {
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
-          <Text style={s.backBtnText}>HereToo</Text>
+          <Text style={s.backBtnText}>NFFGA</Text>
         </TouchableOpacity>
         <Text style={s.title}>Messages</Text>
         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>

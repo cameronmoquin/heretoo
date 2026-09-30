@@ -31,24 +31,18 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="theme-color" content="#1A1A24" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <title>HereToo — the anti-social media</title>
-        {/* The sign went up when Myspace announced its anti-algorithm
-            relaunch: being indexable means having words. One slogan, one
-            grounding line. scripts/copy-build-marker.mjs re-injects
-            these after the export and WINS, so any change here belongs
-            there too — that file overwriting this one is how the old
-            family-first pitch survived its own removal. */}
-        <meta name="description" content="Are you intelligent enough to be HereToo? Built on art, music, and Shakespeare." />
+        <title>NFFGA — National Fire Fighters Golf Association</title>
+        <meta name="description" content="National Fire Fighters Golf Association." />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="HereToo" />
-        <meta property="og:title" content="HereToo — the anti-social media" />
-        <meta property="og:description" content="Are you intelligent enough to be HereToo? Built on art, music, and Shakespeare." />
-        <meta property="og:url" content="https://heretoo.social" />
-        <meta property="og:image" content="https://heretoo.social/og-cover.png" />
+        <meta property="og:site_name" content="NFFGA" />
+        <meta property="og:title" content="NFFGA — National Fire Fighters Golf Association" />
+        <meta property="og:description" content="National Fire Fighters Golf Association." />
+        <meta property="og:url" content="https://nffga.emspcr.app" />
+        <meta property="og:image" content="https://nffga.emspcr.app/og-cover.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="HereToo — the anti-social media" />
-        <meta name="twitter:description" content="Are you intelligent enough to be HereToo? Built on art, music, and Shakespeare." />
-        <meta name="twitter:image" content="https://heretoo.social/og-cover.png" />
+        <meta name="twitter:title" content="NFFGA — National Fire Fighters Golf Association" />
+        <meta name="twitter:description" content="National Fire Fighters Golf Association." />
+        <meta name="twitter:image" content="https://nffga.emspcr.app/og-cover.png" />
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>

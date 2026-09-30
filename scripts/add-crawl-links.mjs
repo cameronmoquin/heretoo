@@ -2,7 +2,7 @@
 /**
  * Give the crawler a way in.
  *
- * THE BUG THIS FIXES. heretoo.social exports web.output "single", so the
+ * THE BUG THIS FIXES. the site exports web.output "single", so the
  * document a crawler receives is a ~3KB React shell. Measured on the live
  * site: ZERO <a> tags, zero occurrences of "fsot", and a root sitemap.xml
  * listing exactly three URLs (/, /about, /advertise). Every link in the

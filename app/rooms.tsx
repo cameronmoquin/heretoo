@@ -21,6 +21,7 @@ import { useRadio, useActiveStation } from '../stores/radioStore';
 import { Colors } from '../constants/colors';
 import { Spacing, Radius, Type, Heights } from '../constants/design';
 import { Vocab } from '../constants/vocab';
+import { CAR56_NAME, CAR56_URL } from '../constants/site';
 
 interface Door {
   icon: any;
@@ -30,9 +31,8 @@ interface Door {
   /** The heavy tile. Filled icon, primary fill, bold label — one door
    *  per shelf at most, or weight stops meaning anything. */
   accent?: boolean;
-  /** A door out of the SPA. /fsot/ is a static site served beside the
-   *  app; the client router would 404 it, so the door does a full
-   *  navigation on web and opens the browser on native. */
+  /** A door out of the app: an absolute URL. Opens a new tab on web
+   *  and the browser on native. */
   external?: boolean;
 }
 
@@ -46,14 +46,8 @@ export default function RoomsScreen() {
   /**
    * Two shelves, split by whether the door leads to another person.
    *
-   * APPS still end in interaction — someone reads the drop, receives the
-   * letter, finds the cache, hears the same station. ANTI-SOCIAL ends
-   * with you: the journal is encrypted so that nobody, including the
-   * platform, can read it, and the memoir is written before it is ever
-   * a book. Babybook is not here because it now lives under Memoir.
-   *
-   * The split is the product's argument made into furniture, so a door
-   * only moves shelf if what it does to a person changes.
+   * APPS are rooms inside this app. ELSEWHERE is the sister products on
+   * the same domain.
    */
   const apps: Door[] = [
     { icon: 'navigate', label: Vocab.Hunt, route: '/hunt' },
@@ -69,11 +63,9 @@ export default function RoomsScreen() {
     // tab bar already carries it; one door per place.
   ];
 
-  // The rooms that end with you. The Journal leads — it is the room the
-  // platform's whole privacy argument lives in, and it keeps the heavy
-  // tile it carried on the Apps shelf. FSOT Prep is the static study
-  // guide + audio course at /fsot/, outside the SPA.
-  const antisocial: Door[] = [
+  // Sister products on the same domain.
+  const elsewhere: Door[] = [
+    { icon: 'flame', label: CAR56_NAME, route: CAR56_URL, external: true },
   ];
 
   return (
@@ -104,10 +96,8 @@ export default function RoomsScreen() {
         <Text style={s.shelf}>Apps</Text>
         <Grid doors={apps} s={s} />
 
-        {/* Second, and last, on purpose. The rooms that end with you are
-            not the ones you reach for on the way somewhere else. */}
-        <Text style={s.shelf}>Anti-social</Text>
-        <Grid doors={antisocial} s={s} />
+        <Text style={s.shelf}>Elsewhere</Text>
+        <Grid doors={elsewhere} s={s} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -124,8 +114,8 @@ function Grid({ doors, s }: { doors: Door[]; s: ReturnType<typeof makeStyles> })
           style={[s.door, d.accent && s.doorAccent]}
           onPress={() => {
             if (d.external) {
-              if (Platform.OS === 'web') (window as any).location.assign(d.route);
-              else Linking.openURL(`https://heretoo.social${d.route}`).catch(() => {});
+              if (Platform.OS === 'web') (window as any).open(d.route, '_blank', 'noopener');
+              else Linking.openURL(d.route).catch(() => {});
             } else {
               router.push(d.route as any);
             }

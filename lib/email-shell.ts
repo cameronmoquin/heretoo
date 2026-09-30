@@ -1,9 +1,10 @@
+import { SITE_URL, SITE_NAME } from '../constants/site';
 /**
- * email-shell — the one branded frame every HereToo email wears.
+ * email-shell — the one branded frame every NFFGA email wears.
  *
  * Every outbound email routes through here so they read as one voice:
- * white card on a faint gray canvas, a black "HERETOO" wordmark, a
- * hairline, the content, a single heretoo.social link at the foot.
+ * white card on a faint gray canvas, a black wordmark, a
+ * hairline, the content, a single site link at the foot.
  * Spare and deadpan on purpose.
  *
  * MONOCHROME (Aug 2026). The dark-and-gold frame was the old brand;
@@ -35,7 +36,8 @@ export const EmailBrand = {
   serif: "'Source Serif 4',Georgia,serif",
 } as const;
 
-const SITE = 'https://heretoo.social';
+const SITE = SITE_URL;
+const SITE_HOST = SITE.replace(/^https?:\/\//, '');
 
 /** Escape the five HTML-significant characters. Run every value that
  *  began as user or database text through this before it enters markup. */
@@ -88,7 +90,7 @@ export interface EmailHtmlInput {
   subject: string;
   /** Content-slot HTML. Caller escapes any user or database text. */
   body: string;
-  /** Optional functional link beside heretoo.social — used by the
+  /** Optional functional link beside the site link — used by the
    *  recurring notification emails for "Manage email settings". */
   footerAction?: FooterAction;
 }
@@ -111,13 +113,13 @@ export function renderEmailHtml({ subject, body, footerAction }: EmailHtmlInput)
     <span style="display:none;max-height:0;overflow:hidden;opacity:0;color:${EmailBrand.canvas};">${preheader}</span>
     <div style="background:${EmailBrand.canvas};padding:32px 16px;font-family:${EmailBrand.display};">
       <div style="max-width:580px;margin:0 auto;background:${EmailBrand.card};border:1px solid ${EmailBrand.cardBorder};border-radius:12px;padding:32px 28px;">
-        <img src="https://heretoo.social/favicon-192.png" width="30" height="36" alt="" style="display:block;border:0;margin:0 0 10px 0;" />
-        <div style="font-family:${EmailBrand.display};font-size:13px;font-weight:700;color:${EmailBrand.ink};text-transform:uppercase;letter-spacing:4px;">HERETOO</div>
+        <img src="${SITE}/favicon-192.png" width="30" height="36" alt="" style="display:block;border:0;margin:0 0 10px 0;" />
+        <div style="font-family:${EmailBrand.display};font-size:13px;font-weight:700;color:${EmailBrand.ink};text-transform:uppercase;letter-spacing:4px;">${SITE_NAME}</div>
         <div style="margin:18px 0;height:1px;background:${EmailBrand.hairline};"></div>
         ${body}
       </div>
       <div style="max-width:580px;margin:18px auto 0;text-align:center;font-family:${EmailBrand.display};font-size:11px;letter-spacing:1px;color:${EmailBrand.muted};">
-        <a href="${SITE}" style="color:${EmailBrand.muted};text-decoration:none;">heretoo.social</a>${footerActionHtml}
+        <a href="${SITE}" style="color:${EmailBrand.muted};text-decoration:none;">${SITE_HOST}</a>${footerActionHtml}
       </div>
     </div>
   </body>
@@ -134,5 +136,5 @@ export interface EmailTextInput {
 /** The plain-text alternative. Same content, no markup. */
 export function renderEmailText({ text, footerAction }: EmailTextInput): string {
   const foot = footerAction ? `\n${footerAction.label}: ${footerAction.href}` : '';
-  return `HERETOO\n\n${text.trim()}\n\nheretoo.social${foot}`;
+  return `${SITE_NAME}\n\n${text.trim()}\n\n${SITE_HOST}${foot}`;
 }

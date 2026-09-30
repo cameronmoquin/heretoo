@@ -1,13 +1,12 @@
 /**
- * The HereToo brand, two parts:
+ * The brand, two parts:
  *
- *   HereTooMark — the glyph. Twin uprights, a crossbar, one raised
- *   stem with a knob at its top. Drawn as a family tree in an earlier
- *   era; read now as what it also always was — a throttle lever
- *   pushed forward. Both readings are true and neither is printed
- *   anywhere. Views only, no SVG dependency, ink follows the theme.
+ *   BrandMark — the glyph, inherited from the HereToo fork: twin
+ *   uprights, a crossbar, one raised stem with a knob at its top.
+ *   A placeholder until the association has a mark of its own.
+ *   Views only, no SVG dependency, ink follows the theme.
  *
- *   HereTooLogo — the wordmark. HERETOO, ink, letterspaced, the same
+ *   BrandLogo — the wordmark. SITE_NAME, ink, letterspaced, the same
  *   word the emails wear.
  *
  * `size` on both is the rough width occupied, so call sites lay out
@@ -18,6 +17,7 @@ import React from 'react';
 import { Text, View, Platform } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { FontFamily } from '../../constants/design';
+import { SITE_NAME } from '../../constants/site';
 
 interface LogoProps {
   /** Rough width in pixels. */
@@ -26,7 +26,7 @@ interface LogoProps {
   color?: string;
 }
 
-export function HereTooMark({ size = 48, color }: LogoProps) {
+export function BrandMark({ size = 48, color }: LogoProps) {
   const c = color ?? Colors.textPrimary;
 
   // Internal coordinate system: 100 wide × 120 tall.
@@ -48,7 +48,7 @@ export function HereTooMark({ size = 48, color }: LogoProps) {
   return (
     <View
       style={{ width: px(W), height: px(H), position: 'relative' }}
-      accessibilityLabel="HereToo"
+      accessibilityLabel={SITE_NAME}
     >
       <View style={{
         position: 'absolute',
@@ -99,12 +99,12 @@ export function HereTooMark({ size = 48, color }: LogoProps) {
   );
 }
 
-export function HereTooLogo({ size = 48, color }: LogoProps) {
+export function BrandLogo({ size = 48, color }: LogoProps) {
   const fontSize = Math.max(12, Math.round(size * 0.42));
   return (
     <Text
       accessibilityRole="header"
-      accessibilityLabel="HereToo"
+      accessibilityLabel={SITE_NAME}
       style={{
         ...(Platform.OS === 'web' ? ({ fontFamily: FontFamily } as any) : {}),
         fontSize,
@@ -114,7 +114,7 @@ export function HereTooLogo({ size = 48, color }: LogoProps) {
         color: color ?? Colors.textPrimary,
       }}
     >
-      HERETOO
+      {SITE_NAME}
     </Text>
   );
 }

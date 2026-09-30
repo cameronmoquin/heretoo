@@ -3,7 +3,7 @@
  *
  * Source of Truth, Milestone 9. The single most leverage-rich screen
  * in the product. The first 90 seconds for a grandmother decide
- * whether HereToo enters her life.
+ * whether the app enters her life.
  *
  * Flow:
  *   1. Page loads. Full-bleed warm canvas, one button: "Begin."
@@ -31,6 +31,7 @@ import { useTTS } from '../../stores/ttsStore';
 import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
+import { SITE_NAME, SITE_LONG_NAME } from '../../constants/site';
 
 type Phase = 'idle' | 'greeting' | 'voice-note' | 'ready';
 
@@ -56,7 +57,7 @@ export default function WelcomeCeremony() {
     return [
       `${recipient}.`,
       `Your ${relationship}, ${inviter}, made you a place here.`,
-      `This is HereToo. It's a quieter corner of the internet, made for the people you love.`,
+      `This is ${SITE_NAME}, the ${SITE_LONG_NAME}.`,
       `I'll walk you through it. There's no rush, and you can come back to this any time.`,
     ].join(' ');
   }, [data]);
@@ -185,7 +186,7 @@ export default function WelcomeCeremony() {
         {/* Ready — Step inside. */}
         {phase === 'ready' && (
           <>
-            <Text style={s.kicker}>Welcome to HereToo</Text>
+            <Text style={s.kicker}>Welcome to {SITE_NAME}</Text>
             <Text style={s.title}>{data.family_name || `Your ${Vocab.group}`}</Text>
             <Text style={s.body}>
               You can come back to this any time. Step inside when you're ready.

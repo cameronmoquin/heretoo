@@ -17,7 +17,7 @@
  * (the `handle_new_user` trigger handles uniqueness and fallback).
  * The user never has to pick one up-front.
  *
- * URL: https://heretoo.social/join/<CODE>
+ * URL: <SITE_URL>/join/<CODE>
  */
 
 import React, { useEffect, useState } from 'react';
@@ -164,7 +164,7 @@ export default function JoinByCode() {
             Check the link. Or ask whoever sent it for a fresh one.
           </Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
-            <Text style={s.ctaText}>Go to HereToo</Text>
+            <Text style={s.ctaText}>Go to NFFGA</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

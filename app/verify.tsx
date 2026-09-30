@@ -40,6 +40,7 @@ import { Button } from '../components/shared/Button';
 import { Eyebrow } from '../components/shared/Eyebrow';
 import { Colors } from '../constants/colors';
 import { Spacing, Radius, Type } from '../constants/design';
+import { SITE_URL } from '../constants/site';
 
 /** EXIF rides in the first APP1 segment; 1MB is generous headroom. */
 const HEAD_BYTES = 1024 * 1024;
@@ -207,7 +208,7 @@ export default function VerifyScreen() {
                   style={s.cta}
                 />
               ) : (
-                <Text style={s.body}>Open heretoo.social in a browser.</Text>
+                <Text style={s.body}>Open {SITE_URL.replace(/^https?:\/\//, '')} in a browser.</Text>
               )}
 
               {stage === 'checking' && (

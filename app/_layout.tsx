@@ -23,8 +23,6 @@ import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
 import { MobileTabBar, useMobileTabBarVisible, useMobileTabBarHeight } from '../components/shared/MobileTabBar';
 import { LeftSidebar } from '../components/shared/LeftSidebar';
 import { RightSidebar } from '../components/shared/RightSidebar';
-import { KioskGate } from '../components/shared/KioskGate';
-import { KioskHomeButton } from '../components/shared/KioskHomeButton';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 import { Vocab } from '../constants/vocab';
@@ -139,9 +137,6 @@ function RootLayoutInner() {
         <Stack.Screen name="hunt" options={{ title: Vocab.Hunt }} />
         <Stack.Screen name="rooms" options={{ title: 'More' }} />
         <Stack.Screen name="version" options={{ presentation: 'modal' }} />
-        {/* Launcher home on kiosk devices. Inert elsewhere — the route
-            redirects to the feed on any non-kiosk build. */}
-        <Stack.Screen name="shelf" options={{ headerShown: false, animation: 'none' }} />
       </Stack>
       </ThemeProvider>
       {/* Global navigation — same hide rules across all three:
@@ -153,10 +148,6 @@ function RootLayoutInner() {
       <MobileTabBar />
       <LeftSidebar />
       <RightSidebar />
-      {/* Kiosk-only: back to the app shelf from any screen. Lives here rather
-          than in the (tabs) layout because /chat, /family and the rest sit
-          outside the tabs group on native and would have no way home. */}
-      <KioskHomeButton />
       <ToastHost />
       <ConfirmHost />
       <UpdateNudge />
@@ -174,11 +165,6 @@ export default function RootLayout() {
           <RootLayoutInner />
         </QueryClientProvider>
       </ErrorBoundary>
-      {/* Deliberately outside ErrorBoundary and outside the auth/font
-          loading gate. On a kiosk device this corner tap is the only way
-          back in, so it has to survive a render crash and a hung sign-in —
-          the two states where you most need it. Inert on web and iOS. */}
-      <KioskGate />
     </>
   );
 }

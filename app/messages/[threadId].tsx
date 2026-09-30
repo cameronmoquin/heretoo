@@ -47,6 +47,7 @@ import { useStartVideoCall } from '../../hooks/useStartVideoCall';
 import { shouldShowLeftSidebar } from '../../components/shared/LeftSidebar';
 import { useWindowDimensions } from 'react-native';
 import { Vocab } from '../../constants/vocab';
+import { SITE_URL } from '../../constants/site';
 
 export default function ChatThread() {
   const s = makeStyles();
@@ -79,7 +80,7 @@ export default function ChatThread() {
       const origin =
         typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
-          : 'https://heretoo.social';
+          : SITE_URL;
       send.mutate({ threadId, body: `${origin}/call/${callId}` });
       router.push(`/call/${callId}` as any);
     } catch (e: any) {

@@ -22,6 +22,7 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
 import { usePendingItems, nextStamp } from '../stores/pendingMessages';
 import { usePendingLive } from './usePendingLive';
+import { SITE_URL } from '../constants/site';
 
 /** Scope key for a thread's chat messages. See stores/pendingMessages.ts. */
 export const msgScope = (threadId: string) => `msg:${threadId}`;
@@ -171,12 +172,12 @@ async function notifyPush(messageId: string | undefined): Promise<void> {
     // below, where it looks like nothing happened.
     //
     // The effect was that push worked in a browser and silently did nothing on
-    // the Jude-a-phone: every message he sent notified no one, with no error
+    // a provisioned phone: every message he sent notified no one, with no error
     // anywhere to say so.
     const base =
       Platform.OS === 'web' && typeof window !== 'undefined' && window.location
         ? window.location.origin
-        : 'https://heretoo.social';
+        : SITE_URL;
     await fetch(`${base}/.netlify/functions/push-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },

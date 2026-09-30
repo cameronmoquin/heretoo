@@ -30,14 +30,15 @@ import {
   emailNote,
   emailButton,
 } from '../../lib/email-shell';
+import { SITE_URL, EMAIL_FROM } from '../../constants/site';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
+const FROM_EMAIL = EMAIL_FROM;
 const REPLY_TO = 'cameron@billing-therapy.com';
-const MANAGE = { href: 'https://heretoo.social/profile/notifications', label: 'Manage email settings' };
+const MANAGE = { href: `${SITE_URL}/profile/notifications`, label: 'Manage email settings' };
 
 const HEADERS = {
   apikey: SERVICE_ROLE,
@@ -58,7 +59,7 @@ type Pending = {
 
 function renderEmail(p: Pending): { subject: string; html: string; text: string } {
   const who = escapeHtml(p.sender_name || p.sender_handle || 'Someone');
-  const link = `https://heretoo.social/messages/${p.thread_id}`;
+  const link = `${SITE_URL}/messages/${p.thread_id}`;
 
   const subject = `${p.sender_name || p.sender_handle || 'Someone'} wrote.`;
 

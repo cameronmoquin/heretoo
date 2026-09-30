@@ -40,11 +40,12 @@ import { supabase } from '../../lib/supabase';
 import { refreshVerified } from '../../hooks/useAuth';
 import { showAlert } from '../../lib/alert';
 import { Button } from '../../components/shared/Button';
-import { HereTooLogo, HereTooMark } from '../../components/shared/Logo';
+import { BrandLogo, BrandMark } from '../../components/shared/Logo';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 import { Eyebrow } from '../../components/shared/Eyebrow';
+import { SITE_URL } from '../../constants/site';
 
 export default function WelcomeScreen() {
   const s = makeStyles();
@@ -240,7 +241,7 @@ export default function WelcomeScreen() {
     // Our own branded endpoint mints the recovery link and sends it via
     // Resend. It always returns a generic 200, so we never learn (and
     // never reveal) whether the address has an account.
-    const base = typeof window !== 'undefined' ? window.location.origin : 'https://heretoo.social';
+    const base = typeof window !== 'undefined' ? window.location.origin : SITE_URL;
     try {
       await fetch(`${base}/api/request-password-reset`, {
         method: 'POST',
@@ -259,8 +260,8 @@ export default function WelcomeScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           <View style={s.logoArea}>
-            <HereTooMark size={44} color={Colors.textPrimary} />
-            <HereTooLogo size={56} color={Colors.textPrimary} />
+            <BrandMark size={44} color={Colors.textPrimary} />
+            <BrandLogo size={56} color={Colors.textPrimary} />
           </View>
 
           <View style={s.section}>
@@ -367,9 +368,9 @@ export default function WelcomeScreen() {
 function consumePendingInviteCode(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    const code = window.localStorage.getItem('heretoo:pending_invite_code');
+    const code = window.localStorage.getItem('nffga:pending_invite_code');
     if (code) {
-      window.localStorage.removeItem('heretoo:pending_invite_code');
+      window.localStorage.removeItem('nffga:pending_invite_code');
       return code;
     }
   } catch {}

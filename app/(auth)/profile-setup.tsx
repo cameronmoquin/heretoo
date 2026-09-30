@@ -97,10 +97,10 @@ export default function ProfileSetupScreen() {
       let pending: string | null = null;
       try {
         pending = typeof localStorage !== 'undefined'
-          ? localStorage.getItem('heretoo:pending_invite_code')
+          ? localStorage.getItem('nffga:pending_invite_code')
           : null;
         if (pending && typeof localStorage !== 'undefined') {
-          localStorage.removeItem('heretoo:pending_invite_code');
+          localStorage.removeItem('nffga:pending_invite_code');
         }
       } catch {}
       router.replace((pending ? `/join/${pending}` : '/(tabs)/feed') as any);

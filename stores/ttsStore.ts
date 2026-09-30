@@ -41,7 +41,7 @@ interface TTSState {
   setPace: (pace: TTSPace) => void;
 }
 
-const PACE_KEY = 'heretoo:tts-pace';
+const PACE_KEY = 'nffga:tts-pace';
 
 function loadInitialPace(): TTSPace {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return 1.0;

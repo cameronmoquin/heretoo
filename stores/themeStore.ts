@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import type { ThemeMode } from '../constants/colors';
 
-const STORAGE_KEY = 'heretoo:theme';
+const STORAGE_KEY = 'nffga:theme';
 
 function loadInitial(): ThemeMode {
   // Dark mode is disabled for now while we dial in the polish pass —

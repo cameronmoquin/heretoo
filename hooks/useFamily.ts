@@ -647,7 +647,7 @@ export function useFamilyFeed(familyId: string | null) {
 
 /**
  * Family updates feed — only posts marked kind='update'. The original
- * use case for HereToo: keep time-sensitive family news (medical
+ * use case for NFFGA: keep time-sensitive family news (medical
  * updates, milestones, the brother in the hospital) in their own
  * dedicated, easy-to-find lane instead of buried in daily chatter.
  */

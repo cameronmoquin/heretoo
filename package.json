@@ -1,5 +1,5 @@
 {
-  "name": "heretoo",
+  "name": "nffga",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
@@ -19,7 +19,7 @@
     "deploy": "npm run predeploy && npm run build && netlify deploy --prod --dir=dist",
     "deploy:force": "npm run predeploy:force && npm run build && netlify deploy --prod --dir=dist",
     "deploy:force-clean": "npm run clean && npm install && npm run predeploy:force && npm run build && netlify deploy --prod --dir=dist",
-    "verify": "curl -s https://heretoo.social/_build.txt && echo",
+    "verify": "curl -s https://nffga.emspcr.app/_build.txt && echo",
     "test:unit": "vitest run"
   },
   "dependencies": {

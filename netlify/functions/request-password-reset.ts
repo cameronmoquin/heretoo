@@ -1,5 +1,5 @@
 /**
- * request-password-reset — HereToo's own forgot-password endpoint.
+ * request-password-reset — the app's own forgot-password endpoint.
  *
  * Replaces supabase.auth.resetPasswordForEmail. We control the whole
  * flow now: generate the recovery token with the admin API, build the
@@ -30,6 +30,7 @@ import {
   emailButton,
   emailNote,
 } from '../../lib/email-shell';
+import { SITE_URL, SITE_NAME, EMAIL_NOREPLY } from '../../constants/site';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -37,8 +38,8 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // Auth mail sends from noreply. notifications@ is for the digests and
 // letters a person might actually want to reply to; a reset link is not.
-const FROM_EMAIL = 'HereToo <noreply@heretoo.social>';
-const REPLY_TO = 'noreply@heretoo.social';
+const FROM_EMAIL = `${SITE_NAME} <${EMAIL_NOREPLY}>`;
+const REPLY_TO = EMAIL_NOREPLY;
 
 /** One body, returned no matter what happened, so the response never
  *  distinguishes a real account from a miss. */
@@ -50,7 +51,7 @@ function generic(): Response {
 }
 
 function buildEmail(link: string): { subject: string; html: string; text: string } {
-  const subject = 'Reset your HereToo password';
+  const subject = `Reset your ${SITE_NAME} password`;
   const body =
     emailEyebrow('Password reset') +
     emailHeading('Reset your password') +
@@ -60,7 +61,7 @@ function buildEmail(link: string): { subject: string; html: string; text: string
     emailNote('If you did not request a reset, ignore this email. Your password stays as it is.') +
     `</div>`;
   const text =
-    `Reset your HereToo password.\n\n` +
+    `Reset your ${SITE_NAME} password.\n\n` +
     `Open this link to set a new password. It works once and expires in one hour.\n\n` +
     `${link}\n\n` +
     `If you did not request a reset, ignore this email.`;
@@ -125,7 +126,7 @@ export default async (req: Request) => {
 
     // 2. Build the link straight at our page. The reset-password screen
     //    consumes ?token_hash=...&type=recovery via verifyOtp.
-    const link = `https://heretoo.social/reset-password?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`;
+    const link = `${SITE_URL}/reset-password?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`;
 
     // 3. Send it, branded, through Resend.
     const { subject, html, text } = buildEmail(link);

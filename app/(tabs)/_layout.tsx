@@ -16,7 +16,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { DEV_MODE } from '../../lib/dev-mode';
 import { hardSignOutAndRedirect } from '../../lib/auth-recovery';
-import { HereTooLogo } from '../../components/shared/Logo';
+import { BrandLogo } from '../../components/shared/Logo';
 import { SidebarArt } from '../../components/shared/SidebarArt';
 import { ArtPreferences } from '../../components/shared/ArtPreferences';
 import { WCRBPlayer } from '../../components/shared/WCRBPlayer';

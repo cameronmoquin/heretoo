@@ -19,6 +19,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { SITE_URL } from '../constants/site';
 
 const HUNT_BUCKET = 'hunt-photos';
 
@@ -107,7 +108,7 @@ export function huntUrl(code: string): string {
   const origin =
     typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
-      : 'https://heretoo.social';
+      : SITE_URL;
   return `${origin}/hunt/${code}`;
 }
 

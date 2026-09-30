@@ -8,7 +8,7 @@
  * fine until the next cold start signs the user out.
  *
  * That is tolerable on a phone whose owner can retype a password. It is not
- * tolerable on the Jude-a-phone, where being signed in is the whole point and
+ * tolerable on a provisioned phone, where being signed in is the whole point and
  * the user cannot sign back in.
  *
  * Layout. The base key holds either:

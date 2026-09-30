@@ -6,7 +6,7 @@
  * What separates it from a person is a small muted source label above
  * the headline, and the absence of an avatar and an action row.
  *
- * Tapping leaves HereToo. The publisher hosts the article; this row
+ * Tapping leaves NFFGA. The publisher hosts the article; this row
  * carries the headline and the credit and nothing else.
  */
 

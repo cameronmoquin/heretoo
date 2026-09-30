@@ -1,13 +1,14 @@
 /**
  * App config — single product surface.
  *
- * The codebase used to ship two products on different subdomains. We've
- * consolidated: family groups are a feature inside HereToo, not a separate
- * brand. `detectAppId()` is kept for backwards compatibility but always
- * returns 'heretoo' now.
+ * The HereToo codebase this was forked from once shipped two products on
+ * different subdomains; `detectAppId()` survives from that era and
+ * always returns 'nffga'.
  */
 
-export type AppId = 'heretoo';
+import { SITE_NAME, SITE_LONG_NAME } from './site';
+
+export type AppId = 'nffga';
 
 export interface AppConfig {
   id: AppId;
@@ -16,19 +17,19 @@ export interface AppConfig {
   rootHref: string;
 }
 
-const HERETOO: AppConfig = {
-  id: 'heretoo',
-  name: 'HERETOO',
-  tagline: 'Stay close to the people who matter.',
+const NFFGA: AppConfig = {
+  id: 'nffga',
+  name: SITE_NAME,
+  tagline: SITE_LONG_NAME,
   rootHref: '/(tabs)/feed',
 };
 
-export const APPS: Record<AppId, AppConfig> = { heretoo: HERETOO };
+export const APPS: Record<AppId, AppConfig> = { nffga: NFFGA };
 
 export function detectAppId(): AppId {
-  return 'heretoo';
+  return 'nffga';
 }
 
 export function getAppConfig(): AppConfig {
-  return HERETOO;
+  return NFFGA;
 }

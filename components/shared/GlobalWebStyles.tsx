@@ -20,7 +20,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { Colors } from '../../constants/colors';
 
-const STYLE_ID = 'heretoo-global';
+const STYLE_ID = 'nffga-global';
 
 export function GlobalWebStyles() {
   // The root View is keyed on theme mode, so this remounts on a mode

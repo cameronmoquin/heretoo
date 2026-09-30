@@ -1,9 +1,9 @@
 /**
  * Invitation landing page — `/add/<TOKEN>`.
  *
- * Sponsor (someone already on HereToo) sent the recipient this link
+ * Sponsor (someone already on NFFGA) sent the recipient this link
  * to "plant a tree" with them — i.e. start their OWN crew on
- * HereToo while being connected to the sponsor.
+ * NFFGA while being connected to the sponsor.
  *
  * The page does not explain any of that to the recipient. Copy here is
  * limited to labels, errors, and the auth flow.
@@ -38,7 +38,7 @@ import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
 
-const PENDING_KEY = 'heretoo:pending_seed_token';
+const PENDING_KEY = 'nffga:pending_seed_token';
 
 export default function AddScreen() {
   const s = makeStyles();
@@ -166,7 +166,7 @@ export default function AddScreen() {
             for a fresh one.
           </Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
-            <Text style={s.ctaText}>Go to HereToo</Text>
+            <Text style={s.ctaText}>Go to NFFGA</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -181,7 +181,7 @@ export default function AddScreen() {
           <Text style={s.title}>Invite already used</Text>
           <Text style={s.sub}>This invite has already been used.</Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
-            <Text style={s.ctaText}>Go to HereToo</Text>
+            <Text style={s.ctaText}>Go to NFFGA</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -196,7 +196,7 @@ export default function AddScreen() {
           <Text style={s.title}>Invite expired</Text>
           <Text style={s.sub}>Ask the person who sent it for a new link.</Text>
           <TouchableOpacity style={s.cta} onPress={() => router.replace('/(tabs)/feed' as any)}>
-            <Text style={s.ctaText}>Go to HereToo</Text>
+            <Text style={s.ctaText}>Go to NFFGA</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

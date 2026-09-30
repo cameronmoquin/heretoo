@@ -33,7 +33,7 @@ export const Copy = {
      * The price explanation, under the number. EMPTY — the sentence that
      * was here was written by Claude and never cleared. The page shows no
      * explanation until you put one here.
-     * {reach} = how many people are on HereToo right now.
+     * {reach} = how many people are on NFFGA right now.
      * {rate}  = dollars per hundred people (currently 20).
      */
     priceWhy: ``,

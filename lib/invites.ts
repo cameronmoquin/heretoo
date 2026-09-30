@@ -1,9 +1,9 @@
 import * as Linking from 'expo-linking';
 import { Share, Platform } from 'react-native';
 import { supabase } from './supabase';
+import { SITE_URL, SITE_NAME } from '../constants/site';
 
-const APP_SCHEME = 'heretoo';
-const WEB_URL = 'https://heretoo.social';
+const WEB_URL = SITE_URL;
 
 /**
  * Generate a unique invite code for the current user.
@@ -53,7 +53,7 @@ export function getInviteDeepLink(code: string): string {
  */
 export async function shareInvite(code: string, inviterName: string): Promise<boolean> {
   const link = getInviteLink(code);
-  const message = `Join my family on HereToo.social — ${link}`;
+  const message = `Join me on ${SITE_NAME} — ${link}`;
 
   try {
     const result = await Share.share(

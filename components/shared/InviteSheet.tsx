@@ -1,7 +1,7 @@
 /**
  * InviteSheet — the invitation is a message.
  *
- * The text reads "«Name» sent you a message on HereToo" and the link
+ * The text reads "«Name» sent you a message on NFFGA" and the link
  * opens the conversation itself: the recipient lands in the thread as
  * a guest, signed in anonymously, named by the number the sender
  * addressed. No form between a person and a message meant for them.
@@ -31,17 +31,18 @@ import { supabase } from '../../lib/supabase';
 import { showAlert } from '../../lib/alert';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type, Heights } from '../../constants/design';
+import { SITE_URL, SITE_NAME } from '../../constants/site';
 
 function inviteUrl(token: string): string {
   const origin =
     typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
-      : 'https://heretoo.social';
+      : SITE_URL;
   return `${origin}/add/${token}`;
 }
 
 function inviteText(name: string, token: string): string {
-  return `${name} sent you a message on HereToo. Click to respond: ${inviteUrl(token)}`;
+  return `${name} sent you a message on ${SITE_NAME}. Click to respond: ${inviteUrl(token)}`;
 }
 
 export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -143,7 +144,7 @@ export function InviteSheet({ visible, onClose }: { visible: boolean; onClose: (
         onClose();
         return;
       }
-      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(`${myName} sent you a message on HereToo`)}&body=${encodeURIComponent(inviteText(myName, token))}`;
+      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(`${myName} sent you a message on ${SITE_NAME}`)}&body=${encodeURIComponent(inviteText(myName, token))}`;
       if (Platform.OS === 'web') window.location.href = mailto;
       else Linking.openURL(mailto).catch(() => {});
       onClose();

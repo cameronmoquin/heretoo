@@ -34,12 +34,6 @@ import { Vocab } from '../../constants/vocab';
 // prefix (e.g., '/welcome' OR '/(auth)/welcome' depending on how
 // the user navigated). Use `includes` not `startsWith`.
 const HIDE_ON = [
-  // The kiosk launcher is not a screen inside the app — it is the device's
-  // home. The bar rendered over its bottom row of tiles and covered the
-  // emergency-call disclaimer entirely, which is a safety label and must
-  // never be obscured. Jude reaches the app through a tile; the bar appears
-  // once he is inside it.
-  '/shelf',
   '/welcome',
   '/(auth)',
   '/profile-setup',
@@ -68,8 +62,7 @@ export function useMobileTabBarVisible(): boolean {
   // tabBarStyle: { display: 'none' } and its NAV array is never rendered, so
   // excluding this bar left native builds with NO navigation at all — Feed and
   // Profile reachable only by landing on them, and Messages, Music and the
-  // whole /rooms hub unreachable. Found on the provisioned phone, where it
-  // looked like HereToo had shipped a cut-down build.
+  // whole /rooms hub unreachable.
   // Not signed in: the auth flow has its own CTA hierarchy.
   if (!session) return false;
   // Desktop gets the vertical nav; never both.

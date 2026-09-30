@@ -20,12 +20,13 @@ import {
   emailHeading,
   emailButton,
 } from '../../lib/email-shell';
+import { SITE_URL, SITE_NAME, EMAIL_FROM } from '../../constants/site';
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
+const FROM_EMAIL = EMAIL_FROM;
 
 export default async (req: Request, _ctx: Context) => {
   if (req.method !== 'POST') return new Response('method not allowed', { status: 405 });
@@ -79,8 +80,8 @@ export default async (req: Request, _ctx: Context) => {
   }
 
   const name = invite.sponsor_display_name || invite.sponsor_handle || 'Someone';
-  const link = `https://heretoo.social/add/${token}`;
-  const subject = `${name} sent you a message on HereToo.`;
+  const link = `${SITE_URL}/add/${token}`;
+  const subject = `${name} sent you a message on ${SITE_NAME}.`;
 
   const bodyHtml =
     emailEyebrow('Messages')

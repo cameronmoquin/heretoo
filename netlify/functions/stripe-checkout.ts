@@ -15,6 +15,7 @@
  */
 
 import type { Config } from '@netlify/functions';
+import { SITE_URL } from '../../constants/site';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -96,8 +97,8 @@ export default async (req: Request) => {
 
   // 3. Create a Stripe Checkout session.
   const returnUrl = body.return_url
-    || `https://heretoo.social/family/${body.family_id}?billing=success`;
-  const cancelUrl = `https://heretoo.social/family/${body.family_id}?billing=canceled`;
+    || `${SITE_URL}/family/${body.family_id}?billing=success`;
+  const cancelUrl = `${SITE_URL}/family/${body.family_id}?billing=canceled`;
 
   const stripeBody = new URLSearchParams();
   stripeBody.set('mode', 'subscription');

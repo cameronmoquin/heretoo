@@ -1,5 +1,5 @@
 /**
- * HereToo service worker — minimal offline shell + last-feed cache.
+ * NFFGA service worker — minimal offline shell + last-feed cache.
  *
  * Strategies:
  *   - HTML / app shell: network-first, fallback to cached index.html
@@ -22,7 +22,7 @@
 // the shell cache. Every successful navigation used to overwrite SHELL_KEY;
 // a visit to /fsot/ would have made a study-guide page the offline fallback
 // for the whole app.
-const VERSION = 'heretoo-v133';
+const VERSION = 'nffga-v1';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSETS_CACHE = `${VERSION}-assets`;
 const API_CACHE = `${VERSION}-api`;
@@ -209,7 +209,7 @@ self.addEventListener('push', (event) => {
     data = {};
   }
 
-  const title = data.title || 'HereToo';
+  const title = data.title || 'NFFGA';
   const options = {
     body: data.body || 'You have a message.',
     // Reusing the maskable PWA icon; no separate asset to keep in sync.
@@ -218,7 +218,7 @@ self.addEventListener('push', (event) => {
     // iOS ignores this, Android honours it. Harmless where unsupported.
     vibrate: [0, 250, 250, 250],
     // Collapse repeats from one thread instead of stacking a screenful.
-    tag: data.tag || 'heretoo-message',
+    tag: data.tag || 'nffga-message',
     renotify: true,
     data: { url: data.url || '/messages' },
   };

@@ -3,7 +3,7 @@
  * Build the social-share cover image (1200×630) at public/og-cover.png.
  *
  * Open Graph / Twitter Card image used by every platform that previews
- * a https://heretoo.social link (Slack, Discord, iMessage, Facebook,
+ * a the site link (Slack, Discord, iMessage, Facebook,
  * LinkedIn, Twitter). 1200×630 is the canonical size — both tall-card
  * and wide-card platforms crop from it cleanly.
  *
@@ -43,7 +43,7 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
 
   <text x="500" y="330" fill="#0A0A0A"
         font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-        font-weight="800" font-size="88" letter-spacing="22">HERETOO</text>
+        font-weight="800" font-size="88" letter-spacing="22">NFFGA</text>
 
   <text x="500" y="392" fill="#6B6B6B"
         font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"

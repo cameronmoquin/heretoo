@@ -1,7 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { DEV_MODE } from '../lib/dev-mode';
-import { isKioskBuild } from '../modules/heretoo-kiosk';
 
 export default function Index() {
   const session = useAuthStore((s) => s.session);
@@ -9,14 +8,6 @@ export default function Index() {
 
   if (DEV_MODE) {
     return <Redirect href="/(tabs)/feed" />;
-  }
-
-  // Kiosk builds land on the launcher shelf, not the feed. Checked after
-  // DEV_MODE but before the auth branches: an unauthenticated kiosk device
-  // still needs to sign in, and /about is the wrong surface for a phone with
-  // no browser and no way out.
-  if (isKioskBuild && session && hasCompletedSetup) {
-    return <Redirect href="/shelf" />;
   }
 
   if (!session) {

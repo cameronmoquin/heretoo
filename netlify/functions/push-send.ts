@@ -93,7 +93,7 @@ export default async (req: Request, _ctx: Context) => {
   const targets = (await r.json()) as Target[];
 
   // The browser half. Separate RPC because push_targets_for_message INNER
-  // JOINs push_tokens, so anyone reading HereToo in a browser — which on an
+  // JOINs push_tokens, so anyone reading NFFGA in a browser — which on an
   // iPhone is everyone, since there is no iOS build — never appears in it.
   let webTargets: WebTarget[] = [];
   try {
@@ -156,7 +156,7 @@ export default async (req: Request, _ctx: Context) => {
         title: who_,
         body: isCall ? 'is calling' : 'sent you a message',
         url: isCall && callId ? `/call/${callId}` : '/messages',
-        tag: `heretoo-${messageId}`,
+        tag: `nffga-${messageId}`,
       });
 
       const results = await Promise.allSettled(

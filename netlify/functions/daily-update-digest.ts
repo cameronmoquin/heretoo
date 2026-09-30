@@ -19,7 +19,7 @@
  * Email sending:
  *   - Resend (https://resend.com), key in RESEND_API_KEY env var
  *   - From: onboarding@resend.dev for now (Resend sandbox default).
- *     To send from a custom domain (e.g. notifications@heretoo.social)
+ *     To send from a custom domain (see EMAIL_FROM in constants/site.ts)
  *     verify the domain in Resend dashboard, then change FROM_EMAIL
  *     below. The sandbox only delivers to the Resend account owner's
  *     email, which is fine for testing but blocks production rollout.
@@ -38,17 +38,15 @@ import {
   emailNote,
   EmailBrand,
 } from '../../lib/email-shell';
+import { SITE_URL, EMAIL_FROM } from '../../constants/site';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// heretoo.social is verified in Resend (DKIM + SPF DNS records live
-// in Cloudflare). Mail goes out as HereToo <notifications@heretoo.social>.
-// Replies go to cameron@billing-therapy.com — heretoo.social has no
-// inbound mail host yet, but billing-therapy.com is already a working
-// inbox for the project owner.
-const FROM_EMAIL = 'HereToo <notifications@heretoo.social>';
+// The sending domain must be verified in Resend (DKIM + SPF DNS
+// records) before this delivers. See constants/site.ts.
+const FROM_EMAIL = EMAIL_FROM;
 const REPLY_TO = 'cameron@billing-therapy.com';
 
 const HEADERS = {
@@ -92,7 +90,7 @@ function localDate(tz: string | null): string {
   }
 }
 
-const MANAGE = { href: 'https://heretoo.social/profile/notifications', label: 'Manage email settings' };
+const MANAGE = { href: `${SITE_URL}/profile/notifications`, label: 'Manage email settings' };
 
 /** Build the branded digest from the unread updates. */
 function renderEmail(displayName: string, updates: any[]): { subject: string; html: string; text: string } {
@@ -104,7 +102,7 @@ function renderEmail(displayName: string, updates: any[]): { subject: string; ht
       const crew = escapeHtml(u.family_name ?? `your ${Vocab.group}`);
       const author = escapeHtml(u.author_name ?? u.author_handle ?? 'someone');
       const body = escapeHtml((u.body ?? '').slice(0, 600));
-      const link = `https://heretoo.social/feed/${u.post_id}`;
+      const link = `${SITE_URL}/feed/${u.post_id}`;
       return `<div style="margin:14px 0;padding:14px 16px;background:${EmailBrand.inset};border:1px solid ${EmailBrand.insetBorder};border-radius:10px;">
         <div style="font-family:${EmailBrand.display};font-size:11px;color:${EmailBrand.ink};text-transform:uppercase;letter-spacing:1.4px;font-weight:700;">${crew}</div>
         <div style="font-size:13px;color:${EmailBrand.muted};margin-top:4px;">From ${author}</div>
@@ -124,7 +122,7 @@ function renderEmail(displayName: string, updates: any[]): { subject: string; ht
   const text = renderEmailText({
     subject,
     text: `Unread.\n\n${updates
-      .map((u) => `[${u.family_name ?? Vocab.group}] ${u.author_name ?? u.author_handle ?? 'someone'}: ${(u.body ?? '').slice(0, 200)}\nhttps://heretoo.social/feed/${u.post_id}`)
+      .map((u) => `[${u.family_name ?? Vocab.group}] ${u.author_name ?? u.author_handle ?? 'someone'}: ${(u.body ?? '').slice(0, 200)}\n${SITE_URL}/feed/${u.post_id}`)
       .join('\n\n')}`,
     footerAction: MANAGE,
   });

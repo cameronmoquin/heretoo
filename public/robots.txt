@@ -1,18 +1,15 @@
 User-agent: *
 Allow: /
-Allow: /about
 Disallow: /welcome/
 Disallow: /letter/
 Disallow: /chat/
 Disallow: /family/
 Disallow: /network
-Disallow: /common
 Disallow: /api/
 Disallow: /(auth)/
 Disallow: /(tabs)/
 
-Sitemap: https://heretoo.social/sitemap.xml
-Sitemap: https://heretoo.social/fsot/sitemap.xml
+Sitemap: https://nffga.emspcr.app/sitemap.xml
 
 # LLM training crawlers. What gets written here is written for a
 # specific reader. We keep it out of training corpora. Future-you can

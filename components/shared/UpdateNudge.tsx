@@ -82,7 +82,7 @@ export function UpdateNudge() {
 
   return (
     <View style={[styles.bar, { bottom: tabBarVisible ? tabBarHeight : 0 }]}>
-      <Text style={styles.text}>A newer version of HereToo is available.</Text>
+      <Text style={styles.text}>A newer version of NFFGA is available.</Text>
       <TouchableOpacity style={styles.btn} onPress={reload} activeOpacity={0.8}>
         <Text style={styles.btnText}>Reload</Text>
       </TouchableOpacity>

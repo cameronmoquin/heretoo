@@ -78,7 +78,7 @@ interface Persisted {
   ruleVersion?: number;
 }
 
-const STORAGE_KEY = 'heretoo:art-prefs';
+const STORAGE_KEY = 'nffga:art-prefs';
 
 /** Bump when the default selection changes and should reach devices
  *  that already have prefs saved. 1 = the poster rule. 2 = ads carried.
@@ -130,7 +130,7 @@ function loadInitial(): Persisted {
         // THE RULE HAS TO REACH EXISTING DEVICES. Anyone who had already
         // opened the app carries a saved blob with genres: [], so the
         // poster default only ever applied to a browser that had never
-        // seen HereToo — which is nobody who would notice it. A stored
+        // seen NFFGA — which is nobody who would notice it. A stored
         // ruleVersion lets the default land exactly once on a device
         // that predates it, without overriding what someone picks later.
         if ((parsed.ruleVersion ?? 0) < RULE_VERSION) {

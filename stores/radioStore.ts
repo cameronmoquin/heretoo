@@ -269,7 +269,7 @@ interface RadioState {
   unduck: () => void;
 }
 
-const STORAGE_KEY = 'heretoo:radio-station';
+const STORAGE_KEY = 'nffga:radio-station';
 
 function loadInitialId(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {

@@ -5,7 +5,7 @@
  * counterpart: a Push API subscription, stored in web_push_subscriptions
  * (migration 089) and sent to by netlify/functions/push-send.ts.
  *
- * Why it exists: the only HereToo on an iPhone is the web app, so without
+ * Why it exists: the only NFFGA on an iPhone is the web app, so without
  * this a parent's only alert that their kid wrote is the polled email, which
  * lands one to three minutes later.
  *

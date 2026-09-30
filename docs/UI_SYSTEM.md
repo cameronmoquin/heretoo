@@ -1,4 +1,4 @@
-# HereToo UI System
+# NFFGA UI System
 
 The single source of truth for how the product looks. One appearance, everywhere,
 always. No generation skins. No wallpaper.

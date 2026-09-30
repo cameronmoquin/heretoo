@@ -2,7 +2,7 @@
 /**
  * Tell Bing and Yandex the site changed, instead of waiting to be found.
  *
- * WHY THIS EXISTS. heretoo.social ships web.output "single", so the
+ * WHY THIS EXISTS. the site ships web.output "single", so the
  * document a crawler receives is a React shell. Discovery has always
  * depended entirely on the two sitemaps, and a sitemap is a passive
  * invitation — the engine reads it when it feels like it, which for a
@@ -36,7 +36,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const HOST = 'heretoo.social';
+const HOST = (process.env.SITE_URL || 'https://nffga.emspcr.app').replace(/^https?:\/\//, '');
 const ORIGIN = `https://${HOST}`;
 const SITEMAPS = [`${ORIGIN}/sitemap.xml`, `${ORIGIN}/fsot/sitemap.xml`];
 const ENDPOINT = 'https://api.indexnow.org/indexnow';

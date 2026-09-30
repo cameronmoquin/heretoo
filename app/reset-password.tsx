@@ -45,9 +45,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/shared/Button';
-import { HereTooLogo } from '../components/shared/Logo';
+import { BrandLogo } from '../components/shared/Logo';
 import { Colors } from '../constants/colors';
 import { Spacing, Radius, Heights } from '../constants/design';
+import { SITE_LONG_NAME } from '../constants/site';
 
 type Phase = 'checking' | 'ready' | 'done' | 'invalid';
 
@@ -220,8 +221,8 @@ export default function ResetPasswordScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           <View style={s.logoArea}>
-            <HereTooLogo size={56} color="#FFFFFF" />
-            <Text style={s.logoSub}>heretoo</Text>
+            <BrandLogo size={56} color="#FFFFFF" />
+            <Text style={s.logoSub}>{SITE_LONG_NAME}</Text>
           </View>
 
           {phase === 'checking' && (

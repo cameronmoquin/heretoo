@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
 import { Spacing, Radius } from '../../constants/design';
+import { SITE_URL } from '../../constants/site';
 
 interface EventForm {
   title: string;
@@ -75,12 +76,12 @@ function buildIcs(ev: EventForm): string | null {
   // Deterministic UID so updates replace prior copies in the
   // recipient's calendar. Hash of (title + date) is good enough
   // for friendly use.
-  const uid = `heretoo-${ev.date}-${ev.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)}@heretoo.social`;
+  const uid = `nffga-${ev.date}-${ev.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)}@${SITE_URL.replace(/^https?:\/\//, '')}`;
 
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//HereToo//Family Event//EN',
+    'PRODID:-//NFFGA//Event//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
