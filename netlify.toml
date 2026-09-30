@@ -108,6 +108,20 @@
 # /sow renamed /add (Sept 2026) — the invite door sheds the planting
 # metaphor. Links already sent by text and email carry /sow/<token>;
 # they walk through unchanged.
+# Episode ca-01, "The World as of September 2026", retired Sept 2026.
+# Current affairs is not a Job Knowledge area: State's revised list names
+# "world history and geography", and its own practice test contains
+# nothing dated 2010 or later. The page was in the sitemap, so it may be
+# indexed; without this rule the SPA fallback answers 200 with the app
+# shell, which is a soft 404 Google reads as a thin duplicate rather than
+# a removal. 410 says the resource is gone on purpose and is not coming
+# back, which is true — unlike the 302s below, where a replacement is
+# still undecided.
+[[redirects]]
+  from = "/fsot/listen/ca-01.html"
+  to = "/fsot/listen/"
+  status = 410
+
 [[redirects]]
   from = "/sow/*"
   to = "/add/:splat"
