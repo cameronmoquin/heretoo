@@ -27,7 +27,7 @@
 <nav class="crumbs"><a href="/fsot/">FSOT</a> / Plan</nav>
 <h1>The plan to both tests</h1>
 <p class="lede" id="lede">Two tests, five days apart.</p>
-<div class="box" data-phase="0"><div class="h">Foundation<span class="when"></span></div><p>Weighted to the FSOT, because job knowledge is the largest body of material and it expires on the 14th. Work the history, government, economics and world affairs episodes and questions. Keep English going the whole way through: it is the one section both tests score. And run two situational judgment sessions a week even now, so the section you have never practised is not cold when you reach it.</p></div><div class="box" data-phase="1"><div class="h">FSOT rehearsal<span class="when"></span></div><p>Timed papers on the clock: Job Knowledge 50 in 35, English 45 in 35, Logical Reasoning 30 in 45 — the real counts on the real clock. Review the wrong answers rather than taking more papers. Keep one situational judgment session a week ticking over, and refresh the current affairs episode in this window, since it is dated and the FSOT asks about the world as it is.</p></div><div class="box" data-phase="2"><div class="h">FSOT<span class="when"></span></div><p>Test day. Afterwards, put it down: the OMST is scored separately, and carrying one test into the next is how one bad morning becomes two.</p></div><div class="box" data-phase="3"><div class="h">Pure OMST<span class="when"></span></div><p>Five days, one job. Switch the app&#x27;s question set to OMST only so sessions stop serving job knowledge. Work the nine OMST episodes, situational judgment and reading papers daily, and sit two full rehearsals at the real hour, late afternoon. Nothing new after the 17th.</p></div><div class="box" data-phase="4"><div class="h">OMST<span class="when"></span></div><p>Test day, five in the afternoon. One attempt in twelve months, so the preparation is finished before you walk in.</p></div>
+<div class="box" data-phase="0"><div class="h">Foundation<span class="when"></span></div><p>Weighted to the FSOT, because job knowledge is the largest body of material and it expires on the 14th. Work the history, government, economics and world affairs episodes and questions. Keep English going the whole way through: it is the one section both tests score. And run two situational judgment sessions a week even now, so the section you have never practised is not cold when you reach it.</p></div><div class="box" data-phase="1"><div class="h">FSOT rehearsal<span class="when"></span></div><p>Timed papers on the clock: Job Knowledge 30 in 30, Logical Reasoning 30 in 60, English 30 in 45. Review the wrong answers rather than taking more papers. Keep one situational judgment session a week ticking over, and refresh the current affairs episode in this window, since it is dated and the FSOT asks about the world as it is.</p></div><div class="box" data-phase="2"><div class="h">FSOT<span class="when"></span></div><p>Test day. Afterwards, put it down: the OMST is scored separately, and carrying one test into the next is how one bad morning becomes two.</p></div><div class="box" data-phase="3"><div class="h">Pure OMST<span class="when"></span></div><p>Five days, one job. Switch the app&#x27;s question set to OMST only so sessions stop serving job knowledge. Work the nine OMST episodes, situational judgment and reading papers daily, and sit two full rehearsals at the real hour, late afternoon. Nothing new after the 17th.</p></div><div class="box" data-phase="4"><div class="h">OMST<span class="when"></span></div><p>Test day, five in the afternoon. One attempt in twelve months, so the preparation is finished before you walk in.</p></div>
 
 <h2>What carries over, and what does not</h2>
 <article>
@@ -35,8 +35,8 @@
 month. <strong>Job knowledge</strong> — history, government, economics, world affairs, geography,
 math — is FSOT only and stops mattering on the 14th. <strong>Logical reasoning</strong> is FSOT
 only, but its habits transfer to OMST reading comprehension, because both turn on holding an
-inference to <em>must be true</em>. <strong>Situational judgment</strong> is OMST only — it was cut from the FSOT in October 2025. <strong>Reading
-comprehension</strong> is scored on both: it is about a third of the FSOT’s English section.</p>
+inference to <em>must be true</em>. <strong>Situational judgment</strong> and <strong>reading
+comprehension</strong> are OMST only; situational judgment was cut from the FSOT in October 2025.</p>
 </article>
 
 <h2>The three rules underneath it</h2>
@@ -87,8 +87,7 @@ switch it on the 15th.</span></a></li>
   document.getElementById('lede').textContent = parts.length
     ? parts.join(' \u00b7 ') + '. English is the only section both tests score; job knowledge is '
       + 'FSOT only, and situational judgment is OMST only.'
-    : 'Registration for the next FSOT window opens 31 December 2026; testing runs 30 January to '
-      + '6 February 2027.';
+    : 'Both tests are behind you.';
   [{"name": "Foundation", "a": "today", "b": "fsot-9"}, {"name": "FSOT rehearsal", "a": "fsot-9", "b": "fsot-1"}, {"name": "FSOT", "a": "fsot", "b": "fsot"}, {"name": "Pure OMST", "a": "fsot+1", "b": "omst-1"}, {"name": "OMST", "a": "omst", "b": "omst"}].forEach(function (p, i) {
     var box = document.querySelector('[data-phase="' + i + '"]');
     if (!box) return;
@@ -112,9 +111,9 @@ switch it on the 15th.</span></a></li>
   // rejects; fetch with credentials omitted + keepalive works everywhere.
   window.fsotHit = function(ev, ep) {
     try {
-      fetch('https://evryruyibfibaplzurik.supabase.co/rest/v1/fsot_hits', { method:'POST', keepalive:true,
+      fetch('https://rhvidcltwftwhhttelms.supabase.co/rest/v1/fsot_hits', { method:'POST', keepalive:true,
         mode:'cors', credentials:'omit',
-        headers: { 'apikey':'sb_publishable_PtGbipIMCzXC4kCBSk2Kvw_G4PuliUg', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+        headers: { 'apikey':'sb_publishable_FmUWdnA1auknsOE8lByolQ_aCnOv-Bc', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
         body: JSON.stringify({ page: location.pathname, event: ev, episode: ep || null,
           ref: ev === 'view' ? (document.referrer || null) : null }) }).catch(function(){});
     } catch (e) {}
