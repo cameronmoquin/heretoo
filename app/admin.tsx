@@ -124,7 +124,7 @@ export default function AdminScreen() {
 function Header({ s }: { s: ReturnType<typeof makeStyles> }) {
   return (
     <View style={s.header}>
-      <BrandMark size={32} color={Colors.textPrimary} />
+      <BrandMark size={56} color={Colors.textPrimary} />
       <BrandLogo size={40} color={Colors.textPrimary} />
       <Text style={s.sub}>{SITE_LONG_NAME}</Text>
     </View>

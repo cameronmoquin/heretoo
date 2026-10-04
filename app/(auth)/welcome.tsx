@@ -299,7 +299,7 @@ export default function WelcomeScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
           <View style={s.logoArea}>
-            <BrandMark size={44} color={Colors.textPrimary} />
+            <BrandMark size={72} color={Colors.textPrimary} />
             <BrandLogo size={56} color={Colors.textPrimary} />
             {ADMIN_DOOR && <Text style={s.doorLabel}>Admin sign in</Text>}
           </View>

@@ -19,39 +19,37 @@
  * deterministic.
  */
 import { Resvg } from '@resvg/resvg-js';
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 
 const ROOT = process.cwd();
 const OUT = join(ROOT, 'public', 'og-cover.png');
 
+// The mark comes from scripts/build-brand.mjs, which runs before this.
+const MARK = readFileSync(join(ROOT, 'assets', 'brand', 'nffga-mark.svg'), 'utf8')
+  .replace(/^[\s\S]*?<svg[^>]*>/, '')
+  .replace(/<\/svg>\s*$/, '')
+  .replace(/#000000/g, '#0A0A0A');
+
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-  <!-- Monochrome brand: white field, ink. The lever, then the word. -->
+  <!-- Monochrome brand: white field, ink. The mark, then the name. -->
   <rect width="1200" height="630" fill="#FFFFFF"/>
 
-  <!-- The mark: 100x120 internal coordinates, scaled 3x at (120,135). -->
-  <g transform="translate(120, 135) scale(3)" fill="#0A0A0A">
-    <circle cx="50" cy="14" r="7"/>
-    <rect x="44" y="14" width="12" height="54" rx="6"/>
-    <rect x="12" y="56" width="76" height="12" rx="2"/>
-    <rect x="14" y="30" width="14" height="80" rx="7"/>
-    <rect x="8" y="106" width="26" height="6" rx="3"/>
-    <rect x="72" y="30" width="14" height="80" rx="7"/>
-    <rect x="66" y="106" width="26" height="6" rx="3"/>
-  </g>
+  <!-- The mark: 200x200 drawing scaled to 400 px, vertically centred. -->
+  <g transform="translate(110, 115) scale(2)">${MARK}</g>
 
-  <text x="500" y="330" fill="#0A0A0A"
+  <text x="580" y="318" fill="#0A0A0A"
         font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-        font-weight="800" font-size="88" letter-spacing="22">NFFGA</text>
+        font-weight="800" font-size="112" letter-spacing="18">NFFGA</text>
 
-  <text x="500" y="392" fill="#6B6B6B"
+  <text x="584" y="372" fill="#6B6B6B"
         font-family="Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif"
-        font-weight="600" font-size="26" letter-spacing="1">the anti-social media</text>
+        font-weight="600" font-size="25" letter-spacing="1">National Fire Fighters Golf Association</text>
 </svg>`;
 
 const resvg = new Resvg(svg, {
-  background: '#0A0A0F',
+  background: '#FFFFFF',
   fitTo: { mode: 'width', value: 1200 },
 });
 const png = resvg.render().asPng();
