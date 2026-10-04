@@ -45,17 +45,19 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 import { Eyebrow } from '../../components/shared/Eyebrow';
-import { SITE_URL, MEMBER_SIGNUP_OPEN } from '../../constants/site';
+import { SITE_URL } from '../../constants/site';
 import { claimAdminSeat, claimErrorText, sendAdminLink } from '../../lib/admin';
 
 /**
- * ADMIN DOOR. While MEMBER_SIGNUP_OPEN is false this screen signs admins
+ * ADMIN DOOR. This screen signs admins
  * in and nobody else: no "Create account", sign-in routes to /admin, and
  * an account without a seat is signed straight back out. First-time
  * admins (and anyone who forgot a password) use the emailed link, which
  * is also the only way the database will seat someone — see lib/admin.ts.
  */
-const ADMIN_DOOR = !MEMBER_SIGNUP_OPEN;
+// Members now sign in at /signin and join at /join (public site, 2026-10-04).
+// This screen is the admin door only; /admin sends signed-out visitors here.
+const ADMIN_DOOR = true;
 
 export default function WelcomeScreen() {
   const s = makeStyles();

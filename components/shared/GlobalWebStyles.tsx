@@ -89,16 +89,10 @@ export function GlobalWebStyles() {
         padding-right: 352px;
       }
 
-      /* Centered column on desktop. The (auth) layout flex-centers its
-         own 480px card and this clamp would fight it. */
-      @media (min-width: 1024px) {
-        body:not([data-auth-layout='on']) #root > div:first-child > div:not([style*="position: fixed"]) {
-          max-width: 720px !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
-          width: 100% !important;
-        }
-      }
+      /* No global width clamp. HereToo centred every page in a 720px
+         column for its phone-style feed; NFFGA's header spans the
+         window and each page sets its own maxWidth (1080 for the home,
+         tournaments and gear; 760 for the board and inbox). */
       body[data-auth-layout='on'] #root > div:first-child {
         padding-left: 0 !important;
         padding-right: 0 !important;

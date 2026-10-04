@@ -20,9 +20,7 @@ import { UpdateNudge } from '../components/shared/UpdateNudge';
 import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
-import { MobileTabBar, useMobileTabBarVisible, useMobileTabBarHeight } from '../components/shared/MobileTabBar';
-import { LeftSidebar } from '../components/shared/LeftSidebar';
-import { RightSidebar } from '../components/shared/RightSidebar';
+import { SiteHeader } from '../components/nffga/SiteHeader';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 import { Vocab } from '../constants/vocab';
@@ -42,10 +40,6 @@ const NAV_THEME = {
 function RootLayoutInner() {
   const { isLoading } = useAuth();
   const themeMode = useThemeStore((s) => s.mode);
-  const tabBarVisible = useMobileTabBarVisible();
-  // Includes the gesture-bar inset, so the reservation matches the bar's real
-  // height on native rather than the bare 64.
-  const tabBarHeight = useMobileTabBarHeight();
 
   // Apply the active palette before child renders happen. useEffect
   // would render once with the wrong palette; useMemo runs sync.
@@ -97,11 +91,11 @@ function RootLayoutInner() {
       style={{
         flex: 1,
         backgroundColor: Colors.background,
-        paddingBottom: tabBarVisible ? tabBarHeight : 0,
       }}
     >
       <GlobalWebStyles />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
+      <SiteHeader />
       <ThemeProvider value={NAV_THEME}>
       <Stack
         screenOptions={{
@@ -140,15 +134,9 @@ function RootLayoutInner() {
         <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>
       </ThemeProvider>
-      {/* Global navigation — same hide rules across all three:
-          web-only, authed, off auth-flow pages. Width thresholds
-          differ so the right configuration shows per viewport:
-            - <1024px:  MobileTabBar at the bottom only
-            - ≥1024px:  LeftSidebar visible; MobileTabBar hides
-            - ≥1280px:  RightSidebar (calendar + invites) also shows */}
-      <MobileTabBar />
-      <LeftSidebar />
-      <RightSidebar />
+      {/* Navigation is the NFFGA SiteHeader above the Stack. HereToo's
+          MobileTabBar, LeftSidebar and RightSidebar are not mounted:
+          they point at rooms this version does not ship. */}
       <ToastHost />
       <ConfirmHost />
       <UpdateNudge />
