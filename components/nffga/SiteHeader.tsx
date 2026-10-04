@@ -1,7 +1,7 @@
 /**
  * SiteHeader — the public top bar on every NFFGA page.
  *
- * Signed out: brand, Clubhouse, Tournaments, Gear, Messages, Sign in and Join.
+ * Signed out: brand, Home, Clubhouse, Tournaments, Gear, Messages, Sign in and Join.
  * Signed in: the same rooms plus Account.
  * Hidden on the sign-in, join and admin screens, which carry their own.
  */
@@ -17,6 +17,8 @@ import { signInHref, joinHref } from '../../lib/nffga/auth';
 const HIDE_ON = ['/signin', '/join', '/admin', '/welcome', '/(auth)', '/reset-password'];
 
 const ROOMS = [
+  // Home is active only on '/' itself (every path starts with '/').
+  { label: 'Home', href: '/' },
   { label: 'Clubhouse', href: '/clubhouse' },
   { label: 'Tournaments', href: '/tournaments' },
   { label: 'Gear', href: '/gear' },
@@ -37,7 +39,7 @@ export function SiteHeader() {
   const links = (
     <>
       {ROOMS.map((r) => (
-        <NavLink key={r.href} label={r.label} href={r.href} active={path.startsWith(r.href)} s={s} />
+        <NavLink key={r.href} label={r.label} href={r.href} active={r.href === '/' ? path === '/' : path.startsWith(r.href)} s={s} />
       ))}
     </>
   );
