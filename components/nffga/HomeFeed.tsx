@@ -15,11 +15,13 @@ import { Button } from '../shared/Button';
 import { Colors } from '../../constants/colors';
 import { Spacing, Type } from '../../constants/design';
 import { useBoardFeed } from '../../lib/nffga/board';
+import { useCopy } from '../../lib/nffga/copy';
 
 export function HomeFeed() {
   const s = makeStyles();
   const feed = useBoardFeed();
   const posts = feed.data?.pages.flat() ?? [];
+  const empty = useCopy('clubhouse.empty');
 
   return (
     <View style={s.wrap}>
@@ -28,7 +30,7 @@ export function HomeFeed() {
         <Composer />
       </RequireAccount>
       {feed.isLoading ? <Text style={s.muted}>Loading.</Text> : null}
-      {!feed.isLoading && posts.length === 0 ? <Text style={s.muted}>No posts yet.</Text> : null}
+      {!feed.isLoading && posts.length === 0 ? <Text style={s.muted}>{empty}</Text> : null}
       {posts.map((p) => <PostCard key={p.id} post={p} />)}
       {feed.hasNextPage ? (
         <Button

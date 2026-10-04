@@ -5,6 +5,10 @@
  * 2026-10-04), with upcoming tournaments and the gear trade beside it on
  * desktop and below it on a phone. Each side section is owned by the
  * agent that built that room (docs/NFFGA_CONTRACT.md).
+ *
+ * Under the name: the editable tagline ('home.tagline', hidden when
+ * empty) and, when admins have added any, the home gallery photos
+ * (/admin → Photos, placement 'home_gallery').
  */
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
@@ -15,6 +19,8 @@ import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/design';
 import { SITE_LONG_NAME } from '../../constants/site';
 import { useSession } from '../../lib/nffga/useSession';
+import { useCopy } from '../../lib/nffga/copy';
+import { SitePhotoStrip } from './SitePhotoStrip';
 import { TournamentsSection } from './home/TournamentsSection';
 import { GearSection } from './home/GearSection';
 import { HomeFeed } from './HomeFeed';
@@ -24,6 +30,7 @@ export function HomeScreen() {
   const s = makeStyles();
   const { width } = useWindowDimensions();
   const { session } = useSession();
+  const tagline = useCopy('home.tagline');
   const wide = width >= 900;
 
   return (
@@ -32,6 +39,7 @@ export function HomeScreen() {
         <BrandMark size={wide ? 120 : 88} />
         <Text style={[s.name, !wide && s.nameCompact]}>NFFGA</Text>
         <Text style={s.long}>{SITE_LONG_NAME}</Text>
+        {tagline ? <Text style={s.tagline}>{tagline}</Text> : null}
         {!session && (
           <View style={s.ctas}>
             <Button title="Join free" onPress={() => router.push('/join' as any)} variant="primary" size="lg" />
@@ -39,6 +47,8 @@ export function HomeScreen() {
           </View>
         )}
       </View>
+
+      <SitePhotoStrip placement="home_gallery" style={wide ? s.galleryWide : s.gallery} />
 
       <View style={[s.body, wide && s.bodyWide]}>
         <View style={wide ? s.main : undefined}>
@@ -67,6 +77,9 @@ function makeStyles() { return StyleSheet.create({
   name: { fontSize: 40, fontWeight: '800', letterSpacing: 10, color: Colors.textPrimary, marginTop: Spacing.xs },
   nameCompact: { fontSize: 30, letterSpacing: 7 },
   long: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center' },
+  tagline: { fontSize: 15, lineHeight: 21, color: Colors.textSecondary, textAlign: 'center', maxWidth: 560 },
+  gallery: { paddingTop: Spacing.md },
+  galleryWide: { paddingTop: Spacing.lg, paddingHorizontal: Spacing.md, maxWidth: 1080, alignSelf: 'center' },
   ctas: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.xs, marginTop: Spacing.sm },
   body: {
     gap: Spacing.xl, paddingHorizontal: Spacing.md, paddingTop: Spacing.lg,

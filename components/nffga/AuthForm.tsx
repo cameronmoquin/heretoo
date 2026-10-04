@@ -15,6 +15,7 @@ import { BrandMark } from '../shared/Logo';
 import { Eyebrow } from '../shared/Eyebrow';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
+import { useCopy } from '../../lib/nffga/copy';
 import { signInMember, signUpMember, safeNext, signInHref, joinHref, requestEmailLink } from '../../lib/nffga/auth';
 
 export function AuthForm({ mode }: { mode: 'signin' | 'join' }) {
@@ -22,6 +23,9 @@ export function AuthForm({ mode }: { mode: 'signin' | 'join' }) {
   const params = useLocalSearchParams<{ next?: string }>();
   const next = safeNext(params.next);
   const joining = mode === 'join';
+  const joinSub = useCopy('join.subtitle');
+  const signinSub = useCopy('signin.subtitle');
+  const subtitle = joining ? joinSub : signinSub;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,7 +69,8 @@ export function AuthForm({ mode }: { mode: 'signin' | 'join' }) {
         <BrandMark size={64} />
         <Text style={s.word}>NFFGA</Text>
       </Pressable>
-      <Text style={s.title}>{joining ? 'Create your account' : 'Sign in'}</Text>
+      <Text style={[s.title, !!subtitle && s.titleTight]}>{joining ? 'Create your account' : 'Sign in'}</Text>
+      {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
 
       <View style={s.form}>
         {joining && (
@@ -127,6 +132,8 @@ function makeStyles() { return StyleSheet.create({
   brand: { alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.md },
   word: { fontSize: 22, fontWeight: '800', letterSpacing: 5, color: Colors.textPrimary },
   title: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginBottom: Spacing.md },
+  titleTight: { marginBottom: Spacing.xs },
+  subtitle: { fontSize: 15, lineHeight: 21, color: Colors.textSecondary, textAlign: 'center', marginBottom: Spacing.md },
   form: { gap: Spacing.xs },
   input: {
     backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md,

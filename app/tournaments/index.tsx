@@ -1,9 +1,9 @@
 /**
  * /tournaments — every tournament anyone may see. Upcoming first
  * (soonest first), then past. Anyone can open "Host an event" to see
- * how a fire department proposes one. Officers also see drafts, a
- * "New tournament" button and the queue of event requests.
- * No sign-in needed to browse.
+ * how a fire department proposes one. Officers also see drafts and a
+ * "New tournament" button. Event requests are decided in the back
+ * office (/admin → Requests), not here. No sign-in needed to browse.
  */
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
@@ -15,7 +15,8 @@ import { Spacing, Type } from '../../constants/design';
 import { useSession } from '../../lib/nffga/useSession';
 import { splitTournaments, useNffgaRole, useTournaments } from '../../lib/nffga/tournaments';
 import { TournamentCard } from '../../components/nffga/tournaments/TournamentCard';
-import { EventRequestsPanel } from '../../components/nffga/tournaments/EventRequestsPanel';
+import { SitePhotoStrip } from '../../components/nffga/SitePhotoStrip';
+import { useCopy } from '../../lib/nffga/copy';
 import { Loading, Muted, Page, PageTitle } from '../../components/nffga/tournaments/ui';
 
 export default function TournamentsScreen() {
@@ -24,12 +25,14 @@ export default function TournamentsScreen() {
   const q = useTournaments();
   const { upcoming, past, drafts } = splitTournaments(q.data ?? []);
   const s = makeStyles();
+  const intro = useCopy('tournaments.intro');
 
   return (
     <Page>
       <Stack.Screen options={{ title: 'Tournaments' }} />
       <PageTitle
         title="Tournaments"
+        sub={intro}
         right={(
           <View style={s.actions}>
             <Button title="Host an event" onPress={() => router.push('/tournaments/host' as any)} variant="outline" size="md" />
@@ -40,10 +43,11 @@ export default function TournamentsScreen() {
         )}
       />
 
+      <SitePhotoStrip placement="tournaments" />
+
       {q.isLoading ? <Loading /> : (
         <>
           <Group title="Upcoming" empty="No upcoming tournaments yet." items={upcoming} />
-          {role ? <EventRequestsPanel /> : null}
           {drafts.length > 0 ? <Group title="Drafts" items={drafts} /> : null}
           {past.length > 0 ? <Group title="Past" items={past} /> : null}
         </>

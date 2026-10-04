@@ -49,6 +49,9 @@ public rows.
 | `nffga_tournaments` | see 104: the full logistics sheet | yes, status not draft |
 | `nffga_tournament_*` | staff, teams, registrations, waiver signatures (append-only), tee times, scores | roster + leaderboard views only |
 | `nffga_threads`, `nffga_thread_members`, `nffga_messages` | direct messages, optionally about a gear listing | no |
+| `nffga_site_copy` | 110: editable website text, `key` → `value`; defaults live in `constants/siteCopy.ts`; site admins write | yes |
+| `nffga_site_photos` | 110: the association's own photos (bucket `nffga-site`), `placement` home_gallery / tournaments / gear / clubhouse; site admins write | yes |
+| `nffga_contact_messages` | 110: Contact us inbox; inserted only by `/api/contact` (service role); site admins read and set `status` | no |
 
 ### RPCs the app calls
 
@@ -97,7 +100,8 @@ not be linked from NFFGA navigation. Leave the files; just do not route to them.
 | `/members/[id]` | community agent | public profile |
 | `/account` | community agent | redirects to sign in |
 | `/signin`, `/join` | shell | sign in / create account; `?next=` returns afterwards |
-| `/admin` | already built | |
+| `/admin` | admin dashboard (110) | site admins only: super_admin and managing_admin (`nffga_is_site_admin`); other officers see their seat line only |
+| `/contact` | admin dashboard (110) | Contact us form, works signed out; posts to `/api/contact` |
 
 ### File ownership (do not edit files you do not own)
 

@@ -16,6 +16,7 @@ import { Spacing, Radius, Type } from '../../constants/design';
 import { SITE_NAME } from '../../constants/site';
 import type { TournamentFormat } from '../../lib/nffga/types';
 import { useSession } from '../../lib/nffga/useSession';
+import { useCopy } from '../../lib/nffga/copy';
 import {
   EVENT_REQUEST_STATUS_LABEL, FORMAT_LABEL, TOURNAMENT_FORMATS, eventRequestKeys, fetchMyProfile,
   submitEventRequest, useMyEventRequests,
@@ -26,13 +27,12 @@ import {
 } from '../../components/nffga/tournaments/ui';
 
 export default function HostEventScreen() {
+  const intro = useCopy('host.intro');
   return (
     <Page narrow>
       <Stack.Screen options={{ title: 'Host an event' }} />
       <PageTitle title="Host an event" />
-      <Paragraph>
-        {`Fire departments can propose a regional golf event to be officiated by ${SITE_NAME}. Send the details below and an officer will review the request and follow up.`}
-      </Paragraph>
+      <Paragraph>{intro}</Paragraph>
       <RequireAccount reason="to submit an event">
         <HostForm />
         <MyRequests />

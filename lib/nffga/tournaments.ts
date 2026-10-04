@@ -638,7 +638,7 @@ function friendlyWriteError(error: any): string {
 
 // ── Event requests (migration 107) ───────────────────────────────────
 // A fire department proposes a regional event to be officiated by NFFGA.
-// Members read their own; officers read and decide all of them.
+// Members read their own; site admins (migration 110) read and decide all of them.
 
 export const EVENT_REQUEST_STATUS_LABEL: Record<EventRequestStatus, string> = {
   submitted: 'Submitted',
@@ -668,7 +668,7 @@ export async function fetchMyEventRequests(userId: string): Promise<EventRequest
   }
 }
 
-/** Every request (officers; RLS returns only the caller's own to anyone else). */
+/** Every request (site admins, migration 110; RLS returns only the caller's own to anyone else). */
 export async function fetchAllEventRequests(): Promise<EventRequest[]> {
   try {
     const { data, error } = await supabase
@@ -725,7 +725,7 @@ export async function submitEventRequest(
   }
 }
 
-/** Officers: create a draft tournament from the request and mark it approved. */
+/** Site admins: create a draft tournament from the request and mark it approved. */
 export async function approveEventRequest(
   requestId: string,
 ): Promise<{ ok: true; tournamentId: string } | { ok: false; error: string }> {
@@ -735,7 +735,7 @@ export async function approveEventRequest(
     const r = (data ?? {}) as { ok?: boolean; tournament_id?: string; error?: string };
     if (!r.ok || !r.tournament_id) {
       const text: Record<string, string> = {
-        not_allowed: 'Only association officers can approve event requests.',
+        not_allowed: 'Only site admins can approve event requests.',
         not_found: 'This request could not be found.',
       };
       return { ok: false, error: text[r.error ?? ''] ?? 'Could not approve. Try again.' };
@@ -747,7 +747,7 @@ export async function approveEventRequest(
   }
 }
 
-/** Officers: set a request's status, with an optional note the submitter can read. */
+/** Site admins: set a request's status, with an optional note the submitter can read. */
 export async function setEventRequestStatus(
   requestId: string,
   status: Exclude<EventRequestStatus, 'approved'>,
@@ -762,7 +762,7 @@ export async function setEventRequestStatus(
       .eq('id', requestId)
       .select('id');
     if (error) { quiet('update request', error); return { ok: false, error: 'Could not update the request. Try again.' }; }
-    if (!data || data.length === 0) return { ok: false, error: 'Only association officers can change a request.' };
+    if (!data || data.length === 0) return { ok: false, error: 'Only site admins can change a request.' };
     return { ok: true };
   } catch (e) {
     quiet('update request', e);

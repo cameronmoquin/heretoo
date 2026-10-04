@@ -1,6 +1,8 @@
 /**
- * EventRequestsPanel — officers' queue of host-department event
- * requests (nffga_event_requests, migration 107), shown on /tournaments.
+ * EventRequestsPanel — the site admins' queue of host-department event
+ * requests (nffga_event_requests, migration 107), shown in the back
+ * office at /admin → Requests. Since migration 110 only site admins
+ * (super / managing admin) may read all requests or decide them.
  *
  * Approve → nffga_create_tournament_from_request makes a draft
  * tournament prefilled from the request, then opens its edit page.
@@ -18,7 +20,7 @@ import {
   EVENT_REQUEST_STATUS_LABEL, FORMAT_LABEL, approveEventRequest, eventRequestKeys, setEventRequestStatus,
   tournamentKeys, useAllEventRequests,
 } from '../../../lib/nffga/tournaments';
-import { ErrorText, Loading, Muted, TextField } from './ui';
+import { ErrorText, Loading, Muted, TextField } from '../tournaments/ui';
 
 export function EventRequestsPanel() {
   const s = makeStyles();
@@ -38,7 +40,7 @@ export function EventRequestsPanel() {
           </Pressable>
         ) : null}
       </View>
-      <Muted>Event proposals from host departments. Visible to officers only.</Muted>
+      <Muted>Event proposals from host departments. Approving one creates a draft tournament and opens it for editing.</Muted>
       {q.isLoading ? <Loading /> : open.length === 0 && !showDecided ? <Muted>No open requests.</Muted> : null}
       {open.map((r) => <RequestCard key={r.id} r={r} />)}
       {showDecided ? decided.map((r) => <RequestCard key={r.id} r={r} />) : null}
@@ -100,7 +102,7 @@ function RequestCard({ r }: { r: EventRequest }) {
     ['Format', fmt],
     ['Supports', r.beneficiary],
     ['Notes', r.notes],
-    ['Officer note', r.officer_notes],
+    ['Note sent', r.officer_notes],
   ];
 
   return (

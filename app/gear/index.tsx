@@ -13,6 +13,8 @@ import { useSession } from '../../lib/nffga/useSession';
 import { signInHref } from '../../lib/nffga/auth';
 import { CATEGORY_LABEL, GEAR_CATEGORIES, useGearListings } from '../../lib/nffga/gear';
 import { GearGrid } from '../../components/nffga/gear/GearGrid';
+import { SitePhotoStrip } from '../../components/nffga/SitePhotoStrip';
+import { useCopy } from '../../lib/nffga/copy';
 import { Loading, Muted, Page, PageTitle } from '../../components/nffga/tournaments/ui';
 
 export default function GearScreen() {
@@ -20,15 +22,17 @@ export default function GearScreen() {
   const { userId } = useSession();
   const [category, setCategory] = useState<GearCategory | null>(null);
   const q = useGearListings(category);
+  const intro = useCopy('gear.intro');
 
   return (
     <Page>
       <Stack.Screen options={{ title: 'Gear trade' }} />
       <PageTitle
         title="Gear trade"
-        sub="Buy, sell, trade and give away golf gear with other members. Payment is arranged between members."
+        sub={intro}
         right={<Button title="List gear" onPress={() => router.push((userId ? '/gear/new' : signInHref('/gear/new')) as any)} variant="primary" size="md" />}
       />
+      <SitePhotoStrip placement="gear" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
         <Chip label="All" selected={category === null} onPress={() => setCategory(null)} />
         {GEAR_CATEGORIES.map((c) => (

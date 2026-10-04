@@ -229,7 +229,7 @@ export interface Message {
 }
 
 /** Public URL for an object in a public NFFGA bucket. */
-export function publicObjectUrl(bucket: 'nffga-gear' | 'nffga-media', path: string): string {
+export function publicObjectUrl(bucket: 'nffga-gear' | 'nffga-media' | 'nffga-site', path: string): string {
   const base = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
   return `${base}/storage/v1/object/public/${bucket}/${path}`;
 }

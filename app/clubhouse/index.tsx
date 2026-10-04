@@ -10,10 +10,13 @@ import { RequireAccount } from '../../components/nffga/RequireAccount';
 import { Button } from '../../components/shared/Button';
 import { Colors } from '../../constants/colors';
 import { useBoardFeed } from '../../lib/nffga/board';
+import { useCopy } from '../../lib/nffga/copy';
+import { SitePhotoStrip } from '../../components/nffga/SitePhotoStrip';
 
 export default function BoardScreen() {
   const feed = useBoardFeed();
   const posts = feed.data?.pages.flat() ?? [];
+  const empty = useCopy('clubhouse.empty');
 
   return (
     <Page
@@ -23,12 +26,13 @@ export default function BoardScreen() {
       }
     >
       <PageTitle>Clubhouse</PageTitle>
+      <SitePhotoStrip placement="clubhouse" />
       <RequireAccount reason="to post">
         <Composer />
       </RequireAccount>
 
       {feed.isLoading ? <Loading /> : null}
-      {!feed.isLoading && posts.length === 0 ? <Muted>No posts yet.</Muted> : null}
+      {!feed.isLoading && posts.length === 0 ? <Muted>{empty}</Muted> : null}
       {posts.map((p) => <PostCard key={p.id} post={p} />)}
 
       {feed.hasNextPage ? (
