@@ -31,6 +31,15 @@ export const EMAIL_FROM = `${SITE_NAME} <notifications@nffga.emspcr.app>`;
 export const EMAIL_NOREPLY = 'noreply@nffga.emspcr.app';
 
 /**
+ * Member sign-up. OFF while the association is admin-only (Cameron,
+ * 2026-10-04: the first two people in are the super admin and the
+ * managing admin). While off, the welcome page is the admin door: no
+ * "Create account", and a successful sign-in lands on /admin. Flip to
+ * true when members should be able to join.
+ */
+export const MEMBER_SIGNUP_OPEN = false;
+
+/**
  * Sister products on the same domain. Car56 is the fire-investigation
  * report tool; the association links to it from the navigation.
  */

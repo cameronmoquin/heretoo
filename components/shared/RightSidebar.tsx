@@ -29,6 +29,7 @@ export function RightSidebar() {
 
   const path = pathname ?? '';
   const HIDE_ON = [
+    '/admin',
     '/welcome',
     '/(auth)',
     '/profile-setup',

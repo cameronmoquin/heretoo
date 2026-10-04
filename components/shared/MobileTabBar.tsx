@@ -34,6 +34,8 @@ import { Vocab } from '../../constants/vocab';
 // prefix (e.g., '/welcome' OR '/(auth)/welcome' depending on how
 // the user navigated). Use `includes` not `startsWith`.
 const HIDE_ON = [
+  // The back office has its own chrome.
+  '/admin',
   '/welcome',
   '/(auth)',
   '/profile-setup',

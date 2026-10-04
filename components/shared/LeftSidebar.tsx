@@ -29,6 +29,7 @@ import { Colors } from '../../constants/colors';
 import { Vocab } from '../../constants/vocab';
 
 const HIDE_ON_PATHS = [
+  '/admin',
   '/welcome',
   '/(auth)',
   '/profile-setup',

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- NFFGA — Migration 103: Tournaments, registration, waivers, scoring
+-- NFFGA — Migration 104: Tournaments, registration, waivers, scoring
 -- ════════════════════════════════════════════════════════════════════════
 -- A TOURNAMENT is one event at one course on one day (or a range). It
 -- carries every logistical fact a player needs before they show up and
@@ -9,9 +9,8 @@
 --
 -- PEOPLE. The creator is the organizer. A host club's owner can also
 -- run it. Organizers may add STAFF (co-organizers, scorers). National
--- events with no host club are run by NFFGA OFFICERS, a table nothing
--- with a user JWT can write — the same "not guarded, incapable" shape
--- as 098's human_verifications.
+-- events with no host club are run by NFFGA OFFICERS (migration 102),
+-- a table nothing with a user JWT can write.
 --
 -- REGISTRATION goes through one RPC that, in a single transaction,
 -- checks the window and capacity, seats the player (or waitlists
@@ -37,13 +36,13 @@
 --
 -- NO MONEY MOVES HERE either. The entry fee is recorded and marked paid
 -- by the organizer; collection is Stripe Checkout or cash at the tent,
--- the organizer's choice. See 102's header for the reasoning.
+-- the organizer's choice. See 103's header for the reasoning.
 --
 -- EMSPCR. This project's database already models firefighters,
 -- agencies and apparatus. department_name is freeform for now; when
 -- the two schemas are wired it becomes a reference to agencies.
 --
--- Depends on: 001, 083, 102 (is_active_club_member).
+-- Depends on: 001, 083, 102 (is_nffga_officer), 103 (is_active_club_member).
 --
 -- Run BY HAND in the dashboard SQL editor. Idempotent. Atomic.
 -- ════════════════════════════════════════════════════════════════════════
@@ -60,33 +59,17 @@ begin
     raise exception 'public.uid_is_guest() missing: migration 083 has not run here.';
   end if;
   if to_regprocedure('public.is_active_club_member(uuid, uuid)') is null then
-    raise exception 'public.is_active_club_member() missing: migration 102 has not run here.';
+    raise exception 'public.is_active_club_member() missing: migration 103 has not run here.';
+  end if;
+  if to_regprocedure('public.is_nffga_officer(uuid)') is null then
+    raise exception 'public.is_nffga_officer() missing: migration 102 has not run here.';
   end if;
 end$$;
 
 create extension if not exists "pgcrypto";
 
 
--- ── 1. NFFGA officers — the national desk ────────────────────────────
--- Inserted by the service role or the SQL editor. No client write path.
-create table if not exists public.nffga_officers (
-  user_id     uuid primary key references public.profiles(id) on delete cascade,
-  role        text not null check (role in ('president', 'director', 'tournament_chair', 'treasurer', 'secretary', 'admin')),
-  created_at  timestamptz not null default now()
-);
-alter table public.nffga_officers enable row level security;
-
-drop policy if exists nffga_officers_read on public.nffga_officers;
-create policy nffga_officers_read on public.nffga_officers
-  for select to authenticated using (true);
--- Deliberately no insert / update / delete policy.
-
-create or replace function public.is_nffga_officer(p_profile_id uuid)
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.nffga_officers where user_id = p_profile_id);
-$$;
-revoke all on function public.is_nffga_officer(uuid) from public, anon;
-grant execute on function public.is_nffga_officer(uuid) to authenticated;
+-- ── 1. NFFGA officers live in migration 102 ─────────────────────────
 
 
 -- ── 2. Tournaments ───────────────────────────────────────────────────

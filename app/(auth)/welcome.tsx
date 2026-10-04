@@ -45,7 +45,17 @@ import { Colors } from '../../constants/colors';
 import { Spacing, Radius, Type } from '../../constants/design';
 import { Vocab } from '../../constants/vocab';
 import { Eyebrow } from '../../components/shared/Eyebrow';
-import { SITE_URL } from '../../constants/site';
+import { SITE_URL, MEMBER_SIGNUP_OPEN } from '../../constants/site';
+import { claimAdminSeat, claimErrorText, sendAdminLink } from '../../lib/admin';
+
+/**
+ * ADMIN DOOR. While MEMBER_SIGNUP_OPEN is false this screen signs admins
+ * in and nobody else: no "Create account", sign-in routes to /admin, and
+ * an account without a seat is signed straight back out. First-time
+ * admins (and anyone who forgot a password) use the emailed link, which
+ * is also the only way the database will seat someone — see lib/admin.ts.
+ */
+const ADMIN_DOOR = !MEMBER_SIGNUP_OPEN;
 
 export default function WelcomeScreen() {
   const s = makeStyles();
@@ -109,6 +119,17 @@ export default function WelcomeScreen() {
       if (error) throw error;
       if (!data?.session) {
         setErrorMsg('Sign-in succeeded but no session was returned. Try again.');
+        return;
+      }
+      if (ADMIN_DOOR) {
+        const seat = await claimAdminSeat();
+        if (seat.ok) {
+          router.replace('/admin' as any);
+        } else {
+          // No seat: do not leave a signed-in session on an admin-only site.
+          await supabase.auth.signOut();
+          setErrorMsg(claimErrorText(seat.error));
+        }
         return;
       }
       // Resume a pending /join/CODE invite if applicable.
@@ -231,6 +252,24 @@ export default function WelcomeScreen() {
     }
   };
 
+  const [linkSent, setLinkSent] = useState(false);
+  const onSendLink = async () => {
+    setErrorMsg(null);
+    const e = email.trim();
+    if (!e) {
+      setErrorMsg('Type your email above first.');
+      return;
+    }
+    setLoading(true);
+    const res = await sendAdminLink(e);
+    setLoading(false);
+    if (!res.ok) {
+      setErrorMsg(res.error ?? 'Could not send the link. Try again.');
+      return;
+    }
+    setLinkSent(true);
+  };
+
   const onForgot = async () => {
     setErrorMsg(null);
     const e = email.trim();
@@ -262,6 +301,7 @@ export default function WelcomeScreen() {
           <View style={s.logoArea}>
             <BrandMark size={44} color={Colors.textPrimary} />
             <BrandLogo size={56} color={Colors.textPrimary} />
+            {ADMIN_DOOR && <Text style={s.doorLabel}>Admin sign in</Text>}
           </View>
 
           <View style={s.section}>
@@ -308,9 +348,14 @@ export default function WelcomeScreen() {
                 />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={onForgot} style={s.forgotBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={s.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
+            {/* On the admin door the emailed link replaces password reset:
+                it signs you in, and the admin screen sets a new password.
+                The branded reset endpoint needs server keys not yet set. */}
+            {!ADMIN_DOOR && (
+              <TouchableOpacity onPress={onForgot} style={s.forgotBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={s.forgotText}>Forgot password?</Text>
+              </TouchableOpacity>
+            )}
 
             {isSignup && (
               <>
@@ -344,14 +389,33 @@ export default function WelcomeScreen() {
               style={s.submitBtn}
             />
 
-            {/* The other door. Two things this form can do, both named. */}
-            <Button
-              title={isSignup ? 'Sign in' : 'Create account'}
-              onPress={() => { setMode(isSignup ? 'signin' : 'register'); setErrorMsg(null); }}
-              disabled={loading}
-              variant="ghost"
-              size="lg"
-            />
+            {ADMIN_DOOR ? (
+              <>
+                {/* First time, or a forgotten password. The link is also the
+                    only sign-in the database accepts for claiming a seat. */}
+                <Button
+                  title="Email me a sign-in link"
+                  onPress={onSendLink}
+                  disabled={loading}
+                  variant="ghost"
+                  size="lg"
+                />
+                {linkSent && (
+                  <Text style={s.linkNote}>
+                    Link sent to {email.trim()}. Open it on this device to finish signing in.
+                  </Text>
+                )}
+              </>
+            ) : (
+              /* The other door. Two things this form can do, both named. */
+              <Button
+                title={isSignup ? 'Sign in' : 'Create account'}
+                onPress={() => { setMode(isSignup ? 'signin' : 'register'); setErrorMsg(null); }}
+                disabled={loading}
+                variant="ghost"
+                size="lg"
+              />
+            )}
           </View>
 
           <Text style={s.legal}>
@@ -409,6 +473,15 @@ function makeStyles() { return StyleSheet.create({
     right: 12,
     height: '100%',
     justifyContent: 'center',
+  },
+
+  doorLabel: {
+    fontSize: Type.caption.size, fontWeight: '600', color: Colors.textSecondary,
+    letterSpacing: 1.5, textTransform: 'uppercase', marginTop: Spacing.sm,
+  },
+  linkNote: {
+    fontSize: Type.caption.size, color: Colors.textSecondary, textAlign: 'center',
+    lineHeight: 18, marginTop: Spacing.xs,
   },
 
   forgotBtn: { alignSelf: 'flex-end', paddingVertical: Spacing.xxs, paddingHorizontal: Spacing.xxs },

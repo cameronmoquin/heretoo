@@ -137,6 +137,7 @@ function RootLayoutInner() {
         <Stack.Screen name="hunt" options={{ title: Vocab.Hunt }} />
         <Stack.Screen name="rooms" options={{ title: 'More' }} />
         <Stack.Screen name="version" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>
       </ThemeProvider>
       {/* Global navigation — same hide rules across all three:
