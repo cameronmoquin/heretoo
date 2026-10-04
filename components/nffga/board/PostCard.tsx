@@ -11,7 +11,7 @@ import { Spacing, Radius, Type } from '../../../constants/design';
 import type { BoardPost } from '../../../lib/nffga/types';
 import { publicObjectUrl } from '../../../lib/nffga/types';
 import { relativeTime } from '../../../lib/nffga/board';
-import { PostPhoto } from './PostPhoto';
+import { PostPhotos } from './PostPhoto';
 
 export function AuthorLine({ authorId, name, department, at }: {
   authorId: string; name?: string | null; department?: string | null; at: string;
@@ -28,6 +28,8 @@ export function AuthorLine({ authorId, name, department, at }: {
   );
 }
 
+const mediaUri = (p: string) => publicObjectUrl('nffga-media', p);
+
 export function PostCard({ post, compact, linked = true, actions }: {
   post: BoardPost;
   /** Home page: clamp the body, smaller photo. */
@@ -40,6 +42,8 @@ export function PostCard({ post, compact, linked = true, actions }: {
   const s = makeStyles();
   const announce = post.kind === 'announcement';
   const open = () => router.push(`/clubhouse/${post.id}` as any);
+  // Several photos since migration 108; older rows only have photo_path.
+  const photoList = post.photo_paths?.length ? post.photo_paths : (post.photo_path ? [post.photo_path] : []);
   const count = post.comment_count ?? 0;
 
   const body = post.body ? (
@@ -58,12 +62,12 @@ export function PostCard({ post, compact, linked = true, actions }: {
       {linked ? (
         <Pressable onPress={open} accessibilityRole="link" accessibilityLabel="Open post" style={s.bodyWrap}>
           {body}
-          {post.photo_path ? <PostPhoto uri={publicObjectUrl('nffga-media', post.photo_path)} maxHeight={compact ? 240 : 520} /> : null}
+          <PostPhotos paths={photoList} toUri={mediaUri} compact={compact} />
         </Pressable>
       ) : (
         <View style={s.bodyWrap}>
           {body}
-          {post.photo_path ? <PostPhoto uri={publicObjectUrl('nffga-media', post.photo_path)} /> : null}
+          <PostPhotos paths={photoList} toUri={mediaUri} />
         </View>
       )}
       <View style={s.footer}>

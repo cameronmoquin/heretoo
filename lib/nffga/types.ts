@@ -22,7 +22,10 @@ export interface BoardPost {
   id: string;
   author_id: string;
   body: string;
+  /** First photo; mirrored from photo_paths[0] by the database. */
   photo_path: string | null;
+  /** Up to five photos, in order (migration 108). */
+  photo_paths?: string[];
   kind: 'post' | 'announcement';
   created_at: string;
   deleted_at: string | null;
@@ -45,7 +48,8 @@ export type GearCategory =
   | 'driver' | 'fairway_wood' | 'hybrid' | 'iron_set' | 'single_iron' | 'wedge' | 'putter'
   | 'full_set' | 'balls' | 'bag' | 'push_cart' | 'apparel' | 'shoes' | 'rangefinder' | 'gps'
   | 'training_aid' | 'accessory' | 'other';
-export type GearCondition = 'new' | 'like_new' | 'good' | 'fair' | 'worn';
+/** Seller's scale (migration 108): everything but 'new' is used. */
+export type GearCondition = 'new' | 'mint' | 'great' | 'good' | 'fair' | 'poor';
 export type GearTradeType = 'sell' | 'trade' | 'sell_or_trade' | 'giveaway';
 export type GearStatus = 'active' | 'pending' | 'sold' | 'traded' | 'given' | 'withdrawn';
 
@@ -62,6 +66,8 @@ export interface GearListing {
   specs: Record<string, unknown>;
   trade_type: GearTradeType;
   price_cents: number | null;
+  /** The price is open to offers (migration 108). */
+  negotiable: boolean;
   currency: string;
   trade_for: string | null;
   shipping: 'local_only' | 'will_ship' | 'either';

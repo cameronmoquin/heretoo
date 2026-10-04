@@ -1,5 +1,5 @@
 /**
- * Composer — write a board post: text (up to 4000), an optional photo,
+ * Composer — write a Clubhouse post: text (up to 4000), up to five photos,
  * and for officers an "announcement" switch. Render it inside
  * <RequireAccount>; it assumes a session.
  */
@@ -10,8 +10,8 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type } from '../../../constants/design';
 import { useSession } from '../../../lib/nffga/useSession';
 import { useRole, type PickedImage } from '../../../lib/nffga/profile';
-import { createPost, POST_MAX, useBoardRefresh } from '../../../lib/nffga/board';
-import { pickImage } from './pickImage';
+import { createPost, POST_MAX, POST_MAX_PHOTOS, useBoardRefresh } from '../../../lib/nffga/board';
+import { pickImages } from './pickImage';
 import { ErrorLine, inputStyle } from './Page';
 
 export function Composer() {
@@ -20,7 +20,7 @@ export function Composer() {
   const role = useRole(userId);
   const refresh = useBoardRefresh();
   const [body, setBody] = useState('');
-  const [photo, setPhoto] = useState<PickedImage | null>(null);
+  const [photos, setPhotos] = useState<PickedImage[]>([]);
   const [announce, setAnnounce] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,13 +28,14 @@ export function Composer() {
   const isOfficer = !!role.data;
   const over = body.length > POST_MAX;
   const near = body.length > POST_MAX - 200;
-  const canPost = !busy && !over && (body.trim().length > 0 || !!photo);
+  const canPost = !busy && !over && (body.trim().length > 0 || photos.length > 0);
+  const room = POST_MAX_PHOTOS - photos.length;
 
   const addPhoto = async () => {
     setError(null);
     try {
-      const p = await pickImage();
-      if (p) setPhoto(p);
+      const picked = await pickImages(room);
+      if (picked.length) setPhotos((cur) => [...cur, ...picked].slice(0, POST_MAX_PHOTOS));
     } catch {
       setError('Could not open your photos.');
     }
@@ -44,11 +45,11 @@ export function Composer() {
     if (!userId || !canPost) return;
     setBusy(true);
     setError(null);
-    const res = await createPost({ userId, body, photo, kind: isOfficer && announce ? 'announcement' : 'post' });
+    const res = await createPost({ userId, body, photos, kind: isOfficer && announce ? 'announcement' : 'post' });
     setBusy(false);
     if (!res.ok) { setError(res.error); return; }
     setBody('');
-    setPhoto(null);
+    setPhotos([]);
     setAnnounce(false);
     refresh();
   };
@@ -65,10 +66,22 @@ export function Composer() {
         style={[inputStyle(), s.input]}
         accessibilityLabel="Post text"
       />
-      {photo ? (
+      {photos.length ? (
         <View style={s.photoRow}>
-          <Image source={{ uri: photo.uri }} style={s.thumb} />
-          <Button title="Remove photo" onPress={() => setPhoto(null)} variant="ghost" size="sm" />
+          {photos.map((p, i) => (
+            <View key={`${p.uri}-${i}`} style={s.thumbWrap}>
+              <Image source={{ uri: p.uri }} style={s.thumb} />
+              <Pressable
+                onPress={() => setPhotos((cur) => cur.filter((_, j) => j !== i))}
+                style={s.thumbX}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove photo ${i + 1}`}
+                hitSlop={8}
+              >
+                <Text style={s.thumbXText}>×</Text>
+              </Pressable>
+            </View>
+          ))}
         </View>
       ) : null}
       {isOfficer ? (
@@ -86,7 +99,10 @@ export function Composer() {
       ) : null}
       <ErrorLine>{error}</ErrorLine>
       <View style={s.bar}>
-        <Button title={photo ? 'Change photo' : 'Add photo'} onPress={addPhoto} variant="outline" size="sm" disabled={busy} />
+        <Button
+          title={photos.length ? `Add photos (${photos.length}/${POST_MAX_PHOTOS})` : 'Add photos'}
+          onPress={addPhoto} variant="outline" size="sm" disabled={busy || room <= 0}
+        />
         <View style={s.right}>
           {near ? <Text style={[s.count, over && s.countOver]}>{body.length}/{POST_MAX}</Text> : null}
           <Button title="Post" onPress={submit} variant="primary" size="sm" loading={busy} disabled={!canPost} />
@@ -99,8 +115,14 @@ export function Composer() {
 function makeStyles() { return StyleSheet.create({
   box: { gap: Spacing.sm },
   input: { minHeight: 96, textAlignVertical: 'top' },
-  photoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  thumbWrap: { position: 'relative' },
   thumb: { width: 72, height: 72, borderRadius: Radius.control, backgroundColor: Colors.surfaceAlt },
+  thumbX: {
+    position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11,
+    backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
+  },
+  thumbXText: { color: Colors.onPrimary, fontSize: 15, lineHeight: 17, fontWeight: '700' },
   check: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, alignSelf: 'flex-start', minHeight: 32 },
   checkBox: {
     width: 18, height: 18, borderRadius: 4, borderWidth: 1, borderColor: Colors.textSecondary,

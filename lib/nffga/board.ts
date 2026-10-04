@@ -41,7 +41,7 @@ export async function listPosts(opts: { limit?: number; before?: string | null; 
     () => {
       let q = supabase
         .from('nffga_posts')
-        .select('id, author_id, body, photo_path, kind, created_at, deleted_at')
+        .select('id, author_id, body, photo_path, photo_paths, kind, created_at, deleted_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(opts.limit ?? PAGE);
@@ -59,7 +59,7 @@ export async function getPost(id: string): Promise<BoardPost | null> {
     'nffga_posts get',
     () => supabase
       .from('nffga_posts')
-      .select('id, author_id, body, photo_path, kind, created_at, deleted_at')
+      .select('id, author_id, body, photo_path, photo_paths, kind, created_at, deleted_at')
       .eq('id', id)
       .is('deleted_at', null)
       .maybeSingle(),
@@ -88,21 +88,28 @@ export async function listComments(postId: string): Promise<BoardComment[]> {
 
 type WriteResult = { ok: true; id?: string } | { ok: false; error: string };
 
+/** Up to five photos per post; the database enforces it too (migration 108). */
+export const POST_MAX_PHOTOS = 5;
+
 export async function createPost(input: {
-  userId: string; body: string; kind?: 'post' | 'announcement'; photo?: PickedImage | null;
+  userId: string; body: string; kind?: 'post' | 'announcement';
+  photos?: PickedImage[]; photo?: PickedImage | null;
 }): Promise<WriteResult> {
   const body = input.body.trim();
-  if (!body && !input.photo) return { ok: false, error: 'Write something first.' };
+  const picked = [...(input.photos ?? []), ...(input.photo ? [input.photo] : [])].slice(0, POST_MAX_PHOTOS);
+  if (!body && picked.length === 0) return { ok: false, error: 'Write something first.' };
   if (body.length > POST_MAX) return { ok: false, error: `Keep it under ${POST_MAX} characters.` };
-  let photo_path: string | null = null;
+  const photo_paths: string[] = [];
   try {
-    if (input.photo) photo_path = await uploadMedia(input.userId, 'posts', input.photo);
+    // In order, so the post shows them the way they were chosen.
+    for (const p of picked) photo_paths.push(await uploadMedia(input.userId, 'posts', p));
   } catch (err) {
-    return { ok: false, error: writeErrorText(err, 'The photo did not upload. Try again.') };
+    return { ok: false, error: writeErrorText(err, 'A photo did not upload. Try again.') };
   }
   const { data, error } = await supabase
     .from('nffga_posts')
-    .insert({ author_id: input.userId, body, photo_path, kind: input.kind ?? 'post' })
+    // photo_path is mirrored from photo_paths[0] by the database.
+    .insert({ author_id: input.userId, body, photo_paths, kind: input.kind ?? 'post' })
     .select('id')
     .single();
   if (error) return { ok: false, error: writeErrorText(error, 'The post did not save. Try again.') };

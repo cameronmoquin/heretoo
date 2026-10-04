@@ -14,7 +14,7 @@ import {
   SHIPPING_LABEL, TRADE_TYPE_LABEL, photoUrl, type ListingInput, type PhotoDraft,
 } from '../../../lib/nffga/gear';
 import {
-  ChipPicker, ErrorText, Field, FieldRow, FormSection, TextField, blankToNull, centsToDollars, dollarsToCents,
+  ChipPicker, ErrorText, Field, FieldRow, FormSection, TextField, blankToNull, centsToDollars, dollarsToCents, YesNo,
 } from '../tournaments/ui';
 
 /** Common spec fields. Other keys already in specs are kept as they are. */
@@ -50,6 +50,7 @@ export function GearForm({ initial, onSave, onCancel, saveLabel }: {
   const [tradeType, setTradeType] = useState<GearTradeType>(initial?.trade_type ?? 'sell_or_trade');
   const [price, setPrice] = useState(centsToDollars(initial?.price_cents));
   const [tradeFor, setTradeFor] = useState(initial?.trade_for ?? '');
+  const [negotiable, setNegotiable] = useState<boolean>(initial?.negotiable ?? false);
   const [shipping, setShipping] = useState<GearListing['shipping']>(initial?.shipping ?? 'local_only');
   const [location, setLocation] = useState(initial?.location_text ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
@@ -115,6 +116,7 @@ export function GearForm({ initial, onSave, onCancel, saveLabel }: {
       specs: cleanSpecs,
       trade_type: tradeType,
       price_cents: wantsPrice ? (cents as number) : null,
+      negotiable: wantsPrice ? negotiable : false,
       trade_for: wantsTrade ? blankToNull(tradeFor) : null,
       shipping,
       location_text: blankToNull(location),
@@ -179,10 +181,13 @@ export function GearForm({ initial, onSave, onCancel, saveLabel }: {
         {wantsPrice ? (
           <TextField label="Price (dollars)" required value={price} onChangeText={setPrice} keyboardType="decimal-pad" error={priceErr} />
         ) : null}
+        {wantsPrice ? (
+          <YesNo label="Price negotiable" value={negotiable} onChange={setNegotiable} />
+        ) : null}
         {wantsTrade ? (
           <TextField label="Would trade for" required={tradeType === 'trade'} value={tradeFor} onChangeText={setTradeFor} multiline={2} maxLength={500} />
         ) : null}
-        <ChipPicker label="Shipping" options={SHIPPING} value={shipping} onChange={(v) => v && setShipping(v)} labels={SHIPPING_LABEL} />
+        <ChipPicker label="Shipping" options={SHIPPING} value={shipping} onChange={(v) => v && setShipping(v)} labels={SHIPPING_LABEL} help="Shipping details are arranged with the buyer in Messages." />
         <TextField label="Location" value={location} onChangeText={setLocation} placeholder="City, state" />
       </FormSection>
 

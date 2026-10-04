@@ -20,7 +20,8 @@ import type {
 } from './types';
 
 export const GEAR_BUCKET = 'nffga-gear' as const;
-export const MAX_GEAR_PHOTOS = 8;
+/** Enforced by the database too (migration 108: position 0..4). */
+export const MAX_GEAR_PHOTOS = 5;
 
 // ── Types local to the gear screens ─────────────────────────────────
 
@@ -69,10 +70,11 @@ export const GEAR_CATEGORIES = Object.keys(CATEGORY_LABEL) as GearCategory[];
 
 export const CONDITION_LABEL: Record<GearCondition, string> = {
   new: 'New',
-  like_new: 'Like new',
+  mint: 'Mint',
+  great: 'Great',
   good: 'Good',
   fair: 'Fair',
-  worn: 'Worn',
+  poor: 'Poor',
 };
 export const GEAR_CONDITIONS = Object.keys(CONDITION_LABEL) as GearCondition[];
 
@@ -90,7 +92,7 @@ export const TRADE_TYPE_LABEL: Record<GearTradeType, string> = {
 };
 
 export const SHIPPING_LABEL: Record<GearListing['shipping'], string> = {
-  local_only: 'Local pickup only',
+  local_only: 'Local pickup',
   will_ship: 'Will ship',
   either: 'Pickup or ship',
 };
@@ -129,19 +131,21 @@ export function offerKindsFor(tradeType: GearTradeType): GearOfferKind[] {
   }
 }
 
-/** "$120", "Trade", "$120 or trade", "Free". */
-export function priceLabel(l: Pick<GearListing, 'trade_type' | 'price_cents' | 'currency'>): string {
+/** "$120", "$120 OBO", "Trade", "$120 or trade", "Free". OBO = or best offer, the
+ *  classifieds shorthand for a negotiable price. */
+export function priceLabel(l: Pick<GearListing, 'trade_type' | 'price_cents' | 'currency'> & { negotiable?: boolean }): string {
   const money = l.price_cents != null
     ? new Intl.NumberFormat('en-US', {
         style: 'currency', currency: l.currency || 'USD',
         maximumFractionDigits: l.price_cents % 100 ? 2 : 0,
       }).format(l.price_cents / 100)
     : '';
+  const obo = money && l.negotiable ? `${money} OBO` : money;
   switch (l.trade_type) {
     case 'giveaway': return 'Free';
     case 'trade': return 'Trade';
-    case 'sell_or_trade': return money ? `${money} or trade` : 'Trade';
-    default: return money || 'Make an offer';
+    case 'sell_or_trade': return obo ? `${obo} or trade` : 'Trade';
+    default: return obo || 'Make an offer';
   }
 }
 
@@ -405,6 +409,7 @@ export interface ListingInput {
   specs: Record<string, unknown>;
   trade_type: GearTradeType;
   price_cents: number | null;
+  negotiable: boolean;
   trade_for: string | null;
   shipping: GearListing['shipping'];
   location_text: string | null;

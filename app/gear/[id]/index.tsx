@@ -218,11 +218,14 @@ export default function GearListingScreen() {
         <Section title="Deal" style={s.cell}>
           <Row label="Seller wants" value={TRADE_TYPE_LABEL[l.trade_type]} />
           <Row label="Price" value={l.price_cents != null && l.trade_type !== 'giveaway' && l.trade_type !== 'trade' ? formatMoney(l.price_cents, l.currency) : null} />
+          {l.price_cents != null && (l.trade_type === 'sell' || l.trade_type === 'sell_or_trade') ? (
+            <Row label="Price negotiable" value={l.negotiable ? 'Yes' : 'No'} />
+          ) : null}
           <Row label="Would trade for" value={l.trade_for} />
           <Row label="Shipping" value={SHIPPING_LABEL[l.shipping]} />
           <Row label="Location" value={l.location_text} />
           <Row label="Listed" value={new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} />
-          <Muted>Payment and handoff are arranged between members. Nothing is paid on this site.</Muted>
+          <Muted>Payment, pickup and shipping are arranged with the seller in Messages. Nothing is paid on this site.</Muted>
         </Section>
       </View>
 
