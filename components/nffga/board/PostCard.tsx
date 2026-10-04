@@ -39,7 +39,7 @@ export function PostCard({ post, compact, linked = true, actions }: {
 }) {
   const s = makeStyles();
   const announce = post.kind === 'announcement';
-  const open = () => router.push(`/board/${post.id}` as any);
+  const open = () => router.push(`/clubhouse/${post.id}` as any);
   const count = post.comment_count ?? 0;
 
   const body = post.body ? (

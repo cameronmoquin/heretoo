@@ -1,5 +1,5 @@
 /**
- * /board — the clubhouse board. Anyone can read; posting needs an account.
+^ * /clubhouse — the Clubhouse (the members' feed). Anyone can read; posting needs an account.
  */
 import React from 'react';
 import { RefreshControl } from 'react-native';
@@ -17,12 +17,12 @@ export default function BoardScreen() {
 
   return (
     <Page
-      title="Feed"
+      title="Clubhouse"
       refreshControl={
         <RefreshControl refreshing={feed.isRefetching && !feed.isFetchingNextPage} onRefresh={() => feed.refetch()} tintColor={Colors.textMuted} />
       }
     >
-      <PageTitle>Feed</PageTitle>
+      <PageTitle>Clubhouse</PageTitle>
       <RequireAccount reason="to post">
         <Composer />
       </RequireAccount>

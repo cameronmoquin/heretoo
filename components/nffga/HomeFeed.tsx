@@ -1,8 +1,8 @@
 /**
- * HomeFeed — the feed, on the landing page (Cameron, 2026-10-04: "lets put
+ * HomeFeed — the Clubhouse (the feed), on the landing page (Cameron, 2026-10-04: "lets put
  * the feed on there. it will be blank. no bots in this build").
  *
- * The same posts as /board, newest first, with the composer on top.
+ * The same posts as /clubhouse, newest first, with the composer on top.
  * Signed out, the composer becomes the join prompt — that is the funnel.
  * Nothing here is generated: every post is a member's.
  */
@@ -23,7 +23,7 @@ export function HomeFeed() {
 
   return (
     <View style={s.wrap}>
-      <Text style={s.title}>Feed</Text>
+      <Text style={s.title}>Clubhouse</Text>
       <RequireAccount reason="to post">
         <Composer />
       </RequireAccount>

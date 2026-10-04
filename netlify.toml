@@ -88,6 +88,18 @@
 # /sow renamed /add (Sept 2026) — the invite door sheds the planting
 # metaphor. Links already sent by text and email carry /sow/<token>;
 # they walk through unchanged.
+# The members' feed was /board for its first hour live (2026-10-04)
+# before Cameron named it the Clubhouse. 302: the name is new.
+[[redirects]]
+  from = "/board"
+  to = "/clubhouse"
+  status = 302
+
+[[redirects]]
+  from = "/board/*"
+  to = "/clubhouse/:splat"
+  status = 302
+
 [[redirects]]
   from = "/sow/*"
   to = "/add/:splat"

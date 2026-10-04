@@ -92,7 +92,7 @@ not be linked from NFFGA navigation. Leave the files; just do not route to them.
 | `/tournaments/[id]/register` | events agent | redirects to sign in |
 | `/gear`, `/gear/[id]` | events agent | browse; Make offer / Message seller ask to sign in |
 | `/gear/new`, `/gear/[id]/edit` | events agent | redirects to sign in |
-| `/board`, `/board/[id]` | community agent | read; compose asks to sign in |
+| `/clubhouse`, `/clubhouse/[id]` (the Clubhouse, i.e. the feed; was `/board`) | community agent | read; compose asks to sign in |
 | `/inbox`, `/inbox/[threadId]` | community agent | redirects to sign in |
 | `/members/[id]` | community agent | public profile |
 | `/account` | community agent | redirects to sign in |
@@ -111,7 +111,7 @@ not be linked from NFFGA navigation. Leave the files; just do not route to them.
   `lib/nffga/tournaments.ts`, `lib/nffga/gear.ts`,
   and the home sections `components/nffga/home/TournamentsSection.tsx`,
   `components/nffga/home/GearSection.tsx`.
-- **community agent**: `app/board/**`, `app/inbox/**`, `app/members/**`,
+- **community agent**: `app/clubhouse/**`, `app/inbox/**`, `app/members/**`,
   `app/account.tsx`, `components/nffga/board/**`, `components/nffga/inbox/**`,
   `lib/nffga/board.ts`, `lib/nffga/messages.ts`, `lib/nffga/profile.ts`,
   and `components/nffga/home/BoardSection.tsx`.

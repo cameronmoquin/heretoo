@@ -1,5 +1,5 @@
 /**
- * /board/[id] — one post with its comments. Reading is public;
+^ * /clubhouse/[id] — one post with its comments. Reading is public;
  * commenting needs an account. The author or an officer can delete.
  */
 import React from 'react';
@@ -45,7 +45,7 @@ export default function PostScreen() {
         if (!res.ok) { toastError(res.error); return; }
         toastSuccess('Post deleted.');
         refresh();
-        router.replace('/board' as any);
+        router.replace('/clubhouse' as any);
       },
     });
   };
@@ -70,7 +70,7 @@ export default function PostScreen() {
       <Page title="Post">
         <Muted>This post is not available. It may have been deleted.</Muted>
         <View style={s.back}>
-          <Button title="Back to the feed" onPress={() => router.replace('/board' as any)} variant="outline" size="md" />
+          <Button title="Back to the Clubhouse" onPress={() => router.replace('/clubhouse' as any)} variant="outline" size="md" />
         </View>
       </Page>
     );
@@ -82,7 +82,7 @@ export default function PostScreen() {
   return (
     <Page title="Post">
       <View style={s.back}>
-        <Button title="Feed" onPress={() => router.push('/board' as any)} variant="ghost" size="sm" />
+        <Button title="Clubhouse" onPress={() => router.push('/clubhouse' as any)} variant="ghost" size="sm" />
       </View>
       <PostCard
         post={{ ...p, comment_count: comments.data ? list.length : p.comment_count }}
