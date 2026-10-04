@@ -49,6 +49,7 @@ import { BrandLogo } from '../components/shared/Logo';
 import { Colors } from '../constants/colors';
 import { Spacing, Radius, Heights } from '../constants/design';
 import { SITE_LONG_NAME } from '../constants/site';
+import { claimAdminSeat } from '../lib/admin';
 
 type Phase = 'checking' | 'ready' | 'done' | 'invalid';
 
@@ -75,6 +76,8 @@ export default function ResetPasswordScreen() {
   // a no-op.
   const settled = useRef(false);
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Where to go after a successful reset: /admin for an admin, else home.
+  const nextRoute = useRef<string>('/');
 
   useEffect(() => {
     let mounted = true;
@@ -189,8 +192,13 @@ export default function ResetPasswordScreen() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setPhase('done');
+      // An admin arriving from the emailed link takes their seat here (the
+      // link proves the inbox; migration 109) and lands on /admin.
+      // Everyone else goes home.
+      const seat = await claimAdminSeat();
+      nextRoute.current = seat.ok ? '/admin' : '/';
       redirectTimer.current = setTimeout(() => {
-        router.replace('/(tabs)/feed' as any);
+        router.replace(nextRoute.current as any);
       }, 1400);
     } catch (err: any) {
       const msg = String(err?.message ?? '');
@@ -209,10 +217,10 @@ export default function ResetPasswordScreen() {
     }
   };
 
-  const backToSignIn = () => router.replace('/(auth)/welcome' as any);
+  const backToSignIn = () => router.replace('/signin' as any);
   const goToFeed = () => {
     if (redirectTimer.current) clearTimeout(redirectTimer.current);
-    router.replace('/(tabs)/feed' as any);
+    router.replace(nextRoute.current as any);
   };
 
   return (
@@ -306,10 +314,10 @@ export default function ResetPasswordScreen() {
             <View style={s.section}>
               <Text style={s.title}>Password changed</Text>
               <Text style={s.subtitle}>
-                The new one is live. Taking you to the feed.
+                The new one is live. Taking you back.
               </Text>
               <Button
-                title="Go to the feed"
+                title="Continue"
                 onPress={goToFeed}
                 variant="primary"
                 size="lg"

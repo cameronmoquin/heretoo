@@ -15,8 +15,7 @@ import { BrandMark } from '../shared/Logo';
 import { Eyebrow } from '../shared/Eyebrow';
 import { Colors } from '../../constants/colors';
 import { Spacing, Radius } from '../../constants/design';
-import { signInMember, signUpMember, safeNext, signInHref, joinHref } from '../../lib/nffga/auth';
-import { sendAdminLink } from '../../lib/admin';
+import { signInMember, signUpMember, safeNext, signInHref, joinHref, requestEmailLink } from '../../lib/nffga/auth';
 
 export function AuthForm({ mode }: { mode: 'signin' | 'join' }) {
   const s = makeStyles();
@@ -54,10 +53,10 @@ export function AuthForm({ mode }: { mode: 'signin' | 'join' }) {
     setErr(null); setNote(null);
     if (!email.trim()) { setErr('Type your email first.'); return; }
     setBusy(true);
-    const res = await sendAdminLink(email);
+    const res = await requestEmailLink(email);
     setBusy(false);
     if (!res.ok) { setErr(res.error ?? 'Could not send the link.'); return; }
-    setNote(`A sign-in link is on its way to ${email.trim()}. After it signs you in, set a new password under Account.`);
+    setNote(`If ${email.trim()} has an account, a link to set a new password is on its way.`);
   };
 
   return (

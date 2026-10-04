@@ -1,7 +1,9 @@
 /**
  * Auth helpers for NFFGA's member flow (docs/NFFGA_CONTRACT.md, "Sign-up").
  */
+import { Platform } from 'react-native';
 import { supabase } from '../supabase';
+import { SITE_URL } from '../../constants/site';
 
 /** Link to the sign-in page that returns to `next` afterwards. */
 export function signInHref(next?: string): string {
@@ -43,6 +45,27 @@ export async function ensureProfile(displayName: string) {
   try {
     await supabase.rpc('nffga_ensure_profile', { p_display_name: displayName || null });
   } catch {}
+}
+
+/**
+ * Ask the server to email a link that signs the person in and lets them
+ * set a password. Sent through Resend in NFFGA's branded frame by
+ * netlify/functions/request-password-reset.ts — never by Supabase. The
+ * server answers the same way whether or not the account exists, so this
+ * reveals nothing; it only fails on a network error.
+ */
+export async function requestEmailLink(email: string): Promise<{ ok: boolean; error?: string }> {
+  const base = Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : SITE_URL;
+  try {
+    const res = await fetch(`${base}/api/request-password-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    return res.ok ? { ok: true } : { ok: false, error: 'Could not send the link. Try again shortly.' };
+  } catch {
+    return { ok: false, error: 'Could not reach the server. Check your connection and try again.' };
+  }
 }
 
 export async function signOutMember() {

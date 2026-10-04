@@ -4,6 +4,11 @@
  * in sections. Dates are typed as "YYYY-MM-DD HH:MM" in the tournament's
  * time zone and stored as UTC.
  *
+ * Migration 107 adds who may enter (individuals, teams or both), a team
+ * fee, the host department, the "officiated by NFFGA" flag, and two
+ * repeatable lists: sponsorships / add-on packages and on-course
+ * contests.
+ *
  * The waiver starts from DEFAULT_WAIVER_TEXT. Its [BRACKETED]
  * placeholders are filled from this form on save, so the stored text is
  * exactly what a player reads and signs.
@@ -15,10 +20,12 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type, Heights } from '../../../constants/design';
 import { DEFAULT_WAIVER_TEXT, WAIVER_PLACEHOLDERS, renderWaiver, type WaiverPlaceholder } from '../../../constants/waiver';
 import { SITE_LONG_NAME } from '../../../constants/site';
-import type { Tournament, TournamentFormat, TournamentStatus } from '../../../lib/nffga/types';
+import type {
+  Tournament, TournamentContest, TournamentEntryMode, TournamentFormat, TournamentPackage, TournamentStatus,
+} from '../../../lib/nffga/types';
 import {
-  DEFAULT_TIMEZONE, FORMAT_LABEL, START_TYPE_LABEL, STATUS_LABEL, TOURNAMENT_FORMATS, TOURNAMENT_STATUSES,
-  formatDay, localToUtcIso, utcToLocalInput, type TournamentInput,
+  DEFAULT_TIMEZONE, ENTRY_MODES, ENTRY_MODE_LABEL, FORMAT_LABEL, START_TYPE_LABEL, STATUS_LABEL, TOURNAMENT_FORMATS,
+  TOURNAMENT_STATUSES, formatDay, localToUtcIso, teamWord, utcToLocalInput, type TournamentInput,
 } from '../../../lib/nffga/tournaments';
 import {
   ChipPicker, ErrorText, Field, FieldRow, FormSection, Muted, TextField, YesNo,
@@ -26,6 +33,14 @@ import {
 } from './ui';
 
 type ScheduleLine = { at: string; what: string };
+type PackageLine = { name: string; price: string; quantity: string; description: string };
+type ContestLine = { name: string; hole: string; prize: string; sponsor: string };
+
+const emptyPackage = (): PackageLine => ({ name: '', price: '', quantity: '', description: '' });
+const emptyContest = (): ContestLine => ({ name: '', hole: '', prize: '', sponsor: '' });
+
+/** The usual on-course contests, offered as one tap when the list is empty. */
+const STANDARD_CONTESTS = ['Closest to the pin', 'Longest drive', 'Hole-in-one', 'Putting contest'];
 
 function initialState(t?: Tournament | null) {
   const tz = t?.timezone || DEFAULT_TIMEZONE;
@@ -35,6 +50,8 @@ function initialState(t?: Tournament | null) {
     description: t?.description ?? '',
     public_notes: t?.public_notes ?? '',
     beneficiary: t?.beneficiary ?? '',
+    host_department: t?.host_department ?? '',
+    sanctioned: t?.sanctioned ?? true,
 
     format: (t?.format ?? 'scramble') as TournamentFormat,
     format_notes: t?.format_notes ?? '',
@@ -68,7 +85,9 @@ function initialState(t?: Tournament | null) {
     max_teams: numToText(t?.max_teams),
     waitlist_enabled: t?.waitlist_enabled ?? true,
 
+    entry_mode: (t?.entry_mode ?? 'both') as TournamentEntryMode,
     entry_fee: centsToDollars(t?.entry_fee_cents ?? 0),
+    team_fee: centsToDollars(t?.team_fee_cents ?? null),
     currency: t?.currency ?? 'USD',
     fee_includes: t?.fee_includes ?? '',
     payment_instructions: t?.payment_instructions ?? '',
@@ -82,6 +101,13 @@ function initialState(t?: Tournament | null) {
     meal_notes: t?.meal_notes ?? '',
     prizes: t?.prizes ?? '',
     sponsors: t?.sponsors ?? '',
+    packages: (t?.packages ?? []).map((x) => ({
+      name: x.name ?? '', price: centsToDollars(x.price_cents ?? null),
+      quantity: numToText(x.quantity_available), description: x.description ?? '',
+    })) as PackageLine[],
+    contests: (t?.contests ?? []).map((x) => ({
+      name: x.name ?? '', hole: x.hole ?? '', prize: x.prize ?? '', sponsor: x.sponsor ?? '',
+    })) as ContestLine[],
 
     contact_name: t?.contact_name ?? '',
     contact_email: t?.contact_email ?? '',
@@ -121,6 +147,20 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
     return null;
   };
   const feeCents = dollarsToCents(f.entry_fee);
+  const teamFeeCents = dollarsToCents(f.team_fee);
+  const packageErrors = f.packages.map((x) => {
+    const filled = x.name.trim() || x.price.trim() || x.quantity.trim() || x.description.trim();
+    const price = dollarsToCents(x.price);
+    return {
+      name: filled && !x.name.trim() ? 'Name this package, or remove the row' : null,
+      price: Number.isNaN(price as number) ? 'Enter dollars, like 250' : null,
+      quantity: numErr(x.quantity, { int: true, min: 0 }),
+    };
+  });
+  const contestErrors = f.contests.map((x) => {
+    const filled = x.name.trim() || x.hole.trim() || x.prize.trim() || x.sponsor.trim();
+    return { name: filled && !x.name.trim() ? 'Name this contest, or remove the row' : null };
+  });
   const errors = {
     starts_at: dateErr(f.starts_at),
     ends_at: dateErr(f.ends_at),
@@ -133,6 +173,9 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
     max_players: numErr(f.max_players, { int: true, min: 1 }),
     max_teams: numErr(f.max_teams, { int: true, min: 1 }),
     entry_fee: Number.isNaN(feeCents as number) ? 'Enter dollars, like 125 or 125.50' : null,
+    team_fee: Number.isNaN(teamFeeCents as number) ? 'Enter dollars, like 460' : null,
+    packages: packageErrors.some((e) => e.name || e.price || e.quantity) ? 'x' : null,
+    contests: contestErrors.some((e) => e.name) ? 'x' : null,
   };
 
   function placeholderValues(): Partial<Record<WaiverPlaceholder, string>> {
@@ -183,6 +226,17 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
     const schedule = f.schedule
       .map((x) => ({ at: x.at.trim(), what: x.what.trim() }))
       .filter((x) => x.at || x.what);
+    const packages: TournamentPackage[] = f.packages
+      .filter((x) => x.name.trim())
+      .map((x) => ({
+        name: x.name.trim(),
+        price_cents: dollarsToCents(x.price),
+        description: blankToNull(x.description),
+        quantity_available: toNumber(x.quantity),
+      }));
+    const contests: TournamentContest[] = f.contests
+      .filter((x) => x.name.trim())
+      .map((x) => ({ name: x.name.trim(), hole: blankToNull(x.hole), prize: blankToNull(x.prize), sponsor: blankToNull(x.sponsor) }));
 
     const input: TournamentInput = {
       status: f.status,
@@ -190,6 +244,8 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
       description: blankToNull(f.description),
       public_notes: blankToNull(f.public_notes),
       beneficiary: blankToNull(f.beneficiary),
+      host_department: blankToNull(f.host_department),
+      sanctioned: f.sanctioned,
       format: f.format,
       format_notes: blankToNull(f.format_notes),
       team_size: f.team_size,
@@ -218,7 +274,9 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
       max_players: toNumber(f.max_players),
       max_teams: toNumber(f.max_teams),
       waitlist_enabled: f.waitlist_enabled,
+      entry_mode: f.entry_mode,
       entry_fee_cents: feeCents ?? 0,
+      team_fee_cents: f.entry_mode === 'individual' ? null : teamFeeCents,
       currency: f.currency || 'USD',
       fee_includes: blankToNull(f.fee_includes),
       payment_instructions: blankToNull(f.payment_instructions),
@@ -231,6 +289,8 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
       meal_notes: blankToNull(f.meal_notes),
       prizes: blankToNull(f.prizes),
       sponsors: blankToNull(f.sponsors),
+      packages,
+      contests,
       contact_name: blankToNull(f.contact_name),
       contact_email: blankToNull(f.contact_email),
       contact_phone: blankToNull(f.contact_phone),
@@ -247,6 +307,11 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
 
   const setLine = (i: number, k: keyof ScheduleLine) => (v: string) =>
     setF((p) => ({ ...p, schedule: p.schedule.map((x, j) => (j === i ? { ...x, [k]: v } : x)) }));
+  const setPackage = (i: number, k: keyof PackageLine) => (v: string) =>
+    setF((p) => ({ ...p, packages: p.packages.map((x, j) => (j === i ? { ...x, [k]: v } : x)) }));
+  const setContest = (i: number, k: keyof ContestLine) => (v: string) =>
+    setF((p) => ({ ...p, contests: p.contests.map((x, j) => (j === i ? { ...x, [k]: v } : x)) }));
+  const word = teamWord(f.team_size);
 
   return (
     <View style={s.form}>
@@ -257,6 +322,10 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
         <TextField label="Description" value={f.description} onChangeText={set('description')} multiline={5} />
         <TextField label="Notice" value={f.public_notes} onChangeText={set('public_notes')} multiline={2} help="Shown at the top of the tournament page." />
         <TextField label="Beneficiary" value={f.beneficiary} onChangeText={set('beneficiary')} help="Charity or fund the event supports." />
+        <TextField label="Host department" value={f.host_department} onChangeText={set('host_department')}
+          help="The fire department hosting a regional event. Leave blank when NFFGA hosts." />
+        <YesNo label="Officiated by NFFGA" value={f.sanctioned} onChange={set('sanctioned')}
+          help="Shows the officiated mark on the tournament page." />
       </FormSection>
 
       <FormSection title="When">
@@ -334,8 +403,16 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
         <YesNo label="Waitlist when full" value={f.waitlist_enabled} onChange={set('waitlist_enabled')} />
       </FormSection>
 
-      <FormSection title="Entry fee">
-        <TextField label="Entry fee (dollars)" value={f.entry_fee} onChangeText={set('entry_fee')} keyboardType="decimal-pad" error={errors.entry_fee} help="0 for no fee." />
+      <FormSection title="Entry and fees">
+        <ChipPicker label="Who can enter" options={ENTRY_MODES} value={f.entry_mode} onChange={(v) => v && set('entry_mode')(v)} labels={ENTRY_MODE_LABEL}
+          help={f.team_size < 2 ? 'Team entries need a team size of 2 or more (Format).' : `Teams enter as a ${word} with a captain.`} />
+        <FieldRow>
+          <TextField label="Individual entry (dollars)" value={f.entry_fee} onChangeText={set('entry_fee')} keyboardType="decimal-pad" error={errors.entry_fee} help="Per golfer. 0 for no fee." />
+          {f.entry_mode !== 'individual' ? (
+            <TextField label={`${word.charAt(0).toUpperCase() + word.slice(1)} entry (dollars)`} value={f.team_fee} onChangeText={set('team_fee')} keyboardType="decimal-pad"
+              error={errors.team_fee} help="Whole team. Blank shows the per-player fee." />
+          ) : null}
+        </FieldRow>
         <TextField label="Fee includes" value={f.fee_includes} onChangeText={set('fee_includes')} placeholder="Green fee, cart, lunch" />
         <TextField label="How to pay" value={f.payment_instructions} onChangeText={set('payment_instructions')} multiline={3}
           help="Payment goes to the organizer directly. This site does not take payments." />
@@ -351,9 +428,55 @@ export function TournamentForm({ initial, onSave, onCancel, saveLabel }: {
         <TextField label="Meal notes" value={f.meal_notes} onChangeText={set('meal_notes')} />
       </FormSection>
 
+      <FormSection title="Contests">
+        <Muted>On-course contests such as closest to the pin or longest drive.</Muted>
+        {f.contests.map((c, i) => (
+          <View key={i} style={s.block}>
+            <FieldRow>
+              <TextField label="Contest" value={c.name} onChangeText={setContest(i, 'name')} error={contestErrors[i]?.name} placeholder="Closest to the pin" />
+              <TextField label="Hole" value={c.hole} onChangeText={setContest(i, 'hole')} placeholder="7, or Par 3s" />
+            </FieldRow>
+            <FieldRow>
+              <TextField label="Prize" value={c.prize} onChangeText={setContest(i, 'prize')} />
+              <TextField label="Sponsor" value={c.sponsor} onChangeText={setContest(i, 'sponsor')} />
+            </FieldRow>
+            <View style={s.inline}>
+              <Button title="Remove contest" onPress={() => setF((p) => ({ ...p, contests: p.contests.filter((_, j) => j !== i) }))} variant="ghost" size="sm" />
+            </View>
+          </View>
+        ))}
+        <View style={s.inlineWrap}>
+          <Button title="Add contest" onPress={() => setF((p) => ({ ...p, contests: [...p.contests, emptyContest()] }))} variant="outline" size="sm" />
+          {f.contests.length === 0 ? (
+            <Button title="Add the standard four" variant="ghost" size="sm"
+              onPress={() => setF((p) => ({ ...p, contests: STANDARD_CONTESTS.map((name) => ({ ...emptyContest(), name })) }))} />
+          ) : null}
+        </View>
+      </FormSection>
+
+      <FormSection title="Sponsorships and packages">
+        <Muted>Sponsorship levels and add-ons such as hole signs or mulligan packages. Shown with prices; nothing is sold on this site.</Muted>
+        {f.packages.map((x, i) => (
+          <View key={i} style={s.block}>
+            <FieldRow>
+              <TextField label="Name" value={x.name} onChangeText={setPackage(i, 'name')} error={packageErrors[i]?.name} placeholder="Hole sponsor" />
+              <TextField label="Price (dollars)" value={x.price} onChangeText={setPackage(i, 'price')} keyboardType="decimal-pad" error={packageErrors[i]?.price} />
+              <TextField label="Number available" value={x.quantity} onChangeText={setPackage(i, 'quantity')} keyboardType="number-pad" error={packageErrors[i]?.quantity} help="Blank for no limit." />
+            </FieldRow>
+            <TextField label="What it includes" value={x.description} onChangeText={setPackage(i, 'description')} multiline={2} />
+            <View style={s.inline}>
+              <Button title="Remove package" onPress={() => setF((p) => ({ ...p, packages: p.packages.filter((_, j) => j !== i) }))} variant="ghost" size="sm" />
+            </View>
+          </View>
+        ))}
+        <View style={s.inline}>
+          <Button title="Add package" onPress={() => setF((p) => ({ ...p, packages: [...p.packages, emptyPackage()] }))} variant="outline" size="sm" />
+        </View>
+      </FormSection>
+
       <FormSection title="Prizes and sponsors">
         <TextField label="Prizes" value={f.prizes} onChangeText={set('prizes')} multiline={3} />
-        <TextField label="Sponsors" value={f.sponsors} onChangeText={set('sponsors')} multiline={3} />
+        <TextField label="Sponsors" value={f.sponsors} onChangeText={set('sponsors')} multiline={3} help="Names of confirmed sponsors, to thank them on the page." />
       </FormSection>
 
       <FormSection title="Contact">
@@ -393,6 +516,8 @@ function makeStyles() { return StyleSheet.create({
   form: { gap: Spacing.lg },
   actions: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap' },
   inline: { flexDirection: 'row' },
+  inlineWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  block: { gap: Spacing.sm, borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.media, padding: Spacing.md },
   schedule: { gap: Spacing.xs },
   schedRow: { flexDirection: 'row', gap: Spacing.xs, alignItems: 'center' },
   input: {

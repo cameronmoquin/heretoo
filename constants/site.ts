@@ -27,8 +27,12 @@ export const APP_SCHEME = 'nffga';
  * (DKIM + SPF in Cloudflare) before any of this delivers; until then
  * the functions log and return without sending.
  */
-export const EMAIL_FROM = `${SITE_NAME} <notifications@nffga.emspcr.app>`;
-export const EMAIL_NOREPLY = 'noreply@nffga.emspcr.app';
+/** The domain mail is sent from. Set NFFGA_EMAIL_DOMAIN on Netlify to
+ *  whichever domain is verified in Resend; defaults to the site's own. */
+const EMAIL_DOMAIN =
+  (typeof process !== 'undefined' && process.env.NFFGA_EMAIL_DOMAIN) || 'nffga.emspcr.app';
+export const EMAIL_FROM = `${SITE_NAME} <notifications@${EMAIL_DOMAIN}>`;
+export const EMAIL_NOREPLY = `noreply@${EMAIL_DOMAIN}`;
 
 /**
  * Member sign-up is OPEN (Cameron, 2026-10-04): anyone who scans the QR

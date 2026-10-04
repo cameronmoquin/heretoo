@@ -10,7 +10,10 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../supabase';
-import type { Tournament, TournamentStatus, TournamentFormat, NffgaProfile } from './types';
+import type {
+  Tournament, TournamentStatus, TournamentFormat, NffgaProfile, TournamentEntryMode,
+  TournamentPackage, TournamentContest, EventRequest, EventRequestStatus,
+} from './types';
 
 // ── Types local to the tournament screens ───────────────────────────
 
@@ -27,6 +30,9 @@ export interface RosterEntry {
   registered_at?: string | null;
   checked_in_at?: string | null;
   team_name?: string | null;
+  /** Migration 107: 'player' (has an account) or 'teammate' (named by a captain). */
+  entry_kind?: 'player' | 'teammate';
+  is_captain?: boolean;
 }
 
 export interface LeaderboardRow {
@@ -45,6 +51,16 @@ export interface MyRegistration {
   tournament_id: string;
   status: string;
   full_name: string;
+  team_id?: string | null;
+}
+
+/** One teammate on a team entry (p_players). Only the name is required. */
+export interface TeammateInput {
+  full_name: string;
+  email?: string | null;
+  handicap?: number | null;
+  department_name?: string | null;
+  shirt_size?: ShirtSize | null;
 }
 
 /** The fields a player fills in to register (p_details). */
@@ -105,6 +121,33 @@ export const START_TYPE_LABEL: Record<Tournament['start_type'], string> = {
   shotgun: 'Shotgun start',
   tee_times: 'Tee times',
 };
+
+export const ENTRY_MODE_LABEL: Record<TournamentEntryMode, string> = {
+  individual: 'Individual golfers only',
+  team: 'Team entries only',
+  both: 'Individual golfers or teams',
+};
+export const ENTRY_MODES: TournamentEntryMode[] = ['both', 'individual', 'team'];
+
+/** "foursome" for 4, "threesome" for 3, "twosome" for 2, else "team of N". */
+export function teamWord(size: number): string {
+  if (size === 4) return 'foursome';
+  if (size === 3) return 'threesome';
+  if (size === 2) return 'twosome';
+  return `team of ${size}`;
+}
+
+export function acceptsIndividuals(t: Pick<Tournament, 'entry_mode'>): boolean {
+  return (t.entry_mode ?? 'both') !== 'team';
+}
+export function acceptsTeams(t: Pick<Tournament, 'entry_mode' | 'team_size'>): boolean {
+  return (t.entry_mode ?? 'both') !== 'individual' && t.team_size > 1;
+}
+
+/** The sample tournament (supabase/seed/nffga_sample_tournament.sql) and any like it. */
+export function isSample(t: Pick<Tournament, 'description'>): boolean {
+  return /^\s*Sample event/i.test(t.description ?? '');
+}
 
 export const UPCOMING_STATUSES: TournamentStatus[] = ['registration_open', 'registration_closed', 'in_progress'];
 
@@ -220,21 +263,55 @@ export function courseCityState(t: Pick<Tournament, 'course_city' | 'course_stat
 
 // ── Reads ────────────────────────────────────────────────────────────
 
-/** Seated players (registered or checked in) per tournament. */
-async function seatedCounts(ids: string[]): Promise<Record<string, number>> {
-  const out: Record<string, number> = {};
+type FieldCount = { seats: number; teams: number };
+
+/**
+ * Seats taken and team entries per tournament (migration 107's
+ * nffga_tournament_field_counts: a team entry holds team_size seats).
+ * Falls back to counting roster rows if the view is missing.
+ */
+async function fieldCounts(ids: string[]): Promise<Record<string, FieldCount>> {
+  const out: Record<string, FieldCount> = {};
   if (ids.length === 0) return out;
   const { data, error } = await supabase
-    .from('nffga_tournament_roster')
-    .select('*')
+    .from('nffga_tournament_field_counts')
+    .select('tournament_id, seats_taken, teams_entered')
     .in('tournament_id', ids);
-  if (error) { quiet('roster counts', error); return out; }
-  for (const r of (data ?? []) as RosterEntry[]) {
+  if (!error) {
+    for (const r of (data ?? []) as { tournament_id: string; seats_taken: number; teams_entered: number }[]) {
+      out[r.tournament_id] = { seats: r.seats_taken ?? 0, teams: r.teams_entered ?? 0 };
+    }
+    return out;
+  }
+  quiet('field counts', error);
+  const roster = await supabase.from('nffga_tournament_roster').select('tournament_id, status').in('tournament_id', ids);
+  if (roster.error) { quiet('roster counts', roster.error); return out; }
+  for (const r of (roster.data ?? []) as RosterEntry[]) {
     if (r.status === 'registered' || r.status === 'checked_in') {
-      out[r.tournament_id] = (out[r.tournament_id] ?? 0) + 1;
+      const c = out[r.tournament_id] ?? { seats: 0, teams: 0 };
+      c.seats += 1;
+      out[r.tournament_id] = c;
     }
   }
   return out;
+}
+
+function asArray<T>(v: unknown): T[] {
+  return Array.isArray(v) ? (v as T[]) : [];
+}
+
+/** Defaults for columns a pre-107 row may lack, and arrays that must be arrays. */
+function normalize(t: Tournament, counts: Record<string, FieldCount>): Tournament {
+  return {
+    ...t,
+    schedule: asArray<{ at: string; what: string }>(t.schedule),
+    packages: asArray<TournamentPackage>(t.packages).filter((p) => p && typeof p.name === 'string' && p.name.trim() !== ''),
+    contests: asArray<TournamentContest>(t.contests).filter((c) => c && typeof c.name === 'string' && c.name.trim() !== ''),
+    entry_mode: t.entry_mode ?? 'both',
+    sanctioned: t.sanctioned ?? true,
+    registered_count: counts[t.id]?.seats ?? 0,
+    teams_entered: counts[t.id]?.teams ?? 0,
+  };
 }
 
 export async function fetchTournaments(): Promise<Tournament[]> {
@@ -245,8 +322,8 @@ export async function fetchTournaments(): Promise<Tournament[]> {
       .order('starts_at', { ascending: true, nullsFirst: false });
     if (error) { quiet('tournaments', error); return []; }
     const rows = (data ?? []) as Tournament[];
-    const counts = await seatedCounts(rows.map((t) => t.id));
-    return rows.map((t) => ({ ...t, schedule: Array.isArray(t.schedule) ? t.schedule : [], registered_count: counts[t.id] ?? 0 }));
+    const counts = await fieldCounts(rows.map((t) => t.id));
+    return rows.map((t) => normalize(t, counts));
   } catch (e) {
     quiet('tournaments', e);
     return [];
@@ -259,8 +336,8 @@ export async function fetchTournament(id: string): Promise<Tournament | null> {
     if (error) { quiet('tournament', error); return null; }
     if (!data) return null;
     const t = data as Tournament;
-    const counts = await seatedCounts([t.id]);
-    return { ...t, schedule: Array.isArray(t.schedule) ? t.schedule : [], registered_count: counts[t.id] ?? 0 };
+    const counts = await fieldCounts([t.id]);
+    return normalize(t, counts);
   } catch (e) {
     quiet('tournament', e);
     return null;
@@ -305,7 +382,7 @@ export async function fetchMyRegistration(tournamentId: string, userId: string):
   try {
     const { data, error } = await supabase
       .from('nffga_tournament_registrations')
-      .select('id, tournament_id, status, full_name')
+      .select('id, tournament_id, status, full_name, team_id')
       .eq('tournament_id', tournamentId)
       .eq('player_id', userId)
       .maybeSingle();
@@ -404,6 +481,12 @@ export function splitTournaments(rows: Tournament[]) {
   return { upcoming, past, drafts };
 }
 
+/** Team entries still open, or null when there is no team cap. */
+export function teamsLeft(t: Tournament): number | null {
+  if (t.max_teams == null) return null;
+  return Math.max(0, t.max_teams - (t.teams_entered ?? 0));
+}
+
 export function spotsLeft(t: Tournament): number | null {
   if (t.max_players == null) return null;
   return Math.max(0, t.max_players - (t.registered_count ?? 0));
@@ -420,6 +503,18 @@ export const REGISTER_ERROR_TEXT: Record<string, string> = {
   already_registered: 'You are already registered for this tournament.',
   waiver_signature_required: 'Type your full name to sign the waiver.',
   full: 'This tournament is full.',
+  teams_only: 'This tournament takes team entries only. Enter a team instead.',
+  individuals_only: 'This tournament takes individual golfers only.',
+  team_name_required: 'Enter a team name (up to 80 characters).',
+  team_name_taken: 'Another team already uses that name. Choose a different one.',
+  too_many_players: 'There are more teammates than this tournament allows per team.',
+  teammate_name_required: 'Each teammate you list needs a name.',
+  teammate_name_too_long: 'A teammate name is too long.',
+  bad_handicap: 'A handicap is not valid. Use a number from -10 to 54, like 12.4.',
+  bad_email: 'A teammate email address is not valid.',
+  bad_shirt_size: 'Choose a shirt size from the list.',
+  bad_years: 'Years of service must be a whole number from 0 to 70.',
+  bad_players: 'The teammate list could not be read. Try again.',
 };
 
 export async function registerForTournament(
@@ -449,6 +544,38 @@ export async function registerForTournament(
   }
 }
 
+/** One call: team row, the captain's registration and signature, the named teammates. */
+export async function enterTeam(
+  tournamentId: string,
+  teamName: string,
+  teammates: TeammateInput[],
+  captain: RegistrationDetails,
+  signedName: string | null,
+): Promise<{ ok: true; teamId: string; registrationId: string; status: string } | { ok: false; error: string }> {
+  try {
+    const { data, error } = await supabase.rpc('nffga_enter_team', {
+      p_tournament_id: tournamentId,
+      p_team_name: teamName,
+      p_players: teammates,
+      p_captain_details: captain,
+      p_signed_name: signedName,
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent ?? null : null,
+    });
+    if (error) {
+      quiet('enter team', error);
+      return { ok: false, error: 'Team entry is not available right now. Try again later.' };
+    }
+    const r = (data ?? {}) as { ok?: boolean; team_id?: string; registration_id?: string; status?: string; error?: string };
+    if (!r.ok) {
+      return { ok: false, error: REGISTER_ERROR_TEXT[r.error ?? ''] ?? 'The team entry did not go through. Try again.' };
+    }
+    return { ok: true, teamId: r.team_id ?? '', registrationId: r.registration_id ?? '', status: r.status ?? 'registered' };
+  } catch (e) {
+    quiet('enter team', e);
+    return { ok: false, error: 'Team entry is not available right now. Try again later.' };
+  }
+}
+
 export async function withdrawFromTournament(tournamentId: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const { data, error } = await supabase.rpc('nffga_withdraw_from_tournament', { p_tournament_id: tournamentId });
@@ -471,12 +598,12 @@ export async function withdrawFromTournament(tournamentId: string): Promise<{ ok
 /** Columns the organizer form writes. */
 export type TournamentInput = Omit<
   Tournament,
-  'id' | 'organizer_id' | 'created_at' | 'updated_at' | 'registered_count' | 'waiver_version' | 'cover_path'
+  'id' | 'organizer_id' | 'created_at' | 'updated_at' | 'registered_count' | 'teams_entered' | 'waiver_version' | 'cover_path'
 >;
 
 export async function saveTournament(
   input: TournamentInput,
-  opts: { id?: string; organizerId: string },
+  opts: { id?: string; organizerId: string | null },
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   try {
     if (opts.id) {
@@ -504,6 +631,141 @@ function friendlyWriteError(error: any): string {
   if (code === '42P01' || code === 'PGRST205') return 'Tournaments are not set up on the server yet.';
   if (/tournaments_waiver_text/.test(msg)) return 'Add the waiver text, or turn the waiver off.';
   if (/tournaments_dates/.test(msg)) return 'The end time must be after the start time.';
+  if (/tournaments_(packages|contests)_array/.test(msg)) return 'The packages or contests could not be saved. Check those rows.';
   if (/check constraint/i.test(msg)) return 'One of the values is out of range. Check the form and try again.';
   return msg || 'Could not save. Try again.';
+}
+
+// ── Event requests (migration 107) ───────────────────────────────────
+// A fire department proposes a regional event to be officiated by NFFGA.
+// Members read their own; officers read and decide all of them.
+
+export const EVENT_REQUEST_STATUS_LABEL: Record<EventRequestStatus, string> = {
+  submitted: 'Submitted',
+  reviewing: 'Under review',
+  approved: 'Approved',
+  declined: 'Declined',
+};
+
+export type EventRequestInput = Pick<
+  EventRequest,
+  | 'department_name' | 'contact_name' | 'contact_email' | 'contact_phone' | 'region' | 'city' | 'state'
+  | 'proposed_dates' | 'course_name' | 'course_city' | 'expected_players' | 'format' | 'beneficiary' | 'notes'
+>;
+
+export async function fetchMyEventRequests(userId: string): Promise<EventRequest[]> {
+  try {
+    const { data, error } = await supabase
+      .from('nffga_event_requests')
+      .select('*')
+      .eq('submitted_by', userId)
+      .order('created_at', { ascending: false });
+    if (error) { quiet('my event requests', error); return []; }
+    return (data ?? []) as EventRequest[];
+  } catch (e) {
+    quiet('my event requests', e);
+    return [];
+  }
+}
+
+/** Every request (officers; RLS returns only the caller's own to anyone else). */
+export async function fetchAllEventRequests(): Promise<EventRequest[]> {
+  try {
+    const { data, error } = await supabase
+      .from('nffga_event_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) { quiet('event requests', error); return []; }
+    return (data ?? []) as EventRequest[];
+  } catch (e) {
+    quiet('event requests', e);
+    return [];
+  }
+}
+
+export const eventRequestKeys = {
+  mine: (userId: string | null) => ['nffga', 'event-requests', 'mine', userId] as const,
+  all: ['nffga', 'event-requests', 'all'] as const,
+};
+
+export function useMyEventRequests(userId: string | null) {
+  return useQuery({
+    queryKey: eventRequestKeys.mine(userId),
+    queryFn: () => fetchMyEventRequests(userId as string),
+    enabled: !!userId,
+  });
+}
+
+export function useAllEventRequests(enabled: boolean) {
+  return useQuery({ queryKey: eventRequestKeys.all, queryFn: fetchAllEventRequests, enabled });
+}
+
+export async function submitEventRequest(
+  userId: string,
+  input: EventRequestInput,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('nffga_event_requests')
+      .insert({ ...input, submitted_by: userId })
+      .select('id')
+      .single();
+    if (error || !data) {
+      quiet('submit event request', error);
+      const code = String((error as any)?.code ?? '');
+      if (code === '42501') return { ok: false, error: 'Your account cannot send a request. Sign in with a full account and try again.' };
+      if (code === '42P01' || code === 'PGRST205') return { ok: false, error: 'Event requests are not set up on the server yet.' };
+      if (code === '23514') return { ok: false, error: 'One of the values is too long or out of range. Check the form and try again.' };
+      return { ok: false, error: 'The request could not be sent. Try again.' };
+    }
+    return { ok: true, id: (data as { id: string }).id };
+  } catch (e) {
+    quiet('submit event request', e);
+    return { ok: false, error: 'The request could not be sent right now. Try again later.' };
+  }
+}
+
+/** Officers: create a draft tournament from the request and mark it approved. */
+export async function approveEventRequest(
+  requestId: string,
+): Promise<{ ok: true; tournamentId: string } | { ok: false; error: string }> {
+  try {
+    const { data, error } = await supabase.rpc('nffga_create_tournament_from_request', { p_request_id: requestId });
+    if (error) { quiet('approve request', error); return { ok: false, error: 'Could not approve right now. Try again later.' }; }
+    const r = (data ?? {}) as { ok?: boolean; tournament_id?: string; error?: string };
+    if (!r.ok || !r.tournament_id) {
+      const text: Record<string, string> = {
+        not_allowed: 'Only association officers can approve event requests.',
+        not_found: 'This request could not be found.',
+      };
+      return { ok: false, error: text[r.error ?? ''] ?? 'Could not approve. Try again.' };
+    }
+    return { ok: true, tournamentId: r.tournament_id };
+  } catch (e) {
+    quiet('approve request', e);
+    return { ok: false, error: 'Could not approve right now. Try again later.' };
+  }
+}
+
+/** Officers: set a request's status, with an optional note the submitter can read. */
+export async function setEventRequestStatus(
+  requestId: string,
+  status: Exclude<EventRequestStatus, 'approved'>,
+  note?: string | null,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const patch: { status: string; officer_notes?: string | null } = { status };
+    if (note !== undefined) patch.officer_notes = note;
+    const { data, error } = await supabase
+      .from('nffga_event_requests')
+      .update(patch)
+      .eq('id', requestId)
+      .select('id');
+    if (error) { quiet('update request', error); return { ok: false, error: 'Could not update the request. Try again.' }; }
+    if (!data || data.length === 0) return { ok: false, error: 'Only association officers can change a request.' };
+    return { ok: true };
+  } catch (e) {
+    quiet('update request', e);
+    return { ok: false, error: 'Could not update the request right now. Try again later.' };
+  }
 }

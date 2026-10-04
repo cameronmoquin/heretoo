@@ -49,7 +49,7 @@ In consideration of being permitted to participate in the event named above (the
 
 7. Photographs and recordings. I grant the ${SITE_LONG_NAME} and [HOST_ORGANIZATION] permission to photograph and record me at the Event and to use those images and recordings, and my name, in connection with the Event and with the promotion of the association, without compensation.
 
-8. Fees. I understand that the entry fee is [non-refundable except as stated by the organizer] and that the Event may be postponed, shortened, or cancelled because of weather or other conditions beyond the organizer's control.
+8. Fees. I understand that the entry fee is non-refundable unless the organizer states otherwise, and that the Event may be postponed, shortened, or cancelled because of weather or other conditions beyond the organizer's control.
 
 9. Severability and governing law. If any part of this agreement is held invalid, the rest remains in effect. This agreement is governed by the laws of the state in which the Event is held.
 

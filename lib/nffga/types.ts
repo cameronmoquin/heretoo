@@ -87,9 +87,29 @@ export type TournamentStatus =
 export type TournamentFormat =
   | 'scramble' | 'shamble' | 'best_ball' | 'stroke_play' | 'stableford' | 'match_play' | 'alternate_shot' | 'other';
 
+/** Who may enter a tournament. Migration 107. */
+export type TournamentEntryMode = 'individual' | 'team' | 'both';
+
+/** A sponsorship or add-on (mulligans, hole sign...). Recorded, never sold here. Migration 107. */
+export interface TournamentPackage {
+  name: string;
+  price_cents: number | null;
+  description?: string | null;
+  quantity_available?: number | null;
+}
+
+/** An on-course contest (closest to the pin, longest drive...). Migration 107. */
+export interface TournamentContest {
+  name: string;
+  hole?: string | null;
+  prize?: string | null;
+  sponsor?: string | null;
+}
+
 export interface Tournament {
   id: string;
-  organizer_id: string;
+  /** Null when NFFGA itself created the event (migration 107). */
+  organizer_id: string | null;
   status: TournamentStatus;
   name: string;
   description: string | null;
@@ -147,8 +167,45 @@ export interface Tournament {
   public_notes?: string | null;
   created_at: string;
   updated_at: string;
-  /** From the roster view, when fetched. */
+  /** Migration 107: entry options, add-ons, contests, host. */
+  entry_mode?: TournamentEntryMode;
+  team_fee_cents?: number | null;
+  packages?: TournamentPackage[];
+  contests?: TournamentContest[];
+  host_department?: string | null;
+  sanctioned?: boolean;
+  /** Seats taken (a team entry holds team_size seats), from nffga_tournament_field_counts. */
   registered_count?: number;
+  /** Team entries seated, from nffga_tournament_field_counts. */
+  teams_entered?: number;
+}
+
+/** A fire department's proposal for a regional event. Migration 107. */
+export type EventRequestStatus = 'submitted' | 'reviewing' | 'approved' | 'declined';
+export interface EventRequest {
+  id: string;
+  submitted_by: string | null;
+  department_name: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string | null;
+  region: string | null;
+  city: string | null;
+  state: string | null;
+  proposed_dates: string | null;
+  course_name: string | null;
+  course_city: string | null;
+  expected_players: number | null;
+  format: string | null;
+  beneficiary: string | null;
+  notes: string | null;
+  status: EventRequestStatus;
+  officer_notes: string | null;
+  tournament_id: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Thread {

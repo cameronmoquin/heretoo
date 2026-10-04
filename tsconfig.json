@@ -16,6 +16,7 @@
   ],
   "exclude": [
     "supabase/functions/**",
-    "netlify/functions/**"
+    "netlify/functions/**",
+    "netlify/functions-disabled/**"
   ]
 }

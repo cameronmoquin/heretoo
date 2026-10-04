@@ -17,6 +17,7 @@
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import { SITE_URL } from '../constants/site';
+import { requestEmailLink } from './nffga/auth';
 
 export type AdminRole =
   | 'super_admin' | 'managing_admin' | 'admin' | 'president' | 'director'
@@ -65,14 +66,12 @@ export function adminRedirectUrl(): string {
   return `${base}/admin`;
 }
 
-/** Email a one-time sign-in link. Creates the auth user if none exists,
- *  which is harmless: an account with no designation holds no seat. */
+/** Email the branded sign-in link (a Resend-delivered recovery link; see
+ *  lib/nffga/auth.ts requestEmailLink). The account must already exist —
+ *  first-time admins create one at /join, then use this to prove the
+ *  inbox and claim the seat (migration 109 accepts reset-link sessions). */
 export async function sendAdminLink(email: string): Promise<{ ok: boolean; error?: string }> {
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.trim().toLowerCase(),
-    options: { shouldCreateUser: true, emailRedirectTo: adminRedirectUrl() },
-  });
-  return error ? { ok: false, error: error.message } : { ok: true };
+  return requestEmailLink(email);
 }
 
 export async function claimAdminSeat(): Promise<ClaimResult> {

@@ -404,7 +404,7 @@ export default function WelcomeScreen() {
                 />
                 {linkSent && (
                   <Text style={s.linkNote}>
-                    Link sent to {email.trim()}. Open it on this device to finish signing in.
+                    If {email.trim()} has an account, a sign-in link is on its way. No account yet? Create one at Join, then come back here.
                   </Text>
                 )}
               </>
