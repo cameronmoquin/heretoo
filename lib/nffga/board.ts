@@ -8,6 +8,7 @@
  */
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
+import { ensureProfile } from './auth';
 import type { BoardComment, BoardPost } from './types';
 import { fetchAuthors, quietRead, uploadMedia, writeErrorText, type PickedImage } from './profile';
 
@@ -88,6 +89,18 @@ export async function listComments(postId: string): Promise<BoardComment[]> {
 
 type WriteResult = { ok: true; id?: string } | { ok: false; error: string };
 
+/**
+ * Posting and commenting need an nffga_profiles row (migration 105). The
+ * app creates it on sign-in (components/nffga/EnsureProfile.tsx), but if a
+ * write is refused for lack of it, create it and try once more.
+ */
+async function withProfileRetry<T extends { error: { code?: string } | null }>(write: () => PromiseLike<T>): Promise<T> {
+  const first = await write();
+  if (first.error?.code !== '42501') return first;
+  await ensureProfile('');
+  return write();
+}
+
 /** Up to five photos per post; the database enforces it too (migration 108). */
 export const POST_MAX_PHOTOS = 5;
 
@@ -106,13 +119,17 @@ export async function createPost(input: {
   } catch (err) {
     return { ok: false, error: writeErrorText(err, 'A photo did not upload. Try again.') };
   }
-  const { data, error } = await supabase
+  const { data, error } = await withProfileRetry(() => supabase
     .from('nffga_posts')
     // photo_path is mirrored from photo_paths[0] by the database.
     .insert({ author_id: input.userId, body, photo_paths, kind: input.kind ?? 'post' })
     .select('id')
-    .single();
-  if (error) return { ok: false, error: writeErrorText(error, 'The post did not save. Try again.') };
+    .single());
+  if (error) {
+    // Don't leave the uploaded photos behind for a post that never saved.
+    if (photo_paths.length) supabase.storage.from('nffga-media').remove(photo_paths).catch(() => {});
+    return { ok: false, error: writeErrorText(error, 'The post did not save. Try again.') };
+  }
   return { ok: true, id: (data as { id: string }).id };
 }
 
@@ -120,11 +137,11 @@ export async function createComment(input: { userId: string; postId: string; bod
   const body = input.body.trim();
   if (!body) return { ok: false, error: 'Write something first.' };
   if (body.length > COMMENT_MAX) return { ok: false, error: `Keep it under ${COMMENT_MAX} characters.` };
-  const { data, error } = await supabase
+  const { data, error } = await withProfileRetry(() => supabase
     .from('nffga_comments')
     .insert({ post_id: input.postId, author_id: input.userId, body })
     .select('id')
-    .single();
+    .single());
   if (error) return { ok: false, error: writeErrorText(error, 'The comment did not save. Try again.') };
   return { ok: true, id: (data as { id: string }).id };
 }

@@ -21,6 +21,7 @@ import { ToastHost } from '../components/shared/Toast';
 import { ConfirmHost } from '../components/shared/ConfirmSheet';
 import { GlobalWebStyles } from '../components/shared/GlobalWebStyles';
 import { SiteHeader } from '../components/nffga/SiteHeader';
+import { EnsureProfile } from '../components/nffga/EnsureProfile';
 import { Colors, setColorMode } from '../constants/colors';
 import { useThemeStore } from '../stores/themeStore';
 import { Vocab } from '../constants/vocab';
@@ -96,6 +97,7 @@ function RootLayoutInner() {
       <GlobalWebStyles />
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <SiteHeader />
+      <EnsureProfile />
       <ThemeProvider value={NAV_THEME}>
       <Stack
         screenOptions={{
