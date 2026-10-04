@@ -26,7 +26,8 @@ sign-up allowlist trigger. NFFGA therefore:
   HereToo's `families`,
 - never `create or replace`s a function it did not create,
 - is the ONLY thing NFFGA migrations may touch, with one sanctioned exception:
-  the sign-up gate (migration 106).
+  migration 106, which opened the shared sign-up gate to everyone at Cameron's
+  direction.
 
 HereToo's migrations 001–101 are **not** applied and will not be for this
 version. Nothing NFFGA ships may depend on them.
@@ -67,7 +68,7 @@ managers).
 ### Sign-up
 
 `supabase.auth.signUp({ email, password, options: { data: { app: 'nffga', display_name } } })`.
-The `app: 'nffga'` key is what EMSPCR's allowlist gate (106) lets through. The
+Sign-up is open to anyone on the shared project since migration 106 (2026-10-04); the `app: 'nffga'` key just tags where the account came from. The
 project auto-confirms email, so a session comes back immediately; the client
 then calls `nffga_ensure_profile`.
 
