@@ -37,7 +37,7 @@ export default function PostScreen() {
     if (!postId) return;
     confirm({
       title: 'Delete this post?',
-      message: 'It will be removed from the board.',
+      message: 'It will be removed from the Clubhouse.',
       confirmLabel: 'Delete',
       destructive: true,
       onConfirm: async () => {

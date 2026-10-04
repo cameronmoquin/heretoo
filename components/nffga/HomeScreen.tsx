@@ -1,10 +1,11 @@
 /**
  * HomeScreen — what the QR code opens. Public: no sign-in to look around.
  *
- * The crest and the name, then the FEED as the main column (Cameron,
- * 2026-10-04), with upcoming tournaments and the gear trade beside it on
- * desktop and below it on a phone. Each side section is owned by the
- * agent that built that room (docs/NFFGA_CONTRACT.md).
+ * The crest and the name, then upcoming tournaments and the gear trade,
+ * side by side on desktop and stacked on a phone. The feed lives in the
+ * Clubhouse only (Cameron, 2026-10-04: "leave the feed in the clubhouse
+ * and keep it off the main page for now"); HomeFeed is kept for when it
+ * comes back.
  *
  * Under the name: the editable tagline ('home.tagline', hidden when
  * empty) and, when admins have added any, the home gallery photos
@@ -23,7 +24,6 @@ import { useCopy } from '../../lib/nffga/copy';
 import { SitePhotoStrip } from './SitePhotoStrip';
 import { TournamentsSection } from './home/TournamentsSection';
 import { GearSection } from './home/GearSection';
-import { HomeFeed } from './HomeFeed';
 import { SiteFooter } from './SiteFooter';
 
 export function HomeScreen() {
@@ -51,11 +51,10 @@ export function HomeScreen() {
       <SitePhotoStrip placement="home_gallery" style={wide ? s.galleryWide : s.gallery} />
 
       <View style={[s.body, wide && s.bodyWide]}>
-        <View style={wide ? s.main : undefined}>
-          <HomeFeed />
-        </View>
-        <View style={[s.side, wide && s.sideWide]}>
+        <View style={wide ? s.half : undefined}>
           <TournamentsSection />
+        </View>
+        <View style={wide ? s.half : undefined}>
           <GearSection />
         </View>
       </View>
@@ -86,7 +85,5 @@ function makeStyles() { return StyleSheet.create({
     maxWidth: 1080, width: '100%', alignSelf: 'center',
   },
   bodyWide: { flexDirection: 'row', alignItems: 'flex-start' },
-  main: { flex: 1.6, minWidth: 0 },
-  side: { gap: Spacing.xl },
-  sideWide: { flex: 1, minWidth: 0 },
+  half: { flex: 1, minWidth: 0 },
 }); }

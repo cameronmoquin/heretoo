@@ -10,7 +10,12 @@ import { Colors } from '../../../constants/colors';
 import { Spacing, Radius, Type } from '../../../constants/design';
 import type { BoardPost } from '../../../lib/nffga/types';
 import { publicObjectUrl } from '../../../lib/nffga/types';
-import { relativeTime } from '../../../lib/nffga/board';
+import { deletePost, relativeTime, useBoardRefresh } from '../../../lib/nffga/board';
+import { useSession } from '../../../lib/nffga/useSession';
+import { useRole } from '../../../lib/nffga/profile';
+import { Button } from '../../shared/Button';
+import { confirm } from '../../shared/ConfirmSheet';
+import { toastError, toastSuccess } from '../../shared/Toast';
 import { PostPhotos } from './PostPhoto';
 
 export function AuthorLine({ authorId, name, department, at }: {
@@ -30,13 +35,39 @@ export function AuthorLine({ authorId, name, department, at }: {
 
 const mediaUri = (p: string) => publicObjectUrl('nffga-media', p);
 
+/**
+ * Delete for the post's author, or an officer moderating. Soft delete:
+ * the database sets deleted_at (migration 105), so the post disappears
+ * everywhere at once. Renders nothing for anyone else.
+ */
+export function PostDeleteButton({ post }: { post: BoardPost }) {
+  const { userId } = useSession();
+  const role = useRole(userId);
+  const refresh = useBoardRefresh();
+  if (!userId || (post.author_id !== userId && !role.data)) return null;
+  const remove = () => confirm({
+    title: 'Delete this post?',
+    message: 'It will be removed from the Clubhouse.',
+    confirmLabel: 'Delete',
+    destructive: true,
+    onConfirm: async () => {
+      const res = await deletePost(post.id);
+      if (!res.ok) { toastError(res.error); return; }
+      toastSuccess('Post deleted.');
+      refresh();
+    },
+  });
+  return <Button title="Delete" onPress={remove} variant="ghost" size="sm" />;
+}
+
 export function PostCard({ post, compact, linked = true, actions }: {
   post: BoardPost;
   /** Home page: clamp the body, smaller photo. */
   compact?: boolean;
   /** Tapping the body opens the post. Off on the post's own page. */
   linked?: boolean;
-  /** Extra controls on the footer row (delete). */
+  /** Footer controls. Defaults to a Delete button for the author (or an
+   *  officer), so every post in every list can be removed by its owner. */
   actions?: React.ReactNode;
 }) {
   const s = makeStyles();
@@ -78,7 +109,7 @@ export function PostCard({ post, compact, linked = true, actions }: {
         ) : (
           <Text style={s.meta}>{count === 1 ? '1 comment' : `${count} comments`}</Text>
         )}
-        {actions}
+        {actions === undefined ? <PostDeleteButton post={post} /> : actions}
       </View>
     </View>
   );
