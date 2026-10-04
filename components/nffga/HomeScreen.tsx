@@ -1,9 +1,10 @@
 /**
  * HomeScreen — what the QR code opens. Public: no sign-in to look around.
  *
- * The crest and the name, two doors (join, or look at tournaments), then
- * the three live rooms. Each section is its own component, owned by the
- * agent building that room (docs/NFFGA_CONTRACT.md).
+ * The crest and the name, then the FEED as the main column (Cameron,
+ * 2026-10-04), with upcoming tournaments and the gear trade beside it on
+ * desktop and below it on a phone. Each side section is owned by the
+ * agent that built that room (docs/NFFGA_CONTRACT.md).
  */
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
@@ -16,7 +17,7 @@ import { SITE_LONG_NAME } from '../../constants/site';
 import { useSession } from '../../lib/nffga/useSession';
 import { TournamentsSection } from './home/TournamentsSection';
 import { GearSection } from './home/GearSection';
-import { BoardSection } from './home/BoardSection';
+import { HomeFeed } from './HomeFeed';
 import { SiteFooter } from './SiteFooter';
 
 export function HomeScreen() {
@@ -27,25 +28,26 @@ export function HomeScreen() {
 
   return (
     <ScrollView style={s.page} contentContainerStyle={s.scroll}>
-      <View style={s.hero}>
-        <BrandMark size={wide ? 140 : 112} />
-        <Text style={s.name}>NFFGA</Text>
+      <View style={[s.hero, !wide && s.heroCompact]}>
+        <BrandMark size={wide ? 120 : 88} />
+        <Text style={[s.name, !wide && s.nameCompact]}>NFFGA</Text>
         <Text style={s.long}>{SITE_LONG_NAME}</Text>
-        <View style={s.ctas}>
-          {!session && (
+        {!session && (
+          <View style={s.ctas}>
             <Button title="Join free" onPress={() => router.push('/join' as any)} variant="primary" size="lg" />
-          )}
-          <Button title="Tournaments" onPress={() => router.push('/tournaments' as any)} variant="outline" size="lg" />
-          <Button title="Gear trade" onPress={() => router.push('/gear' as any)} variant="outline" size="lg" />
-        </View>
+            <Button title="Sign in" onPress={() => router.push('/signin' as any)} variant="outline" size="lg" />
+          </View>
+        )}
       </View>
 
-      <View style={[s.sections, wide && s.sectionsWide]}>
-        <View style={wide ? s.col : undefined}><TournamentsSection /></View>
-        <View style={wide ? s.col : undefined}><GearSection /></View>
-      </View>
-      <View style={s.sections}>
-        <BoardSection />
+      <View style={[s.body, wide && s.bodyWide]}>
+        <View style={wide ? s.main : undefined}>
+          <HomeFeed />
+        </View>
+        <View style={[s.side, wide && s.sideWide]}>
+          <TournamentsSection />
+          <GearSection />
+        </View>
       </View>
 
       <SiteFooter />
@@ -58,16 +60,20 @@ function makeStyles() { return StyleSheet.create({
   scroll: { paddingBottom: Spacing.md },
   hero: {
     alignItems: 'center', gap: Spacing.xs,
-    paddingTop: Spacing.xl, paddingBottom: Spacing.xl, paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.xl, paddingBottom: Spacing.lg, paddingHorizontal: Spacing.md,
     borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  name: { fontSize: 40, fontWeight: '800', letterSpacing: 10, color: Colors.textPrimary, marginTop: Spacing.sm },
+  heroCompact: { paddingTop: Spacing.lg, paddingBottom: Spacing.md },
+  name: { fontSize: 40, fontWeight: '800', letterSpacing: 10, color: Colors.textPrimary, marginTop: Spacing.xs },
+  nameCompact: { fontSize: 30, letterSpacing: 7 },
   long: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center' },
-  ctas: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.xs, marginTop: Spacing.md },
-  sections: {
-    gap: Spacing.xl, paddingHorizontal: Spacing.md, paddingTop: Spacing.xl,
+  ctas: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.xs, marginTop: Spacing.sm },
+  body: {
+    gap: Spacing.xl, paddingHorizontal: Spacing.md, paddingTop: Spacing.lg,
     maxWidth: 1080, width: '100%', alignSelf: 'center',
   },
-  sectionsWide: { flexDirection: 'row' },
-  col: { flex: 1, minWidth: 0 },
+  bodyWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  main: { flex: 1.6, minWidth: 0 },
+  side: { gap: Spacing.xl },
+  sideWide: { flex: 1, minWidth: 0 },
 }); }

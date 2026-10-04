@@ -1,8 +1,8 @@
 /**
  * SiteHeader — the public top bar on every NFFGA page.
  *
- * Signed out: brand, the three public rooms, Sign in and Join.
- * Signed in: the same rooms plus Inbox and Account.
+ * Signed out: brand, Feed, Tournaments, Gear, Messages, Sign in and Join.
+ * Signed in: the same rooms plus Account.
  * Hidden on the sign-in, join and admin screens, which carry their own.
  */
 import React from 'react';
@@ -17,9 +17,12 @@ import { signInHref, joinHref } from '../../lib/nffga/auth';
 const HIDE_ON = ['/signin', '/join', '/admin', '/welcome', '/(auth)', '/reset-password'];
 
 const ROOMS = [
+  { label: 'Feed', href: '/board' },
   { label: 'Tournaments', href: '/tournaments' },
   { label: 'Gear', href: '/gear' },
-  { label: 'Board', href: '/board' },
+  // Shown signed out too: the inbox page answers with the join prompt,
+  // which is part of the funnel.
+  { label: 'Messages', href: '/inbox' },
 ] as const;
 
 export function SiteHeader() {
@@ -36,7 +39,6 @@ export function SiteHeader() {
       {ROOMS.map((r) => (
         <NavLink key={r.href} label={r.label} href={r.href} active={path.startsWith(r.href)} s={s} />
       ))}
-      {session && <NavLink label="Inbox" href="/inbox" active={path.startsWith('/inbox')} s={s} />}
     </>
   );
 

@@ -17,12 +17,12 @@ export default function BoardScreen() {
 
   return (
     <Page
-      title="Clubhouse board"
+      title="Feed"
       refreshControl={
         <RefreshControl refreshing={feed.isRefetching && !feed.isFetchingNextPage} onRefresh={() => feed.refetch()} tintColor={Colors.textMuted} />
       }
     >
-      <PageTitle>Clubhouse board</PageTitle>
+      <PageTitle>Feed</PageTitle>
       <RequireAccount reason="to post">
         <Composer />
       </RequireAccount>

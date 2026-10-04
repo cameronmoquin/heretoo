@@ -11,7 +11,7 @@ export function BoardSection() {
   const latest = useLatestPosts(3);
   const posts = latest.data ?? [];
   return (
-    <HomeSection title="Clubhouse board" href="/board" empty={latest.isLoading ? 'Loading posts.' : 'No posts yet.'}>
+    <HomeSection title="Feed" href="/board" empty={latest.isLoading ? 'Loading posts.' : 'No posts yet.'}>
       {posts.map((p) => <PostCard key={p.id} post={p} compact />)}
     </HomeSection>
   );

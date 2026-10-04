@@ -70,7 +70,7 @@ export default function PostScreen() {
       <Page title="Post">
         <Muted>This post is not available. It may have been deleted.</Muted>
         <View style={s.back}>
-          <Button title="Back to the board" onPress={() => router.replace('/board' as any)} variant="outline" size="md" />
+          <Button title="Back to the feed" onPress={() => router.replace('/board' as any)} variant="outline" size="md" />
         </View>
       </Page>
     );
@@ -82,7 +82,7 @@ export default function PostScreen() {
   return (
     <Page title="Post">
       <View style={s.back}>
-        <Button title="Board" onPress={() => router.push('/board' as any)} variant="ghost" size="sm" />
+        <Button title="Feed" onPress={() => router.push('/board' as any)} variant="ghost" size="sm" />
       </View>
       <PostCard
         post={{ ...p, comment_count: comments.data ? list.length : p.comment_count }}
