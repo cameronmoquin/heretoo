@@ -139,6 +139,19 @@ if (existsSync(indexPath)) {
     '<meta name="mobile-web-app-capable" content="yes" />',
     // SEO
     // Open Graph (Facebook, iMessage, Slack, Discord, LinkedIn)
+    // Canonical. The shell has never carried one, and it is served at
+    // every path AND on heretoo.netlify.app, which answers 200 for the
+    // whole site with its own Allow-everything robots.txt. Two
+    // byte-identical homepages on two hosts with no canonical between
+    // them leaves Google to guess which is the real site. The /fsot/
+    // pages were never exposed to this because build_public.py writes
+    // an absolute canonical into every one of them.
+    //
+    // This names the root. scripts/route-canonicals.mjs rewrites it for
+    // /about and /advertise, which are served from copies of this same
+    // document -- without that step this tag would claim those two pages
+    // are the homepage and fold them into it.
+    `<link rel="canonical" href="${URL}/" />`,
     '<meta property="og:type" content="website" />',
     `<meta name="description" content="${DESCRIPTION}" />`,
     '<meta property="og:site_name" content="HereToo" />',
