@@ -77,7 +77,7 @@ export default function FeedHomeScreen() {
   // pagination (see useFeed's marker); they are dropped here, where the
   // column is actually assembled.
   const posts = React.useMemo(
-    () => (feed.data?.pages.flat() ?? []).filter((p: any) => !p?.hidden_by_flags),
+    () => (feed.data?.pages.flat() ?? []).filter((p: any) => !p?.hidden_by_flags && !p?.hidden_as_bot),
     [feed.data],
   );
 

@@ -85,6 +85,7 @@ export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
             media:post_media(*)
           `)
           .eq('visibility', 'family')
+          .is('slugline', null) // no bot posts; see BOT POSTS below
           // Same rule as the ranked RPC (067): updates are a crew
           // instrument with their own tab, and the feed is not the third
           // place they show up. Without this the two lenses disagreed.
@@ -108,6 +109,7 @@ export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
             media:post_media(*)
           `)
           .eq('visibility', 'public')
+          .is('slugline', null) // no bot posts; see BOT POSTS below
           .order('created_at', { ascending: false })
           .range(pageParam, pageParam + PAGE_SIZE - 1);
         if (error) throw error;
@@ -132,6 +134,13 @@ export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
           const byId = new Map<string, any>((enriched ?? []).map((p: any) => [p.id, p]));
           raw = raw.map((p) => ({ ...p, ...(byId.get(p.id) ?? {}) }));
         }
+        // BOT POSTS. The faculty and the Shakespeare accounts are retired
+        // (Oct 2026), and a slugline is the mark only they ever wrote. The
+        // three direct queries drop them in SQL; this ranked RPC cannot
+        // take a filter, so its bot rows are tagged rather than dropped
+        // and skipped where the column is assembled, for the same paging
+        // reason as flagged posts below.
+        raw = raw.map((p) => (p.slugline ? { ...p, hidden_as_bot: true } : p));
       } else {
         let q = supabase
           .from('posts')
@@ -141,6 +150,7 @@ export function useFeed(tab: FeedTab = 'for_you', scope: FeedScope = 'all') {
             media:post_media(*)
           `)
           .eq('visibility', 'connections')
+          .is('slugline', null) // no bot posts; see BOT POSTS below
           .order('created_at', { ascending: false })
           .range(pageParam, pageParam + PAGE_SIZE - 1);
 
