@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUnreadCount } from '../hooks/useChat';
 import { useRadio, useActiveStation } from '../stores/radioStore';
+import { ADS_LIVE } from '../stores/artPrefsStore';
 import { Colors } from '../constants/colors';
 import { Spacing, Radius, Type, Heights } from '../constants/design';
 import { Vocab } from '../constants/vocab';
@@ -59,7 +60,8 @@ export default function RoomsScreen() {
     // play/pause control and nothing else, and the only route into
     // /music anywhere was a long-press on the desktop sidebar.
     { icon: 'disc', label: 'Music', route: '/music' },
-    { icon: 'pricetag', label: 'Advertise', route: '/advertise' },
+    // Advertise is off the shelf while ads are off (ADS_LIVE).
+    ...(ADS_LIVE ? [{ icon: 'pricetag', label: 'Advertise', route: '/advertise' }] : []),
     // Give is off the shelf — donations sit inside regulatory territory
     // that a lemonade stand has no business standing in. The /give route
     // still exists; no door points at it. Profile is off because the

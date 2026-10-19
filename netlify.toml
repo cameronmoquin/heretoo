@@ -112,6 +112,14 @@
   to = "/index.html"
   status = 410
 
+# /advertise retired while ads are off (Oct 2026): until there is a
+# subscriber base nobody should be asked to pay for exposure. 302 —
+# the counter comes back when ADS_LIVE flips.
+[[redirects]]
+  from = "/advertise"
+  to = "/"
+  status = 302
+
 [[redirects]]
   from = "/sow/*"
   to = "/add/:splat"

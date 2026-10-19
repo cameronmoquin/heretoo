@@ -146,9 +146,9 @@ if (existsSync(indexPath)) {
     // them leaves Google to guess which is the real site.
     //
     // This names the root. scripts/route-canonicals.mjs rewrites it for
-    // /about and /advertise, which are served from copies of this same
-    // document -- without that step this tag would claim those two pages
-    // are the homepage and fold them into it.
+    // /about, which is served from a copy of this same document --
+    // without that step this tag would claim that page is the homepage
+    // and fold it into it.
     `<link rel="canonical" href="${URL}/" />`,
     '<meta property="og:type" content="website" />',
     `<meta name="description" content="${DESCRIPTION}" />`,

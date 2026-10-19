@@ -14,7 +14,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import {
-  useArtPrefs, parseYear, yearToEra, normalizeSchool, ERA_RANGES, type ArtEra,
+  useArtPrefs, parseYear, yearToEra, normalizeSchool, ERA_RANGES, ADS_LIVE, type ArtEra,
 } from '../stores/artPrefsStore';
 
 export interface ArtWork {
@@ -80,8 +80,9 @@ export function useArtFeed() {
       // slots entirely.
       if (feedMix === 'posts_only') return [];
 
-      // art_only: skip the ad sub-query so source='ad' rows never enter the pool.
-      const wantAds = feedMix === 'art_and_ads';
+      // art_only, or ads switched off (ADS_LIVE): skip the ad sub-query so
+      // source='ad' rows never enter the pool.
+      const wantAds = ADS_LIVE && feedMix === 'art_and_ads';
 
       const ads = wantAds
         ? (await supabase

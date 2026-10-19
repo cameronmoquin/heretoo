@@ -20,6 +20,7 @@ import {
   View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { showAlert } from '../lib/alert';
@@ -29,6 +30,7 @@ import { Button } from '../components/shared/Button';
 import { Eyebrow } from '../components/shared/Eyebrow';
 import { HereTooLogo } from '../components/shared/Logo';
 import { Copy } from '../constants/copy';
+import { ADS_LIVE } from '../stores/artPrefsStore';
 
 /** Fills {reach} and {rate} in the author's strings. */
 function fill(s: string, vals: Record<string, string | number>): string {
@@ -45,7 +47,14 @@ function priceFor(reach: number): number {
   return Math.max(FLOOR, Math.round((reach / 100) * RATE_PER_HUNDRED));
 }
 
+/** The counter is closed while ads are off (ADS_LIVE). The Netlify rule
+ *  catches the cold hit; this catches the warm one. */
 export default function AdvertiseScreen() {
+  if (!ADS_LIVE) return <Redirect href="/" />;
+  return <AdCounter />;
+}
+
+function AdCounter() {
   const s = makeStyles();
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');

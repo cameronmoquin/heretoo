@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Give /about and /advertise a canonical that is true.
+ * (/advertise is retired while ads are off, Oct 2026.)
  *
  * THE PROBLEM. web.output is "single", so expo export emits exactly one
  * document and Netlify's SPA fallback serves it at every path. Measured
@@ -36,7 +37,7 @@
  * pages would be better for search, and that is Cameron's to write --
  * this file does not invent any.
  *
- * The two routes here are the two the sitemap function publishes beside
+ * The route here is the one the sitemap function publishes beside
  * "/". If netlify/functions/sitemap.ts grows another marketing route,
  * add it here or it ships with the wrong canonical.
  */
@@ -45,7 +46,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 const BASE = 'https://heretoo.social';
 const SRC = 'dist/index.html';
-const ROUTES = ['about', 'advertise'];
+const ROUTES = ['about'];
 
 const CANON = /<link rel="canonical" href="[^"]*"\s*\/>/;
 const OGURL = /<meta property="og:url" content="[^"]*"\s*\/>/;

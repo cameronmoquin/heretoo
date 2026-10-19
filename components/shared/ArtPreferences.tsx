@@ -22,6 +22,7 @@ import {
   ERA_LABELS,
   SOURCE_LABELS,
   FEED_MIX_LABELS,
+  ADS_LIVE,
   type ArtEra,
   type FeedMix,
 } from '../../stores/artPrefsStore';
@@ -171,8 +172,13 @@ export function ArtPreferences({ compact = false }: ArtPreferencesProps) {
           {/* Feed Mix — what shows up between posts */}
           <Section label={`Between ${Vocab.postPlural}`}>
             <View style={s.mixCol}>
-              {(Object.keys(FEED_MIX_LABELS) as FeedMix[]).map((m) => {
-                const on = feedMix === m;
+              {(Object.keys(FEED_MIX_LABELS) as FeedMix[])
+                // While ads are off the "Art + ads" choice is not offered,
+                // and a stored art_and_ads (the default) shows as Art only,
+                // which is what it delivers.
+                .filter((m) => ADS_LIVE || m !== 'art_and_ads')
+                .map((m) => {
+                const on = feedMix === m || (!ADS_LIVE && m === 'art_only' && feedMix === 'art_and_ads');
                 return (
                   <TouchableOpacity
                     key={m}

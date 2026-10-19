@@ -58,6 +58,14 @@ export const ERA_RANGES: Record<ArtEra, [number, number]> = {
  *   - 'posts_only'  Skip every between-post slot entirely. The
  *                   eventual $5/mo subscription preview.
  */
+/**
+ * Ads are off until HereToo has a subscriber base (Oct 2026). While this
+ * is false no ad row is fetched, every slot is art, the "Art + ads"
+ * choice is hidden, and /advertise sends visitors home. Flip it to bring
+ * the counter back; nothing else was deleted.
+ */
+export const ADS_LIVE = false;
+
 /** Default since rule 2 (Sept 2026): 'art_and_ads'. */
 export type FeedMix = 'art_only' | 'art_and_ads' | 'posts_only';
 
