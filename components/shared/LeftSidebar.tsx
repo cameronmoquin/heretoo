@@ -164,22 +164,13 @@ export function LeftSidebar() {
           hallway's second shelf. The Journal keeps its filled lock: the
           room's weight in the rail matches its weight in the platform's
           argument. Memoir's row is gone — the room is retired (data
-          kept; punch list holds it). FSOT Prep is the static study
-          guide + audio course at /fsot/, outside the SPA, so its row
-          does a full navigation rather than a router push. */}
+          kept; punch list holds it). */}
       <Text style={s.sectionLabel}>Anti-social</Text>
       <NavRow
         icon="lock-closed"
         label="Journal"
         active={onJournal}
         onPress={() => router.push('/journal' as any)}
-      />
-      <NavRow
-        icon="school-outline"
-        label="FSOT Prep"
-        sub="Study guide & audio course"
-        active={false}
-        onPress={() => { if (typeof window !== 'undefined') window.location.assign('/fsot/'); }}
       />
 
       <View style={s.divider} />

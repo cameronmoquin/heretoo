@@ -27,9 +27,9 @@
  * /* fallback, so /about gets about.html; the app boots identically
  * because it routes off location.pathname and never reads the filename.
  *
- * It copies the document AFTER fix-viewport and add-crawl-links have run,
- * so the copies inherit the viewport fix and the crawlable nav. Keep it
- * last in the build chain for that reason.
+ * It copies the document AFTER fix-viewport has run, so the copies
+ * inherit the viewport fix. Keep it last in the build chain for that
+ * reason.
  *
  * NO COPY CHANGES. Title and description are untouched and identical to
  * the root's. Distinct, written titles and descriptions for these two

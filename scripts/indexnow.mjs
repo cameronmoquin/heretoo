@@ -24,7 +24,7 @@
  * which is that anyone can fetch it.
  *
  * USAGE
- *   node scripts/indexnow.mjs            submit every URL in both sitemaps
+ *   node scripts/indexnow.mjs            submit every URL in the sitemap
  *   node scripts/indexnow.mjs --dry-run  print what would be sent
  *
  * Run it after a deploy that changed or added pages. It is safe to
@@ -38,7 +38,7 @@ import { join } from 'node:path';
 
 const HOST = 'heretoo.social';
 const ORIGIN = `https://${HOST}`;
-const SITEMAPS = [`${ORIGIN}/sitemap.xml`, `${ORIGIN}/fsot/sitemap.xml`];
+const SITEMAPS = [`${ORIGIN}/sitemap.xml`];
 const ENDPOINT = 'https://api.indexnow.org/indexnow';
 const DRY = process.argv.includes('--dry-run');
 

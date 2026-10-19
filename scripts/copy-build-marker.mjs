@@ -143,9 +143,7 @@ if (existsSync(indexPath)) {
     // every path AND on heretoo.netlify.app, which answers 200 for the
     // whole site with its own Allow-everything robots.txt. Two
     // byte-identical homepages on two hosts with no canonical between
-    // them leaves Google to guess which is the real site. The /fsot/
-    // pages were never exposed to this because build_public.py writes
-    // an absolute canonical into every one of them.
+    // them leaves Google to guess which is the real site.
     //
     // This names the root. scripts/route-canonicals.mjs rewrites it for
     // /about and /advertise, which are served from copies of this same

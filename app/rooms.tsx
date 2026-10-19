@@ -11,7 +11,7 @@
 
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Linking,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -30,10 +30,6 @@ interface Door {
   /** The heavy tile. Filled icon, primary fill, bold label — one door
    *  per shelf at most, or weight stops meaning anything. */
   accent?: boolean;
-  /** A door out of the SPA. /fsot/ is a static site served beside the
-   *  app; the client router would 404 it, so the door does a full
-   *  navigation on web and opens the browser on native. */
-  external?: boolean;
 }
 
 export default function RoomsScreen() {
@@ -72,11 +68,9 @@ export default function RoomsScreen() {
 
   // The rooms that end with you. The Journal leads — it is the room the
   // platform's whole privacy argument lives in, and it keeps the heavy
-  // tile it carried on the Apps shelf. FSOT Prep is the static study
-  // guide + audio course at /fsot/, outside the SPA.
+  // tile it carried on the Apps shelf.
   const antisocial: Door[] = [
     { icon: 'lock-closed', label: 'Journal', route: '/journal', accent: true },
-    { icon: 'school', label: 'FSOT Prep', route: '/fsot/', external: true },
   ];
 
   return (
@@ -125,14 +119,7 @@ function Grid({ doors, s }: { doors: Door[]; s: ReturnType<typeof makeStyles> })
         <TouchableOpacity
           key={d.route}
           style={[s.door, d.accent && s.doorAccent]}
-          onPress={() => {
-            if (d.external) {
-              if (Platform.OS === 'web') (window as any).location.assign(d.route);
-              else Linking.openURL(`https://heretoo.social${d.route}`).catch(() => {});
-            } else {
-              router.push(d.route as any);
-            }
-          }}
+          onPress={() => router.push(d.route as any)}
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel={d.label}
